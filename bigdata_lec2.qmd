@@ -1,0 +1,570 @@
+---
+title: "Big Data: Speeding up computation"
+author: 
+  - name: MSDE
+    affiliation: Lviv University
+code-fold: false
+execute:
+  enabled: false
+  cache: true
+diagram:
+  cache: true
+  cache-dir: ./cache
+  engine:
+    tikz:
+      execpath: lualatex
+      additional-packages: |
+        \usetikzlibrary{arrows.meta}
+        \usetikzlibrary{positioning}
+        \usetikzlibrary{decorations.pathreplacing}
+filters:
+  - diagram
+format: 
+  revealjs:
+    preview-links: auto
+    slide-number: true
+    theme: default
+    multiplex:
+      url: 'https://mplex.vitv.ly'
+      secret: 'fad1947f4c744674d25d0769c690f8d7'
+      id: 'ceb96efc411836bb262565b446653921d89b7ccf140a4d923b70660482df2ced'
+---
+
+# Computational improvements
+
+## Moore's Law
+:::{.callout-important icon=false}
+## Definition (1965)
+Number of transistors in an integrated circuit (IC) doubles about every two years. 
+:::
+
+
+## Moore's Law
+![](img/MooresLaw)
+
+## Moore's Law
+![](img/cpu_speed_graph.jpeg)
+
+## Moore's Law
+:::{.callout-tip icon=false}
+## Trends
+
+- Gordon Moore: Moore's law will end by around 2025. 
+- Nvidia CEO Jensen Huang: declared Moore's law dead in 2022.
+:::
+
+:::{.callout-note icon=false}
+## Pat Gelsinger, Intel CEO, end of 2023
+> We're no longer in the golden era of Moore's Law, it's much, much harder now, so we're probably doubling effectively closer to every three years now, so we've definitely seen a slowing.
+:::
+
+## Edholm's law
+:::{.callout-tip icon=false}
+## Definition (2004)
+
+- three categories of telecommunication, namely 
+  - wireless (mobile),
+  - nomadic (wireless without mobility)
+  - and wired networks (fixed),
+
+  are in lockstep and gradually converging
+- the bandwidth and data rates double every 18 months, which has proven to be true since the 1970s
+:::
+
+
+## Edholm's law
+![](img/moore_edholm_comparison)
+
+## Edholm's law
+![](img/internet_traffic)
+
+:::{.callout-warning icon=false}
+## Data deluge
+
+- 90\% of data humankind has produced happened in the last two years.
+- 80\% of data could be unstructured
+- 99\% of data produced is never analyzed
+:::
+
+
+# Multithreading vs multiprocessing
+
+## Core counts
+![](img/core_count)
+
+## Concurrency vs Parallelism
+
+
+:::: {.columns}
+
+::: {.column width="50%" background-color="lightgray"}
+:::{.callout-tip icon=false}
+## Concurrency Parallelism
+Individual steps of both tasks are executed in an *interleaved* fashion
+:::
+
+:::
+::: {.column width="50%" background-color="lightgray"}
+:::{.callout-note icon=false}
+## Parallelism
+Task statements are executed *at the same time*.
+:::
+
+:::
+::::
+
+
+## Process
+:::{.callout-note icon=false}
+## Definition
+A process can be defined as an instance of a running program with its own memory. 
+
+Alternatively: a context maintained for an executing program.
+
+Processes have:
+
+- lifetimes
+- parents
+- children.
+- memory/resources allocated.
+:::
+
+## Process
+![](img/process)
+
+
+## Threads
+:::{.callout-tip icon=false}
+## Definition
+A lightweight unit of execution within a process that can operate independently.
+
+Thread is a basic unit to which the operating system allocates processor time.
+  
+Managed with help of **thread context**, which consists of processor context and information required for thread management.
+:::
+
+## Threads
+![](img/thread_diagram)
+
+## Green threads/Coroutines
+:::{.callout-tip icon=false}
+## Definition
+These are threads managed by the process runtime, *multiplexed* onto OS threads.
+:::
+
+<!-- ![](img/goroutines) -->
+
+## Comparison table
+![](img/threads_vs_processes.jpg)
+
+
+# Programming paradigms
+
+## Imperative
+:::{.callout-important icon=false}
+## Wikipedia definition
+A programming paradigm of software that uses statements that change a program's state.
+
+Imperative program is a step-by-step description of program's algorithm.
+:::
+  
+:::{.callout-note icon=false}
+## Examples
+
+- Fortran
+- COBOL
+- C
+- Python
+- Go
+:::
+
+## Imperative
+:::{.callout-important icon=false}
+## Cons
+
+- Difficult to **parallelize**
+- Lots of state management
+:::
+
+:::{.callout-tip icon=false}
+## Pros
+
+- Intuitive concept, maps well to how people think, program as a recipe.
+- Easy to optimize by the compiler
+:::
+
+## Functional
+:::{.callout-important icon=false}
+## Wikipedia definition
+A programming paradigm where programs are constructed by applying and composing functions.
+:::
+
+:::{.callout-note icon=false}
+## Examples
+
+- ML (Ocaml)
+- Lisp
+- Haskell
+- Julia
+:::
+
+## Functional
+:::{.callout-important icon=false}
+## Cons
+
+- Often non-intuitive to reason about
+- Depending on a specific algorithm, might be slower
+:::
+
+:::{.callout-tip icon=false}
+## Pros
+
+- Easier to parallelize
+- Lend themselves beautifully to certain types of problems
+:::
+
+## Object-oriented
+:::{.callout-important icon=false}
+## Wikipedia definition
+A programming paradigm based on the concept of objects, which can contain data and code: data in the form of fields (often known as attributes or properties), and code in the form of procedures (often known as methods).
+:::
+
+:::{.callout-note icon=false}
+## Examples
+
+- Smalltalk
+- Java
+- C++
+- Python
+- C\#
+:::
+
+## Object-oriented
+![](img/uml)
+
+## Object-oriented
+:::{.callout-important icon=false}
+## Cons
+
+- Does not map well to many problems
+- Lots of state management
+:::
+
+:::{.callout-tip icon=false}
+## Pros
+
+- Intuitively easy to grasp, as human thinking is largely **noun**-oriented
+- Useful for UIs
+:::
+
+## Symbolic
+:::{.callout-tip icon=false}
+## Wikipedia definition
+A programming paradigm in which the program can manipulate its own formulas and program components as if they were plain data.
+:::
+
+:::{.callout-note icon=false}
+## Examples
+
+- Lisp
+- Prolog
+- Julia
+:::
+
+## Lisp
+![](img/lisp_macro)
+
+## Prolog
+![](img/prolog)
+:::
+
+# Typing
+
+## Typing
+:::{.callout-tip icon=false}
+## Static vs dynamic
+
+- **static:** types are known and checked before running the program
+- **dynamic:** types become known when the program is running
+:::
+
+:::{.callout-note icon=false}
+## Strong vs weak
+
+- **strong:** variable types are not changed easily
+- **weak:** types can be changed by the compiler if necessary
+:::
+
+## Typing
+![](img/lang_graph)
+
+## Memory management
+
+:::: {.columns}
+
+::: {.column width="50%" background-color="lightgray"}
+:::{.callout-important icon=false}
+## Manual
+
+- C/C++
+- Pascal
+- Forth
+- Fortran
+- Zig
+:::
+:::
+
+::: {.column width="50%" background-color="lightgray"}
+
+:::{.callout-note icon=false}
+## Automatic
+
+- Lisp
+- Java
+- Python
+- Go
+- Julia
+:::
+:::
+::::
+
+# Code execution
+
+## Python Options
+
+|Libraries|Low-level langs|Alt Python Impls|JIT|
+|---|---|---|---|
+|NumPy, <br/> SciPy | C,<br/> Rust,<br/> Cython,<br/> PyO3 | PyPy, <br/>Jython | Numba, <br/>PyPy|
+
+
+::: aside
+**Options above are not mutually exclusive!**
+:::
+
+
+## Interpreters
+:::{.callout-tip icon=false}
+## Wikipedia definition
+An interpreter is a computer program that directly executes instructions written in a programming or scripting language, without requiring them previously to have been compiled into a machine language program.
+:::
+
+:::{.callout-note icon=false}
+## Examples
+
+- Python
+- Ruby
+- Lua
+- Javascript
+:::
+
+## CPython
+![](img/cpython_internals)
+
+:::{.callout-note icon=false}
+## Flow
+
+- Read Python code
+- Convert Python into bytecode
+- Execute bytecode inside a VM
+- VM converts bytecode to machine code
+:::
+
+## CPython
+![](img/cpython_code)
+![](img/cpython_bytecode)
+
+## Compilers
+:::{.callout-tip icon=false}
+## Wikipedia definition
+Source code is compiled - in this context, translated into machine code for better performance.
+:::
+
+:::{.callout-note icon=false}
+## Examples
+
+- C/C++
+- Go
+- Python (to intermediate VM code)
+- Java
+- Cython
+:::
+
+## Compilers
+![](img/llvm)
+
+## Cython
+:::{.callout-important icon=false}
+## Definition
+Cython is an optimising static compiler for the Python programming language.
+
+- converts Python code to C
+- supports static type declarations
+:::
+
+## Cython
+![](img/cython_flow)
+
+## Cython
+![](img/cython_speedup)
+
+## Cython
+:::{.callout-tip icon=false}
+## Python code
+    
+![](img/cython_integratev1)
+:::
+
+## Cython
+:::{.callout-tip icon=false}
+## Annotated Python code
+![](img/cython_integratev2)
+:::
+
+## Cython
+:::{.callout-important icon=false}
+## Cython code
+![](img/cython_integratev3)
+:::
+
+## Parallel Cython
+![](img/cython_parallel1)
+
+## Parallel Cython
+![](img/cython_parallel2)
+
+## JIT
+:::{.callout-tip icon=false}
+## Wikipedia definition
+A compilation (of computer code) during execution of a program (at run time) rather than before execution.
+:::
+
+:::{.callout-note icon=false}
+## Features
+
+- **warm-up time:** JIT causes a slight to noticeable delay in the initial execution of an application, due to the time taken to load and compile the input code. 
+- **statistics collection:** performed by the system during runtime, shows how the program is actually running in the environment it is in; helps JIT to rearrange and recompile for optimum performance. 
+- particularly suited for **dynamic** programming languages
+:::
+
+## JIT
+:::{.callout-note icon=false}
+## Examples
+
+- HotSpot Java Virtual Machine
+- LuaJIT
+- Numba
+- PyPy
+:::
+
+## Numba
+![](img/numba_arch)
+
+## Numba
+:::{.callout-note icon=false}
+## Description
+
+- Numba translates Python byte-code to machine code immediately before execution to improve the execution speed. 
+- For that we add a `@jit` decorator
+- Works well for numeric operations, NumPy, and loops
+:::
+
+## Numba
+:::{.callout-tip icon=false}
+## Steps
+
+- read the Python bytecode for a decorated function 
+- combine it with information about the types of the input arguments to the function
+- analyze and optimize the code 
+- use the LLVM compiler library to generate a machine code version of the function, tailored to specific CPU capabilities.
+:::
+
+## Numba
+:::{.callout-tip icon=false}
+## Works great
+![](img/numba_example1)
+:::
+
+## Numba
+:::{.callout-important icon=false}
+## Nope
+![](img/numba_example2)
+:::
+
+## Numba
+![](img/numba_reduction)
+
+## Numba
+:::{.callout-important icon=false}
+## Sequential
+![](img/numba_sequential){height=400}
+:::
+
+## Numba
+:::{.callout-note icon=false}
+## Parallel
+![](img/numba_parallel){height=400}
+:::
+
+## Numpy
+:::{.callout-important icon=false}
+## Why so fast?
+
+- Optimized C code
+- Densely packed arrays
+- Uses BLAS - Basic Linear Algebra Subroutines. 
+:::
+
+# Distributed computing
+## Distributed computing
+:::{.callout-note icon=false}
+## Types
+
+- **Cluster computing:** collection of similar workstations
+- **Grid computing**: federation of different computer systems
+- **Cloud computing:** provide the facilities to dynamically construct an infrastructure and compose what is needed from available services. Not only providing lots of resources.
+:::
+
+## Distributed computing
+:::{.callout-tip icon=false}
+## Original Beowulf cluster at NASA (1994)
+![](img/beowulf.jpg){height=500}
+:::
+
+## Distributed computing
+:::{.callout-important icon=false}
+## Beowulf cluster diagram
+![](img/beowulf_diagram)
+:::
+
+## Distributed computing
+:::: {.columns}
+
+::: {.column width="50%" background-color="lightgray"}
+
+:::{.callout-note icon=false}
+## Grid architecture diagram (Foster et al. 2001)
+![](img/grid_arch_diagram)
+:::
+
+:::
+
+::: {.column width="50%" background-color="lightgray"}
+
+:::{.callout-tip icon=false}
+## Notation
+<div style="font-size: 0.8em;">
+- **fabric:** interfaces to local resources at a specific site
+- **connectivity**: communication protocols for supporting grid transactions that span the usage of multiple resources
+- **resource:** responsible for managing a single resource
+- **collective:** handling access to multiple resources and typically consists of services for resource discovery, allocation and scheduling of tasks onto multiple resources, data replication, and so on
+- **application:** applications that operate within a virtual organization 
+</div>
+:::
+:::
+::::
+
+## Distributed computing
+:::{.callout-important icon=false}
+## Cloud architecture
+![](img/cloud_arch)
+:::
