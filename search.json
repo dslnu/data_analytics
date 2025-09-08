@@ -1,0 +1,772 @@
+[
+  {
+    "objectID": "nb/lab2/lab2.html",
+    "href": "nb/lab2/lab2.html",
+    "title": "Lab2: Parallelisation",
+    "section": "",
+    "text": "Previous lab listed some methods of optimizing Pandas work - data storage optimizations, Cython conversion, Numba annotations.\nIn this lab we’ll start looking into parallelisation as a way of optimizing data analysis workflows.\nWhy - because today’s systems are multicore (sometimes very much so).\nCheck yours:\nimport os\nos.cpu_count()\nNote: there are two kinds of parallelism, distributed and shared-memory. Here we’ll talk about shared-memory version.\nDistributed parallelism is when we use multiple machines/VMs for computations."
+  },
+  {
+    "objectID": "nb/lab2/lab2.html#short-intro-to-functional-programming",
+    "href": "nb/lab2/lab2.html#short-intro-to-functional-programming",
+    "title": "Lab2: Parallelisation",
+    "section": "Short intro to functional programming",
+    "text": "Short intro to functional programming\nIn functional programming paradigm, functions are first-class citizens of the languages. They can be composed, applied, passed as arguments to another functions, or returned as values.\nFunctional programming is inherently better suited for parallel programs.\nBenefits of functional programming: - minimization of state - no side-effects - pure functions are easier to reason about - and parallelize (!)\nIt is based on lambda calculus. We’ll learn some of its concepts first: - lambda function definition - application and partial application - currying - closures\nFirst off, functions can be values in Python:\n\nadd = lambda x, y: x + y  \nprint (f\"add = {add}\")  \n\nAll variables support some operations on them: addition for integers, or e.g. read_csv on Pandas DataFrame.\nFunction variables support a single operation: application.\n\ni = 0  \nj = 1    \nadd = lambda x, y: x + y  \n  \nk = i + j  \nprint (f\"k = {k}\")  \n  \nz = add (i, j)  \nprint (f\"z = {z}\") \n\nPartial function application is also supported. We’ll use functools package (https://docs.python.org/3/library/functools.html).\n\nfrom functools import partial  \ni = 0  \nj = 1    \nadd = lambda x, y: x + y  \ninc = partial (add, 1)  \n  \nii = inc (i)  \njj = inc (j)  \nprint (f\"ii = {ii}, jj = {jj}\")  \n\nNote: the code above both passes add as an argument to partial, and stores the return value of partial function into a new variable inc.\nThe lambda in the example above accepts two arguments essentially. This can be simplified by currying:\n\ni = 0  \nj = 1    \nadd = lambda x: lambda y: x + y  \ninc = add(1)  \n  \nii = inc (i)  \njj = inc (j)  \nprint (f\"ii = {ii}, jj = {jj}\") \n\nDefinition for currying: currying is the technique of translating a function that takes multiple arguments into a sequence of families of functions, each taking a single argument.\nAlternatively, we can say that currying is the mean to transform a function of arity n to n functions of arity 1.\nWith currying, we can express partial application without and extra partial function.\nNote: currying relies on closures - functions that can refer to variables defined in surrounding context (like x in add definition above).\nA monstrous example:\n\ndef f_5(a, b, c, d, e):\n    return a + b + c + d + e\n\ndef c_5(a):\n    def c_4(b):\n        def c_3(c):\n            def c_2(d):\n                def c_1(e):\n                    return f_5(a, b, c, d, e)\n                return c_1\n            return c_2\n        return c_3\n    return c_4\n\nHow to use?\n\nf_5(1,2,3,4,5)\n\n\nc_5(1)(2)(3)(4)(5)"
+  },
+  {
+    "objectID": "nb/lab2/lab2.html#map-reduce",
+    "href": "nb/lab2/lab2.html#map-reduce",
+    "title": "Lab2: Parallelisation",
+    "section": "map-reduce",
+    "text": "map-reduce\nIn functional programming, we do not iterate - we map. Why? Because map can be parallelised.\nIteration (like a for-loop) is sequential. Mapping is not.\nmap takes its name from a mathematical term for functions - mappings.\nmap’s arguments: - a sequence to iterate on - a function to apply to each element of the sequence.\nmap’s return value: - a processed sequence of the same size as input\nNow, if we want to convert our sequence to a sequence of a different length, or different object altogether, we use reduce.\nreduce’s arguments: - a sequence to iterate on - accumulation seed to start reducing on - a function of two arguments, accumulation result and next element\nUsing above examples, we can easily implement map using list comprehensions as as:\n\nmap = lambda f, l: [f(x) for x in l]\n\nLet’s use it:\n\nint_list = [1,2,3,4,5,6]\ninc_list = map(inc, int_list)\nprint(inc_list)\n\nAnd reduce can be implemented as:\n\ndef reduce_v1 (f, id, s):  \n    n = len(s)  \n    if n == 0:  \n        return id  \n    elif n == 1:  \n        return s[0]  \n    else:  \n        return f(reduce_v1(f, id, s[1:]), s[0]) \n\nUsage example:\n\nadd = lambda x, y: x + y  \nres = reduce_v1(add, 0, int_list)\nprint(res)\n\n\nLimitations and parallelisation types\nSome tasks can be trivially parallelised - these are called embarrassingly parallel. inc is a simple example of this type.\nOther tasks have a degree of interdependence. Consider below example, adapted from the reduce above:\n\n# Sum all elements of int_list\ndef sum(lst):\n    sum = 0\n    \n    for i in range(len(lst)):\n      sum += lst[i]\n\n    return sum\n\nprint(sum(int_list))\n\nHow can it be parallelised? By using a technique called chunking:\n\nchunk1 = int_list[:3]\nchunk2 = int_list[3:]\n\nsum_1 = sum(chunk1)\nsum_2 = sum(chunk2)\n\nresult = sum_1 + sum_2\n\nprint(result)\n\nThen there algorithms that are inherently serial. An example is computation of a Fibonacci sequence.\n\n\nPython’s builtin map\nSuppose we want to square each number in a list. A naive approach would be:\n\nnumber_list = [1,2,3,4]\n\ndef squarev1(lst):\n    squared = [] # sometimes pre-allocation can also work, like [None]*1000\n    for el in lst:\n        squared.append(el*el)\n    return squared\n\nsquarev1(number_list)\n\n\n# Built in map: https://docs.python.org/3/library/functions.html#map\n# Note that we return a map object that has to be converted to a list first\ndef squarev2(lst):\n    return list(map(lambda x: x*x, lst))\n\n\nsquarev2(number_list)\n\n\n\nPython parallel map\nWe need to use multiprocessing library (https://docs.python.org/3/library/multiprocessing.html)\n\nfrom multiprocessing import Pool\n\nThere are limitations though: in order to arrange communication between proceses, Python uses pickling: a method of serializing/deserializing objects so that they can be sent between processes.\nPython cannot pickle closures, nested functions or classes! More info on pickling: https://docs.python.org/3/library/pickle.html\nMoreover, we have to move sqr definition into a separate file (https://stackoverflow.com/questions/41385708/multiprocessing-example-giving-attributeerror)\n\nimport defs\n\n\ndef squarev3(lst):\n    pool = Pool()\n    return pool.map(defs.sqr, number_list)\n\n\nsquarev3(number_list)\n\n\n\nPathos map\nNote:: however, Dill (https://pypi.org/project/dill/) can overcome this limitation!\nHow to use Dill?\npip3 install pathos\n\npip3 install toolz\n\nfrom pathos.multiprocessing import ProcessPool\n\ndef squarev4(lst):\n    pool = ProcessPool()\n    return pool.map(lambda x: x*x, lst)\n\n\nsquarev4([1,3,5])\n\n\n\nNumpy vectorization\nNumpy automatically vectorizes array operations. However, we can explicitly invoke vectorize():\n\nimport numpy as np\n\nnp_array = np.array(number_list)\n\nvectorized_fn = np.vectorize(lambda x: x*x)\n\nresult = vectorized_fn(np_array)\nprint(result)"
+  },
+  {
+    "objectID": "nb/lab2/lab2.html#exercises",
+    "href": "nb/lab2/lab2.html#exercises",
+    "title": "Lab2: Parallelisation",
+    "section": "Exercises",
+    "text": "Exercises\n\nWrite a version of curried function c_5 using lambda syntax.\nWrite a program calculating a factorial using parallelisation and map-reduce.\nWrite a parallelised version of reduce (hint: use chunking).\nCompare performance of Numpy vectorization vs parallel map on a really large array of integers."
+  },
+  {
+    "objectID": "bigdata.html",
+    "href": "bigdata.html",
+    "title": "Big Data Analytics",
+    "section": "",
+    "text": "Slides\n\n\n\nSlides"
+  },
+  {
+    "objectID": "bigdata.html#lectures",
+    "href": "bigdata.html#lectures",
+    "title": "Big Data Analytics",
+    "section": "",
+    "text": "Slides\n\n\n\nSlides"
+  },
+  {
+    "objectID": "bigdata.html#labs",
+    "href": "bigdata.html#labs",
+    "title": "Big Data Analytics",
+    "section": "Labs",
+    "text": "Labs\nLab 1:"
+  },
+  {
+    "objectID": "bigdata.html#python-venv-info",
+    "href": "bigdata.html#python-venv-info",
+    "title": "Big Data Analytics",
+    "section": "Python venv info",
+    "text": "Python venv info\nInstructions on how to create a virtual environment for DL course:\n\nLaunch Anaconda Prompt. In it execute:\n\npython -m venv dl_venv\n\nActivate the environment:\n\ndl_venv\\Scripts\\activate\n\nInstall required packages:\n\npip install jupyter matplotlib scipy numpy scikit-learn termcolor h5py\n\nRun Jupyter:\n\njupyter notebook\n\nVoila! (pardon my French)"
+  },
+  {
+    "objectID": "bigdata.html#exam-questions",
+    "href": "bigdata.html#exam-questions",
+    "title": "Big Data Analytics",
+    "section": "Exam questions",
+    "text": "Exam questions\nList"
+  },
+  {
+    "objectID": "bigdata_lec1.html#what-is-big-data",
+    "href": "bigdata_lec1.html#what-is-big-data",
+    "title": "Big Data: Intro",
+    "section": "What is Big Data?",
+    "text": "What is Big Data?\n\n\n\nDefinition\n\n\nBig Data is a set of technologies designed to store, manage and analyze data that is:\n\ntoo large to fit on a single machine\nwhile accommodating for the issue of growing discrepancy between capacity, throughput and latency."
+  },
+  {
+    "objectID": "bigdata_lec1.html#prefixes",
+    "href": "bigdata_lec1.html#prefixes",
+    "title": "Big Data: Intro",
+    "section": "Prefixes",
+    "text": "Prefixes\n\n\n\nPrefixes\n\n\n\nkilo (k) 1,000 (3 zeros)\nMega (M) 1,000,000 (6 zeros)\nGiga (G) 1,000,000,000 (9 zeros)\nTera (T) 1,000,000,000,000 (12 zeros)\nPeta (P) 1,000,000,000,000,000 (15 zeros)\nExa (E) 1,000,000,000,000,000,000 (18 zeros)\nZetta (Z) 1,000,000,000,000,000,000,000 (21 zeros)\nYotta (Y) 1,000,000,000,000,000,000,000,000 (24 zeros)\nRonna (R) 1,000,000,000,000,000,000,000,000,000 (27 zeros)\nQuetta (Q) 1,000,000,000,000,000,000,000,000,000,000 (30 zeros)"
+  },
+  {
+    "objectID": "bigdata_lec1.html#total-estimate",
+    "href": "bigdata_lec1.html#total-estimate",
+    "title": "Big Data: Intro",
+    "section": "Total estimate",
+    "text": "Total estimate\n\n\n\nEstimate\n\n\nThe total amount of data stored digitally worldwide is estimated to be getting close to 100 ZB as of 2021 (zettabytes)"
+  },
+  {
+    "objectID": "bigdata_lec1.html#three-vs",
+    "href": "bigdata_lec1.html#three-vs",
+    "title": "Big Data: Intro",
+    "section": "Three Vs",
+    "text": "Three Vs\n\n\n\nVolume\nVariety\nVelocity"
+  },
+  {
+    "objectID": "bigdata_lec1.html#volume",
+    "href": "bigdata_lec1.html#volume",
+    "title": "Big Data: Intro",
+    "section": "Volume",
+    "text": "Volume\n\n\n\nIssue\n\n\nData volume has exponentially increased in recent decades.\n\n\n\n\n\n\nWait but why?\n\n\n\nInternet-of-Things sensor data\nSocial networks\nStorage device progress"
+  },
+  {
+    "objectID": "bigdata_lec1.html#variety",
+    "href": "bigdata_lec1.html#variety",
+    "title": "Big Data: Intro",
+    "section": "Variety",
+    "text": "Variety\n\n\n\nTypes\n\n\n\ntrees - XML, JSON, Parquet, Avro, etc\nunstructured - text, pictures, audio, video\ndata cubes\ngraphs"
+  },
+  {
+    "objectID": "bigdata_lec1.html#velocity",
+    "href": "bigdata_lec1.html#velocity",
+    "title": "Big Data: Intro",
+    "section": "Velocity",
+    "text": "Velocity\n\n\n\nDefinion\n\n\nSpeed at which data is being generated, collected, and processed.\n\n\n\n\n\n\nAttributes\n\n\n\nCapacity: how much data can we store per unit of volume?\nThroughput: how many bytes can we read per unit of time?\nLatency: how much time do we need to wait until the bytes start arriving?"
+  },
+  {
+    "objectID": "bigdata_lec1.html#velocity-1",
+    "href": "bigdata_lec1.html#velocity-1",
+    "title": "Big Data: Intro",
+    "section": "Velocity",
+    "text": "Velocity\nEvolution since 1950s"
+  },
+  {
+    "objectID": "bigdata_lec1.html#features",
+    "href": "bigdata_lec1.html#features",
+    "title": "Big Data: Intro",
+    "section": "Features",
+    "text": "Features\n\n\n\nFeatures\n\n\n\nReliability\nScalability\nMaintainability"
+  },
+  {
+    "objectID": "bigdata_lec1.html#reliability",
+    "href": "bigdata_lec1.html#reliability",
+    "title": "Big Data: Intro",
+    "section": "Reliability",
+    "text": "Reliability\n\n\n\nKleppmann’s definition\n\n\nThe system should continue to work correctly (performing the correct function at the desired level of performance) even in the face of adversity\n\nhardware faults\nsoftware faults\nand even human error"
+  },
+  {
+    "objectID": "bigdata_lec1.html#reliability-1",
+    "href": "bigdata_lec1.html#reliability-1",
+    "title": "Big Data: Intro",
+    "section": "Reliability",
+    "text": "Reliability\n\n\n\nFaults\n\n\nBasically, theses are things that could go wrong.\nSystems that can anticipate faults are called fault-tolerant or resilient.\nFault can be defined as one component of the system deviating from the spec.\n\n\n\n\n\n\nFailures\n\n\nFailures occur when system stops providing services to the user.\n\n\n\nFaults might degenerate into failures."
+  },
+  {
+    "objectID": "bigdata_lec1.html#reliability-2",
+    "href": "bigdata_lec1.html#reliability-2",
+    "title": "Big Data: Intro",
+    "section": "Reliability",
+    "text": "Reliability\n\n\n\nTypes of errors\n\n\n\nHardware\nSoftware\nHuman"
+  },
+  {
+    "objectID": "bigdata_lec1.html#reliability-3",
+    "href": "bigdata_lec1.html#reliability-3",
+    "title": "Big Data: Intro",
+    "section": "Reliability",
+    "text": "Reliability"
+  },
+  {
+    "objectID": "bigdata_lec1.html#scalability",
+    "href": "bigdata_lec1.html#scalability",
+    "title": "Big Data: Intro",
+    "section": "Scalability",
+    "text": "Scalability\n\n\n\nKleppmann\n\n\nAs the system grows (in data volume, traffic volume, or complexity), there should be reasonable ways of dealing with that growth.\nIn other words, scalability is a system’s ability to cope with increased load.\n\n\n\n\n\nNote that scalability is a multi-dimensional term. When saying “system scales well”, it’s important to state exactly along which axis."
+  },
+  {
+    "objectID": "bigdata_lec1.html#scalability-1",
+    "href": "bigdata_lec1.html#scalability-1",
+    "title": "Big Data: Intro",
+    "section": "Scalability",
+    "text": "Scalability\n\n\n\nWhat is load?\n\n\nLoad is described by load parameters. These might include:\n\ndata set size\ndata write speed\ndata read speed\ncomputational complexity\netc…"
+  },
+  {
+    "objectID": "bigdata_lec1.html#scalability-2",
+    "href": "bigdata_lec1.html#scalability-2",
+    "title": "Big Data: Intro",
+    "section": "Scalability",
+    "text": "Scalability\n\n\n\nPerformance\n\n\nIncreasing load affects performance. There are several meanings to this term:\n\nthroughput – time required to process a dataset of certain size\nresponse time – time between sending a request and receiving a response\nlatency – duration of waiting for a request to be processed. Included in response time.\n\n\n\n\n\n\nPerformance might be more strictly defined by service level objectives (SLOs) and service level agreements (SLAs)."
+  },
+  {
+    "objectID": "bigdata_lec1.html#scalability-3",
+    "href": "bigdata_lec1.html#scalability-3",
+    "title": "Big Data: Intro",
+    "section": "Scalability",
+    "text": "Scalability\n\n\n\nHow to deal with load\n\n\n\nvertical scaling - scaling up\nhorizontal scaling - scaling out\narchitectural changes\n\n\n\n\n\n\n\nElasticity\n\n\nAn approach to load handling whereby a system automatically adds resources in case of load increase, and can decrease resources if load decreases."
+  },
+  {
+    "objectID": "bigdata_lec1.html#scalability-4",
+    "href": "bigdata_lec1.html#scalability-4",
+    "title": "Big Data: Intro",
+    "section": "Scalability",
+    "text": "Scalability\n\n\n\nCommon wisdom\n\n\n\nKeep your database on a single node (scale up) until scaling cost or high-availability requirements forces you to make it distributed.\nOptimize code so that it can run on a single node."
+  },
+  {
+    "objectID": "bigdata_lec1.html#maintainability",
+    "href": "bigdata_lec1.html#maintainability",
+    "title": "Big Data: Intro",
+    "section": "Maintainability",
+    "text": "Maintainability\n\n\n\nKleppmann\n\n\nOver time, many different people will work on the system\n\nengineering\noperations\nboth maintaining current behavior and adapting the system to new use cases),\n\nand they should all be able to work on it productively."
+  },
+  {
+    "objectID": "bigdata_lec1.html#maintainability-1",
+    "href": "bigdata_lec1.html#maintainability-1",
+    "title": "Big Data: Intro",
+    "section": "Maintainability",
+    "text": "Maintainability\n\n\n\nPrinciples\n\n\n\nOperability – make it easy for operations teams to keep the system running smoothly.\nSimplicity – make it easy for new engineers to understand the system, by removing as much complexity as possible from the system.\nEvolvability – Make it easy for engineers to make changes to the system in the future, adapting it for unanticipated use cases as requirements change. Also known as extensibility, modifiability, or plasticity."
+  },
+  {
+    "objectID": "bigdata_lec1.html#maintainability-2",
+    "href": "bigdata_lec1.html#maintainability-2",
+    "title": "Big Data: Intro",
+    "section": "Maintainability",
+    "text": "Maintainability\n\n\n\nOperability\n\n\n\nHealth monitoring\nGood deployment practices\nConfiguration management\nVisibility into the internals of the system\nKnowledge preservation – documentation (!).\netc…"
+  },
+  {
+    "objectID": "bigdata_lec1.html#maintainability-3",
+    "href": "bigdata_lec1.html#maintainability-3",
+    "title": "Big Data: Intro",
+    "section": "Maintainability",
+    "text": "Maintainability\n\n\n\nComplexity symptoms\n\n\n\nLots of hidden state\nLoose cohesion, tight coupling\nBad naming (!)\nUnnecessary hacks\netc…"
+  },
+  {
+    "objectID": "bigdata_lec1.html#maintainability-complexity",
+    "href": "bigdata_lec1.html#maintainability-complexity",
+    "title": "Big Data: Intro",
+    "section": "Maintainability: Complexity",
+    "text": "Maintainability: Complexity"
+  },
+  {
+    "objectID": "bigdata_lec1.html#maintainability-complexity-1",
+    "href": "bigdata_lec1.html#maintainability-complexity-1",
+    "title": "Big Data: Intro",
+    "section": "Maintainability: Complexity",
+    "text": "Maintainability: Complexity\n\n\n\nTypes\n\n\n\nincidental\naccidental"
+  },
+  {
+    "objectID": "bigdata_lec1.html#maintainability-complexity-2",
+    "href": "bigdata_lec1.html#maintainability-complexity-2",
+    "title": "Big Data: Intro",
+    "section": "Maintainability: Complexity",
+    "text": "Maintainability: Complexity\n\n\n\nIncidental\n\n\n\nEasy things can be complex. There can be complex constructs that are succinctly described, familiar, available and easy to use. That is incidental complexity.\n\nRich Hickey talk “Simple made easy”: https://www.youtube.com/watch?v=SxdOUGdseq4"
+  },
+  {
+    "objectID": "bigdata_lec1.html#maintainability-complexity-3",
+    "href": "bigdata_lec1.html#maintainability-complexity-3",
+    "title": "Big Data: Intro",
+    "section": "Maintainability: complexity",
+    "text": "Maintainability: complexity\nHowever: Complexity is often caused by\n\n\n\nAccidental complexity\n\n\nMoseley and Marks define complexity as accidental if it is not inherent in the problem that the software solves (as seen by the users) but arises only from the implementation.\n\n\n\n\n\n\nHow to remove?\n\n\nBy providing proper abstractions."
+  },
+  {
+    "objectID": "bigdata_lec1.html#maintainability-abstractions",
+    "href": "bigdata_lec1.html#maintainability-abstractions",
+    "title": "Big Data: Intro",
+    "section": "Maintainability: abstractions",
+    "text": "Maintainability: abstractions\n\n\n\n\n\n\nDefinition (Ousterhout)\n\n\nAn abstraction is a simplified view of an entity, which omits unimportant details.\nIn modular programming, each module provides an abstraction in the form of its interface."
+  },
+  {
+    "objectID": "bigdata_lec1.html#maintainability-abstractions-1",
+    "href": "bigdata_lec1.html#maintainability-abstractions-1",
+    "title": "Big Data: Intro",
+    "section": "Maintainability: abstractions",
+    "text": "Maintainability: abstractions\n\n\n\n\n\n\nWhat can abstractions do?\n\n\n\nHide implementation details\nProvide reusable building blocks"
+  },
+  {
+    "objectID": "bigdata_lec1.html#maintainability-4",
+    "href": "bigdata_lec1.html#maintainability-4",
+    "title": "Big Data: Intro",
+    "section": "Maintainability",
+    "text": "Maintainability\n\n\n\nEvolvability\n\n\nOne needs to adapt their big data system to possible future requirements changes.\nHowever, keep in mind the following:\n\nInability to foresee exact nature of changes\nNeed to strike the balance of flexibility and fitness for a particular task"
+  },
+  {
+    "objectID": "bigdata_lec1.html#types-of-big-data-analytics",
+    "href": "bigdata_lec1.html#types-of-big-data-analytics",
+    "title": "Big Data: Intro",
+    "section": "Types of big data analytics",
+    "text": "Types of big data analytics\n\n\n\nTypes\n\n\n\nPrescriptive\nDiagnostic\nDescriptive\nPredictive"
+  },
+  {
+    "objectID": "bigdata_lec1.html#types-prescriptive",
+    "href": "bigdata_lec1.html#types-prescriptive",
+    "title": "Big Data: Intro",
+    "section": "Types: Prescriptive",
+    "text": "Types: Prescriptive\n\n\n\nPrescriptive\n\n\n\nForward looking\nOptimal decisions for future situations"
+  },
+  {
+    "objectID": "bigdata_lec1.html#types-diagnostic",
+    "href": "bigdata_lec1.html#types-diagnostic",
+    "title": "Big Data: Intro",
+    "section": "Types: Diagnostic",
+    "text": "Types: Diagnostic\n\n\n\nDiagnostic\n\n\n\nBackward looking\nFocused on causal relationships"
+  },
+  {
+    "objectID": "bigdata_lec1.html#types-descriptive",
+    "href": "bigdata_lec1.html#types-descriptive",
+    "title": "Big Data: Intro",
+    "section": "Types: Descriptive",
+    "text": "Types: Descriptive\n\n\n\nDescriptive\n\n\n\nBackward looking\nFocused on descriptions and comparisons"
+  },
+  {
+    "objectID": "bigdata_lec1.html#types-descriptive-1",
+    "href": "bigdata_lec1.html#types-descriptive-1",
+    "title": "Big Data: Intro",
+    "section": "Types: Descriptive",
+    "text": "Types: Descriptive\n\n\n\nPredictive\n\n\n\nForward looking\nFocused on the prediction of future states, relationship, and patterns"
+  },
+  {
+    "objectID": "bigdata_lec1.html#challenges",
+    "href": "bigdata_lec1.html#challenges",
+    "title": "Big Data: Intro",
+    "section": "Challenges",
+    "text": "Challenges\nThere are 2 main challenges associated with Big Data.\n\n\n\nChallenges\n\n\n\nhow do we store and manage such a huge volume of data efficiently?\nhow do we process and extract valuable information from the data within the given time frame?"
+  },
+  {
+    "objectID": "bigdata_lec2.html#moores-law",
+    "href": "bigdata_lec2.html#moores-law",
+    "title": "Big Data: Speeding up computation",
+    "section": "Moore’s Law",
+    "text": "Moore’s Law\n\n\n\nDefinition (1965)\n\n\nNumber of transistors in an integrated circuit (IC) doubles about every two years."
+  },
+  {
+    "objectID": "bigdata_lec2.html#moores-law-1",
+    "href": "bigdata_lec2.html#moores-law-1",
+    "title": "Big Data: Speeding up computation",
+    "section": "Moore’s Law",
+    "text": "Moore’s Law"
+  },
+  {
+    "objectID": "bigdata_lec2.html#moores-law-2",
+    "href": "bigdata_lec2.html#moores-law-2",
+    "title": "Big Data: Speeding up computation",
+    "section": "Moore’s Law",
+    "text": "Moore’s Law"
+  },
+  {
+    "objectID": "bigdata_lec2.html#moores-law-3",
+    "href": "bigdata_lec2.html#moores-law-3",
+    "title": "Big Data: Speeding up computation",
+    "section": "Moore’s Law",
+    "text": "Moore’s Law\n\n\n\nTrends\n\n\n\nGordon Moore: Moore’s law will end by around 2025.\nNvidia CEO Jensen Huang: declared Moore’s law dead in 2022.\n\n\n\n\n\n\n\nPat Gelsinger, Intel CEO, end of 2023\n\n\n\nWe’re no longer in the golden era of Moore’s Law, it’s much, much harder now, so we’re probably doubling effectively closer to every three years now, so we’ve definitely seen a slowing."
+  },
+  {
+    "objectID": "bigdata_lec2.html#edholms-law",
+    "href": "bigdata_lec2.html#edholms-law",
+    "title": "Big Data: Speeding up computation",
+    "section": "Edholm’s law",
+    "text": "Edholm’s law\n\n\n\nDefinition (2004)\n\n\n\nthree categories of telecommunication, namely\n\nwireless (mobile),\nnomadic (wireless without mobility)\nand wired networks (fixed),\n\nare in lockstep and gradually converging\nthe bandwidth and data rates double every 18 months, which has proven to be true since the 1970s"
+  },
+  {
+    "objectID": "bigdata_lec2.html#edholms-law-1",
+    "href": "bigdata_lec2.html#edholms-law-1",
+    "title": "Big Data: Speeding up computation",
+    "section": "Edholm’s law",
+    "text": "Edholm’s law"
+  },
+  {
+    "objectID": "bigdata_lec2.html#edholms-law-2",
+    "href": "bigdata_lec2.html#edholms-law-2",
+    "title": "Big Data: Speeding up computation",
+    "section": "Edholm’s law",
+    "text": "Edholm’s law\n\n\n\n\nData deluge\n\n\n\n90% of data humankind has produced happened in the last two years.\n80% of data could be unstructured\n99% of data produced is never analyzed"
+  },
+  {
+    "objectID": "bigdata_lec2.html#core-counts",
+    "href": "bigdata_lec2.html#core-counts",
+    "title": "Big Data: Speeding up computation",
+    "section": "Core counts",
+    "text": "Core counts"
+  },
+  {
+    "objectID": "bigdata_lec2.html#concurrency-vs-parallelism",
+    "href": "bigdata_lec2.html#concurrency-vs-parallelism",
+    "title": "Big Data: Speeding up computation",
+    "section": "Concurrency vs Parallelism",
+    "text": "Concurrency vs Parallelism\n\n\n\n\n\nConcurrency Parallelism\n\n\nIndividual steps of both tasks are executed in an interleaved fashion\n\n\n\n\n\n\n\nParallelism\n\n\nTask statements are executed at the same time."
+  },
+  {
+    "objectID": "bigdata_lec2.html#process",
+    "href": "bigdata_lec2.html#process",
+    "title": "Big Data: Speeding up computation",
+    "section": "Process",
+    "text": "Process\n\n\n\nDefinition\n\n\nA process can be defined as an instance of a running program with its own memory.\nAlternatively: a context maintained for an executing program.\nProcesses have:\n\nlifetimes\nparents\nchildren.\nmemory/resources allocated."
+  },
+  {
+    "objectID": "bigdata_lec2.html#process-1",
+    "href": "bigdata_lec2.html#process-1",
+    "title": "Big Data: Speeding up computation",
+    "section": "Process",
+    "text": "Process"
+  },
+  {
+    "objectID": "bigdata_lec2.html#threads",
+    "href": "bigdata_lec2.html#threads",
+    "title": "Big Data: Speeding up computation",
+    "section": "Threads",
+    "text": "Threads\n\n\n\nDefinition\n\n\nA lightweight unit of execution within a process that can operate independently.\nThread is a basic unit to which the operating system allocates processor time.\nManaged with help of thread context, which consists of processor context and information required for thread management."
+  },
+  {
+    "objectID": "bigdata_lec2.html#threads-1",
+    "href": "bigdata_lec2.html#threads-1",
+    "title": "Big Data: Speeding up computation",
+    "section": "Threads",
+    "text": "Threads"
+  },
+  {
+    "objectID": "bigdata_lec2.html#green-threadscoroutines",
+    "href": "bigdata_lec2.html#green-threadscoroutines",
+    "title": "Big Data: Speeding up computation",
+    "section": "Green threads/Coroutines",
+    "text": "Green threads/Coroutines\n\n\n\nDefinition\n\n\nThese are threads managed by the process runtime, multiplexed onto OS threads."
+  },
+  {
+    "objectID": "bigdata_lec2.html#comparison-table",
+    "href": "bigdata_lec2.html#comparison-table",
+    "title": "Big Data: Speeding up computation",
+    "section": "Comparison table",
+    "text": "Comparison table"
+  },
+  {
+    "objectID": "bigdata_lec2.html#imperative",
+    "href": "bigdata_lec2.html#imperative",
+    "title": "Big Data: Speeding up computation",
+    "section": "Imperative",
+    "text": "Imperative\n\n\n\nWikipedia definition\n\n\nA programming paradigm of software that uses statements that change a program’s state.\nImperative program is a step-by-step description of program’s algorithm.\n\n\n\n\n\n\nExamples\n\n\n\nFortran\nCOBOL\nC\nPython\nGo"
+  },
+  {
+    "objectID": "bigdata_lec2.html#imperative-1",
+    "href": "bigdata_lec2.html#imperative-1",
+    "title": "Big Data: Speeding up computation",
+    "section": "Imperative",
+    "text": "Imperative\n\n\n\nCons\n\n\n\nDifficult to parallelize\nLots of state management\n\n\n\n\n\n\n\nPros\n\n\n\nIntuitive concept, maps well to how people think, program as a recipe.\nEasy to optimize by the compiler"
+  },
+  {
+    "objectID": "bigdata_lec2.html#functional",
+    "href": "bigdata_lec2.html#functional",
+    "title": "Big Data: Speeding up computation",
+    "section": "Functional",
+    "text": "Functional\n\n\n\nWikipedia definition\n\n\nA programming paradigm where programs are constructed by applying and composing functions.\n\n\n\n\n\n\nExamples\n\n\n\nML (Ocaml)\nLisp\nHaskell\nJulia"
+  },
+  {
+    "objectID": "bigdata_lec2.html#functional-1",
+    "href": "bigdata_lec2.html#functional-1",
+    "title": "Big Data: Speeding up computation",
+    "section": "Functional",
+    "text": "Functional\n\n\n\nCons\n\n\n\nOften non-intuitive to reason about\nDepending on a specific algorithm, might be slower\n\n\n\n\n\n\n\nPros\n\n\n\nEasier to parallelize\nLend themselves beautifully to certain types of problems"
+  },
+  {
+    "objectID": "bigdata_lec2.html#object-oriented",
+    "href": "bigdata_lec2.html#object-oriented",
+    "title": "Big Data: Speeding up computation",
+    "section": "Object-oriented",
+    "text": "Object-oriented\n\n\n\nWikipedia definition\n\n\nA programming paradigm based on the concept of objects, which can contain data and code: data in the form of fields (often known as attributes or properties), and code in the form of procedures (often known as methods).\n\n\n\n\n\n\nExamples\n\n\n\nSmalltalk\nJava\nC++\nPython\nC#"
+  },
+  {
+    "objectID": "bigdata_lec2.html#object-oriented-1",
+    "href": "bigdata_lec2.html#object-oriented-1",
+    "title": "Big Data: Speeding up computation",
+    "section": "Object-oriented",
+    "text": "Object-oriented"
+  },
+  {
+    "objectID": "bigdata_lec2.html#object-oriented-2",
+    "href": "bigdata_lec2.html#object-oriented-2",
+    "title": "Big Data: Speeding up computation",
+    "section": "Object-oriented",
+    "text": "Object-oriented\n\n\n\nCons\n\n\n\nDoes not map well to many problems\nLots of state management\n\n\n\n\n\n\n\nPros\n\n\n\nIntuitively easy to grasp, as human thinking is largely noun-oriented\nUseful for UIs"
+  },
+  {
+    "objectID": "bigdata_lec2.html#symbolic",
+    "href": "bigdata_lec2.html#symbolic",
+    "title": "Big Data: Speeding up computation",
+    "section": "Symbolic",
+    "text": "Symbolic\n\n\n\nWikipedia definition\n\n\nA programming paradigm in which the program can manipulate its own formulas and program components as if they were plain data.\n\n\n\n\n\n\nExamples\n\n\n\nLisp\nProlog\nJulia"
+  },
+  {
+    "objectID": "bigdata_lec2.html#lisp",
+    "href": "bigdata_lec2.html#lisp",
+    "title": "Big Data: Speeding up computation",
+    "section": "Lisp",
+    "text": "Lisp"
+  },
+  {
+    "objectID": "bigdata_lec2.html#prolog",
+    "href": "bigdata_lec2.html#prolog",
+    "title": "Big Data: Speeding up computation",
+    "section": "Prolog",
+    "text": "Prolog\n :::"
+  },
+  {
+    "objectID": "bigdata_lec2.html#typing-1",
+    "href": "bigdata_lec2.html#typing-1",
+    "title": "Big Data: Speeding up computation",
+    "section": "Typing",
+    "text": "Typing\n\n\n\nStatic vs dynamic\n\n\n\nstatic: types are known and checked before running the program\ndynamic: types become known when the program is running\n\n\n\n\n\n\n\nStrong vs weak\n\n\n\nstrong: variable types are not changed easily\nweak: types can be changed by the compiler if necessary"
+  },
+  {
+    "objectID": "bigdata_lec2.html#typing-2",
+    "href": "bigdata_lec2.html#typing-2",
+    "title": "Big Data: Speeding up computation",
+    "section": "Typing",
+    "text": "Typing"
+  },
+  {
+    "objectID": "bigdata_lec2.html#memory-management",
+    "href": "bigdata_lec2.html#memory-management",
+    "title": "Big Data: Speeding up computation",
+    "section": "Memory management",
+    "text": "Memory management\n\n\n\n\n\nManual\n\n\n\nC/C++\nPascal\nForth\nFortran\nZig\n\n\n\n\n\n\n\n\nAutomatic\n\n\n\nLisp\nJava\nPython\nGo\nJulia"
+  },
+  {
+    "objectID": "bigdata_lec2.html#python-options",
+    "href": "bigdata_lec2.html#python-options",
+    "title": "Big Data: Speeding up computation",
+    "section": "Python Options",
+    "text": "Python Options\n\n\n\n\n\n\n\n\n\nLibraries\nLow-level langs\nAlt Python Impls\nJIT\n\n\n\n\nNumPy,  SciPy\nC, Rust, Cython, PyO3\nPyPy, Jython\nNumba, PyPy\n\n\n\n\n\nOptions above are not mutually exclusive!"
+  },
+  {
+    "objectID": "bigdata_lec2.html#interpreters",
+    "href": "bigdata_lec2.html#interpreters",
+    "title": "Big Data: Speeding up computation",
+    "section": "Interpreters",
+    "text": "Interpreters\n\n\n\nWikipedia definition\n\n\nAn interpreter is a computer program that directly executes instructions written in a programming or scripting language, without requiring them previously to have been compiled into a machine language program.\n\n\n\n\n\n\nExamples\n\n\n\nPython\nRuby\nLua\nJavascript"
+  },
+  {
+    "objectID": "bigdata_lec2.html#cpython",
+    "href": "bigdata_lec2.html#cpython",
+    "title": "Big Data: Speeding up computation",
+    "section": "CPython",
+    "text": "CPython\n\n\n\n\nFlow\n\n\n\nRead Python code\nConvert Python into bytecode\nExecute bytecode inside a VM\nVM converts bytecode to machine code"
+  },
+  {
+    "objectID": "bigdata_lec2.html#cpython-1",
+    "href": "bigdata_lec2.html#cpython-1",
+    "title": "Big Data: Speeding up computation",
+    "section": "CPython",
+    "text": "CPython"
+  },
+  {
+    "objectID": "bigdata_lec2.html#compilers",
+    "href": "bigdata_lec2.html#compilers",
+    "title": "Big Data: Speeding up computation",
+    "section": "Compilers",
+    "text": "Compilers\n\n\n\nWikipedia definition\n\n\nSource code is compiled - in this context, translated into machine code for better performance.\n\n\n\n\n\n\nExamples\n\n\n\nC/C++\nGo\nPython (to intermediate VM code)\nJava\nCython"
+  },
+  {
+    "objectID": "bigdata_lec2.html#compilers-1",
+    "href": "bigdata_lec2.html#compilers-1",
+    "title": "Big Data: Speeding up computation",
+    "section": "Compilers",
+    "text": "Compilers"
+  },
+  {
+    "objectID": "bigdata_lec2.html#cython",
+    "href": "bigdata_lec2.html#cython",
+    "title": "Big Data: Speeding up computation",
+    "section": "Cython",
+    "text": "Cython\n\n\n\nDefinition\n\n\nCython is an optimising static compiler for the Python programming language.\n\nconverts Python code to C\nsupports static type declarations"
+  },
+  {
+    "objectID": "bigdata_lec2.html#cython-1",
+    "href": "bigdata_lec2.html#cython-1",
+    "title": "Big Data: Speeding up computation",
+    "section": "Cython",
+    "text": "Cython"
+  },
+  {
+    "objectID": "bigdata_lec2.html#cython-2",
+    "href": "bigdata_lec2.html#cython-2",
+    "title": "Big Data: Speeding up computation",
+    "section": "Cython",
+    "text": "Cython"
+  },
+  {
+    "objectID": "bigdata_lec2.html#cython-3",
+    "href": "bigdata_lec2.html#cython-3",
+    "title": "Big Data: Speeding up computation",
+    "section": "Cython",
+    "text": "Cython\n\n\n\nPython code"
+  },
+  {
+    "objectID": "bigdata_lec2.html#cython-4",
+    "href": "bigdata_lec2.html#cython-4",
+    "title": "Big Data: Speeding up computation",
+    "section": "Cython",
+    "text": "Cython\n\n\n\nAnnotated Python code"
+  },
+  {
+    "objectID": "bigdata_lec2.html#cython-5",
+    "href": "bigdata_lec2.html#cython-5",
+    "title": "Big Data: Speeding up computation",
+    "section": "Cython",
+    "text": "Cython\n\n\n\nCython code"
+  },
+  {
+    "objectID": "bigdata_lec2.html#parallel-cython",
+    "href": "bigdata_lec2.html#parallel-cython",
+    "title": "Big Data: Speeding up computation",
+    "section": "Parallel Cython",
+    "text": "Parallel Cython"
+  },
+  {
+    "objectID": "bigdata_lec2.html#parallel-cython-1",
+    "href": "bigdata_lec2.html#parallel-cython-1",
+    "title": "Big Data: Speeding up computation",
+    "section": "Parallel Cython",
+    "text": "Parallel Cython"
+  },
+  {
+    "objectID": "bigdata_lec2.html#jit",
+    "href": "bigdata_lec2.html#jit",
+    "title": "Big Data: Speeding up computation",
+    "section": "JIT",
+    "text": "JIT\n\n\n\nWikipedia definition\n\n\nA compilation (of computer code) during execution of a program (at run time) rather than before execution.\n\n\n\n\n\n\nFeatures\n\n\n\nwarm-up time: JIT causes a slight to noticeable delay in the initial execution of an application, due to the time taken to load and compile the input code.\nstatistics collection: performed by the system during runtime, shows how the program is actually running in the environment it is in; helps JIT to rearrange and recompile for optimum performance.\nparticularly suited for dynamic programming languages"
+  },
+  {
+    "objectID": "bigdata_lec2.html#jit-1",
+    "href": "bigdata_lec2.html#jit-1",
+    "title": "Big Data: Speeding up computation",
+    "section": "JIT",
+    "text": "JIT\n\n\n\nExamples\n\n\n\nHotSpot Java Virtual Machine\nLuaJIT\nNumba\nPyPy"
+  },
+  {
+    "objectID": "bigdata_lec2.html#numba",
+    "href": "bigdata_lec2.html#numba",
+    "title": "Big Data: Speeding up computation",
+    "section": "Numba",
+    "text": "Numba"
+  },
+  {
+    "objectID": "bigdata_lec2.html#numba-1",
+    "href": "bigdata_lec2.html#numba-1",
+    "title": "Big Data: Speeding up computation",
+    "section": "Numba",
+    "text": "Numba\n\n\n\nDescription\n\n\n\nNumba translates Python byte-code to machine code immediately before execution to improve the execution speed.\nFor that we add a @jit decorator\nWorks well for numeric operations, NumPy, and loops"
+  },
+  {
+    "objectID": "bigdata_lec2.html#numba-2",
+    "href": "bigdata_lec2.html#numba-2",
+    "title": "Big Data: Speeding up computation",
+    "section": "Numba",
+    "text": "Numba\n\n\n\nSteps\n\n\n\nread the Python bytecode for a decorated function\ncombine it with information about the types of the input arguments to the function\nanalyze and optimize the code\nuse the LLVM compiler library to generate a machine code version of the function, tailored to specific CPU capabilities."
+  },
+  {
+    "objectID": "bigdata_lec2.html#numba-3",
+    "href": "bigdata_lec2.html#numba-3",
+    "title": "Big Data: Speeding up computation",
+    "section": "Numba",
+    "text": "Numba\n\n\n\nWorks great"
+  },
+  {
+    "objectID": "bigdata_lec2.html#numba-4",
+    "href": "bigdata_lec2.html#numba-4",
+    "title": "Big Data: Speeding up computation",
+    "section": "Numba",
+    "text": "Numba\n\n\n\nNope"
+  },
+  {
+    "objectID": "bigdata_lec2.html#numba-5",
+    "href": "bigdata_lec2.html#numba-5",
+    "title": "Big Data: Speeding up computation",
+    "section": "Numba",
+    "text": "Numba"
+  },
+  {
+    "objectID": "bigdata_lec2.html#numba-6",
+    "href": "bigdata_lec2.html#numba-6",
+    "title": "Big Data: Speeding up computation",
+    "section": "Numba",
+    "text": "Numba\n\n\n\nSequential"
+  },
+  {
+    "objectID": "bigdata_lec2.html#numba-7",
+    "href": "bigdata_lec2.html#numba-7",
+    "title": "Big Data: Speeding up computation",
+    "section": "Numba",
+    "text": "Numba\n\n\n\nParallel"
+  },
+  {
+    "objectID": "bigdata_lec2.html#numpy",
+    "href": "bigdata_lec2.html#numpy",
+    "title": "Big Data: Speeding up computation",
+    "section": "Numpy",
+    "text": "Numpy\n\n\n\nWhy so fast?\n\n\n\nOptimized C code\nDensely packed arrays\nUses BLAS - Basic Linear Algebra Subroutines."
+  },
+  {
+    "objectID": "bigdata_lec2.html#distributed-computing-1",
+    "href": "bigdata_lec2.html#distributed-computing-1",
+    "title": "Big Data: Speeding up computation",
+    "section": "Distributed computing",
+    "text": "Distributed computing\n\n\n\nTypes\n\n\n\nCluster computing: collection of similar workstations\nGrid computing: federation of different computer systems\nCloud computing: provide the facilities to dynamically construct an infrastructure and compose what is needed from available services. Not only providing lots of resources."
+  },
+  {
+    "objectID": "bigdata_lec2.html#distributed-computing-2",
+    "href": "bigdata_lec2.html#distributed-computing-2",
+    "title": "Big Data: Speeding up computation",
+    "section": "Distributed computing",
+    "text": "Distributed computing\n\n\n\nOriginal Beowulf cluster at NASA (1994)"
+  },
+  {
+    "objectID": "bigdata_lec2.html#distributed-computing-3",
+    "href": "bigdata_lec2.html#distributed-computing-3",
+    "title": "Big Data: Speeding up computation",
+    "section": "Distributed computing",
+    "text": "Distributed computing\n\n\n\nBeowulf cluster diagram"
+  },
+  {
+    "objectID": "bigdata_lec2.html#distributed-computing-4",
+    "href": "bigdata_lec2.html#distributed-computing-4",
+    "title": "Big Data: Speeding up computation",
+    "section": "Distributed computing",
+    "text": "Distributed computing\n\n\n\n\n\nGrid architecture diagram (Foster et al. 2001)\n\n\n\n\n\n\n\n\n\n\nNotation\n\n\n\n\nfabric: interfaces to local resources at a specific site\nconnectivity: communication protocols for supporting grid transactions that span the usage of multiple resources\nresource: responsible for managing a single resource\ncollective: handling access to multiple resources and typically consists of services for resource discovery, allocation and scheduling of tasks onto multiple resources, data replication, and so on\napplication: applications that operate within a virtual organization"
+  },
+  {
+    "objectID": "bigdata_lec2.html#distributed-computing-5",
+    "href": "bigdata_lec2.html#distributed-computing-5",
+    "title": "Big Data: Speeding up computation",
+    "section": "Distributed computing",
+    "text": "Distributed computing\n\n\n\nCloud architecture"
+  },
+  {
+    "objectID": "applied.html#labs",
+    "href": "applied.html#labs",
+    "title": "Applied Data Analytics",
+    "section": "Labs",
+    "text": "Labs"
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Data Analytics",
+    "section": "",
+    "text": "Big data analytics / Applied data analytics courses."
+  },
+  {
+    "objectID": "about.html",
+    "href": "about.html",
+    "title": "About",
+    "section": "",
+    "text": "About this site"
+  },
+  {
+    "objectID": "nb/lab1/Lab1.html",
+    "href": "nb/lab1/Lab1.html",
+    "title": "Pandas optimization",
+    "section": "",
+    "text": "Primary docs: - https://pandas.pydata.org/pandas-docs/stable/user_guide/enhancingperf.html#numba-jit-compilation - https://pandas.pydata.org/pandas-docs/stable/user_guide/scale.html\nPerformance deps for Pandas: - https://pandas.pydata.org/pandas-docs/stable/getting_started/install.html#install-recommended-dependencies\nUse Numba for JIT optimizations.\nhttps://github.com/modin-project/modin"
+  },
+  {
+    "objectID": "nb/lab1/Lab1.html#notes",
+    "href": "nb/lab1/Lab1.html#notes",
+    "title": "Pandas optimization",
+    "section": "Notes",
+    "text": "Notes\n\nChunking\nchunksize parameter in Pandas functions.\n\n\nData types\nUse to_numeric (https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.to_numeric.html) for downcasting\n\n\nCategoricals\nhttps://pandas.pydata.org/pandas-docs/stable/user_guide/categorical.html\n\n\nMemory usage\nUse DataFrame.memory_usage(deep=True) func. Use DataFrame.info() func"
+  },
+  {
+    "objectID": "nb/lab1/Lab1.html#storage-optimization",
+    "href": "nb/lab1/Lab1.html#storage-optimization",
+    "title": "Pandas optimization",
+    "section": "Storage optimization",
+    "text": "Storage optimization\nWe’ll get the sample dataset from https://www.kaggle.com/datasets/anthonytherrien/depression-dataset.\n\nimport pandas as pd\n\ndd = pd.read_csv('depression_data.csv')\ndd.head()\n\n\n\n\n\n\n\n\nName\nAge\nMarital Status\nEducation Level\nNumber of Children\nSmoking Status\nPhysical Activity Level\nEmployment Status\nIncome\nAlcohol Consumption\nDietary Habits\nSleep Patterns\nHistory of Mental Illness\nHistory of Substance Abuse\nFamily History of Depression\nChronic Medical Conditions\n\n\n\n\n0\nChristine Barker\n31\nMarried\nBachelor's Degree\n2\nNon-smoker\nActive\nUnemployed\n26265.67\nModerate\nModerate\nFair\nYes\nNo\nYes\nYes\n\n\n1\nJacqueline Lewis\n55\nMarried\nHigh School\n1\nNon-smoker\nSedentary\nEmployed\n42710.36\nHigh\nUnhealthy\nFair\nYes\nNo\nNo\nYes\n\n\n2\nShannon Church\n78\nWidowed\nMaster's Degree\n1\nNon-smoker\nSedentary\nEmployed\n125332.79\nLow\nUnhealthy\nGood\nNo\nNo\nYes\nNo\n\n\n3\nCharles Jordan\n58\nDivorced\nMaster's Degree\n3\nNon-smoker\nModerate\nUnemployed\n9992.78\nModerate\nModerate\nPoor\nNo\nNo\nNo\nNo\n\n\n4\nMichael Rich\n18\nSingle\nHigh School\n0\nNon-smoker\nSedentary\nUnemployed\n8595.08\nLow\nModerate\nFair\nYes\nNo\nYes\nYes\n\n\n\n\n\n\n\nLet’s see some memory usage stats:\n\ndd.info(memory_usage='deep')\n\nNote: Pandas stores memory in blocks, managed by BlockManager class. There is a separate block class for each type, like ObjectBlock or FloatBlock.\nNice write-up here: https://uwekorn.com/2020/05/24/the-one-pandas-internal.html\nLet’s examine memory usage for each type:\n\nfor dtype in ['float','int','object']:\n    selected_dtype = dd.select_dtypes(include=[dtype])\n    mean_usage_b = selected_dtype.memory_usage(deep=True).mean()\n    mean_usage_mb = mean_usage_b / 1024 ** 2\n    print(\"Average memory usage for {} columns: {:03.2f} MB\".format(dtype,mean_usage_mb))\n\n\nNumeric types optimization\nLet’s first use iinfo to check ranges for different subtypes:\n\nimport numpy as np\nint_types = [\"uint8\", \"int8\", \"int16\", \"int32\", \"int64\"]\nfor it in int_types:\n    print(np.iinfo(it))\n\nWe can use pd.to_numeric() to downcast numeric types.\nFirst, let’s write a helper function for memory usage display:\n\ndef mem_usage(pandas_obj):\n    if isinstance(pandas_obj,pd.DataFrame):\n        usage_b = pandas_obj.memory_usage(deep=True).sum()\n    else: # we assume if not a df it's a series\n        usage_b = pandas_obj.memory_usage(deep=True)\n    usage_mb = usage_b / 1024 ** 2 # convert bytes to megabytes\n    return \"{:03.2f} MB\".format(usage_mb)\n\nNote that “Age” and “Number of Children” columns can be presented as unsigned ints. Let’s convert:\n\ndd_int = dd.select_dtypes(include=['int'])\nconverted_int = dd_int.apply(pd.to_numeric,downcast='unsigned')\nprint(mem_usage(dd_int))\nprint(mem_usage(converted_int))\ncompare_ints = pd.concat([dd_int.dtypes,converted_int.dtypes],axis=1)\ncompare_ints.columns = ['before','after']\ncompare_ints.apply(pd.Series.value_counts)\n\nNice. Now let’s process float columns (Income):\n\ndd_float = dd.select_dtypes(include=['float'])\nconverted_float = dd_float.apply(pd.to_numeric,downcast='float')\nprint(mem_usage(dd_float))\nprint(mem_usage(converted_float))\ncompare_floats = pd.concat([dd_float.dtypes,converted_float.dtypes],axis=1)\ncompare_floats.columns = ['before','after']\ncompare_floats.apply(pd.Series.value_counts)\n\nNow let’s create a new optimized DataFrame:\n\noptimized_dd = dd.copy()\noptimized_dd[converted_int.columns] = converted_int\noptimized_dd[converted_float.columns] = converted_float\nprint(mem_usage(dd))\nprint(mem_usage(optimized_dd))\n\nJust a bit. Let’s proceed with object types.\nFirst, read https://jakevdp.github.io/blog/2014/05/09/why-python-is-slow/.\nNow, back to the dataset.\nWe can use categoricals (https://pandas.pydata.org/pandas-docs/stable/categorical.html) to optimize object columns.\n\n\n\ncategoricals\n\n\nLet’s look at the number of unique values for each object type:\n\ndd_obj = dd.select_dtypes(include=['object']).copy()\ndd_obj.describe()\n\nLet’s start with one column first: “Education Level”\n\nedu_level = dd_obj[\"Education Level\"]\nprint(edu_level.head())\nedu_level_cat = edu_level.astype('category')\nprint(edu_level_cat.head())\n\nWe can look at the category codes:\n\nedu_level_cat.head().cat.codes\n\nCompare memory usage:\n\nprint(mem_usage(edu_level))\nprint(mem_usage(edu_level_cat))\n\nWe should only convert objects to categoricals if most values are repeated. We have to pick a threshold, say, 25% of unique values.\nNote: when reading a csv, we can also provide a dtype dictionary param with preferred types.\nConverting all object columns and creating a new optimized DataFrame is left as part of Exercise 1."
+  },
+  {
+    "objectID": "nb/lab1/Lab1.html#computation-optimization",
+    "href": "nb/lab1/Lab1.html#computation-optimization",
+    "title": "Pandas optimization",
+    "section": "Computation optimization",
+    "text": "Computation optimization\n\nCython\n\nimport math\ndef process(x):\n    if x &lt;= 9:\n        return x\n    lst = [int(i) for i in str(x).replace(\".\", \"\")]\n    result = 0\n    for el in lst:\n        result = result + el\n    return process(result)\n\n\nprocess(123688)\n\nObtain timing:\n\n%timeit dd.apply(lambda x: process(x[\"Income\"]), axis=1)\n\nSee more detailed breakdown:\n\n%prun -l 4 dd.apply(lambda x: process(x[\"Income\"]), axis=1)\n\n\n%load_ext Cython\n\n\n%%cython\ndef process_cython(x):\n    if x &lt;= 9:\n        return x\n    lst = [int(i) for i in str(x).replace(\".\", \"\")]\n    result = 0\n    for el in lst:\n        result = result + el\n    return process_cython(result)\n\n\n%timeit dd.apply(lambda x: process_cython(x[\"Income\"]), axis=1)\n\n\n%prun -l 8 dd.apply(lambda x: process_cython(x[\"Income\"]), axis=1)\n\nRead more about type annotations: https://pandas.pydata.org/pandas-docs/stable/user_guide/enhancingperf.html#declaring-c-types\n\n\nNumba\nEither add engine=\"numba\" parameter to Pandas functions, or add a @jit annotation to Python funcs.\n\nimport numba\n\n@numba.jit\ndef process_jit(x):\n    if x &lt;= 9:\n        return x\n    char_lst = [i for i in str(x).replace(\".\", \"\")]\n    result = 0\n    for el in char_lst:\n        i = int(el)\n        result = result + i\n    return process_jit(result)\n\n\n%prun -l 4 dd.apply(lambda x: process_jit(x[\"Income\"]), axis=1)"
+  },
+  {
+    "objectID": "nb/lab1/Lab1.html#problems",
+    "href": "nb/lab1/Lab1.html#problems",
+    "title": "Pandas optimization",
+    "section": "Problems",
+    "text": "Problems\n\nPick your own dataset from Kaggle or HuggingFace or https://archive.ics.uci.edu. Perform numerical and object types conversions aimed at minimizing storage space, as outlined above.\nFix the Numba issue related to missing int() (more context here: https://github.com/numba/numba/issues/5650)"
+  }
+]
