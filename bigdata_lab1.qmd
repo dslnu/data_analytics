@@ -1,0 +1,262 @@
+---
+title: "Applied Analytics: Lab 1"
+execute:
+  enabled: true
+  echo: true
+  cache: true
+format:
+  html:
+    code-fold: false
+jupyter: python3
+diagram:
+  cache: true
+  cache-dir: ./cache
+  engine:
+    tikz:
+      execpath: lualatex
+filters:
+  - diagram
+---
+
+# Pandas optimization
+
+Primary docs:
+
+  - <https://pandas.pydata.org/pandas-docs/stable/user_guide/enhancingperf.html>
+  - <https://pandas.pydata.org/pandas-docs/stable/user_guide/scale.html>
+
+Performance deps for Pandas:
+
+  - <https://pandas.pydata.org/pandas-docs/stable/getting_started/install.html#install-recommended-dependencies>
+
+<!-- Use Numba for JIT optimizations. -->
+
+<!-- https://github.com/modin-project/modin -->
+
+## Notes
+### Chunking
+`chunksize` parameter in Pandas functions.
+
+### Data types
+Use `to_numeric` (<https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.to_numeric.html>) for downcasting
+
+### Categoricals
+<https://pandas.pydata.org/pandas-docs/stable/user_guide/categorical.html>
+
+### Memory usage
+
+- use `DataFrame.memory_usage(deep=True)` func.
+- use `DataFrame.info()` func
+
+## Storage optimization
+
+We'll get the sample dataset from <https://www.kaggle.com/datasets/anthonytherrien/depression-dataset>.
+
+```{python}
+import pandas as pd
+
+dd = pd.read_csv('files/depression_data.csv')
+dd.head()
+```
+
+Let's see some memory usage stats:
+```{python}
+dd.info(memory_usage='deep')
+```
+
+**Note:** Pandas stores memory in blocks, managed by `BlockManager` class. There is a separate block class for each type, like `ObjectBlock` or `FloatBlock`.
+
+Nice write-up here: <https://uwekorn.com/2020/05/24/the-one-pandas-internal.html>.
+
+Let's examine memory usage for each type:
+```{python}
+for dtype in ['float','int','object']:
+    selected_dtype = dd.select_dtypes(include=[dtype])
+    mean_usage_b = selected_dtype.memory_usage(deep=True).mean()
+    mean_usage_mb = mean_usage_b / 1024 ** 2
+    print("Average memory usage for {} columns: {:03.2f} MB".format(dtype,mean_usage_mb))
+```
+### Numeric types optimization
+
+Let's first use `iinfo` to check ranges for different subtypes:
+
+```{python}
+import numpy as np
+int_types = ["uint8", "int8", "int16", "int32", "int64"]
+for it in int_types:
+    print(np.iinfo(it))
+```
+
+We can use `pd.to_numeric()` to downcast numeric types.
+
+First, let's write a helper function for memory usage display:
+
+```{python}
+def mem_usage(pandas_obj):
+    if isinstance(pandas_obj,pd.DataFrame):
+        usage_b = pandas_obj.memory_usage(deep=True).sum()
+    else: # we assume if not a df it's a series
+        usage_b = pandas_obj.memory_usage(deep=True)
+    usage_mb = usage_b / 1024 ** 2 # convert bytes to megabytes
+    return "{:03.2f} MB".format(usage_mb)
+```
+
+Note that "Age" and "Number of Children" columns can be presented as unsigned ints. Let's convert:
+
+```{python}
+dd_int = dd.select_dtypes(include=['int'])
+converted_int = dd_int.apply(pd.to_numeric,downcast='unsigned')
+print("Before: ", mem_usage(dd_int))
+print("After: ", mem_usage(converted_int))
+compare_ints = pd.concat([dd_int.dtypes,converted_int.dtypes],axis=1)
+compare_ints.columns = ['before','after']
+compare_ints.apply(pd.Series.value_counts)
+```
+
+Nice. Now let's process `float` columns (`Income`):
+
+```{python}
+dd_float = dd.select_dtypes(include=['float'])
+converted_float = dd_float.apply(pd.to_numeric,downcast='float')
+print("Before: ", mem_usage(dd_float))
+print("After: ", mem_usage(converted_float))
+compare_floats = pd.concat([dd_float.dtypes,converted_float.dtypes],axis=1)
+compare_floats.columns = ['before','after']
+compare_floats.apply(pd.Series.value_counts)
+```
+
+Nothing spectacular.
+
+Now let's create a new optimized `DataFrame`:
+
+```{python}
+optimized_dd = dd.copy()
+optimized_dd[converted_int.columns] = converted_int
+optimized_dd[converted_float.columns] = converted_float
+print(mem_usage(dd))
+print(mem_usage(optimized_dd))
+```
+
+Just a bit. Let's proceed with object types.
+
+First, read <https://jakevdp.github.io/blog/2014/05/09/why-python-is-slow/>.
+
+Now, back to the dataset.
+
+We can use categoricals (<https://pandas.pydata.org/pandas-docs/stable/categorical.html>) to optimize object columns.
+
+![](img/categorical.png)
+
+Let's look at the number of unique values for each object type:
+```{python}
+dd_obj = dd.select_dtypes(include=['object']).copy()
+dd_obj.describe()
+```
+
+Let's start with one column first: "Education Level"
+```{python}
+edu_level = dd_obj["Education Level"]
+print(edu_level.head())
+edu_level_cat = edu_level.astype('category')
+print(edu_level_cat.head())
+```
+
+We can look at the category codes:
+
+```{python}
+edu_level_cat.head().cat.codes
+```
+
+Compare memory usage:
+
+```{python}
+print(mem_usage(edu_level))
+print(mem_usage(edu_level_cat))
+```
+We should only convert objects to categoricals if most values are repeated. We have to pick a threshold, say, 25% of unique values.
+
+**Note:** when reading a csv, we can also provide a `dtype` dictionary param with preferred types.
+
+Converting all object columns and creating a new optimized DataFrame is left as part of **Exercise 1**.
+
+## Computation optimization
+
+### Cython
+
+```{python}
+import math
+def process(x):
+    if x <= 9:
+        return x
+    lst = [int(i) for i in str(x).replace(".", "")]
+    result = 0
+    for el in lst:
+        result = result + el
+    return process(result)
+```
+
+
+```{python}
+process(123688)
+```
+
+Obtain timing:
+```{python}
+%timeit dd.apply(lambda x: process(x["Income"]), axis=1)
+```
+See more detailed breakdown:
+```{python}
+%prun -l 4 dd.apply(lambda x: process(x["Income"]), axis=1)
+```
+
+```{python}
+%load_ext Cython
+```
+
+```{python}
+%%cython
+def process_cython(x):
+    if x <= 9:
+        return x
+    lst = [int(i) for i in str(x).replace(".", "")]
+    result = 0
+    for el in lst:
+        result = result + el
+    return process_cython(result)
+```
+
+```{python}
+%timeit dd.apply(lambda x: process_cython(x["Income"]), axis=1)
+```
+```{python}
+%prun -l 8 dd.apply(lambda x: process_cython(x["Income"]), axis=1)
+```
+
+Read more about type annotations: <https://pandas.pydata.org/pandas-docs/stable/user_guide/enhancingperf.html#declaring-c-types>.
+
+### Numba
+
+Either add `engine="numba"` parameter to Pandas functions, or add a `@jit` annotation to Python funcs.
+```python
+import numba
+
+@numba.jit
+def process_jit(x):
+    if x <= 9:
+        return x
+    char_lst = [i for i in str(x).replace(".", "")]
+    result = 0
+    for el in char_lst:
+        i = int(el)
+        result = result + i
+    return process_jit(result)
+```
+
+```python
+%prun -l 4 dd.apply(lambda x: process_jit(x["Income"]), axis=1)
+```
+
+## Exercises
+
+1. Pick your own dataset from Kaggle or HuggingFace or <https://archive.ics.uci.edu>. Perform numerical and object types conversions aimed at minimizing storage space, as outlined above.
+2. Fix the Numba issue related to missing `int()` (more context here: https://github.com/numba/numba/issues/5650)
