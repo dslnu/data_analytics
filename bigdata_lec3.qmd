@@ -1,0 +1,1076 @@
+---
+title: "Big Data: Dask intro"
+author: 
+  - name: MSDE
+    affiliation: Lviv University
+code-fold: false
+execute:
+  enabled: false
+  cache: true
+diagram:
+  cache: true
+  cache-dir: ./cache
+  engine:
+    tikz:
+      execpath: lualatex
+      additional-packages: |
+        \usetikzlibrary{arrows.meta}
+        \usetikzlibrary{positioning}
+        \usetikzlibrary{decorations.pathreplacing}
+filters:
+  - diagram
+format: 
+  revealjs:
+    preview-links: auto
+    slide-number: true
+    theme: default
+    multiplex:
+      url: 'https://mplex.vitv.ly'
+      secret: 'fad1947f4c744674d25d0769c690f8d7'
+      id: 'ceb96efc411836bb262565b446653921d89b7ccf140a4d923b70660482df2ced'
+---
+
+
+# Intro to DAGs and Dask
+
+## Program as DAG
+:::{.callout-tip icon=false}
+## Representation
+A parallel program can be represented by a node- and edge-weighted **directed acyclic graph (DAG)**, in which:
+
+- **node weights** represent task processing times 
+- **edge weights** represent data dependencies as well as the communication times between tasks.
+:::
+
+## Program as DAG
+![](img/dag)
+
+## Program as DAG
+:::{.callout-note icon=false}
+## Generalization
+Multithreaded computing can be viewed as a natural generalization of sequential computing in the following sense: 
+
+- in **sequential computing**, a computation can be defined as a totally ordered set of instructions, where the ordering corresponds to the sequential execution order; 
+- **in multithreaded computing**, a computation can be viewed as a partially ordered set of instructions (as specified by the DAG), where the instructions may be executed in any order compatible with the specified partial order.
+:::
+
+## Program as DAG
+:::{.callout-important icon=false}
+## Ordering re-cap
+A binary relation $\preccurlyeq$ on some set $X$ is called a **partial order** if $\forall a,b,c \in X$ the following is true:
+
+- **Reflexivity:** $a \preccurlyeq a$
+- **Transitiity:** $a \preccurlyeq b, b \preccurlyeq c \Rightarrow a \preccurlyeq c$
+- **Antisymmetricity:** $a \preccurlyeq b, b \preccurlyeq a \Rightarrow a = b$
+
+If, additionally, $\forall a,b \ in X$ either $a \preccurlyeq b$ or $b \preccurlyeq a$, then the order is total.
+:::
+
+## Program as DAG
+:::{.callout-tip icon=false}
+## Definitions
+A parallel program can be represented by a directed acyclic graph (**DAG**) 
+$$
+G=(V,E),
+$$
+
+where $V$ is a set of $v$ nodes and $E$ is a set of $e$ directed edges.
+
+A **node** in the DAG represents a task which in turn is a set of instructions which must be executed sequentially without preemption in the same processor. 
+
+The **weight** of a node $n_i$ is called the **computation cost** and is denoted by $w(n_i)$. 
+:::
+
+## Program as DAG
+:::{.callout-tip icon=false}
+## Definitions
+The edges in the DAG, each of which is denoted by $(n_i,n_j)$, correspond to the communication messages and precedence constraints among the nodes.
+
+The **weight of an edge** is called the **communication cost** of the edge and is denoted by $c(n_i, n_j)$.
+
+The **source node of an edge** is called the **parent** node while the sink node is called the **child** node. 
+
+A node with no parent is called an **entry** node and a node with no child is called an **exit** node. 
+
+The **communication-to-computation-ratio (CCR)** of a parallel program is defined as its average edge weight divided by its average node weight.
+:::
+
+## Program as DAG
+:::{.callout-important icon=false}
+## Definition
+**Scheduling** involves executing a parallel program by mapping the computation over the processors so that:
+
+- completion time is minimized
+- use of other resources such as storage as energy is optimal.
+:::
+
+## Program as DAG
+:::{.callout-tip icon=false}
+## Definitions
+$ST(n_i)$ and $FT(n_i)$ denote start time and finish time at some processor.
+
+After all the nodes have been scheduled, the schedule length is defined as $\max_i\left\{FT(n_i)\right\}$ across all processors.
+
+The goal of scheduling is to minimize $\max_i\left\{FT(n_i)\right\}$.
+
+Scheduling is done in such a manner that the precedence constraints among the program tasks are preserved. 
+:::
+
+## Program as DAG
+![](img/embarrassingly_parallel)
+
+## Program as DAG
+![](img/map_reduce_type)
+
+## Program as DAG
+![](img/full_scheduling)
+
+## Program as DAG
+:::{.callout-tip icon=false}
+## Work
+**Work** is defined as the number of vertices in the DAG.
+
+Work of a computation corresponds to the total number of operations it performs.
+:::
+
+:::{.callout-important icon=false}
+## Span
+**Span** is the length of the longest path in the DAG.
+
+Span corresponds to the longest chain of dependencies in the computation.
+:::
+
+:::{.callout-note icon=false}
+## Work\[make\]span
+The overall finish-time of a parallel program is commonly called the **schedule length** or **makespan**. 
+:::
+
+# Scheduling
+
+## Scheduling
+:::{.callout-important icon=false}
+## Taxonomy
+![](img/scheduling_taxonomy)
+:::
+
+## Scheduling
+:::{.callout-note icon=false}
+## Types
+
+- **Static:** the characteristics of a parallel program (such as task processing times, communication, data dependencies, and synchronization requirements) are known before program execution
+- **Dynamic:** a few assumptions about the parallel program can be made before execution, and thus, scheduling decisions have to be made on-the-fly. 
+         <!-- The goal of a dynamic scheduling algorithm as such includes not only the minimization of the program completion time but also the minimization of the scheduling overhead which constitutes a significant portion of the cost paid for running the scheduler. -->
+:::
+
+## Scheduling
+:::{.callout-note icon=false}
+## Categories
+
+- **Job scheduling**: independent jobs are to be scheduled among the processors of a distributed computing system to optimize overall system performance 
+- **Scheduling and mapping**: allocation of multiple interacting tasks of a single parallel program in order to minimize the completion time on the parallel computer system.
+:::
+
+## Scheduling model variations
+:::{.callout-tip icon=false}
+## Preemptive vs non-preemptive
+
+- **preemptive:** execution of the task might be interrupted so that it's allocated to a different processor
+- **non-preemptive:** execution must complete on a single processor
+:::
+
+:::{.callout-important icon=false}
+## Parallel vs non-parallel
+**Parallel** task requires more than one processor for its execution.
+:::
+
+:::{.callout-note icon=false}
+## With vs without conditional branches
+In conditional model, each edge in the DAG is associated with a non-zero probability that the child will be executed immediately after the parent.
+:::
+
+## Scheduling
+:::{.callout-important icon=false}
+## List scheduling
+The basic idea of **list scheduling** is to make a scheduling list (a sequence of nodes for scheduling) by assigning them some priorities, and then repeatedly execute the following two steps until all the nodes in the graph are scheduled:
+
+- Remove the first node from the scheduling list;
+- Allocate the node to a processor which allows the earliest start-time.
+:::
+
+## Scheduling
+:::{.callout-important icon=false}
+## Greedy Scheduler
+We say that a scheduler is **greedy** if whenever there is a processor available and a task ready to execute, then it assigns the task to the processor and starts running it immediately. Greedy schedulers have an important property that is summarized by the greedy scheduling principle.
+:::
+
+:::{.callout-important icon=false}
+## Greedy Scheduling Principle
+The **greedy scheduling principle** postulates that if a computation is run on $P$ processors using a greedy scheduler, then the total time (clock cycles) for running the computation is bounded by
+$$
+T_P < \frac{W}{P} + S
+$$
+where $W$ is the work of the computation, and $S$ is the span of the computation (both measured in units of clock cycles).
+:::
+
+## Scheduling
+:::{.callout-important icon=false}
+## Optimality of Greedy Schedulers 
+Firstly, the time to execute the computation cannot be less than $\frac{W}{P}$ clock cycles since we have a total of $W$ clock cycles of work to do and the best we can possibly do is divide it evenly among the processors.
+Secondly, the time to execute the computation cannot be any less than $S$ clock cycles, because $S$ represents the longest chain of sequential dependencies. Therefore we have
+$$
+T_P \geq \max\left(\frac{W}{P},S\right).
+$$
+We therefore see that a greedy scheduler does reasonably close to the best possible. In particular, $\frac{W}{P} +S$ is never more than twice $\max\left(\frac{W}{P} ,S\right)$.
+:::
+
+# Dask overview
+
+## Dask
+Dask is a library to perform parallel computation for analytics.
+![](img/dask_layers)
+
+## Scheduling
+:::{.callout-important icon=false}
+## What does Dask scheduler do?
+
+- execute DAGs on parallel hardware
+- manage resource allocation across DAG nodes
+:::
+
+# Scheduling algorithms
+
+## Scheduling algorithms
+![](img/scheduling_classification)
+
+## Scheduling algorithms
+:::{.callout-tip icon=false}
+## What's a **heuristic** algorithm?
+Algorithm used when classic methods are too slow for finding an exact or approximate solution, or when classic methods fail to find any exact solution in a search space. 
+
+This is achieved by trading 
+
+- optimality,
+- completeness,
+- accuracy,
+- or precision
+
+for speed. 
+
+In a way, it can be considered a shortcut.
+:::
+
+## Scheduling algorithms
+:::{.callout-tip icon=false}
+## List scheduling
+A list-scheduling heuristic maintains a list of all tasks of a given graph according to their priorities. It has two phases: 
+
+- the **task prioritizing** or **task selection** phase for selecting the highest-priority ready task
+- and the **processor selection** phase for selecting a suitable processor that minimizes a predefined cost function which can be the execution start time. 
+:::
+
+:::{.callout-important icon=false}
+## Features
+
+- for a bounded number of fully connected homogeneous processors
+- provide better performance results at a lower scheduling time than the other groups
+:::
+
+
+## Scheduling algorithms
+:::{.callout-tip icon=false}
+## Clustering
+
+- Maps the tasks to unlimited number of clusters. The selected tasks for clustering can be any task, not necessarily a ready task. 
+
+- Each iteration refines the previous clustering by merging some clusters. 
+
+- If two tasks are assigned to the same cluster, they will be
+executed on the same processor. 
+:::
+
+## Scheduling algorithms
+:::{.callout-tip icon=false}
+## Clustering: Extra final steps
+
+- a cluster **merging** step for merging the clusters so that the remaining number of clusters equal the number of processors
+- a cluster **mapping** step for mapping the clusters on the available processors
+- a task **ordering** step for ordering the mapped tasks within each processor 
+:::
+
+## Scheduling algorithms
+:::{.callout-note icon=false}
+## Guided random search
+**Guided random search** techniques (or **randomized search** techniques) use
+random choice to guide themselves through the problem
+space, which is not the same as performing merely random
+walks as in the random search methods. 
+
+These techniques
+combine the knowledge gained from previous search
+results with some randomizing features to generate new
+results. 
+:::
+
+## HEFT/CPOP
+:::{.callout-tip icon=false}
+## Definition
+Heterogeneous earliest finish time (HEFT) is a heuristic algorithm to schedule a set of dependent tasks onto a network of heterogeneous workers taking communication time into account. 
+
+Critical-Path-On-a-Processor (CPOP) algorithm uses the summation of upward and downward rank values for prioritizing tasks.
+:::
+
+::: aside
+H. Topcuoglu, S. Hariri and Min-You Wu, **"Performance-effective and low-complexity task scheduling for heterogeneous computing,"** in IEEE Transactions on Parallel and Distributed Systems, vol. 13, no. 3, pp. 260-274, March 2002, doi: 10.1109/71.993206.
+:::
+
+## HEFT/CPOP
+
+- $V$ -- set of $v$ nodes
+- $E$ -- set of $e$ edges
+- $data$ -- a $v \times v$ matrix of communication data
+- $data_{i,k}$ -- amount of data to be transmitted from $n_i$ to $n_k$
+- $Q$ -- set of $q$ processors
+- $W$ -- a $v \times q$ computation cost matrix, in which each $w_{i,j}$ gives the estimated execution cost to complete task $n_i$ on processor $p_j$
+- $B$ -- $q \times q$ data transfer rates matrix
+- $L$ -- $q$-dimensional vector of communication startup costs
+
+## HEFT/CPOP
+:::{.callout-note icon=false}
+## Costs
+**Average execution cost**:
+$$
+  \overline{w_i} = \sum\limits_{j=1}^q \frac{w_{i,j}}{q}.
+$$
+**Communication cost** of the edge $(i,k)$ for transfering data from task $n_i$ scheduled on processor $p_m$ to task $n_k$ scheduled on processor $p_n$:
+$$
+c_{i,k} = L_m + \frac{data_{i,k}}{B_{m,n}}
+$$
+**Average communication cost:**
+$$
+\overline{c_{i,k}} = \overline{L} + \frac{data_{i,k}}{\overline{B}}
+$$
+:::
+
+## HEFT/CPOP
+:::{.callout-tip icon=false}
+## Times
+**Earliest execution start time** of task $n_i$ on processor $p_j$:
+$$
+\begin{align*}
+& EST(n_{entry}, p_j) = 0, \\
+& EST(n_i, p_j) = \max\left\{avail[j], \max\limits_{n_m \in pred(n_i)} (AFT(n_m)+c_{m,i})\right\},
+\end{align*}
+$$
+where $avail[j]$ is the earliest time at which processor $p_j$ is ready for task execution.
+
+**Earliest execution finish time** of task $n_i$ on processor $p_j$:
+$$
+EFT(n_i, p_j) = w_{i,j} + EST(n_i,p_j)
+$$
+
+
+After a task $n_m$ is scheduled on processor $p_j$, the earliest start time and the earliest finish time of $n_m$ on processor $p_j$ is equal to the **actual start time** $AST(n_m)$ and the **actual finish time** $AFT(n_m)$, respectively.
+:::
+
+## HEFT/CPOP
+:::{.callout-note icon=false}
+## Workspane
+After all tasks in the graph have been scheduled, the **schedule length** (**makespan**) will be equal to the actual finish time of the exit task $n_{exit}$. In case of several exits:
+$$
+makespan = \max \left\{AFT(n_{exit})\right\}
+$$
+:::
+
+:::{.callout-tip icon=false}
+## Definition
+The **objective function** of the task scheduling problem is to determine the assignment of tasks to processors such that its **makespan is minimized**.
+:::
+
+## HEFT/CPOP
+:::{.callout-note icon=false}
+## Upward rank
+$$
+\begin{align*}
+  rank_u(n_i) = \overline{w_i} + \max\limits_{n_j \in succ(n_i)} \left(\overline{c_{i,j}} + rank_u(n_j)\right)
+\end{align*}
+$$
+
+- $succ(n_i)$ -- set of immediate successors of $n_i$
+- $\overline{c_{i,j}}$ -- average communication cost of edge $(i,j)$
+- $\overline{w_i}$ -- average computation cost of task $n_i$
+
+$$
+rank_u(n_{exit}) = \overline{w_{exit}}
+$$
+:::
+
+## HEFT/CPOP
+:::{.callout-tip icon=false}
+## Downward rank
+$$
+\begin{align*}
+  rank_d(n_i) = \max\limits_{n_j \in pred(n_i)} \left(rank_d(n_j)+ \overline{w_j} + \overline{c_{j,i}}\right)
+  \end{align*}
+$$
+
+- $pred(n_i)$ -- set of immediate predecessors of $n_i$
+- $rank_d(n_{entry}) = 0$
+- can be thought of as the longest distance from the entry task to $n_i$ without computation costs
+:::
+
+## HEFT/CPOP
+:::{.callout-important icon=false}
+## HEFT
+
+1. Set the computation costs of tasks and communication costs of edges with mean values
+2. Compute $rank_u$ for all tasks by traversing graph upward, starting from the exit task
+3. Sort the tasks in the scheduling list by non-increasing order of $rank_u$ values
+4. **while** there are unscheduled tasks in the list **do**:
+5. select the task $n_i$ from the scheduling list
+6. **for** each processor $p_k$ in the processor set $Q$ **do**:
+7. Compute $EFT(n_i,p_k)$ using the insertion-based scheduling policy
+8.  Assign task $n_i$ to the processor $p_j$ minimizing $EFT(n_i, p_j)$
+:::
+
+## HEFT/CPOP
+:::{.callout-tip icon=false}
+## CPOP
+
+1. Set the computation costs of tasks and communication costs of edges with mean values
+2. Compute $rank_u$ for all tasks by traversing graph upward, starting from the exit task
+3. Compute $rank_d$ for all tasks by traversing graph downward, starting from the entry task
+4. Compute $priority(n_i) = rank_d(n_i) + rank_u(n_i) \; \forall n_i$
+5. $|CP| = priority(n_{entry})$
+6. $SET_{CP} = \{n_{entry}\}$, where $SET_{CP}$ is a set of tasks on a critical path
+7. $n_k \leftarrow n_{entry}$
+:::
+
+## HEFT/CPOP
+:::{.callout-note icon=false}
+## CPOP
+
+8. **while** $n_k \neq n_{exit}$ **do**
+9. select $n_j: n_j \in succ(n_k) \textbf{ and } priority(n_j) = |CP|$ 
+10. $SET_{CP} = SET_{CP} \cup {n_j}$
+11. $n_k \leftarrow n_j$
+12. select $p_{CP}$ minimizing $\sum\limits_{n_i \in SET_{CP}} w_{i,j} \; \forall p_j \in Q$
+13. initialize priority queue $PQ$ with the entry task
+:::
+
+## HEFT/CPOP
+:::{.callout-important icon=false}
+## CPOP
+
+14. **while** there are unscheduled tasks in the $PQ$**do**
+  15. select the highest priority task $n_i$ from $PQ$
+  16. **if** $n_i \ in SET_{CP}$ **then** 
+  17. assign $n_i$ to $p_{CP}$
+  18. **else** 
+  19. assign $n_i$ to $p_j$ minimizing $EFT(n_i,p_j)$
+  20. update $PQ$ with the successors of $n_i$ if ready
+:::
+
+## HEFT/CPOP
+![](img/heft_graph){height=600}
+
+## HEFT/CPOP
+![HEFT - (a), CPOP - (b)](img/heft_cpop)
+
+# Dask Scheduling
+
+## Dask Scheduling
+:::{.callout-note icon=false}
+## Dask Scheduler types
+
+- **Single-machine scheduler:** This scheduler provides basic features on a local process or thread pool. This scheduler was made first and is the default. It is simple and cheap to use, although it can only be used on a single machine and does not scale
+- **Distributed scheduler:** This scheduler is more sophisticated, offers more features, but also requires a bit more effort to set up. It can run locally or distributed across a cluster
+:::
+
+## DAG
+![](img/dask-overview)
+
+## Dask Scheduling
+![](img/dask_dist)
+
+## Scheduling
+:::{.callout-tip icon=false}
+## Single-thread scheduler
+```python
+import dask
+dask.config.set(scheduler='synchronous')  # overwrite default with single-threaded scheduler
+```
+:::
+
+:::{.callout-important icon=false}
+## Notes
+
+- Useful for debugging or profiling
+- No parallelism at all
+:::
+
+## Scheduling
+:::{.callout-tip icon=false}
+## Thread scheduler
+```python
+import dask
+dask.config.set(scheduler='threads')  # overwrite default with threaded scheduler 
+```
+:::
+
+:::{.callout-important icon=false}
+## Notes
+
+- Small overhead of 50 microseconds per task
+- Only provides parallelism when executing non-Python code (because of GIL)
+:::
+
+## Scheduling
+:::{.callout-tip icon=false}
+## Process scheduler
+```python
+import dask
+dask.config.set(scheduler='processes')  # overwrite default with multiprocessing scheduler
+```
+:::
+
+:::{.callout-important icon=false}
+## Notes
+
+- Performance penalties when inter-process communication is heavy
+- Can provide parallelism when executing Python code
+:::
+
+## Scheduling
+:::{.callout-note icon=false}
+## Distributed (local) scheduler
+```python
+from dask.distributed import Client
+client = Client()
+# or
+client = Client(processes=False)
+```
+:::
+
+:::{.callout-important icon=false}
+## Notes
+
+- Can be more efficient than the multiprocessing scheduler on workloads that require multiple processes
+- Diagnostic dashboard and async API
+:::
+
+## Scheduling
+:::{.callout-tip icon=false}
+## Distributed (cluster) scheduler
+```python
+# You can swap out LocalCluster for other cluster types
+
+from dask.distributed import LocalCluster
+from dask_kubernetes import KubeCluster
+
+# cluster = LocalCluster()
+cluster = KubeCluster()  # example, you can swap out for Kubernetes
+
+client = cluster.get_client()
+```
+:::
+
+:::{.callout-important icon=false}
+## Notes
+- Can be setup either locally, or e.g. on a pre-existing Kubernetes cluster
+- Different cluster backends easy to swap
+:::
+
+## Scheduling
+![](img/scheduling_overhead)
+
+## Issues
+:::{.callout-important icon=false}
+## Issues
+
+- Resource starvation
+- Worker failures
+- Data loss
+:::
+
+# Dask Internals
+
+## Dask
+:::{.callout-tip icon=false}
+## Parallel
+We refer to algorithms that use multiple cores simultaneously as **parallel**. 
+:::
+
+:::{.callout-note icon=false}
+## Out-of-core
+We refer to systems that efficiently use disk as extensions
+of memory as **out-of-core**.
+:::
+
+## Dask
+:::{.callout-note icon=false}
+## How to execute parallel code?
+
+- represent the structure of our program explicitly as data
+within the program itself
+- encode task schedules programmatically within a framework
+:::
+
+## Dask
+:::{.callout-important icon=false}
+## Dask Graph definition
+
+- **A Python dictionary** mapping keys to tasks or values. 
+- **A key** is any Python hashable 
+- **a value** is any Python object that is not a **task**
+- **a task** is a Python tuple with a callable first element.
+:::
+
+## Dask
+```python
+def inc(i):
+  return i + 1
+
+def add(a, b):
+  return a + b
+
+x = 1
+y = inc(x)
+z = add(y, 10)
+```
+
+## Dask
+![](img/dask_simple_dag)
+
+## Dask
+:::{.callout-tip icon=false}
+## Dictionary representation
+```python
+d = {'x': 1,
+     'y': (inc, 'x'),
+     'z': (add, 'y', 10)}
+```
+:::
+
+## Dask
+:::{.callout-important icon=false}
+## Dask computation
+Dask represents a computation as a directed acyclic graph of tasks
+with data dependencies. 
+
+It can be said that Dask is a specification to encode such a
+graph using ordinary Python data structures, namely dicts, tuples,
+functions, and arbitrary Python values.
+:::
+
+## Dask
+```python
+{'x': 1,
+ 'y': 2,
+ 'z': (add, 'x', 'y'),
+ 'w': (sum, ['x', 'y', 'z'])}
+```
+
+:::{.callout-tip icon=false}
+## Examples
+
+- **key**: `'x'`, `('x', 2, 3)`
+- **task**: `(add, 'x', 'y')`
+- **task argument**: `'x'`, `1`, `(inc, 'x')`, `[1, 'x', (inc, 'x')]`
+:::
+
+## Dask
+:::{.callout-tip icon=false}
+## Valid tasks in a Dask graph
+```python
+(add, 1, 2)
+(add, 'x' , 2)
+(add, (inc, 'x'), 2)
+(sum, [1, 2])
+(sum, ['x', (inc, 'x')])
+(np.dot, np.array([...]), np.array([...]))
+```
+:::
+
+# Arrays
+
+## Dask
+:::{.callout-important icon=false}
+## Dask Array
+The `dask.array` submodule uses dask graphs to create a
+NumPy-like library that uses all of your cores and operates on
+datasets that do not fit in memory. 
+
+It does this by building up a
+dask graph of **blocked array algorithms**.
+
+Dask array functions produce Array objects that hold on to Dask
+graphs. These Dask graphs use several NumPy functions to achieve
+the full result.
+:::
+
+## Dask
+:::{.callout-note icon=false}
+## Blocked Array Algorithms
+Blocked algorithms compute a large result like 
+
+- "take the sum of these trillion numbers"
+
+with many small computations like
+
+- "break up the trillion numbers into one million chunks of size one million",
+- "sum each chunk", 
+- "then sum all of the intermediate sums."
+
+Through tricks like this we can evaluate one large problem by solving very many small problems.
+
+Blocked algorithm organizes a computation so that it works on contiguous chunks of data.
+:::
+
+## Dask
+:::{.callout-tip icon=false}
+## Blocked Array Algorithms
+![](img/blocked_matrix_mult){height=600}
+:::
+
+## Dask
+:::{.callout-tip icon=false}
+## Unblocked
+```python
+for i in range(N):
+ for k in range(N):
+   r = X[i,k]
+   for j in range(N):
+     Z[i,j] += r*Y[k,j]
+```
+:::
+
+:::{.callout-important icon=false}
+## Blocked
+```python
+for kk in range(N/B):
+ for jj in range(N/B): 
+   for i in range(N):
+     for k in range(kk, min(kk+B-1, N)):
+       r = X[i,k]
+       for j in range(jj, min(jj+B-1,N)):
+         Z[i,j] += r*Y[k,j]
+```
+:::
+
+## Dask
+
+:::{.callout-note}
+It is well known that the memory hierarchy can be better utilized if scientific algorithms are blocked.
+
+Blocking is also known as **tiling**. 
+
+In matrix multiplication example: instead of operating on individual matrix entries, the calculation is performed on submatrices.
+
+`B` is a **blocking factor**.
+:::
+
+## Dask
+:::{.callout-important icon=false}
+## Blocking features
+
+- Blocking is a general optimization technique for increasing the effectiveness of a memory hierarchy. 
+- By reusing data in the faster level of the hierarchy, it cuts down the average **access latency**.
+- It also reduces the **number of references** made to slower levels of the hierarchy. 
+- Blocking is superior to optimization such as **prefetching**, which hides the latency but does not reduce the memory bandwidth requirement. 
+- This reduction is especially im portant for multiprocessors since memory bandwidth is often the bottleneck of the system. 
+:::
+
+## Dask
+```python
+import dask.array as da
+x = da.arange(15, chunks=(5,))
+```
+
+![](img/dask_array_chunks)
+
+## Dask
+:::{.callout-important icon=false}
+## Metadata
+```python
+x # Array object metadata
+dask.array<x-1, shape=(15,), chunks=((5, 5, 5)), dtype=int64>
+```
+:::
+
+:::{.callout-tip icon=false}
+## Dask Graph
+```python
+x.dask # Every dask array holds a dask graph
+{('x' , 0): (np.arange, 0, 5),
+ ('x', 1): (np.arange, 5, 10),
+ ('x' , 2): (np.arange, 10, 15)}
+```
+:::
+
+
+## Dask
+:::{.callout-tip icon=false}
+## More complex graph
+```python
+z = (x + 100).sum()
+z.dask
+{('x', 0): (np.arange, 0, 5),
+('x', 1): (np.arange, 5, 10),
+('x', 2): (np.arange, 10, 15),
+('y', 0): (add, ('x', 0), 100),
+('y', 1): (add, ('x', 1), 100),
+('y', 2): (add, ('x', 2), 100),
+('z', 0): (np.sum, ('y', 0)),
+('z', 1): (np.sum, ('y', 1)),
+('z', 2): (np.sum, ('y', 2)),
+('z',): (sum, [('z', 0), ('z', 1), ('z', 2)])}
+```
+:::
+
+:::{.callout-note icon=false}
+## Execute the Graph
+```python
+z.compute()
+1605
+```
+:::
+
+
+## Dask
+:::{.callout-important icon=false}
+## dask.array.Array objects
+`x` and `z` are both `dask.array.Array` objects containing:
+
+- Dask graph `.dask`
+- array shape and chunk shape `.chunks`
+- a name identifying which keys in the graph correspond
+to the result, `.name`
+- a dtype
+:::
+
+## Dask
+:::{.callout-note icon=false}
+## Chunks
+    
+A normal NumPy array knows its shape, a dask array must
+know its shape and the shape of all of the internal NumPy blocks
+that make up the larger array. 
+
+These shapes can be concisely
+described by a tuple of tuples of integers, where each internal
+tuple corresponds to the lengths along a single dimension.
+
+In the example above we have a 20 by 24 array cut into
+uniform blocks of size 5 by 8. The chunks attribute describing
+this array is the following:
+
+```python
+chunks = ((5, 5, 5, 5), (8, 8, 8))
+```
+:::
+
+
+## Dask
+:::{.callout-important icon=false}
+## Chunks need not be uniform!
+```python
+x[::2].chunks
+((3, 2, 3, 2), (8, 8, 8))
+x[::2].T.chunks
+((8, 8, 8), (3, 2, 3, 2))
+```
+:::
+
+
+## Dask
+:::{.callout-tip icon=false}
+## Dask Array operations
+
+- arithmetic and scalar math: `+`, `*`, `exp`, `log`
+- reductions along axes: `sum()`, `mean()`, `std()`, `sum(axis=0)`
+- tensor contractions / dot products / matrix multiplication: `tensordot`
+- axis reordering / transposition: `transpose`
+- slicing: `x[:100, 500:100:-2]`
+- utility functions: `bincount`, `where`
+:::
+
+
+## Dask
+:::{.callout-important icon=false}
+## Ahead-of-time shape limitations
+```python
+x[x > 0]
+```
+:::
+
+# Dask Task Scheduling
+
+## Dask
+Graph creation and graph scheduling are separate problems!
+
+Current Dask scheduler is **dynamic**.
+
+:::{.callout-important icon=false}
+## Current Dask scheduler logic
+
+- A worker reports that it has completed a task and that it
+is ready for another.
+- We update runtime state to record the finished
+task, 
+- mark which new tasks can be run, which data can be released,
+etc. 
+- We then choose a task to give to this worker from among the
+set of ready-to-run tasks. This small choice governs the macroscale performance of the scheduler.
+:::
+
+## Dask
+:::{.callout-tip icon=false}
+## Out-of-core computation - which task to choose?
+
+- last in, first out 
+- select tasks whose data dependencies were most recently made available. 
+- this causes a behavior where long chains of related tasks trigger each other
+- it forces the scheduler to finish related tasks before starting new ones. 
+- **implementation:** a simple stack, which can operate in constant time.
+:::
+
+## Dask
+![](img/dask_custom_scheduler)
+
+## Dask
+![](img/dask_blas_comparison)
+
+# Other Dask collections
+
+## Dask
+:::{.callout-important icon=false}
+## Collections
+
+- **dask.array** = numpy+ threading
+- **dask.bag** = toolz+ multiprocessing
+- **dask.dataframe** = pandas+ threading
+:::
+
+## Dask
+:::{.callout-tip icon=false}
+## Dask Bag - Definition
+A **bag** is an unordered collection with repeats. 
+
+It is like a Python list but does not guarantee the order of elements. 
+
+The `dask.bag` API contains functions like **map** and **filter** and generally follows the PyToolz API. 
+
+<!-- %We find that it is particularly useful on the front lines of data analysis, particularly in parsing and cleaning up initial data dumps like JSON or log files because it combines the streaming properties and solid performance of projects like cytoolz. -->
+:::
+
+## Dask
+```python
+>>> import dask.bag as db
+>>> import json
+>>> b = db.from_filenames('2014-*.json.gz').map(json.loads)
+>>> alices = b.filter(lambda d: d['name'] == 'Alice')
+>>> alices.take(3)
+({'name': 'Alice', 'city': 'LA', 'balance': 100},
+{'name': 'Alice', 'city': 'LA', 'balance': 200},
+{'name': 'Alice', 'city': 'NYC', 'balance': 300},)
+
+>>> dict(alices.pluck('city').frequencies())
+{'LA': 10000, 'NYC': 20000, ...}
+```
+
+## Dask
+:::{.callout-important icon=false}
+## S3 example
+```python
+>>> import dask.bag as db
+>>> b = db.from_s3('githubarchive-data', '2015-01-01-*.json.gz')
+          .map(json.loads)
+          .map(lambda d: d['type'] == 'PushEvent')
+          .count()
+```
+:::
+
+## Dask
+  <!-- %https://blog.dask.org/2015/06/26/Complex-Graphs -->
+![](img/dask_bag_graph)
+
+## Dask
+:::{.callout-note icon=false}
+## Dask DataFrame - Definition
+The **dask.dataframe** module implements a large dataframe
+out of many Pandas DataFrames.
+
+It uses a threaded scheduler.
+:::
+
+## Dask
+:::{.callout-important icon=false}
+## Partitioned datasets
+The dask dataframe can compute efficiently on **partitioned datasets** where the different blocks are well separated along an index. 
+
+For example in time series data we may know that all of
+January is in one block while all of February is in another.
+
+`Join`, `groupby`, and `range` queries along this index are significantly faster
+when working on partitioned datasets.
+:::
+
+## Dask
+:::{.callout-tip icon=false}
+## Dask DataFrame `join`
+![](img/dask_ddf_join){height=600}
+:::
+
+## Dask
+:::{.callout-important icon=false}
+## Out-of-core parallel SVD example
+```python
+>>> import dask.array as da
+>>> x = da.ones((5000, 1000), chunks=(1000, 1000))
+>>> u, s, v = da.svd(x)
+```
+Out-of-core parallel non-negative matrix factorizations on top of `dask.array`.
+:::
+
+## Dask
+:::{.callout-tip icon=false}
+## Out-of-core parallel SVD
+![](img/dask_parallel_svd){height=600}
+:::
+
+# Usage
+
+## Usage
+![scida.io - astrophysical simulations](img/dask_scida)
+
+## Usage
+![Pangeo - open, reproducible, scalable geoscience. A global slice of Sea Water Temperature](img/pangeo_sea_water_temp)
+
+  <!-- %https://medium.com/pangeo/using-kerchunk-with-uncompressed-netcdf-64-bit-offset-files-cloud-optimized-access-to-hycom-ocean-9008ba6d0d67 -->
+  <!-- %https://www.earthdata.nasa.gov/learn/articles/pangeo-project -->
+
+## Usage
+  <!-- %\textsc{Pangeo - open, reproducible, scalable geoscience} -->
+  <!-- %https://stories.dask.org/en/latest/network-modeling.html -->
+![Line-Of-Sight (LOS) coverage from a lamp post in San Jose.](img/dask_wireless_modeling){height=600}
+
+# Dask vs Spark
+
+## Comparison with Spark
+:::{.callout-important icon=false}
+## Setup
+
+- BigBrain20, a 3-D image of the human brain, **total data size** of 606 GiB. 
+- dataset provided by the Consortium for Reliability and Reproducibility, entire dataset is 379.83 GiB, used all 3,491 anatomical images, representing 26.67 GiB overall.
+<!-- %containing anatomical, diffusion, and functional images of 1,654 subjects acquired in 35 sites, -->
+:::
+
+## Comparison with Spark
+
+![](img/dask_spark_graphs.png){height=700}
+
+## Comparison with Spark
+![](img/dask_spark_increment.png)
+
+## Comparison with Spark
+![](img/dask_spark_histogram.png)
