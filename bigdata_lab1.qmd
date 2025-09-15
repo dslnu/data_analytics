@@ -1,5 +1,5 @@
 ---
-title: "Applied Analytics: Lab 1"
+title: "Big Data Analytics: Lab 1"
 execute:
   enabled: true
   echo: true
@@ -179,84 +179,23 @@ We should only convert objects to categoricals if most values are repeated. We h
 
 Converting all object columns and creating a new optimized DataFrame is left as part of **Exercise 1**.
 
-## Computation optimization
-
-### Cython
-
-```{python}
-import math
-def process(x):
-    if x <= 9:
-        return x
-    lst = [int(i) for i in str(x).replace(".", "")]
-    result = 0
-    for el in lst:
-        result = result + el
-    return process(result)
-```
-
-
-```{python}
-process(123688)
-```
-
-Obtain timing:
-```{python}
-%timeit dd.apply(lambda x: process(x["Income"]), axis=1)
-```
-See more detailed breakdown:
-```{python}
-%prun -l 4 dd.apply(lambda x: process(x["Income"]), axis=1)
-```
-
-```{python}
-%load_ext Cython
-```
-
-```{python}
-%%cython
-def process_cython(x):
-    if x <= 9:
-        return x
-    lst = [int(i) for i in str(x).replace(".", "")]
-    result = 0
-    for el in lst:
-        result = result + el
-    return process_cython(result)
-```
-
-```{python}
-%timeit dd.apply(lambda x: process_cython(x["Income"]), axis=1)
-```
-```{python}
-%prun -l 8 dd.apply(lambda x: process_cython(x["Income"]), axis=1)
-```
-
-Read more about type annotations: <https://pandas.pydata.org/pandas-docs/stable/user_guide/enhancingperf.html#declaring-c-types>.
-
-### Numba
-
-Either add `engine="numba"` parameter to Pandas functions, or add a `@jit` annotation to Python funcs.
-```python
-import numba
-
-@numba.jit
-def process_jit(x):
-    if x <= 9:
-        return x
-    char_lst = [i for i in str(x).replace(".", "")]
-    result = 0
-    for el in char_lst:
-        i = int(el)
-        result = result + i
-    return process_jit(result)
-```
-
-```python
-%prun -l 4 dd.apply(lambda x: process_jit(x["Income"]), axis=1)
-```
-
 ## Exercises
 
-1. Pick your own dataset from Kaggle or HuggingFace or <https://archive.ics.uci.edu>. Perform numerical and object types conversions aimed at minimizing storage space, as outlined above.
-2. Fix the Numba issue related to missing `int()` (more context here: https://github.com/numba/numba/issues/5650)
+1. Pick your own dataset from 
+  - Kaggle 
+  - HuggingFace
+  - or <https://archive.ics.uci.edu>.
+
+2. Use Dora library installed in [Applied lab1](./applied_lab1.qmd) for data cleaning.
+
+3. Create a data type describing the data structures you're working with in your Pandas DataFrame.
+   Use mypy for type annotations.
+
+:::{.callout-note}
+mypy does not improve performance. However, it makes the code easier to understand.
+:::
+
+4. Perform numerical and object types conversions aimed at minimizing storage space, as outlined above.
+
+5. Measure performance impact and plot it via e.g. `matplotlib`.
+

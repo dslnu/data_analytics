@@ -1,0 +1,288 @@
+---
+title: "Big Data Analytics: Lab 2"
+execute:
+  enabled: true
+  echo: true
+  cache: true
+format:
+  html:
+    code-fold: false
+jupyter: python3
+diagram:
+  cache: true
+  cache-dir: ./cache
+  engine:
+    tikz:
+      execpath: lualatex
+filters:
+  - diagram
+---
+
+## Cython
+
+First, install Cython:
+```python
+uv add cython
+```
+
+Then we can load Cython extension in Jupyter:
+```{python}
+%load_ext Cython
+```
+
+Define a function that generates a list of first $n$ primes:
+
+:::{.callout-important icon=false}
+## Pure Python
+```{python}
+def primes1(nb_primes):
+    p = [0] * 1000
+    if nb_primes > 1000:
+        nb_primes = 1000
+
+    len_p = 0  # The current number of elements in p.
+    n = 2
+    while len_p < nb_primes:
+        # Is n prime?
+        for i in p[:len_p]:
+            if n % i == 0:
+                break
+
+        # If no break occurred in the loop, we have a prime.
+        else:
+            p[len_p] = n
+            len_p += 1
+        n += 1
+
+    # Let's copy the result into a Python list:
+    result_as_list = [prime for prime in p[:len_p]]
+    return result_as_list
+```
+:::
+
+:::{.callout-important icon=false}
+## Pure Python results
+We can measure its execution time:
+```{python}
+%timeit primes1(100)
+```
+:::
+
+Now, define a function using Cython type annotations. Note that we use `%%cython` magic before function definition:
+
+:::{.callout-note icon=false}
+## Python with Cython type hints
+```{python}
+%%cython
+def primes2(nb_primes: cython.int):
+    i: cython.int
+    p: cython.int[1000] = [0] * 1000
+
+    if nb_primes > 1000:
+        nb_primes = 1000
+
+    len_p: cython.int = 0  # The current number of elements in p.
+    n: cython.int = 2
+    while len_p < nb_primes:
+        # Is n prime?
+        for i in p[:len_p]:
+            if n % i == 0:
+                break
+
+        # If no break occurred in the loop, we have a prime.
+        else:
+            p[len_p] = n
+            len_p += 1
+        n += 1
+
+    # Let's copy the result into a Python list:
+    result_as_list = [prime for prime in p[:len_p]]
+    return result_as_list
+```
+:::
+
+:::{.callout-note icon=false}
+## Python with Cython type hints: results
+We measure its execution time:
+```{python}
+%timeit primes2(100)
+```
+:::
+
+Different syntax:
+
+:::{.callout-tip icon=false}
+## Cython syntax
+```{python}
+%%cython
+def primes3(int nb_primes):
+    cdef int n, i, len_p
+    cdef int[1000] p
+
+    if nb_primes > 1000:
+        nb_primes = 1000
+
+    len_p = 0  # The current number of elements in p.
+    n = 2
+    while len_p < nb_primes:
+        # Is n prime?
+        for i in p[:len_p]:
+            if n % i == 0:
+                break
+
+        # If no break occurred in the loop, we have a prime.
+        else:
+            p[len_p] = n
+            len_p += 1
+        n += 1
+
+    # Let's copy the result into a Python list:
+    result_as_list = [prime for prime in p[:len_p]]
+    return result_as_list
+```
+:::
+
+:::{.callout-tip icon=false}
+## Cython syntax results
+We measure its execution time:
+```{python}
+%timeit primes3(100)
+```
+:::
+
+:::{.callout-note}
+Passing `--annotate` flag will produce more relevant info.
+:::
+
+## Using Cython in Pandas
+
+Define a random DataFrame:
+
+```{python}
+import pandas as pd
+import numpy as np
+
+df = pd.DataFrame(
+    {
+        "a": np.random.randn(1000),
+        "b": np.random.randn(1000),
+        "N": np.random.randint(100, 1000, (1000)),
+        "x": "x",
+    }
+)
+
+```
+
+Define functions that will be applied to the DataFrame:
+
+:::{.callout-important icon=false}
+## Pure Python
+```{python}
+def f(x):
+    return x * (x - 1)
+
+
+def integrate_f(a, b, N):
+    s = 0
+    dx = (b - a) / N
+    for i in range(N):
+        s += f(a + i * dx)
+    return s * dx
+
+```
+:::
+
+:::{.callout-important icon=false}
+## Pure Python results
+Apply functions to DataFrame:
+```{python}
+%timeit df.apply(lambda x: integrate_f(x["a"], x["b"], x["N"]), axis=1)
+```
+:::
+
+Now let's use Cython-annotated functions:
+
+:::{.callout-important icon=false}
+## Python with Cython type hints
+```{python}
+%%cython
+def f_typed2(x: cython.double) -> cython.double:
+    return x * (x - 1)
+
+def integrate_f_typed2(a: cython.double, b: cython.double, N: cython.int) -> cython.double:
+    i: cython.int
+    s: cython.double
+    dx: cython.double
+    s = 0
+    dx = (b - a) / N
+    for i in range(N):
+        s += f_typed2(a + i * dx)
+    return s * dx
+
+```
+:::
+
+:::{.callout-important icon=false}
+## Python with Cython type hints
+Apply annotated functions to DataFrame:
+```{python}
+%timeit df.apply(lambda x: integrate_f_typed2(x["a"], x["b"], x["N"]), axis=1)
+```
+:::
+
+
+With a different syntax:
+
+:::{.callout-tip icon=false}
+## Cython syntax
+```{python}
+%%cython
+cdef double f_typed(double x) except? -2:
+   return x * (x - 1)
+cpdef double integrate_f_typed(double a, double b, int N):
+   cdef int i
+   cdef double s, dx
+   s = 0
+   dx = (b - a) / N
+   for i in range(N):
+       s += f_typed(a + i * dx)
+   return s * dx
+
+```
+:::
+
+:::{.callout-tip icon=false}
+## Cython syntax results
+```{python}
+%timeit df.apply(lambda x: integrate_f_typed(x["a"], x["b"], x["N"]), axis=1)
+```
+:::
+
+:::{.callout-note}
+## Pandas
+Read more about type annotations for Pandas: <https://pandas.pydata.org/pandas-docs/stable/user_guide/enhancingperf.html>.
+:::
+
+
+## Numba
+
+Either add `engine="numba"` parameter to Pandas functions, or add a `@jit` annotation to Python funcs.
+
+```python
+import numba
+
+@numba.jit
+def process_jit(x):
+    if x <= 9:
+        return x
+    char_lst = [i for i in str(x).replace(".", "")]
+    result = 0
+    for el in char_lst:
+        i = int(el)
+        result = result + i
+    return process_jit(result)
+```
+
+```python
+%prun -l 4 dd.apply(lambda x: process_jit(x["Income"]), axis=1)
+```

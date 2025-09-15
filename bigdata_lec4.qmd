@@ -1,5 +1,5 @@
 ---
-title: "Big Data: Speeding up computation"
+title: "Big Data: Dask intro"
 author: 
   - name: MSDE
     affiliation: Lviv University
@@ -59,35 +59,6 @@ format:
 :::
 :::
 ::::
-
-## Memory management
-
-```python
-import os
-import gc
-import psutil
-
-proc = psutil.Process(os.getpid())
-gc.collect()
-initial_memory = proc.memory_info().rss
-
-## Allocate memory by creating large lists
-foo = ['abc' for _ in range(10**7)]
-allocated_memory = proc.memory_info().rss
-
-## Deallocate memory
-del foo
-gc.collect()
-final_memory = proc.memory_info().rss
-
-## Print memory statistics
-increase = lambda x2, x1: 100.0 * (x2 - x1) / initial_memory
-print("Allocated Memory Increase: %0.2f%%" % increase(allocated_memory, initial_memory))
-print("Memory After Deletion: %0.2f%%" % increase(final_memory, allocated_memory))
-
->>> Allocated Memory Increase: 23.35%
->>> Memory After Deletion: -10.78%
-```
 
 # Code execution
 
