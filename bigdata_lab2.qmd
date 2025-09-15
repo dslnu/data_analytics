@@ -268,21 +268,62 @@ Read more about type annotations for Pandas: <https://pandas.pydata.org/pandas-d
 
 Either add `engine="numba"` parameter to Pandas functions, or add a `@jit` annotation to Python funcs.
 
-```python
+:::{.callout-warning icon=false}
+## Numba-annotated code
+```{python}
 import numba
 
-@numba.jit
-def process_jit(x):
-    if x <= 9:
-        return x
-    char_lst = [i for i in str(x).replace(".", "")]
-    result = 0
-    for el in char_lst:
-        i = int(el)
-        result = result + i
-    return process_jit(result)
-```
 
-```python
-%prun -l 4 dd.apply(lambda x: process_jit(x["Income"]), axis=1)
+@numba.jit
+def f_numba(x):
+    return x * (x - 1)
+
+
+@numba.jit
+def integrate_f_numba(a, b, N):
+    s = 0
+    dx = (b - a) / N
+    for i in range(N):
+        s += f_numba(a + i * dx)
+    return s * dx
+
+
+@numba.jit
+def apply_integrate_f_numba(col_a, col_b, col_N):
+    n = len(col_N)
+    result = np.empty(n, dtype="float64")
+    assert len(col_a) == len(col_b) == n
+    for i in range(n):
+        result[i] = integrate_f_numba(col_a[i], col_b[i], col_N[i])
+    return result
+
+
+def compute_numba(df):
+    result = apply_integrate_f_numba(
+        df["a"].to_numpy(), df["b"].to_numpy(), df["N"].to_numpy()
+    )
+    return pd.Series(result, index=df.index, name="result")
 ```
+:::
+
+:::{.callout-warning icon=false}
+## Numba Results
+```{python}
+%timeit compute_numba(df)
+```
+:::
+
+
+## Exercises
+
+1. Go through the tutorial on Black-Scholes option pricing (<https://louis-finegan.github.io/2024/10/10/Black-Scholes.html>). Modify the code so that:
+  - it works for some different company
+  - uses Cython as much as possible
+  - measure results
+
+## References
+
+1. [Cython tutorial](https://docs.cython.org/en/latest/src/tutorial/cython_tutorial.html)
+2. [Cython build instructions](https://cython.readthedocs.io/en/latest/src/quickstart/build.html)
+3. [Cython language](https://cython.readthedocs.io/en/latest/src/userguide/language_basics.html)
+4. [Pandas optimization](https://pandas.pydata.org/pandas-docs/stable/user_guide/enhancingperf.html)
