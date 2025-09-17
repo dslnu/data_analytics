@@ -198,12 +198,12 @@ The basic idea of **list scheduling** is to make a scheduling list (a sequence o
 :::
 
 ## Scheduling
-:::{.callout-important icon=false}
+:::{.callout-note icon=false}
 ## Greedy Scheduler
 We say that a scheduler is **greedy** if whenever there is a processor available and a task ready to execute, then it assigns the task to the processor and starts running it immediately. Greedy schedulers have an important property that is summarized by the greedy scheduling principle.
 :::
 
-:::{.callout-important icon=false}
+:::{.callout-tip icon=false}
 ## Greedy Scheduling Principle
 The **greedy scheduling principle** postulates that if a computation is run on $P$ processors using a greedy scheduler, then the total time (clock cycles) for running the computation is bounded by
 $$
@@ -221,20 +221,6 @@ $$
 T_P \geq \max\left(\frac{W}{P},S\right).
 $$
 We therefore see that a greedy scheduler does reasonably close to the best possible. In particular, $\frac{W}{P} +S$ is never more than twice $\max\left(\frac{W}{P} ,S\right)$.
-:::
-
-# Dask overview
-
-## Dask
-Dask is a library to perform parallel computation for analytics.
-![](img/dask_layers)
-
-## Scheduling
-:::{.callout-important icon=false}
-## What does Dask scheduler do?
-
-- execute DAGs on parallel hardware
-- manage resource allocation across DAG nodes
 :::
 
 # Scheduling algorithms
@@ -325,6 +311,8 @@ H. Topcuoglu, S. Hariri and Min-You Wu, **"Performance-effective and low-complex
 
 ## HEFT/CPOP
 
+:::{.callout-tip icon=false}
+## Definitions
 - $V$ -- set of $v$ nodes
 - $E$ -- set of $e$ edges
 - $data$ -- a $v \times v$ matrix of communication data
@@ -333,6 +321,7 @@ H. Topcuoglu, S. Hariri and Min-You Wu, **"Performance-effective and low-complex
 - $W$ -- a $v \times q$ computation cost matrix, in which each $w_{i,j}$ gives the estimated execution cost to complete task $n_i$ on processor $p_j$
 - $B$ -- $q \times q$ data transfer rates matrix
 - $L$ -- $q$-dimensional vector of communication startup costs
+:::
 
 ## HEFT/CPOP
 :::{.callout-note icon=false}
@@ -374,7 +363,7 @@ After a task $n_m$ is scheduled on processor $p_j$, the earliest start time and 
 
 ## HEFT/CPOP
 :::{.callout-note icon=false}
-## Workspane
+## Workspan
 After all tasks in the graph have been scheduled, the **schedule length** (**makespan**) will be equal to the actual finish time of the exit task $n_{exit}$. In case of several exits:
 $$
 makespan = \max \left\{AFT(n_{exit})\right\}
@@ -426,10 +415,10 @@ $$
 2. Compute $rank_u$ for all tasks by traversing graph upward, starting from the exit task
 3. Sort the tasks in the scheduling list by non-increasing order of $rank_u$ values
 4. **while** there are unscheduled tasks in the list **do**:
-5. select the task $n_i$ from the scheduling list
-6. **for** each processor $p_k$ in the processor set $Q$ **do**:
-7. Compute $EFT(n_i,p_k)$ using the insertion-based scheduling policy
-8.  Assign task $n_i$ to the processor $p_j$ minimizing $EFT(n_i, p_j)$
+5. &emsp;&emsp; select the task $n_i$ from the scheduling list
+6. &emsp;&emsp; **for** each processor $p_k$ in the processor set $Q$ **do**:
+7. &emsp;&emsp;&emsp;&emsp; Compute $EFT(n_i,p_k)$ using the insertion-based scheduling policy
+8. &emsp;&emsp; Assign task $n_i$ to the processor $p_j$ minimizing $EFT(n_i, p_j)$
 :::
 
 ## HEFT/CPOP
@@ -450,9 +439,9 @@ $$
 ## CPOP
 
 8. **while** $n_k \neq n_{exit}$ **do**
-9. select $n_j: n_j \in succ(n_k) \textbf{ and } priority(n_j) = |CP|$ 
-10. $SET_{CP} = SET_{CP} \cup {n_j}$
-11. $n_k \leftarrow n_j$
+9. &emsp;&emsp; select $n_j: n_j \in succ(n_k) \textbf{ and } priority(n_j) = |CP|$ 
+10. &emsp;&emsp; $SET_{CP} = SET_{CP} \cup {n_j}$
+11. &emsp;&emsp; $n_k \leftarrow n_j$
 12. select $p_{CP}$ minimizing $\sum\limits_{n_i \in SET_{CP}} w_{i,j} \; \forall p_j \in Q$
 13. initialize priority queue $PQ$ with the entry task
 :::
@@ -462,12 +451,12 @@ $$
 ## CPOP
 
 14. **while** there are unscheduled tasks in the $PQ$**do**
-  15. select the highest priority task $n_i$ from $PQ$
-  16. **if** $n_i \ in SET_{CP}$ **then** 
-  17. assign $n_i$ to $p_{CP}$
-  18. **else** 
-  19. assign $n_i$ to $p_j$ minimizing $EFT(n_i,p_j)$
-  20. update $PQ$ with the successors of $n_i$ if ready
+15. &emsp;&emsp; select the highest priority task $n_i$ from $PQ$
+16. &emsp;&emsp; **if** $n_i \ in SET_{CP}$ **then** 
+17. &emsp;&emsp;&emsp;&emsp; assign $n_i$ to $p_{CP}$
+18. &emsp;&emsp; **else** 
+19. &emsp;&emsp;&emsp;&emsp; assign $n_i$ to $p_j$ minimizing $EFT(n_i,p_j)$
+20. &emsp;&emsp; update $PQ$ with the successors of $n_i$ if ready
 :::
 
 ## HEFT/CPOP
@@ -477,6 +466,19 @@ $$
 ![HEFT - (a), CPOP - (b)](img/heft_cpop)
 
 # Dask Scheduling
+
+## Dask
+Dask is a library to perform parallel computation for analytics.
+![](img/dask_layers)
+
+## Scheduling
+:::{.callout-important icon=false}
+## What does Dask scheduler do?
+
+- execute DAGs on parallel hardware
+- manage resource allocation across DAG nodes
+:::
+
 
 ## Dask Scheduling
 :::{.callout-note icon=false}

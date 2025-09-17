@@ -1,0 +1,361 @@
+---
+title: "Applied Analytics: Lab 1"
+execute:
+  enabled: true
+  echo: true
+  cache: true
+format:
+  html:
+    code-fold: false
+jupyter: python3
+diagram:
+  cache: true
+  cache-dir: ./cache
+  engine:
+    tikz:
+      execpath: lualatex
+filters:
+  - diagram
+---
+
+# Lab2: Parallelisation
+
+Previous lab listed some methods of optimizing Pandas work:
+
+- data storage optimizations
+- Cython conversion
+- Numba decorators
+
+In this lab we'll start looking into parallelisation as a way of optimizing data analysis workflows.
+
+Why - because today's systems are **multicore** (sometimes very much so).
+
+Check yours:    
+
+```{python}
+import os
+os.cpu_count()
+```
+
+:::{.callout-note}
+There are two kinds of parallelism, *distributed* and *shared-memory*. Here we'll talk about shared-memory version.
+
+Distributed parallelism is when we use multiple machines/VMs for computations.
+:::
+
+
+## Short intro to functional programming
+
+In functional programming paradigm, functions are first-class citizens of the languages. They can be composed, applied, passed as arguments to another functions, or returned as values.
+
+*Functional programming* is inherently better suited for parallel programs.
+
+Benefits of functional programming:
+  - minimization of state
+  - no side-effects
+  - pure functions are easier to reason about
+  - and parallelize (!)
+
+It is based on *lambda calculus*. We'll learn some of its concepts first:
+  - lambda function definition
+  - application and partial application
+  - currying
+  - closures
+
+First off, functions can be values in Python:
+
+```{python}
+add = lambda x, y: x + y  
+print (f"add = {add}")
+```
+
+All variables support some operations on them: addition for integers, or e.g. `read_csv` on Pandas DataFrame.
+
+Function variables support a single operation: *application*.
+
+```{python}
+i = 0  
+j = 1    
+add = lambda x, y: x + y  
+  
+k = i + j  
+print (f"k = {k}")  
+  
+z = add (i, j)  
+print (f"z = {z}")
+```
+
+*Partial* function application is also supported. We'll use `functools` package (https://docs.python.org/3/library/functools.html).
+
+
+```{python}
+from functools import partial  
+i = 0  
+j = 1    
+add = lambda x, y: x + y  
+inc = partial (add, 1)  
+  
+ii = inc (i)  
+jj = inc (j)  
+print (f"ii = {ii}, jj = {jj}")  
+```
+
+**Note:** the code above both passes `add` as an argument to `partial`, and stores the return value of `partial` function into a new variable `inc`.
+
+The lambda in the example above accepts two arguments essentially. This can be simplified by *currying*:
+```{python}
+i = 0  
+j = 1    
+add = lambda x: lambda y: x + y  
+inc = add(1)  
+  
+ii = inc (i)  
+jj = inc (j)  
+print (f"ii = {ii}, jj = {jj}")
+```
+
+:::{.callout-tip}
+## Definition for `currying`
+Currying is the technique of translating a function that takes multiple arguments into a sequence of families of functions, each taking a single argument.
+
+Alternatively, we can say that currying is a method to transform a function of arity `n` to `n` functions of arity `1`.
+:::
+
+With currying, we can express partial application without and extra `partial` function.
+
+:::{.callout-note}
+**Note:** currying relies on `closures` - functions that can refer to variables defined in surrounding context (like `x` in `add` definition above).
+:::
+
+A monstrous example:
+```{python}
+def f_5(a, b, c, d, e):
+    return a + b + c + d + e
+
+def c_5(a):
+    def c_4(b):
+        def c_3(c):
+            def c_2(d):
+                def c_1(e):
+                    return f_5(a, b, c, d, e)
+                return c_1
+            return c_2
+        return c_3
+    return c_4
+
+```
+How to use?
+
+```{python}
+f_5(1,2,3,4,5)
+```
+
+```{python}
+c_5(1)(2)(3)(4)(5)
+```
+
+## map-reduce
+
+In functional programming, we do not iterate - we `map`. Why? Because `map` can be parallelised.
+
+Iteration (like a `for`-loop) is sequential. Mapping is not.
+
+`map` takes its name from a mathematical term for functions - `mapping`s. 
+
+:::{.callout-warning icon=false}
+## Map
+**Arguments:**
+
+  - a sequence to iterate on
+  - a function to apply to each element of the sequence.
+
+**Return value:**
+
+  - a processed sequence of the same size as input
+:::
+
+Now, if we want to convert our sequence to a sequence of a different length, or different object altogether, we use `reduce`.
+
+:::{.callout-tip icon=false}
+## Reduce
+**Arguments**:
+
+  - a sequence to iterate on
+  - accumulation seed to start reducing on
+  - a function of two arguments, accumulation result and next element
+
+**Return value:**:
+
+  - result of accumulation
+:::
+
+Using above examples, we can easily implement `map` using list comprehensions as as:
+
+```{python}
+map = lambda f, l: [f(x) for x in l]
+```
+
+Let's use it:
+
+```{python}
+int_list = [1,2,3,4,5,6]
+inc_list = map(inc, int_list)
+print(inc_list)
+```
+
+And `reduce` can be implemented as:
+
+```{python}
+def reduce_v1 (f, id, s):  
+    n = len(s)  
+    if n == 0:  
+        return id  
+    elif n == 1:  
+        return s[0]  
+    else:  
+        return f(reduce_v1(f, id, s[1:]), s[0])
+```
+
+Usage example:
+
+```{python}
+add = lambda x, y: x + y  
+res = reduce_v1(add, 0, int_list)
+print(res)
+```
+
+### Limitations and parallelisation types
+
+Some tasks can be trivially parallelised - these are called *embarrassingly parallel*. `inc` is a simple example of this type.
+
+Other tasks have a degree of interdependence. Consider below example, adapted from the reduce above:
+
+
+```{python}
+# Sum all elements of int_list
+def sum(lst):
+    sum = 0
+    
+    for i in range(len(lst)):
+      sum += lst[i]
+
+    return sum
+
+print(sum(int_list))
+```
+
+How can it be parallelised? By using a technique called chunking:
+
+
+```{python}
+chunk1 = int_list[:3]
+chunk2 = int_list[3:]
+
+sum_1 = sum(chunk1)
+sum_2 = sum(chunk2)
+
+result = sum_1 + sum_2
+
+print(result)
+```
+
+Then there are algorithms that are **inherently serial**. An example is computation of a Fibonacci sequence.
+
+### Python's builtin map
+
+Suppose we want to square each number in a list. A naive approach would be:
+
+```{python}
+number_list = [1,2,3,4]
+
+def squarev1(lst):
+    squared = [] # sometimes pre-allocation can also work, like [None]*1000
+    for el in lst:
+        squared.append(el*el)
+    return squared
+
+squarev1(number_list)
+```
+
+Or we can use a built-in (<https://docs.python.org/3/library/functions.html#map>):
+
+```{python}
+# Note that we return a map object that has to be converted to a list first
+def squarev2(lst):
+    return list(map(lambda x: x*x, lst))
+
+squarev2(number_list)
+```
+
+### Python parallel map
+
+Map function can be made to execute in parallel on multiple CPU cores. How?
+We need to use multiprocessing library (https://docs.python.org/3/library/multiprocessing.html)
+
+```{python}
+from multiprocessing import Pool
+```
+
+There are limitations though: in order to arrange communication between proceses, Python uses *pickling*: a method of serializing/deserializing objects so that they can be sent between processes.
+
+Python cannot pickle closures, nested functions or classes! More info on pickling: <https://docs.python.org/3/library/pickle.html>.
+
+Moreover, we have to move `sqr` definition into a separate file (<https://stackoverflow.com/questions/41385708/multiprocessing-example-giving-attributeerror>)
+
+
+```{python}
+import files.defs as defs
+
+def squarev3(lst):
+    pool = Pool()
+    return pool.map(defs.sqr, number_list)
+
+squarev3(number_list)
+```
+
+:::{.callout-note}
+## Pathos map with Dill
+However, Dill (<https://pypi.org/project/dill/>) can overcome this limitation!
+
+How to use Dill?
+```
+uv add pathos
+
+uv add toolz
+```
+And then
+```python
+from pathos.multiprocessing import ProcessPool
+
+def squarev4(lst):
+    pool = ProcessPool()
+    return pool.map(lambda x: x*x, lst)
+
+squarev4([1,3,5])
+```
+:::
+
+## Numpy vectorization
+
+Numpy automatically vectorizes array operations. However, we can explicitly invoke `vectorize()`:
+
+In this context vectorization refers to low-level CPU vectorization (single CPU instruction processing items in a vector)
+
+```{python}
+import numpy as np
+
+np_array = np.array(number_list)
+
+vectorized_fn = np.vectorize(lambda x: x*x)
+
+result = vectorized_fn(np_array)
+print(result)
+```
+
+## Exercises
+
+1. Write a version of curried function `c_5` using lambda syntax.
+2. Write a program calculating a factorial using parallelisation and `map-reduce`.
+3. Write a parallelised version of `reduce` (hint: use chunking).
+4. Compare performance of Numpy vectorization vs parallel map on a really large array of integers.
+5. Using computations from previous labs, apply chunking approach to `df.apply(...)` using parallel map.
