@@ -1,0 +1,1686 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.24">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Docker – Big Data analytics / Applied Data analytics</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dc55a5b9e770e841cd82e46aadbfb9b0.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-5b4ad623e5705c0698d39aec6f10cf02.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="../../styles.css">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="../../index.html" class="navbar-brand navbar-brand-logo">
+    </a>
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">Big Data analytics / Applied Data analytics</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../bigdata.html"> 
+<span class="menu-text">Big Data analytics</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../applied.html"> 
+<span class="menu-text">Applied Data analytics</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../about.html"> 
+<span class="menu-text">About</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#running" id="toc-running" class="nav-link active" data-scroll-target="#running">Running</a></li>
+  <li><a href="#images" id="toc-images" class="nav-link" data-scroll-target="#images">Images</a>
+  <ul class="collapse">
+  <li><a href="#multi-stage-image-builds" id="toc-multi-stage-image-builds" class="nav-link" data-scroll-target="#multi-stage-image-builds">Multi-stage image builds</a></li>
+  <li><a href="#example-python-env" id="toc-example-python-env" class="nav-link" data-scroll-target="#example-python-env">Example python env</a></li>
+  </ul></li>
+  <li><a href="#volumes" id="toc-volumes" class="nav-link" data-scroll-target="#volumes">Volumes</a></li>
+  <li><a href="#networks" id="toc-networks" class="nav-link" data-scroll-target="#networks">Networks</a>
+  <ul class="collapse">
+  <li><a href="#running-containers-in-the-same-network-namespace" id="toc-running-containers-in-the-same-network-namespace" class="nav-link" data-scroll-target="#running-containers-in-the-same-network-namespace">Running containers in the same network namespace</a></li>
+  <li><a href="#port-mapping" id="toc-port-mapping" class="nav-link" data-scroll-target="#port-mapping">Port mapping</a></li>
+  </ul></li>
+  <li><a href="#docker-compose" id="toc-docker-compose" class="nav-link" data-scroll-target="#docker-compose">Docker Compose</a></li>
+  <li><a href="#exercises" id="toc-exercises" class="nav-link" data-scroll-target="#exercises">Exercises</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Docker</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="running" class="level2">
+<h2 class="anchored" data-anchor-id="running">Running</h2>
+<p>Download Docker from https://www.docker.com/products/docker-desktop/.</p>
+<p>Install it, give it admin permissions if asked.</p>
+<p>Most of the commands listed below can be executed from within Jupyter notebook, by prefixing with an exclamation mark (<code>!</code>). However, some things require running from the shell. On Unix-like systems, it’s called <strong>Terminal</strong>. On Windows, it’s <strong>Command Prompt</strong>.</p>
+<p>Check that Docker is installed by running <code>docker version</code>:</p>
+<div id="2f44b325-dd2a-49a8-82ff-3bc859481b28" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker version</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Client:
+ Version:           27.2.0
+ API version:       1.47
+ Go version:        go1.21.13
+ Git commit:        3ab4256
+ Built:             Tue Aug 27 14:14:45 2024
+ OS/Arch:           darwin/arm64
+ Context:           desktop-linux
+
+Server: Docker Desktop 4.34.3 (170107)
+ Engine:
+  Version:          27.2.0
+  API version:      1.47 (minimum version 1.24)
+  Go version:       go1.21.13
+  Git commit:       3ab5c7d
+  Built:            Tue Aug 27 14:15:41 2024
+  OS/Arch:          linux/arm64
+  Experimental:     false
+ containerd:
+  Version:          1.7.20
+  GitCommit:        8fc6bcff51318944179630522a095cc9dbf9f353
+ runc:
+  Version:          1.1.13
+  GitCommit:        v1.1.13-0-g58aa920
+ docker-init:
+  Version:          0.19.0
+  GitCommit:        de40ad0</code></pre>
+</div>
+</div>
+<p>All Docker commands are grouped into categories (e.g.&nbsp;<code>container</code>, <code>image</code>, <code>volume</code>, etc.).</p>
+<p>So if you want to work on images, the corresponding command will start with <code>docker image</code>, on networks - with <code>docker network</code>, and so on.</p>
+<p>If not category is listed, <code>container</code> is assumed by default.</p>
+<p>Let’s run an extremely simple container, and execute some command in it.</p>
+<div id="56360a6a-ef73-4730-bf44-fe9eb88d327e" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker container run alpine echo <span class="st">"Hello World"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Unable to find image 'alpine:latest' locally
+latest: Pulling from library/alpine
+
+c63912e1: Download complete MB/4.088MBDigest: sha256:beefdbd8a1da6d2915566fde36db9db0b524eb737fc57cd1367effd16dc0d06d
+Status: Downloaded newer image for alpine:latest
+Hello World</code></pre>
+</div>
+</div>
+<p>the above command has 4 parts:</p>
+<ol type="1">
+<li><code>container</code> - means that we want to do something with a container (run, remove, etc.)</li>
+<li><code>run</code> - we will run the container</li>
+<li><code>alpine</code> - this is the name of the image to run inside the container. <code>Alpine</code> is a simple Linux version optimized for containers, with very small footprint</li>
+<li>and, finally, <code>echo "Hello World"</code> is the command we want to immediately execute inside the container.</li>
+</ol>
+<p>Let’s try another image, this time <code>centos</code> (another popular Linux distribution):</p>
+<div id="44a0c175-beaa-431f-8a4b-cfafcbee2a57" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker container run centos ping <span class="op">-</span>c <span class="dv">5</span> <span class="fl">127.0.0.1</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Unable to find image 'centos:latest' locally
+latest: Pulling from library/centos
+
+ef134af7: Download complete MB/83.94MBDigest: sha256:a27fd8080b517143cbbbab9dfb7c8571c40d67d534bbdee55bd6c473f432b177
+Status: Downloaded newer image for centos:latest
+PING 127.0.0.1 (127.0.0.1) 56(84) bytes of data.
+64 bytes from 127.0.0.1: icmp_seq=1 ttl=64 time=0.041 ms
+64 bytes from 127.0.0.1: icmp_seq=2 ttl=64 time=0.099 ms
+64 bytes from 127.0.0.1: icmp_seq=3 ttl=64 time=0.087 ms
+64 bytes from 127.0.0.1: icmp_seq=4 ttl=64 time=0.094 ms
+64 bytes from 127.0.0.1: icmp_seq=5 ttl=64 time=0.074 ms
+
+--- 127.0.0.1 ping statistics ---
+5 packets transmitted, 5 received, 0% packet loss, time 4118ms
+rtt min/avg/max/mdev = 0.041/0.079/0.099/0.020 ms</code></pre>
+</div>
+</div>
+<p>Note that it pings 5 times, and this output is shown in the notebook.</p>
+<p>Now let’s try passing some command <strong><em>options</em></strong>:</p>
+<div id="245170b4-8a99-4252-82f4-de0170ac7f78" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker container run <span class="op">--</span>detach <span class="op">--</span>name trivia fundamentalsofdocker<span class="op">/</span>trivia:ed2</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Here <code>--detach</code> means that we leave it running in the background (no messages pushed to the output cell).</p>
+<p>And <code>--name</code> is there for optionally specifying a container name. If not explicitly given, Docker will assign some name by itself.</p>
+<p>We can list currently running containers with <code>ls</code> command. <code>-l</code> means “provide detailed output”.</p>
+<div id="73d9f8a9-eb37-4a20-9407-5d54dd1ded40" class="cell" data-execution_count="6">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker container ls <span class="op">-</span>l</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>CONTAINER ID   IMAGE                             COMMAND                  CREATED          STATUS          PORTS     NAMES
+bca55b773358   fundamentalsofdocker/trivia:ed2   "/bin/sh -c 'source …"   27 seconds ago   Up 26 seconds             trivia</code></pre>
+</div>
+</div>
+<p>And we can remove a container with <code>rm</code>. <code>--force</code> option is there so that Docker does not complain that the container in question is still running. Note that we skip the <code>container</code> part, as by default it’s <code>container</code> anyway.</p>
+<div id="74a731d9-983b-4991-8c4c-8ac2d0185b60" class="cell" data-execution_count="18">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker rm <span class="op">--</span>force trivia</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Cannot connect to the Docker daemon at unix:///Users/vitvly/.docker/run/docker.sock. Is the docker daemon running?</code></pre>
+</div>
+</div>
+<p>Now we shouldn’t see any running containers:</p>
+<div id="f1cbb9a3-1a85-42d6-88ec-6f62c19ca878" class="cell" data-execution_count="9">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker container ls</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES</code></pre>
+</div>
+</div>
+<p>We can also passing a <code>-a</code> option. This will list all containers, not only the currently running ones.</p>
+<div id="3416bb43-635f-4f95-b882-298fb55ec008" class="cell" data-execution_count="11">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker container ls <span class="op">-</span>a</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>CONTAINER ID   IMAGE                 COMMAND                  CREATED          STATUS                      PORTS     NAMES
+e0a8ea8c48e9   centos                "ping -c 5 127.0.0.1"    54 minutes ago   Exited (0) 54 minutes ago             nifty_neumann
+98beda218482   alpine                "echo 'Hello World'"     56 minutes ago   Exited (0) 56 minutes ago             quizzical_pascal
+44fe2fb9314d   alpine                "echo 'Hello World'"     57 minutes ago   Exited (0) 57 minutes ago             crazy_bouman
+ab7337959b5e   quay.io/minio/minio   "/usr/bin/docker-ent…"   6 days ago       Exited (0) 6 days ago                 minio</code></pre>
+</div>
+</div>
+<p>Take some time to examine the list and columns.</p>
+<p>The <code>-q</code> option will only list container IDs:</p>
+<div id="05ec2d2a-5b12-4838-91f8-07858c40ec4e" class="cell" data-execution_count="12">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker container ls <span class="op">-</span>a <span class="op">-</span>q</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>e0a8ea8c48e9
+98beda218482
+44fe2fb9314d
+ab7337959b5e</code></pre>
+</div>
+</div>
+<p>Also, you can invoke <code>--help</code> command option to list all available options for particular command:</p>
+<div id="0ca7a4b6-80c2-43f6-b600-7f8e5d2d07f0" class="cell" data-execution_count="19">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker container ls <span class="op">--</span><span class="bu">help</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Usage:  docker container ls [OPTIONS]
+
+List containers
+
+Aliases:
+  docker container ls, docker container list, docker container ps, docker ps
+
+Options:
+  -a, --all             Show all containers (default shows just running)
+  -f, --filter filter   Filter output based on conditions provided
+      --format string   Format output using a custom template:
+                        'table':            Print output in table format
+                        with column headers (default)
+                        'table TEMPLATE':   Print output in table format
+                        using the given Go template
+                        'json':             Print in JSON format
+                        'TEMPLATE':         Print output using the given
+                        Go template.
+                        Refer to https://docs.docker.com/go/formatting/
+                        for more information about formatting output with
+                        templates
+  -n, --last int        Show n last created containers (includes all
+                        states) (default -1)
+  -l, --latest          Show the latest created container (includes all
+                        states)
+      --no-trunc        Don't truncate output
+  -q, --quiet           Only display container IDs
+  -s, --size            Display total file sizes</code></pre>
+</div>
+</div>
+<p>There is also a <code>stop</code> container command that stops a container by ID or name:</p>
+<div id="82cab760-c2fd-42f9-b948-89c5acca48ed" class="cell" data-execution_count="21">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker container stop trivia</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>trivia</code></pre>
+</div>
+</div>
+<p>After stopping, container will be down, but not removed, hence visible in the output of <code>ls -a</code>:</p>
+<div id="556e552f-1882-4efd-8218-8396475a382d" class="cell" data-execution_count="22">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker container ls <span class="op">-</span>aq</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>576a24020ffd</code></pre>
+</div>
+</div>
+<p>We can start the container again via <code>start</code> command:</p>
+<div id="8fbe332f-12ac-4cee-8375-ff0219cd6063" class="cell" data-execution_count="23">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker container start <span class="dv">576</span><span class="er">a24020ffd</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>576a24020ffd</code></pre>
+</div>
+</div>
+<div id="bfbc9ecb-7c73-4a02-aebd-6c7f5f22fbb5" class="cell" data-execution_count="24">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker container stop trivia</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>trivia</code></pre>
+</div>
+</div>
+<div id="bb15b0e0-a323-4062-a131-ff8993d496e5" class="cell" data-execution_count="26">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker container ls <span class="op">-</span>a</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>CONTAINER ID   IMAGE                             COMMAND                  CREATED         STATUS                        PORTS     NAMES
+576a24020ffd   fundamentalsofdocker/trivia:ed2   "/bin/sh -c 'source …"   3 minutes ago   Exited (137) 27 seconds ago             trivia</code></pre>
+</div>
+</div>
+<p>Now, we can <strong><em>inspect</em></strong> the container via <code>inspect</code> command:</p>
+<div id="332e9479-23cd-45c6-89c8-496740eda046" class="cell" data-execution_count="38">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker container inspect trivia</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[
+    {
+        "Id": "3eb3a1011d623c9c13c22ba6b0130b34b0db071c5e9f96254a9f76bfe1ffb81d",
+        "Created": "2024-11-05T10:35:21.679070631Z",
+        "Path": "/bin/sh",
+        "Args": [
+            "-c",
+            "source script.sh"
+        ],
+        "State": {
+            "Status": "running",
+            "Running": true,
+            "Paused": false,
+            "Restarting": false,
+            "OOMKilled": false,
+            "Dead": false,
+            "Pid": 1825,
+            "ExitCode": 0,
+            "Error": "",
+            "StartedAt": "2024-11-05T10:35:21.711150631Z",
+            "FinishedAt": "0001-01-01T00:00:00Z"
+        },
+        "Image": "sha256:0bb60b6958950c25f7946646eaa6deb9f1db1597d8fbe70d869d67123066dfda",
+        "ResolvConfPath": "/var/lib/docker/containers/3eb3a1011d623c9c13c22ba6b0130b34b0db071c5e9f96254a9f76bfe1ffb81d/resolv.conf",
+        "HostnamePath": "/var/lib/docker/containers/3eb3a1011d623c9c13c22ba6b0130b34b0db071c5e9f96254a9f76bfe1ffb81d/hostname",
+        "HostsPath": "/var/lib/docker/containers/3eb3a1011d623c9c13c22ba6b0130b34b0db071c5e9f96254a9f76bfe1ffb81d/hosts",
+        "LogPath": "/var/lib/docker/containers/3eb3a1011d623c9c13c22ba6b0130b34b0db071c5e9f96254a9f76bfe1ffb81d/3eb3a1011d623c9c13c22ba6b0130b34b0db071c5e9f96254a9f76bfe1ffb81d-json.log",
+        "Name": "/trivia",
+        "RestartCount": 0,
+        "Driver": "overlayfs",
+        "Platform": "linux",
+        "MountLabel": "",
+        "ProcessLabel": "",
+        "AppArmorProfile": "",
+        "ExecIDs": null,
+        "HostConfig": {
+            "Binds": null,
+            "ContainerIDFile": "",
+            "LogConfig": {
+                "Type": "json-file",
+                "Config": {}
+            },
+            "NetworkMode": "bridge",
+            "PortBindings": {},
+            "RestartPolicy": {
+                "Name": "no",
+                "MaximumRetryCount": 0
+            },
+            "AutoRemove": false,
+            "VolumeDriver": "",
+            "VolumesFrom": null,
+            "ConsoleSize": [
+                24,
+                80
+            ],
+            "CapAdd": null,
+            "CapDrop": null,
+            "CgroupnsMode": "private",
+            "Dns": [],
+            "DnsOptions": [],
+            "DnsSearch": [],
+            "ExtraHosts": null,
+            "GroupAdd": null,
+            "IpcMode": "private",
+            "Cgroup": "",
+            "Links": null,
+            "OomScoreAdj": 0,
+            "PidMode": "",
+            "Privileged": false,
+            "PublishAllPorts": false,
+            "ReadonlyRootfs": false,
+            "SecurityOpt": null,
+            "UTSMode": "",
+            "UsernsMode": "",
+            "ShmSize": 67108864,
+            "Runtime": "runc",
+            "Isolation": "",
+            "CpuShares": 0,
+            "Memory": 0,
+            "NanoCpus": 0,
+            "CgroupParent": "",
+            "BlkioWeight": 0,
+            "BlkioWeightDevice": [],
+            "BlkioDeviceReadBps": [],
+            "BlkioDeviceWriteBps": [],
+            "BlkioDeviceReadIOps": [],
+            "BlkioDeviceWriteIOps": [],
+            "CpuPeriod": 0,
+            "CpuQuota": 0,
+            "CpuRealtimePeriod": 0,
+            "CpuRealtimeRuntime": 0,
+            "CpusetCpus": "",
+            "CpusetMems": "",
+            "Devices": [],
+            "DeviceCgroupRules": null,
+            "DeviceRequests": null,
+            "MemoryReservation": 0,
+            "MemorySwap": 0,
+            "MemorySwappiness": null,
+            "OomKillDisable": null,
+            "PidsLimit": null,
+            "Ulimits": [],
+            "CpuCount": 0,
+            "CpuPercent": 0,
+            "IOMaximumIOps": 0,
+            "IOMaximumBandwidth": 0,
+            "MaskedPaths": [
+                "/proc/asound",
+                "/proc/acpi",
+                "/proc/kcore",
+                "/proc/keys",
+                "/proc/latency_stats",
+                "/proc/timer_list",
+                "/proc/timer_stats",
+                "/proc/sched_debug",
+                "/proc/scsi",
+                "/sys/firmware",
+                "/sys/devices/virtual/powercap"
+            ],
+            "ReadonlyPaths": [
+                "/proc/bus",
+                "/proc/fs",
+                "/proc/irq",
+                "/proc/sys",
+                "/proc/sysrq-trigger"
+            ]
+        },
+        "GraphDriver": {
+            "Data": null,
+            "Name": "overlayfs"
+        },
+        "Mounts": [],
+        "Config": {
+            "Hostname": "3eb3a1011d62",
+            "Domainname": "",
+            "User": "",
+            "AttachStdin": false,
+            "AttachStdout": false,
+            "AttachStderr": false,
+            "Tty": false,
+            "OpenStdin": false,
+            "StdinOnce": false,
+            "Env": [
+                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+            ],
+            "Cmd": [
+                "/bin/sh",
+                "-c",
+                "source script.sh"
+            ],
+            "Image": "fundamentalsofdocker/trivia:ed2",
+            "Volumes": null,
+            "WorkingDir": "/app",
+            "Entrypoint": null,
+            "OnBuild": null,
+            "Labels": {}
+        },
+        "NetworkSettings": {
+            "Bridge": "",
+            "SandboxID": "6d9a80b1b1af3d5d834c4af2147d93288b33f62c277ae3f2b8ff660e94555d8a",
+            "SandboxKey": "/var/run/docker/netns/6d9a80b1b1af",
+            "Ports": {},
+            "HairpinMode": false,
+            "LinkLocalIPv6Address": "",
+            "LinkLocalIPv6PrefixLen": 0,
+            "SecondaryIPAddresses": null,
+            "SecondaryIPv6Addresses": null,
+            "EndpointID": "4fa0a42a9e4f9fbbaa976e7b2e7c001a207b4c9ba7d7e375804f2ff155c17575",
+            "Gateway": "172.17.0.1",
+            "GlobalIPv6Address": "",
+            "GlobalIPv6PrefixLen": 0,
+            "IPAddress": "172.17.0.2",
+            "IPPrefixLen": 16,
+            "IPv6Gateway": "",
+            "MacAddress": "02:42:ac:11:00:02",
+            "Networks": {
+                "bridge": {
+                    "IPAMConfig": null,
+                    "Links": null,
+                    "Aliases": null,
+                    "MacAddress": "02:42:ac:11:00:02",
+                    "DriverOpts": null,
+                    "NetworkID": "6c12aa86d2281ae2cc59f894cb088749e4d638f3fc679396209fb3e7ffd953be",
+                    "EndpointID": "4fa0a42a9e4f9fbbaa976e7b2e7c001a207b4c9ba7d7e375804f2ff155c17575",
+                    "Gateway": "172.17.0.1",
+                    "IPAddress": "172.17.0.2",
+                    "IPPrefixLen": 16,
+                    "IPv6Gateway": "",
+                    "GlobalIPv6Address": "",
+                    "GlobalIPv6PrefixLen": 0,
+                    "DNSNames": null
+                }
+            }
+        }
+    }
+]</code></pre>
+</div>
+</div>
+<p>Also, we can <strong><em>execute</em></strong> an arbitrary command inside the running container via <code>exec</code>.</p>
+<p><strong>Note:</strong> the below two examples has to be run inside Command Prompt:</p>
+<ol type="1">
+<li></li>
+</ol>
+<pre><code>docker container exec -it trivia /bin/sh</code></pre>
+<ol start="2" type="1">
+<li></li>
+</ol>
+<pre><code>docker container exec trivia ps</code></pre>
+<p>Now let’s remove the container (note that we don’t need <code>--force</code> option as it’s already stopped):</p>
+<div id="eaf3dcc0-ce64-46f5-9ffe-b905d17ac0a3" class="cell" data-execution_count="27">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker container rm <span class="dv">576</span><span class="er">a24020ffd</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>576a24020ffd</code></pre>
+</div>
+</div>
+<div id="d9e27946-ccab-4d9f-9b0e-abd0d232c150" class="cell" data-execution_count="28">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker container ls <span class="op">-</span>a</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES</code></pre>
+</div>
+</div>
+<p>In order to wrap up the container section, let’s run a web server inside Docker:</p>
+<div id="0333d71e-35f2-40e6-a5b3-21629ed140f6" class="cell" data-execution_count="44">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker container run <span class="op">-</span>d <span class="op">--</span>name nginx <span class="op">-</span>p <span class="dv">8080</span>:<span class="dv">80</span> nginx:alpine</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Unable to find image 'nginx:alpine' locally
+alpine: Pulling from library/nginx
+
+ee71aeeb: Pulling fs layer 
+c7406b65: Pulling fs layer 
+64b3e722: Pulling fs layer 
+18b1a2c5: Pulling fs layer 
+df5b8f8a: Pulling fs layer 
+342cad58: Pulling fs layer 
+ee71aeeb: Download complete MB/15.63MBDigest: sha256:2140dad235c130ac861018a4e13a6bc8aea3a35f3a40e20c1b060d51a7efd250
+Status: Downloaded newer image for nginx:alpine
+29176eb030b5fe2bab3b9f68a00d350058f742926a405c303e9fe34077429afd</code></pre>
+</div>
+</div>
+<p>Note that above <code>-d</code> is a short form of <code>--detach</code>, and <code>-p 8080:80</code> maps ports: from 80 inside the container to 8080 on your machine.</p>
+<p>If you now go to http://localhost:8080, you should see a Nginx welcome page.</p>
+<p>Now remove the container and check that no other containers remain:</p>
+<div id="b9faf06a-f4cd-4958-a349-9b4170926931" class="cell" data-execution_count="45">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker container rm nginx</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>nginx</code></pre>
+</div>
+</div>
+<div id="dc98dd29-90a0-4e0b-a93a-606d5094c6c0" class="cell" data-execution_count="46">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker container ls <span class="op">-</span>a</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES</code></pre>
+</div>
+</div>
+</section>
+<section id="images" class="level2">
+<h2 class="anchored" data-anchor-id="images">Images</h2>
+<p>Docker images are descriptions of what software needs to be run inside a Docker container. In other words, containers are running instances of images.</p>
+<p>Inside <code>pinger</code> subdir, there is a Dockerfile with the below contents:</p>
+<pre><code>FROM alpine:3.17
+ENTRYPOINT [ "ping" ]
+CMD [ "-c", "3", "8.8.8.8" ]</code></pre>
+<p>Each line in the file specifies the steps required to build the image. These steps can also be though of as <em>layers</em>.</p>
+<ol type="1">
+<li>We select <code>alpine:3.17</code> as the base to start from (this means Alpine Linux version 3.17)</li>
+<li>We specify the command to run upon container startup via <code>ENTRYPOINT</code></li>
+<li>And specify the parameters to the command via <code>CMD</code>. The arguments to <code>CMD</code> can be overridden on-the-fly when we run the container.</li>
+</ol>
+<p><strong>Note:</strong> it’s possible to specify everything inside <code>CMD</code>, not using <code>ENTRYPOINT</code>. But in that case we will not be able to override the default <code>CMD</code>.</p>
+<p>We can now <strong><em>build</em></strong> the image via the below command:</p>
+<div id="acc7b138-1e20-4e04-bb49-d3a52b7c46bb" class="cell" data-execution_count="27">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker image build <span class="op">-</span>t img_pinger pinger</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<div class="ansi-escaped-output">
+<pre>[+] Building 0.0s (0/1)                                    docker:desktop-linux
+
+[+] Building 0.2s (1/2)                                    docker:desktop-linux
+
+<span class="ansi-blue-fg"> =&gt; [internal] load build definition from Dockerfile                       0.0s
+
+</span><span class="ansi-blue-fg"> =&gt; =&gt; transferring dockerfile: 105B                                       0.0s
+
+</span> =&gt; [internal] load metadata for docker.io/library/alpine:3.17             0.2s
+
+[+] Building 0.3s (1/2)                                    docker:desktop-linux
+
+<span class="ansi-blue-fg"> =&gt; [internal] load build definition from Dockerfile                       0.0s
+
+</span><span class="ansi-blue-fg"> =&gt; =&gt; transferring dockerfile: 105B                                       0.0s
+
+</span> =&gt; [internal] load metadata for docker.io/library/alpine:3.17             0.3s
+
+[+] Building 0.5s (1/2)                                    docker:desktop-linux
+
+<span class="ansi-blue-fg"> =&gt; [internal] load build definition from Dockerfile                       0.0s
+
+</span><span class="ansi-blue-fg"> =&gt; =&gt; transferring dockerfile: 105B                                       0.0s
+
+</span> =&gt; [internal] load metadata for docker.io/library/alpine:3.17             0.5s
+
+[+] Building 0.6s (2/2)                                    docker:desktop-linux
+
+<span class="ansi-blue-fg"> =&gt; [internal] load build definition from Dockerfile                       0.0s
+
+</span><span class="ansi-blue-fg"> =&gt; =&gt; transferring dockerfile: 105B                                       0.0s
+
+</span><span class="ansi-blue-fg"> =&gt; [internal] load metadata for docker.io/library/alpine:3.17             0.5s
+
+</span>[+] Building 0.6s (5/5) FINISHED                           docker:desktop-linux
+
+<span class="ansi-blue-fg"> =&gt; [internal] load build definition from Dockerfile                       0.0s
+
+</span><span class="ansi-blue-fg"> =&gt; =&gt; transferring dockerfile: 105B                                       0.0s
+
+</span><span class="ansi-blue-fg"> =&gt; [internal] load metadata for docker.io/library/alpine:3.17             0.5s
+
+</span><span class="ansi-blue-fg"> =&gt; [internal] load .dockerignore                                          0.0s
+
+</span><span class="ansi-blue-fg"> =&gt; =&gt; transferring context: 2B                                            0.0s
+
+</span><span class="ansi-blue-fg"> =&gt; CACHED [1/1] FROM docker.io/library/alpine:3.17@sha256:8fc3dacfb6d69d  0.0s
+
+</span><span class="ansi-blue-fg"> =&gt; =&gt; resolve docker.io/library/alpine:3.17@sha256:8fc3dacfb6d69da8d44e4  0.0s
+
+</span><span class="ansi-blue-fg"> =&gt; exporting to image                                                     0.0s
+
+</span><span class="ansi-blue-fg"> =&gt; =&gt; exporting layers                                                    0.0s
+
+</span><span class="ansi-blue-fg"> =&gt; =&gt; exporting manifest sha256:383953e0a21daa0ef49e15ccb95b16baf34206b1  0.0s
+
+</span><span class="ansi-blue-fg"> =&gt; =&gt; exporting config sha256:6af8d3801a6161970741b5d861640886c38e9f0eb7  0.0s
+
+</span><span class="ansi-blue-fg"> =&gt; =&gt; exporting attestation manifest sha256:f004624c2b5b8f6ad6f7b7438d77  0.0s
+
+</span><span class="ansi-blue-fg"> =&gt; =&gt; exporting manifest list sha256:46ffb548a5964a6c10471dc88be75b3aa76  0.0s
+
+</span><span class="ansi-blue-fg"> =&gt; =&gt; naming to docker.io/library/img_pinger:latest                       0.0s
+
+</span><span class="ansi-blue-fg"> =&gt; =&gt; unpacking to docker.io/library/img_pinger:latest                    0.0s
+
+</span><span class="ansi-bold">
+
+What's next:</span>
+
+    View a summary of image vulnerabilities and recommendations → <span class="ansi-cyan-fg">docker scout quickview </span>
+</pre>
+</div>
+</div>
+</div>
+<p>In the above command, <code>-t</code> option specifies the <strong>name</strong> for the image.</p>
+<p>Last argument, <code>pinger</code>, specifies the folder in which to look for the Dockerfile. Alternatively, you can use Windows Command Prompt and <code>cd</code> to <code>pinger</code> directory and run the build from there. In that case, the command will look like this: <code>!docker image build -t img_pinger .</code> The <code>.</code> (dot) stands for current directory.</p>
+<p>We can run the image we’ve just built via:</p>
+<div id="f0338a0a-6a4e-4640-8d90-5d12f72ab0a3" class="cell" data-execution_count="28">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker container run <span class="op">--</span>rm img_pinger</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>PING 8.8.8.8 (8.8.8.8): 56 data bytes
+64 bytes from 8.8.8.8: seq=0 ttl=63 time=24.228 ms
+64 bytes from 8.8.8.8: seq=1 ttl=63 time=30.638 ms
+64 bytes from 8.8.8.8: seq=2 ttl=63 time=26.928 ms
+
+--- 8.8.8.8 ping statistics ---
+3 packets transmitted, 3 packets received, 0% packet loss
+round-trip min/avg/max = 24.228/27.264/30.638 ms</code></pre>
+</div>
+</div>
+<p>The <code>--rm</code> option in the above command means that we should immediately delete the container after stopping.</p>
+<p>We can also provide custom arguments to the <code>ping</code> <code>ENTRYPOINT</code>, as discussed above:</p>
+<div id="04c5a16d-1f5d-4301-9364-943413048687" class="cell" data-execution_count="48">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb48"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker container run <span class="op">--</span>rm <span class="op">-</span>it img_pinger <span class="op">-</span>w <span class="dv">5</span> <span class="fl">127.0.0.1</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>PING 127.0.0.1 (127.0.0.1): 56 data bytes
+64 bytes from 127.0.0.1: seq=0 ttl=64 time=0.035 ms
+64 bytes from 127.0.0.1: seq=1 ttl=64 time=0.138 ms
+64 bytes from 127.0.0.1: seq=2 ttl=64 time=0.105 ms
+64 bytes from 127.0.0.1: seq=3 ttl=64 time=0.137 ms
+64 bytes from 127.0.0.1: seq=4 ttl=64 time=0.136 ms
+
+--- 127.0.0.1 ping statistics ---
+5 packets transmitted, 5 packets received, 0% packet loss
+round-trip min/avg/max = 0.035/0.110/0.138 ms</code></pre>
+</div>
+</div>
+<p>Note that thanks to <code>--rm</code>, we don’t have any containers lying around after stopping:</p>
+<div id="2ddbb31c-3827-431b-85be-ad8cbc8cd364" class="cell" data-execution_count="49">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb50"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker container ls <span class="op">-</span>a</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES</code></pre>
+</div>
+</div>
+<p>Currently downloaded (or built) images can be viewed via <code>ls</code> subcommand:</p>
+<div id="d915a53d-fe0d-4fcf-a9c5-104593b62a0c" class="cell" data-execution_count="50">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb52"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker image ls</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>REPOSITORY                    TAG       IMAGE ID       CREATED       SIZE
+quay.io/minio/minio           latest    9535594ad412   3 weeks ago   217MB
+nginx                         alpine    2140dad235c1   4 weeks ago   76.7MB
+pinger                        latest    60cf059f4580   8 weeks ago   11.4MB
+alpine                        latest    beefdbd8a1da   8 weeks ago   13.6MB
+centos                        latest    a27fd8080b51   3 years ago   380MB
+fundamentalsofdocker/trivia   ed2       0bb60b695895   5 years ago   13.1MB</code></pre>
+</div>
+</div>
+<p>Similarly to how <code>rm</code> behaves for containers, we can remove images as well:</p>
+<div id="8a492bc3-1480-4e0c-96b3-8042c9daba41" class="cell" data-execution_count="51">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb54"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker image rm centos</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Untagged: centos:latest
+Deleted: sha256:a27fd8080b517143cbbbab9dfb7c8571c40d67d534bbdee55bd6c473f432b177</code></pre>
+</div>
+</div>
+<div id="0dc9feb6-c286-44f6-ae38-4a0fd3c3ce7d" class="cell" data-execution_count="52">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb56"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker image ls</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>REPOSITORY                    TAG       IMAGE ID       CREATED       SIZE
+quay.io/minio/minio           latest    9535594ad412   3 weeks ago   217MB
+nginx                         alpine    2140dad235c1   4 weeks ago   76.7MB
+pinger                        latest    60cf059f4580   8 weeks ago   11.4MB
+alpine                        latest    beefdbd8a1da   8 weeks ago   13.6MB
+fundamentalsofdocker/trivia   ed2       0bb60b695895   5 years ago   13.1MB</code></pre>
+</div>
+</div>
+<section id="multi-stage-image-builds" class="level3">
+<h3 class="anchored" data-anchor-id="multi-stage-image-builds">Multi-stage image builds</h3>
+<p>Consider the below, much more complicated, Dockerfile:</p>
+<pre><code>FROM alpine:3.12 AS build
+RUN apk update &amp;&amp; \
+apk add --update alpine-sdk
+RUN mkdir /app
+WORKDIR /app
+COPY . /app
+RUN mkdir bin
+RUN gcc -Wall hello.c -o bin/hello
+
+FROM alpine:3.12
+COPY --from=build /app/bin/hello /app/hello
+CMD /app/hello</code></pre>
+<p>It’s located under <code>hello_c</code> subdir.</p>
+<p>This file describes a two-stage build (it has 2 <code>FROM</code> directives).</p>
+<p>During first stage: 1. We use <code>alpine:3.12</code> as the base image, and name it <code>build</code>. 2. Then, <code>RUN</code> a package update command that will install the C compiler. 3. Then <code>RUN mkdir /app</code> will create a directory inside the image. 4. <code>WORKDIR /app</code> will switch current build dir to <code>/app/</code>, so that all subsequent commands like <code>RUN</code> or <code>COPY</code> are executed from within that dir. 5. <code>COPY . /app</code> will copy the files from <code>.</code> on your machine (the folder in which Dockerfile is located, <code>hello_c</code>) to <code>/app</code> inside the image. 6. <code>RUN mkdir bin</code> will create additional dir named <code>bin</code>. As we are inside <code>/app</code> WORKDIR now, the resulting dir will be <code>/app/bin</code> 7. <code>RUN gcc -Wall hello.c -o bin/hello</code> will compile <code>hello.c</code> and put the result into <code>/app/bin</code>.</p>
+<p>Now, during second stage: 1. We use <code>alpine:3.12</code> as the base image. 2. We use <code>COPY --from=build</code> so that to tell Docker that we are copying not from our machine, but from the temporary <code>build</code> from stage 1. 3. Then we use <code>CMD</code> to specify which command should run upon container startup.</p>
+<p>We can build the Dockerfile via <code>docker image build -t hello-c .</code> from within <code>hello_c</code> subdirectory.</p>
+<p>Now we can see the image we just built via <code>ls</code> subcommand:</p>
+<div id="fa8e561e-0586-4301-ac6a-2f8cde58e981" class="cell" data-execution_count="30">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb59"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker image ls</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>REPOSITORY       TAG       IMAGE ID       CREATED          SIZE
+hello-c          latest    4254b85ed709   28 seconds ago   8.72MB
+redis-web        latest    353a1799536c   6 days ago       313MB
+new-web          latest    fbe8c83422a0   6 days ago       313MB
+redis            alpine    f9f38fd31d4d   6 weeks ago      70.7MB
+postgres         alpine    38a37cc842c0   7 weeks ago      370MB
+dpage/pgadmin4   latest    585350593e8b   2 months ago     732MB
+img_pinger       latest    46ffb548a596   2 months ago     11.4MB
+pinger           latest    9d7e73baada8   2 months ago     11.4MB
+hello-world      latest    305243c73457   18 months ago    21kB</code></pre>
+</div>
+</div>
+<p>And we can run it via:</p>
+<div id="cb593f16-3435-4ab9-a3a2-6023351afd4c" class="cell" data-execution_count="31">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb61"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker container run hello<span class="op">-</span>c</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Hello, world!</code></pre>
+</div>
+</div>
+<p>Now remove it:</p>
+<div id="cfbcf60b-22f3-462f-8e97-567ffc84b8fa" class="cell" data-execution_count="34">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb63"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker image rm <span class="op">-</span>f hello<span class="op">-</span>c</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Untagged: hello-c:latest</code></pre>
+</div>
+</div>
+<div id="8947f5bb-7002-45e0-adf4-88c6d3de7673" class="cell" data-execution_count="36">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb65"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker image ls</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>REPOSITORY       TAG       IMAGE ID       CREATED              SIZE
+&lt;none&gt;           &lt;none&gt;    4254b85ed709   About a minute ago   8.72MB
+new-web          latest    fbe8c83422a0   6 days ago           313MB
+redis-web        latest    353a1799536c   6 days ago           313MB
+redis            alpine    f9f38fd31d4d   6 weeks ago          70.7MB
+postgres         alpine    38a37cc842c0   7 weeks ago          370MB
+dpage/pgadmin4   latest    585350593e8b   2 months ago         732MB
+img_pinger       latest    46ffb548a596   2 months ago         11.4MB
+pinger           latest    9d7e73baada8   2 months ago         11.4MB
+hello-world      latest    305243c73457   18 months ago        21kB</code></pre>
+</div>
+</div>
+<p><strong>Note:</strong> image names can use a short form, or be fully qualified:</p>
+<pre><code>&lt;registry URL&gt;/&lt;User or Org&gt;/&lt;name&gt;:&lt;tag&gt;</code></pre>
+<p>In majority of cases, <code>registry URL</code> is hub.docker.com.</p>
+</section>
+<section id="example-python-env" class="level3">
+<h3 class="anchored" data-anchor-id="example-python-env">Example python env</h3>
+<p>Consider the below Dockerfile:</p>
+<pre><code>FROM python:3.13
+
+RUN pip install jupyter
+
+RUN pip install numpy
+
+EXPOSE 8888
+
+CMD ["jupyter", "notebook", "--ip=0.0.0.0", "--no-browser", "--allow-root"]</code></pre>
+<p>This will install jupyter and numpy, and execute <code>jupyter notebook</code> upon container startup.</p>
+</section>
+</section>
+<section id="volumes" class="level2">
+<h2 class="anchored" data-anchor-id="volumes">Volumes</h2>
+<p>The purpose of volumes is a long-term storage of data inside a container. Once container is removed, its data are gone. Volumes exist independently of containers.</p>
+<p>For instance, we can try creating a <code>sample.txt</code> file inside a container:</p>
+<div id="8e95ef5d-e5b5-4f83-b631-6978adf9840e" class="cell" data-execution_count="37">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb69"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker container run <span class="op">--</span>name demo alpine <span class="op">/</span><span class="bu">bin</span><span class="op">/</span>sh <span class="op">-</span>c <span class="st">'echo "This is a test" &gt; sample.txt'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Unable to find image 'alpine:latest' locally
+latest: Pulling from library/alpine
+Digest: sha256:1e42bbe2508154c9126d48c2b8a75420c3544343bf86fd041fb7527e017a4b4a
+Status: Downloaded newer image for alpine:latest</code></pre>
+</div>
+</div>
+<p>Check the difference between base image (alpine) and current instance of the container:</p>
+<div id="d94ba9bb-a34d-4188-bbdd-3f1a8400ebea" class="cell" data-execution_count="38">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb71"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker container diff demo</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>A /sample.txt</code></pre>
+</div>
+</div>
+<p>The file is there, but once container is removed, it will be gone. This is where volumes help.</p>
+<p>Create a volume via:</p>
+<div id="1b50eab6-0a8a-4d4c-b379-c16be50c30f7" class="cell" data-execution_count="60">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb73"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker volume create sample</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>sample</code></pre>
+</div>
+</div>
+<p>Inspect it:</p>
+<div id="d919d63b-b8fb-4929-b3ff-328a3bd61ff2" class="cell" data-execution_count="61">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb75"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker volume inspect sample</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[
+    {
+        "CreatedAt": "2024-11-05T11:47:53Z",
+        "Driver": "local",
+        "Labels": null,
+        "Mountpoint": "/var/lib/docker/volumes/sample/_data",
+        "Name": "sample",
+        "Options": null,
+        "Scope": "local"
+    }
+]</code></pre>
+</div>
+</div>
+<p>Now we can run containers, attach them to the volume, and create some files:</p>
+<pre><code>docker container run --name test -it -v sample:/data alpine /bin/sh</code></pre>
+<p>We attach volumes via <code>-v</code> option. In this case, <code>sample</code> volume is mapped to <code>/data</code> dir inside the container.</p>
+<p><strong>Note:</strong> the <code>-it</code> means that the container run will run in interactive mode. As Jupyter notebook does not support it, the above command has to be run from the Command Prompt.</p>
+<p>Now remove the container:</p>
+<div id="a1269380-80c0-486c-86e2-24d5ac86dd6a" class="cell" data-execution_count="62">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb78"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb78-1"><a href="#cb78-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker container rm test</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>test</code></pre>
+</div>
+</div>
+<p>And create the same container again, attached to the same <code>sample</code> volume. The files you’ve created during first run should still be there.</p>
+<p>Now remove the <code>sample</code> volume:</p>
+<div id="60dfa401-fbed-4dd1-8500-935e5d0894a1" class="cell" data-execution_count="63">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb80"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker volume rm sample</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>sample</code></pre>
+</div>
+</div>
+<p>We can also map local dirs to container dirs, by providing their paths instead of the volume name after <code>-v</code> option:</p>
+<pre><code>docker container run -d --name my-site -v local/html:/usr/share/nginx/html -p 8080:80 nginx:alpine</code></pre>
+</section>
+<section id="networks" class="level2">
+<h2 class="anchored" data-anchor-id="networks">Networks</h2>
+<p>Docker specifies a <code>container networking model</code>. This model defines <strong>software defined networks</strong>, which can be thought of as a way to arrange communications between multiple containers of a single application. Each container, moreover, runs in its own <strong>network namespace</strong> or <strong>sandbox</strong>.</p>
+<p>You can view current networks via <code>network ls</code> command:</p>
+<div id="bf01d473-4530-405e-9cec-7bab2018192b" class="cell" data-execution_count="45">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb83"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb83-1"><a href="#cb83-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker network ls</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>NETWORK ID     NAME      DRIVER    SCOPE
+8d845304bdba   bridge    bridge    local
+a44d5472c247   host      host      local
+33c7de9853f4   none      null      local</code></pre>
+</div>
+</div>
+<p>By default, Docker creates 3 networks: <strong>bridge</strong>, <strong>host</strong>, and <strong>none</strong>.</p>
+<p>The <strong>bridge</strong> network is the default network that containers use.</p>
+<p>We can inspect it:</p>
+<div id="436819b7-566a-4d88-a893-41f357ff3e90" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb85"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb85-1"><a href="#cb85-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker network inspect bridge</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[
+    {
+        "Name": "bridge",
+        "Id": "f8fae2d5aaa07ed9fb7a8a13c0db9f4f29a67947c62897eb1ac3dfb0f86c1929",
+        "Created": "2024-11-12T11:39:44.2291835Z",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": null,
+            "Config": [
+                {
+                    "Subnet": "172.17.0.0/16",
+                    "Gateway": "172.17.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Containers": {},
+        "Options": {
+            "com.docker.network.bridge.default_bridge": "true",
+            "com.docker.network.bridge.enable_icc": "true",
+            "com.docker.network.bridge.enable_ip_masquerade": "true",
+            "com.docker.network.bridge.host_binding_ipv4": "0.0.0.0",
+            "com.docker.network.bridge.name": "docker0",
+            "com.docker.network.driver.mtu": "65535"
+        },
+        "Labels": {}
+    }
+]</code></pre>
+</div>
+</div>
+<p>Pay attention to IPAM node: <code>IP address management</code>. This specifies which addresses will be assigned to containers using this network.</p>
+<p>These addresses are local to the network your machine is running inside of, e.g., your WiFi router network.</p>
+<p>Create a new network:</p>
+<div id="b5089c79-aa3c-492b-b8e6-96b85f13947c" class="cell" data-execution_count="46">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb87"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb87-1"><a href="#cb87-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker network create <span class="op">--</span>driver bridge sample<span class="op">-</span>net</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>f282c4b4cbe2ea77d200f1aea870e07dac85300d6c9adb7d0807a50ba60d14ef</code></pre>
+</div>
+</div>
+<p>And check which subnet it gets assigned:</p>
+<div id="690b2f02-d335-4142-890f-0c350e8a400d" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb89"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb89-1"><a href="#cb89-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker network inspect sample<span class="op">-</span>net <span class="op">|</span> grep Subnet</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>You can provide a custom subnet when creating a network:</p>
+<p>!docker network create –subnet “11.11.0.0/16” test-subnet</p>
+<div id="74c4eef9-263b-40b9-bde2-4aebf9e72901" class="cell" data-execution_count="8">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb90"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb90-1"><a href="#cb90-1" aria-hidden="true" tabindex="-1"></a><span class="op">!!</span>docker network inspect test<span class="op">-</span>subnet <span class="op">|</span> grep Subnet</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="8">
+<pre><code>['                    "Subnet": "11.11.0.0/16"']</code></pre>
+</div>
+</div>
+<p>Now let’s run a couple of containers and check IP addresses they get:</p>
+<p><code>docker container run --name c1 -it --rm alpine:latest /bin/sh</code></p>
+<p>and inside the container:</p>
+<pre><code>/ # ip addr show eth0
+21: eth0@if22: &lt;BROADCAST,MULTICAST,UP,LOWER_UP,M-DOWN&gt; mtu 65535 qdisc noqueue state UP
+    link/ether 02:42:ac:11:00:02 brd ff:ff:ff:ff:ff:ff
+    inet 172.17.0.2/16 brd 172.17.255.255 scope global eth0
+       valid_lft forever preferred_lft forever</code></pre>
+<p>From outside:</p>
+<div id="6662662c-d3b7-4f41-a5fd-db6f57bbcc3f" class="cell" data-execution_count="10">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb93"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb93-1"><a href="#cb93-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker container inspect c1 <span class="op">|</span> grep IPAddress</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>            "SecondaryIPAddresses": null,
+            "IPAddress": "172.17.0.2",
+                    "IPAddress": "172.17.0.2",</code></pre>
+</div>
+</div>
+<p>And another container:</p>
+<div id="7613ab5e-1ed6-4d6e-abcf-9920f0af2aad" class="cell" data-execution_count="11">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb95"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb95-1"><a href="#cb95-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker container run <span class="op">--</span>name c2 <span class="op">-</span>d <span class="op">--</span>rm alpine:latest ping <span class="fl">127.0.0.1</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>691dab6d3f35e5f220a89950b7596683acae06dc5ddf7b0594d15269a56297ef</code></pre>
+</div>
+</div>
+<p>Check its network:</p>
+<div id="c48ca3e4-2f31-47e6-b14c-fa6c3731b863" class="cell" data-execution_count="12">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb97"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb97-1"><a href="#cb97-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker container inspect c2 <span class="op">|</span> grep IPAddress</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>            "SecondaryIPAddresses": null,
+            "IPAddress": "172.17.0.3",
+                    "IPAddress": "172.17.0.3",</code></pre>
+</div>
+</div>
+<p>And now, if we inspect the network, we’ll see those containers attached (recall that <code>bridge</code> is the default network):</p>
+<div id="1a9f0939-b5f2-441c-8f57-4f5ad2bb61e9" class="cell" data-execution_count="13">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb99"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb99-1"><a href="#cb99-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker network inspect bridge</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[
+    {
+        "Name": "bridge",
+        "Id": "80f2302e3302f74de65281dc290cf71acf13634784830883436cb072ab9ac294",
+        "Created": "2024-11-12T12:22:30.525464791Z",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": null,
+            "Config": [
+                {
+                    "Subnet": "172.17.0.0/16",
+                    "Gateway": "172.17.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Containers": {
+            "691dab6d3f35e5f220a89950b7596683acae06dc5ddf7b0594d15269a56297ef": {
+                "Name": "c2",
+                "EndpointID": "d11763fcf4b72cf4af8c1fb5f31c5ce3966de61c96791db1e9b2adf3c547bd0f",
+                "MacAddress": "02:42:ac:11:00:03",
+                "IPv4Address": "172.17.0.3/16",
+                "IPv6Address": ""
+            },
+            "6e5fad01bb8b9a955b2fc215bf8eb724471e2e7a2fcaf662ea099d15abe22302": {
+                "Name": "c1",
+                "EndpointID": "ef027703da6101a7b4e2fd21ec3c71c1de05b9af752ac057d02fe9a37c4347b5",
+                "MacAddress": "02:42:ac:11:00:02",
+                "IPv4Address": "172.17.0.2/16",
+                "IPv6Address": ""
+            }
+        },
+        "Options": {
+            "com.docker.network.bridge.default_bridge": "true",
+            "com.docker.network.bridge.enable_icc": "true",
+            "com.docker.network.bridge.enable_ip_masquerade": "true",
+            "com.docker.network.bridge.host_binding_ipv4": "0.0.0.0",
+            "com.docker.network.bridge.name": "docker0",
+            "com.docker.network.driver.mtu": "65535"
+        },
+        "Labels": {}
+    }
+]</code></pre>
+</div>
+</div>
+<p>Now let’s create two more containers and attach them via <code>--network</code> option to the <code>sample-net</code> network we created earlier:</p>
+<div id="16fe1d60-c8b7-44f0-82cd-f1c8b2117c3d" class="cell" data-execution_count="47">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb101"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb101-1"><a href="#cb101-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker container run <span class="op">--</span>name c3 <span class="op">-</span>d <span class="op">--</span>network sample<span class="op">-</span>net alpine ping <span class="fl">127.0.0.1</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>9ab6bb78688d3a3a5c196acaf735e340f45e080f2391e520448971c134281ed7</code></pre>
+</div>
+</div>
+<div id="3d5a2a3d-6268-46e8-92a6-410dcfa10b31" class="cell" data-execution_count="48">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb103"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb103-1"><a href="#cb103-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker container run <span class="op">--</span>name c4 <span class="op">-</span>d <span class="op">--</span>network sample<span class="op">-</span>net alpine ping <span class="fl">127.0.0.1</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>c6ec9db2b0799850f002968690908f3b7607183dd91f82cf18117b0343a3a1fd</code></pre>
+</div>
+</div>
+<p>Check that hosts are mutually reachable via <code>docker container exec -it c3 /bin/sh</code> and try connecting to c4 (should work) and c1 (should fail).</p>
+<p>Networks can be deleted via <code>rm</code> as usual, or we can use <code>prune</code>:</p>
+<div id="8a52b38a-eeb1-4431-8aa9-a5c61640ffd9" class="cell" data-execution_count="68">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb105"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb105-1"><a href="#cb105-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker network prune <span class="op">--</span>force</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Deleted Networks:
+sample-net
+</code></pre>
+</div>
+</div>
+<p><code>prune</code> can also be used for other object types:</p>
+<pre><code>docker container prune -f
+docker image prune -af
+docker system prune -f</code></pre>
+<p>Similarly to how we can run additional commands via <code>container exec</code>, we can connect currently running to more networks via</p>
+<pre><code>docker network connect &lt;network&gt; &lt;container&gt;</code></pre>
+<p>Another network type, <code>--network host</code> is used to run container connectecd to host’s network. You can check it via</p>
+<pre><code>docker container run --rm -it --name test1 --network host alpine:latest /bin/sh</code></pre>
+<p>and <code>ip addr show eth0</code> inside.</p>
+<section id="running-containers-in-the-same-network-namespace" class="level3">
+<h3 class="anchored" data-anchor-id="running-containers-in-the-same-network-namespace">Running containers in the same network namespace</h3>
+<p>Container can be attached to the network sandbox of another container, so that they share same IP address:</p>
+<div id="9466a4b6-5b17-4427-b9c8-38a09b988dee" class="cell" data-execution_count="71">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb110"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb110-1"><a href="#cb110-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker network create test<span class="op">-</span>net</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>8f3a7cab15b47ca638554b88ed487982669555104a8538c353371c320bc2944c</code></pre>
+</div>
+</div>
+<div id="8de7de59-87a9-4de3-bdee-7f43cb840e6a" class="cell" data-execution_count="72">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb112"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb112-1"><a href="#cb112-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker container run <span class="op">--</span>name web <span class="op">-</span>d <span class="op">--</span>network test<span class="op">-</span>net nginx:alpine</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>cb3c164cc9c444a109cad91fd7a54076946dbc08f66c2472e30e78b49486c826</code></pre>
+</div>
+</div>
+<p>And now use the <code>--network container:&lt;name&gt;</code> syntax to connect to the network sandbox of <code>web</code> container:</p>
+<pre><code>docker container run -it \
+--network container:web \
+alpine /bin/sh</code></pre>
+<p>and then <code>wget -qO - localhost</code> inside to verify they indeed share same address.</p>
+</section>
+<section id="port-mapping" class="level3">
+<h3 class="anchored" data-anchor-id="port-mapping">Port mapping</h3>
+<p>Port mapping allows us to open specific ports inside the container to the outside world.</p>
+<p><code>-P</code> parameter will automatically map ports:<code>docker container run --name web -P -d nginx:alpine</code></p>
+<p><code>docker container port web</code> will show ports we just mapped:</p>
+<pre><code> docker container port web
+80/tcp -&gt; 0.0.0.0:55000</code></pre>
+<p>We can map a specific port via the <code>-p</code> option:</p>
+<div id="ad78fdeb-c65c-4ce5-9dd6-08fe46207a9a" class="cell" data-execution_count="16">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb116"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb116-1"><a href="#cb116-1" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>docker container run <span class="op">--</span>name web2 <span class="op">-</span>p <span class="dv">8080</span>:<span class="dv">80</span> <span class="op">-</span>d nginx:alpine</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>8f58fb31b2e7efe01e8d7c651279e29223e4acbfdc370f5c2ba80802959a8938</code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="docker-compose" class="level2">
+<h2 class="anchored" data-anchor-id="docker-compose">Docker Compose</h2>
+<p>With Docker Compose, applications consisting of several containers can be configured in one file.</p>
+<p>In a sense, Docker Compose allows one to declaratively specify which images and with which options (volumes/environments etc.) should run.</p>
+<p>While Dockerfile uses its own format, Docker Compose files are written in YAML (https://en.wikipedia.org/wiki/YAML).</p>
+<p>Consider a sample <code>docker-compose.yml</code>:</p>
+<pre><code>version: "3.8" 
+services: 
+  db:
+    image: postgres:alpine
+    environment:
+    - POSTGRES_USER=dockeruser
+    - POSTGRES_PASSWORD=dockerpass
+    - POSTGRES_DB=pets
+    volumes:
+    - pg-data:/var/lib/postgresql/data
+    - ./db:/docker-entrypoint-initdb.d
+  
+  pgadmin:
+    image: dpage/pgadmin4
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@acme.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+
+volumes: 
+  pg-data:
+  pgadmin-data:</code></pre>
+<p>This will run 2 containers: one for PostgreSQL, and another for pgAdmin. This file is located in the <code>pg</code> subdir.</p>
+<p>Inside that dir, run</p>
+<pre><code>docker compose up</code></pre>
+<p>to start the containers, press <code>Ctrl+C</code> to stop it, and</p>
+<pre><code>docker compose down</code></pre>
+<p>to cleanup.</p>
+<p>We can also use a <code>build</code> entry to build custom images:</p>
+<pre><code>services:
+  web:
+    build: .
+    ports:
+      - "8000:5000"
+  redis:
+    image: "redis:alpine"</code></pre>
+<p>In the above example, the <code>build: .</code> tells Docker Compose to use the Dockerfile in current directory (<code>.</code>), and for redis, use a stock image named <code>redis:alpine</code>, which it will download from hub.docker.com.</p>
+<p>Full example is in <code>redis</code> subdir.</p>
+<p>If you want to use a custom Dockerfile name, use this syntax instead:</p>
+<pre><code>build:
+  context: web
+  dockerfile: Dockerfile.dev</code></pre>
+<p><code>docker compose up</code>, with <code>-d</code> in order to run in detached mode.</p>
+<p>Note that Docker Compose prefixes all names with the name of the parent folder. This can be overridden with the <code>--project-name</code> option:</p>
+<pre><code>docker compose --project-name demo up</code></pre>
+</section>
+<section id="exercises" class="level2">
+<h2 class="anchored" data-anchor-id="exercises">Exercises</h2>
+<p>For this Lab, extend the problem from Lab 13: 1. Reproduce Python’s venv in Docker. 2. Run Postgres via Docker 3. Connect Python, Postgres, and MinIO service from Lab12.</p>
+<p>with 4. Use Docker compose to declaratively specify environment in items 1-3 above</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/dslnu\.github\.io\/data_analytics\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

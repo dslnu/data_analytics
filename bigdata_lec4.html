@@ -207,425 +207,528 @@ MSDE
 </div>
 
 </section>
-<section id="memory-management" class="slide level2">
-<h2>Memory management</h2>
-<div class="columns">
-<div class="column" data-background-color="lightgray" style="width:50%;">
+<section>
+<section id="intro-to-dags-and-dask" class="title-slide slide level1 center">
+<h1>Intro to DAGs and Dask</h1>
+
+</section>
+<section id="program-as-dag" class="slide level2">
+<h2>Program as DAG</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Representation</strong></p>
+</div>
+<div class="callout-content">
+<p>A parallel program can be represented by a node- and edge-weighted <strong>directed acyclic graph (DAG)</strong>, in which:</p>
+<ul>
+<li><strong>node weights</strong> represent task processing times</li>
+<li><strong>edge weights</strong> represent data dependencies as well as the communication times between tasks.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="program-as-dag-1" class="slide level2">
+<h2>Program as DAG</h2>
+
+<img data-src="img/dag.png" class="r-stretch"></section>
+<section id="program-as-dag-2" class="slide level2">
+<h2>Program as DAG</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Generalization</strong></p>
+</div>
+<div class="callout-content">
+<p>Multithreaded computing can be viewed as a natural generalization of sequential computing in the following sense:</p>
+<ul>
+<li>in <strong>sequential computing</strong>, a computation can be defined as a totally ordered set of instructions, where the ordering corresponds to the sequential execution order;</li>
+<li><strong>in multithreaded computing</strong>, a computation can be viewed as a partially ordered set of instructions (as specified by the DAG), where the instructions may be executed in any order compatible with the specified partial order.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="program-as-dag-3" class="slide level2">
+<h2>Program as DAG</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
-<p><strong>Manual</strong></p>
+<p><strong>Ordering re-cap</strong></p>
 </div>
 <div class="callout-content">
+<p>A binary relation <span class="math inline">\(\preccurlyeq\)</span> on some set <span class="math inline">\(X\)</span> is called a <strong>partial order</strong> if <span class="math inline">\(\forall a,b,c \in X\)</span> the following is true:</p>
 <ul>
-<li>C/C++</li>
-<li>Pascal</li>
-<li>Forth</li>
-<li>Fortran</li>
-<li>Zig</li>
+<li><strong>Reflexivity:</strong> <span class="math inline">\(a \preccurlyeq a\)</span></li>
+<li><strong>Transitiity:</strong> <span class="math inline">\(a \preccurlyeq b, b \preccurlyeq c \Rightarrow a \preccurlyeq c\)</span></li>
+<li><strong>Antisymmetricity:</strong> <span class="math inline">\(a \preccurlyeq b, b \preccurlyeq a \Rightarrow a = b\)</span></li>
 </ul>
+<p>If, additionally, <span class="math inline">\(\forall a,b \ in X\)</span> either <span class="math inline">\(a \preccurlyeq b\)</span> or <span class="math inline">\(b \preccurlyeq a\)</span>, then the order is total.</p>
 </div>
 </div>
 </div>
-</div><div class="column" data-background-color="lightgray" style="width:50%;">
-<div class="callout callout-note no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Automatic</strong></p>
-</div>
-<div class="callout-content">
-<ul>
-<li>Lisp</li>
-<li>Java</li>
-<li>Python</li>
-<li>Go</li>
-<li>Julia</li>
-</ul>
-</div>
-</div>
-</div>
-</div></div>
 </section>
-<section>
-<section id="code-execution" class="title-slide slide level1 center">
-<h1>Code execution</h1>
-
-</section>
-<section id="python-options" class="slide level2">
-<h2>Python Options</h2>
-<table class="caption-top">
-<colgroup>
-<col style="width: 25%">
-<col style="width: 25%">
-<col style="width: 25%">
-<col style="width: 25%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Libraries</th>
-<th>Low-level langs</th>
-<th>Alt Python Impls</th>
-<th>JIT</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>NumPy, <br> SciPy</td>
-<td>C,<br> Rust,<br> Cython,<br> PyO3</td>
-<td>PyPy, <br>Jython</td>
-<td>Numba, <br>PyPy</td>
-</tr>
-</tbody>
-</table>
-
-<aside><div>
-<p><strong>Options above are not mutually exclusive!</strong></p>
-</div></aside></section>
-<section id="interpreters" class="slide level2">
-<h2>Interpreters</h2>
+<section id="program-as-dag-4" class="slide level2">
+<h2>Program as DAG</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
-<p><strong>Wikipedia definition</strong></p>
+<p><strong>Definitions</strong></p>
 </div>
 <div class="callout-content">
-<p>An interpreter is a computer program that directly executes instructions written in a programming or scripting language, without requiring them previously to have been compiled into a machine language program.</p>
-</div>
-</div>
-</div>
-<div class="callout callout-note no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Examples</strong></p>
-</div>
-<div class="callout-content">
-<ul>
-<li>Python</li>
-<li>Ruby</li>
-<li>Lua</li>
-<li>Javascript</li>
-</ul>
+<p>A parallel program can be represented by a directed acyclic graph (<strong>DAG</strong>) <span class="math display">\[
+G=(V,E),
+\]</span></p>
+<p>where <span class="math inline">\(V\)</span> is a set of <span class="math inline">\(v\)</span> nodes and <span class="math inline">\(E\)</span> is a set of <span class="math inline">\(e\)</span> directed edges.</p>
+<p>A <strong>node</strong> in the DAG represents a task which in turn is a set of instructions which must be executed sequentially without preemption in the same processor.</p>
+<p>The <strong>weight</strong> of a node <span class="math inline">\(n_i\)</span> is called the <strong>computation cost</strong> and is denoted by <span class="math inline">\(w(n_i)\)</span>.</p>
 </div>
 </div>
 </div>
 </section>
-<section id="cpython" class="slide level2">
-<h2>CPython</h2>
-
-<img data-src="img/cpython_internals.png" class="r-stretch"><div class="callout callout-note no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Flow</strong></p>
-</div>
-<div class="callout-content">
-<ul>
-<li>Read Python code</li>
-<li>Convert Python into bytecode</li>
-<li>Execute bytecode inside a VM</li>
-<li>VM converts bytecode to machine code</li>
-</ul>
-</div>
-</div>
-</div>
-</section>
-<section id="cpython-1" class="slide level2">
-<h2>CPython</h2>
-<p><img data-src="img/cpython_code.png"> <img data-src="img/cpython_bytecode.png"></p>
-</section>
-<section id="compilers" class="slide level2">
-<h2>Compilers</h2>
+<section id="program-as-dag-5" class="slide level2">
+<h2>Program as DAG</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
-<p><strong>Wikipedia definition</strong></p>
+<p><strong>Definitions</strong></p>
 </div>
 <div class="callout-content">
-<p>Source code is compiled - in this context, translated into machine code for better performance.</p>
-</div>
-</div>
-</div>
-<div class="callout callout-note no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Examples</strong></p>
-</div>
-<div class="callout-content">
-<ul>
-<li>C/C++</li>
-<li>Go</li>
-<li>Python (to intermediate VM code)</li>
-<li>Java</li>
-<li>Cython</li>
-</ul>
+<p>The edges in the DAG, each of which is denoted by <span class="math inline">\((n_i,n_j)\)</span>, correspond to the communication messages and precedence constraints among the nodes.</p>
+<p>The <strong>weight of an edge</strong> is called the <strong>communication cost</strong> of the edge and is denoted by <span class="math inline">\(c(n_i, n_j)\)</span>.</p>
+<p>The <strong>source node of an edge</strong> is called the <strong>parent</strong> node while the sink node is called the <strong>child</strong> node.</p>
+<p>A node with no parent is called an <strong>entry</strong> node and a node with no child is called an <strong>exit</strong> node.</p>
+<p>The <strong>communication-to-computation-ratio (CCR)</strong> of a parallel program is defined as its average edge weight divided by its average node weight.</p>
 </div>
 </div>
 </div>
 </section>
-<section id="compilers-1" class="slide level2">
-<h2>Compilers</h2>
-
-<img data-src="img/llvm.png" class="r-stretch"></section>
-<section id="cython" class="slide level2">
-<h2>Cython</h2>
+<section id="program-as-dag-6" class="slide level2">
+<h2>Program as DAG</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
 <p><strong>Definition</strong></p>
 </div>
 <div class="callout-content">
-<p>Cython is an optimising static compiler for the Python programming language.</p>
+<p><strong>Scheduling</strong> involves executing a parallel program by mapping the computation over the processors so that:</p>
 <ul>
-<li>converts Python code to C</li>
-<li>supports static type declarations</li>
+<li>completion time is minimized</li>
+<li>use of other resources such as storage as energy is optimal.</li>
 </ul>
 </div>
 </div>
 </div>
 </section>
-<section id="cython-1" class="slide level2">
-<h2>Cython</h2>
-
-<img data-src="img/cython_flow.png" class="r-stretch"></section>
-<section id="cython-2" class="slide level2">
-<h2>Cython</h2>
-
-<img data-src="img/cython_speedup.png" class="r-stretch"></section>
-<section id="cython-3" class="slide level2">
-<h2>Cython</h2>
+<section id="program-as-dag-7" class="slide level2">
+<h2>Program as DAG</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
-<p><strong>Python code</strong></p>
+<p><strong>Definitions</strong></p>
 </div>
 <div class="callout-content">
-<p><img data-src="img/cython_integratev1.png"></p>
+<p><span class="math inline">\(ST(n_i)\)</span> and <span class="math inline">\(FT(n_i)\)</span> denote start time and finish time at some processor.</p>
+<p>After all the nodes have been scheduled, the schedule length is defined as <span class="math inline">\(\max_i\left\{FT(n_i)\right\}\)</span> across all processors.</p>
+<p>The goal of scheduling is to minimize <span class="math inline">\(\max_i\left\{FT(n_i)\right\}\)</span>.</p>
+<p>Scheduling is done in such a manner that the precedence constraints among the program tasks are preserved.</p>
 </div>
 </div>
 </div>
 </section>
-<section id="cython-4" class="slide level2">
-<h2>Cython</h2>
+<section id="program-as-dag-8" class="slide level2">
+<h2>Program as DAG</h2>
+
+<img data-src="img/embarrassingly_parallel.png" class="r-stretch"></section>
+<section id="program-as-dag-9" class="slide level2">
+<h2>Program as DAG</h2>
+
+<img data-src="img/map_reduce_type.png" class="r-stretch"></section>
+<section id="program-as-dag-10" class="slide level2">
+<h2>Program as DAG</h2>
+
+<img data-src="img/full_scheduling.png" class="r-stretch"></section>
+<section id="program-as-dag-11" class="slide level2">
+<h2>Program as DAG</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
-<p><strong>Annotated Python code</strong></p>
+<p><strong>Work</strong></p>
 </div>
 <div class="callout-content">
-<p><img data-src="img/cython_integratev2.png"></p>
+<p><strong>Work</strong> is defined as the number of vertices in the DAG.</p>
+<p>Work of a computation corresponds to the total number of operations it performs.</p>
 </div>
 </div>
 </div>
-</section>
-<section id="cython-5" class="slide level2">
-<h2>Cython</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
-<p><strong>Cython code</strong></p>
+<p><strong>Span</strong></p>
 </div>
 <div class="callout-content">
-<p><img data-src="img/cython_integratev3.png"></p>
-</div>
-</div>
-</div>
-</section>
-<section id="parallel-cython" class="slide level2">
-<h2>Parallel Cython</h2>
-
-<img data-src="img/cython_parallel1.png" class="r-stretch"></section>
-<section id="parallel-cython-1" class="slide level2">
-<h2>Parallel Cython</h2>
-
-<img data-src="img/cython_parallel2.png" class="r-stretch"></section>
-<section id="jit" class="slide level2">
-<h2>JIT</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Wikipedia definition</strong></p>
-</div>
-<div class="callout-content">
-<p>A compilation (of computer code) during execution of a program (at run time) rather than before execution.</p>
+<p><strong>Span</strong> is the length of the longest path in the DAG.</p>
+<p>Span corresponds to the longest chain of dependencies in the computation.</p>
 </div>
 </div>
 </div>
 <div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Work[make]span</strong></p>
+</div>
+<div class="callout-content">
+<p>The overall finish-time of a parallel program is commonly called the <strong>schedule length</strong> or <strong>makespan</strong>.</p>
+</div>
+</div>
+</div>
+</section></section>
+<section>
+<section id="scheduling" class="title-slide slide level1 center">
+<h1>Scheduling</h1>
+
+</section>
+<section id="scheduling-1" class="slide level2">
+<h2>Scheduling</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Taxonomy</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/scheduling_taxonomy.png"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="scheduling-2" class="slide level2">
+<h2>Scheduling</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Types</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>Static:</strong> the characteristics of a parallel program (such as task processing times, communication, data dependencies, and synchronization requirements) are known before program execution</li>
+<li><strong>Dynamic:</strong> a few assumptions about the parallel program can be made before execution, and thus, scheduling decisions have to be made on-the-fly. <!-- The goal of a dynamic scheduling algorithm as such includes not only the minimization of the program completion time but also the minimization of the scheduling overhead which constitutes a significant portion of the cost paid for running the scheduler. --></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="scheduling-3" class="slide level2">
+<h2>Scheduling</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Categories</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>Job scheduling</strong>: independent jobs are to be scheduled among the processors of a distributed computing system to optimize overall system performance</li>
+<li><strong>Scheduling and mapping</strong>: allocation of multiple interacting tasks of a single parallel program in order to minimize the completion time on the parallel computer system.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="scheduling-model-variations" class="slide level2">
+<h2>Scheduling model variations</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Preemptive vs non-preemptive</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>preemptive:</strong> execution of the task might be interrupted so that it’s allocated to a different processor</li>
+<li><strong>non-preemptive:</strong> execution must complete on a single processor</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Parallel vs non-parallel</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>Parallel</strong> task requires more than one processor for its execution.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>With vs without conditional branches</strong></p>
+</div>
+<div class="callout-content">
+<p>In conditional model, each edge in the DAG is associated with a non-zero probability that the child will be executed immediately after the parent.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="scheduling-4" class="slide level2">
+<h2>Scheduling</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>List scheduling</strong></p>
+</div>
+<div class="callout-content">
+<p>The basic idea of <strong>list scheduling</strong> is to make a scheduling list (a sequence of nodes for scheduling) by assigning them some priorities, and then repeatedly execute the following two steps until all the nodes in the graph are scheduled:</p>
+<ul>
+<li>Remove the first node from the scheduling list;</li>
+<li>Allocate the node to a processor which allows the earliest start-time.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="scheduling-5" class="slide level2">
+<h2>Scheduling</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Greedy Scheduler</strong></p>
+</div>
+<div class="callout-content">
+<p>We say that a scheduler is <strong>greedy</strong> if whenever there is a processor available and a task ready to execute, then it assigns the task to the processor and starts running it immediately. Greedy schedulers have an important property that is summarized by the greedy scheduling principle.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Greedy Scheduling Principle</strong></p>
+</div>
+<div class="callout-content">
+<p>The <strong>greedy scheduling principle</strong> postulates that if a computation is run on <span class="math inline">\(P\)</span> processors using a greedy scheduler, then the total time (clock cycles) for running the computation is bounded by <span class="math display">\[
+T_P &lt; \frac{W}{P} + S
+\]</span> where <span class="math inline">\(W\)</span> is the work of the computation, and <span class="math inline">\(S\)</span> is the span of the computation (both measured in units of clock cycles).</p>
+</div>
+</div>
+</div>
+</section>
+<section id="scheduling-6" class="slide level2">
+<h2>Scheduling</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Optimality of Greedy Schedulers</strong></p>
+</div>
+<div class="callout-content">
+<p>Firstly, the time to execute the computation cannot be less than <span class="math inline">\(\frac{W}{P}\)</span> clock cycles since we have a total of <span class="math inline">\(W\)</span> clock cycles of work to do and the best we can possibly do is divide it evenly among the processors. Secondly, the time to execute the computation cannot be any less than <span class="math inline">\(S\)</span> clock cycles, because <span class="math inline">\(S\)</span> represents the longest chain of sequential dependencies. Therefore we have <span class="math display">\[
+T_P \geq \max\left(\frac{W}{P},S\right).
+\]</span> We therefore see that a greedy scheduler does reasonably close to the best possible. In particular, <span class="math inline">\(\frac{W}{P} +S\)</span> is never more than twice <span class="math inline">\(\max\left(\frac{W}{P} ,S\right)\)</span>.</p>
+</div>
+</div>
+</div>
+</section></section>
+<section>
+<section id="scheduling-algorithms" class="title-slide slide level1 center">
+<h1>Scheduling algorithms</h1>
+
+</section>
+<section id="scheduling-algorithms-1" class="slide level2">
+<h2>Scheduling algorithms</h2>
+
+<img data-src="img/scheduling_classification.png" class="r-stretch"></section>
+<section id="scheduling-algorithms-2" class="slide level2">
+<h2>Scheduling algorithms</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>What’s a <strong>heuristic</strong> algorithm?</strong></p>
+</div>
+<div class="callout-content">
+<p>Algorithm used when classic methods are too slow for finding an exact or approximate solution, or when classic methods fail to find any exact solution in a search space.</p>
+<p>This is achieved by trading</p>
+<ul>
+<li>optimality,</li>
+<li>completeness,</li>
+<li>accuracy,</li>
+<li>or precision</li>
+</ul>
+<p>for speed.</p>
+<p>In a way, it can be considered a shortcut.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="scheduling-algorithms-3" class="slide level2">
+<h2>Scheduling algorithms</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>List scheduling</strong></p>
+</div>
+<div class="callout-content">
+<p>A list-scheduling heuristic maintains a list of all tasks of a given graph according to their priorities. It has two phases:</p>
+<ul>
+<li>the <strong>task prioritizing</strong> or <strong>task selection</strong> phase for selecting the highest-priority ready task</li>
+<li>and the <strong>processor selection</strong> phase for selecting a suitable processor that minimizes a predefined cost function which can be the execution start time.</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
 <p><strong>Features</strong></p>
 </div>
 <div class="callout-content">
 <ul>
-<li><strong>warm-up time:</strong> JIT causes a slight to noticeable delay in the initial execution of an application, due to the time taken to load and compile the input code.</li>
-<li><strong>statistics collection:</strong> performed by the system during runtime, shows how the program is actually running in the environment it is in; helps JIT to rearrange and recompile for optimum performance.</li>
-<li>particularly suited for <strong>dynamic</strong> programming languages</li>
+<li>for a bounded number of fully connected homogeneous processors</li>
+<li>provide better performance results at a lower scheduling time than the other groups</li>
 </ul>
 </div>
 </div>
 </div>
 </section>
-<section id="jit-1" class="slide level2">
-<h2>JIT</h2>
-<div class="callout callout-note no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Examples</strong></p>
-</div>
-<div class="callout-content">
-<ul>
-<li>HotSpot Java Virtual Machine</li>
-<li>LuaJIT</li>
-<li>Numba</li>
-<li>PyPy</li>
-</ul>
-</div>
-</div>
-</div>
-</section>
-<section id="numba" class="slide level2">
-<h2>Numba</h2>
-
-<img data-src="img/numba_arch.png" class="r-stretch"></section>
-<section id="numba-1" class="slide level2">
-<h2>Numba</h2>
-<div class="callout callout-note no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Description</strong></p>
-</div>
-<div class="callout-content">
-<ul>
-<li>Numba translates Python byte-code to machine code immediately before execution to improve the execution speed.</li>
-<li>For that we add a <code>@jit</code> decorator</li>
-<li>Works well for numeric operations, NumPy, and loops</li>
-</ul>
-</div>
-</div>
-</div>
-</section>
-<section id="numba-2" class="slide level2">
-<h2>Numba</h2>
+<section id="scheduling-algorithms-4" class="slide level2">
+<h2>Scheduling algorithms</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
-<p><strong>Steps</strong></p>
+<p><strong>Clustering</strong></p>
 </div>
 <div class="callout-content">
 <ul>
-<li>read the Python bytecode for a decorated function</li>
-<li>combine it with information about the types of the input arguments to the function</li>
-<li>analyze and optimize the code</li>
-<li>use the LLVM compiler library to generate a machine code version of the function, tailored to specific CPU capabilities.</li>
+<li><p>Maps the tasks to unlimited number of clusters. The selected tasks for clustering can be any task, not necessarily a ready task.</p></li>
+<li><p>Each iteration refines the previous clustering by merging some clusters.</p></li>
+<li><p>If two tasks are assigned to the same cluster, they will be executed on the same processor.</p></li>
 </ul>
 </div>
 </div>
 </div>
 </section>
-<section id="numba-3" class="slide level2">
-<h2>Numba</h2>
+<section id="scheduling-algorithms-5" class="slide level2">
+<h2>Scheduling algorithms</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
-<p><strong>Works great</strong></p>
-</div>
-<div class="callout-content">
-<p><img data-src="img/numba_example1.png"></p>
-</div>
-</div>
-</div>
-</section>
-<section id="numba-4" class="slide level2">
-<h2>Numba</h2>
-<div class="callout callout-important no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Nope</strong></p>
-</div>
-<div class="callout-content">
-<p><img data-src="img/numba_example2.png"></p>
-</div>
-</div>
-</div>
-</section>
-<section id="numba-5" class="slide level2">
-<h2>Numba</h2>
-
-<img data-src="img/numba_reduction.png" class="r-stretch"></section>
-<section id="numba-6" class="slide level2">
-<h2>Numba</h2>
-<div class="callout callout-important no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Sequential</strong></p>
-</div>
-<div class="callout-content">
-<p><img data-src="img/numba_sequential.png" height="400"></p>
-</div>
-</div>
-</div>
-</section>
-<section id="numba-7" class="slide level2">
-<h2>Numba</h2>
-<div class="callout callout-note no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Parallel</strong></p>
-</div>
-<div class="callout-content">
-<p><img data-src="img/numba_parallel.png" height="400"></p>
-</div>
-</div>
-</div>
-</section>
-<section id="numpy" class="slide level2">
-<h2>Numpy</h2>
-<div class="callout callout-important no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Why so fast?</strong></p>
+<p><strong>Clustering: Extra final steps</strong></p>
 </div>
 <div class="callout-content">
 <ul>
-<li>Optimized C code</li>
-<li>Densely packed arrays</li>
-<li>Uses BLAS - Basic Linear Algebra Subroutines.</li>
+<li>a cluster <strong>merging</strong> step for merging the clusters so that the remaining number of clusters equal the number of processors</li>
+<li>a cluster <strong>mapping</strong> step for mapping the clusters on the available processors</li>
+<li>a task <strong>ordering</strong> step for ordering the mapped tasks within each processor</li>
 </ul>
 </div>
 </div>
 </div>
-</section></section>
-<section>
-<section id="rustpyo3-example" class="title-slide slide level1 center">
-<h1>Rust/PyO3 example</h1>
-
 </section>
-<section id="rustpyo3-example-1" class="slide level2">
-<h2>Rust/PyO3 example</h2>
+<section id="scheduling-algorithms-6" class="slide level2">
+<h2>Scheduling algorithms</h2>
 <div class="callout callout-note no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
-<p><strong>Description</strong></p>
+<p><strong>Guided random search</strong></p>
 </div>
 <div class="callout-content">
-<p>We show an example of a simple algebraic cipher that utilizes PyO3 bindings to speed up encoding/decoding.</p>
-</div>
-</div>
-</div>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Cipher definition</strong></p>
-</div>
-<div class="callout-content">
-<p>The basic mechanism for encrypting a message using a shared secret key is called a cipher (or encryption scheme)</p>
+<p><strong>Guided random search</strong> techniques (or <strong>randomized search</strong> techniques) use random choice to guide themselves through the problem space, which is not the same as performing merely random walks as in the random search methods.</p>
+<p>These techniques combine the knowledge gained from previous search results with some randomizing features to generate new results.</p>
 </div>
 </div>
 </div>
 </section>
-<section id="rustpyo3-example-2" class="slide level2">
-<h2>Rust/PyO3 example</h2>
-<div class="hidden">
+<section id="heftcpop" class="slide level2">
+<h2>HEFT/CPOP</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Definition</strong></p>
+</div>
+<div class="callout-content">
+<p>Heterogeneous earliest finish time (HEFT) is a heuristic algorithm to schedule a set of dependent tasks onto a network of heterogeneous workers taking communication time into account.</p>
+<p>Critical-Path-On-a-Processor (CPOP) algorithm uses the summation of upward and downward rank values for prioritizing tasks.</p>
+</div>
+</div>
+</div>
 
+<aside><div>
+<p>H. Topcuoglu, S. Hariri and Min-You Wu, <strong>“Performance-effective and low-complexity task scheduling for heterogeneous computing,”</strong> in IEEE Transactions on Parallel and Distributed Systems, vol.&nbsp;13, no. 3, pp.&nbsp;260-274, March 2002, doi: 10.1109/71.993206.</p>
+</div></aside></section>
+<section id="heftcpop-1" class="slide level2">
+<h2>HEFT/CPOP</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Definitions</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><span class="math inline">\(V\)</span> – set of <span class="math inline">\(v\)</span> nodes</li>
+<li><span class="math inline">\(E\)</span> – set of <span class="math inline">\(e\)</span> edges</li>
+<li><span class="math inline">\(data\)</span> – a <span class="math inline">\(v \times v\)</span> matrix of communication data</li>
+<li><span class="math inline">\(data_{i,k}\)</span> – amount of data to be transmitted from <span class="math inline">\(n_i\)</span> to <span class="math inline">\(n_k\)</span></li>
+<li><span class="math inline">\(Q\)</span> – set of <span class="math inline">\(q\)</span> processors</li>
+<li><span class="math inline">\(W\)</span> – a <span class="math inline">\(v \times q\)</span> computation cost matrix, in which each <span class="math inline">\(w_{i,j}\)</span> gives the estimated execution cost to complete task <span class="math inline">\(n_i\)</span> on processor <span class="math inline">\(p_j\)</span></li>
+<li><span class="math inline">\(B\)</span> – <span class="math inline">\(q \times q\)</span> data transfer rates matrix</li>
+<li><span class="math inline">\(L\)</span> – <span class="math inline">\(q\)</span>-dimensional vector of communication startup costs</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="heftcpop-2" class="slide level2">
+<h2>HEFT/CPOP</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Costs</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>Average execution cost</strong>: <span class="math display">\[
+  \overline{w_i} = \sum\limits_{j=1}^q \frac{w_{i,j}}{q}.
+\]</span> <strong>Communication cost</strong> of the edge <span class="math inline">\((i,k)\)</span> for transfering data from task <span class="math inline">\(n_i\)</span> scheduled on processor <span class="math inline">\(p_m\)</span> to task <span class="math inline">\(n_k\)</span> scheduled on processor <span class="math inline">\(p_n\)</span>: <span class="math display">\[
+c_{i,k} = L_m + \frac{data_{i,k}}{B_{m,n}}
+\]</span> <strong>Average communication cost:</strong> <span class="math display">\[
+\overline{c_{i,k}} = \overline{L} + \frac{data_{i,k}}{\overline{B}}
+\]</span></p>
+</div>
+</div>
+</div>
+</section>
+<section id="heftcpop-3" class="slide level2">
+<h2>HEFT/CPOP</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Times</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>Earliest execution start time</strong> of task <span class="math inline">\(n_i\)</span> on processor <span class="math inline">\(p_j\)</span>: <span class="math display">\[
+\begin{align*}
+&amp; EST(n_{entry}, p_j) = 0, \\
+&amp; EST(n_i, p_j) = \max\left\{avail[j], \max\limits_{n_m \in pred(n_i)} (AFT(n_m)+c_{m,i})\right\},
+\end{align*}
+\]</span> where <span class="math inline">\(avail[j]\)</span> is the earliest time at which processor <span class="math inline">\(p_j\)</span> is ready for task execution.</p>
+<p><strong>Earliest execution finish time</strong> of task <span class="math inline">\(n_i\)</span> on processor <span class="math inline">\(p_j\)</span>: <span class="math display">\[
+EFT(n_i, p_j) = w_{i,j} + EST(n_i,p_j)
+\]</span></p>
+<p>After a task <span class="math inline">\(n_m\)</span> is scheduled on processor <span class="math inline">\(p_j\)</span>, the earliest start time and the earliest finish time of <span class="math inline">\(n_m\)</span> on processor <span class="math inline">\(p_j\)</span> is equal to the <strong>actual start time</strong> <span class="math inline">\(AST(n_m)\)</span> and the <strong>actual finish time</strong> <span class="math inline">\(AFT(n_m)\)</span>, respectively.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="heftcpop-4" class="slide level2">
+<h2>HEFT/CPOP</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Workspan</strong></p>
+</div>
+<div class="callout-content">
+<p>After all tasks in the graph have been scheduled, the <strong>schedule length</strong> (<strong>makespan</strong>) will be equal to the actual finish time of the exit task <span class="math inline">\(n_{exit}\)</span>. In case of several exits: <span class="math display">\[
+makespan = \max \left\{AFT(n_{exit})\right\}
+\]</span></p>
+</div>
+</div>
 </div>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -633,436 +736,1039 @@ MSDE
 <p><strong>Definition</strong></p>
 </div>
 <div class="callout-content">
-<p>Encryption and decryption use the same secret key.</p>
+<p>The <strong>objective function</strong> of the task scheduling problem is to determine the assignment of tasks to processors such that its <strong>makespan is minimized</strong>.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="heftcpop-5" class="slide level2">
+<h2>HEFT/CPOP</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Upward rank</strong></p>
+</div>
+<div class="callout-content">
+<p><span class="math display">\[
+\begin{align*}
+  rank_u(n_i) = \overline{w_i} + \max\limits_{n_j \in succ(n_i)} \left(\overline{c_{i,j}} + rank_u(n_j)\right)
+\end{align*}
+\]</span></p>
+<ul>
+<li><span class="math inline">\(succ(n_i)\)</span> – set of immediate successors of <span class="math inline">\(n_i\)</span></li>
+<li><span class="math inline">\(\overline{c_{i,j}}\)</span> – average communication cost of edge <span class="math inline">\((i,j)\)</span></li>
+<li><span class="math inline">\(\overline{w_i}\)</span> – average computation cost of task <span class="math inline">\(n_i\)</span></li>
+</ul>
+<p><span class="math display">\[
+rank_u(n_{exit}) = \overline{w_{exit}}
+\]</span></p>
+</div>
+</div>
+</div>
+</section>
+<section id="heftcpop-6" class="slide level2">
+<h2>HEFT/CPOP</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Downward rank</strong></p>
+</div>
+<div class="callout-content">
+<p><span class="math display">\[
+\begin{align*}
+  rank_d(n_i) = \max\limits_{n_j \in pred(n_i)} \left(rank_d(n_j)+ \overline{w_j} + \overline{c_{j,i}}\right)
+  \end{align*}
+\]</span></p>
+<ul>
+<li><span class="math inline">\(pred(n_i)\)</span> – set of immediate predecessors of <span class="math inline">\(n_i\)</span></li>
+<li><span class="math inline">\(rank_d(n_{entry}) = 0\)</span></li>
+<li>can be thought of as the longest distance from the entry task to <span class="math inline">\(n_i\)</span> without computation costs</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="heftcpop-7" class="slide level2">
+<h2>HEFT/CPOP</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>HEFT</strong></p>
+</div>
+<div class="callout-content">
+<ol type="1">
+<li>Set the computation costs of tasks and communication costs of edges with mean values</li>
+<li>Compute <span class="math inline">\(rank_u\)</span> for all tasks by traversing graph upward, starting from the exit task</li>
+<li>Sort the tasks in the scheduling list by non-increasing order of <span class="math inline">\(rank_u\)</span> values</li>
+<li><strong>while</strong> there are unscheduled tasks in the list <strong>do</strong>:</li>
+<li>   select the task <span class="math inline">\(n_i\)</span> from the scheduling list</li>
+<li>   <strong>for</strong> each processor <span class="math inline">\(p_k\)</span> in the processor set <span class="math inline">\(Q\)</span> <strong>do</strong>:</li>
+<li>     Compute <span class="math inline">\(EFT(n_i,p_k)\)</span> using the insertion-based scheduling policy</li>
+<li>   Assign task <span class="math inline">\(n_i\)</span> to the processor <span class="math inline">\(p_j\)</span> minimizing <span class="math inline">\(EFT(n_i, p_j)\)</span></li>
+</ol>
+</div>
+</div>
+</div>
+</section>
+<section id="heftcpop-8" class="slide level2">
+<h2>HEFT/CPOP</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>CPOP</strong></p>
+</div>
+<div class="callout-content">
+<ol type="1">
+<li>Set the computation costs of tasks and communication costs of edges with mean values</li>
+<li>Compute <span class="math inline">\(rank_u\)</span> for all tasks by traversing graph upward, starting from the exit task</li>
+<li>Compute <span class="math inline">\(rank_d\)</span> for all tasks by traversing graph downward, starting from the entry task</li>
+<li>Compute <span class="math inline">\(priority(n_i) = rank_d(n_i) + rank_u(n_i) \; \forall n_i\)</span></li>
+<li><span class="math inline">\(|CP| = priority(n_{entry})\)</span></li>
+<li><span class="math inline">\(SET_{CP} = \{n_{entry}\}\)</span>, where <span class="math inline">\(SET_{CP}\)</span> is a set of tasks on a critical path</li>
+<li><span class="math inline">\(n_k \leftarrow n_{entry}\)</span></li>
+</ol>
+</div>
+</div>
+</div>
+</section>
+<section id="heftcpop-9" class="slide level2">
+<h2>HEFT/CPOP</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>CPOP</strong></p>
+</div>
+<div class="callout-content">
+<ol start="8" type="1">
+<li><strong>while</strong> <span class="math inline">\(n_k \neq n_{exit}\)</span> <strong>do</strong></li>
+<li>   select <span class="math inline">\(n_j: n_j \in succ(n_k) \textbf{ and } priority(n_j) = |CP|\)</span></li>
+<li>   <span class="math inline">\(SET_{CP} = SET_{CP} \cup {n_j}\)</span></li>
+<li>   <span class="math inline">\(n_k \leftarrow n_j\)</span></li>
+<li>select <span class="math inline">\(p_{CP}\)</span> minimizing <span class="math inline">\(\sum\limits_{n_i \in SET_{CP}} w_{i,j} \; \forall p_j \in Q\)</span></li>
+<li>initialize priority queue <span class="math inline">\(PQ\)</span> with the entry task</li>
+</ol>
+</div>
+</div>
+</div>
+</section>
+<section id="heftcpop-10" class="slide level2">
+<h2>HEFT/CPOP</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>CPOP</strong></p>
+</div>
+<div class="callout-content">
+<ol start="14" type="1">
+<li><strong>while</strong> there are unscheduled tasks in the <span class="math inline">\(PQ\)</span><strong>do</strong></li>
+<li>   select the highest priority task <span class="math inline">\(n_i\)</span> from <span class="math inline">\(PQ\)</span></li>
+<li>   <strong>if</strong> <span class="math inline">\(n_i \ in SET_{CP}\)</span> <strong>then</strong></li>
+<li>     assign <span class="math inline">\(n_i\)</span> to <span class="math inline">\(p_{CP}\)</span></li>
+<li>   <strong>else</strong></li>
+<li>     assign <span class="math inline">\(n_i\)</span> to <span class="math inline">\(p_j\)</span> minimizing <span class="math inline">\(EFT(n_i,p_j)\)</span></li>
+<li>   update <span class="math inline">\(PQ\)</span> with the successors of <span class="math inline">\(n_i\)</span> if ready</li>
+</ol>
+</div>
+</div>
+</div>
+</section>
+<section id="heftcpop-11" class="slide level2">
+<h2>HEFT/CPOP</h2>
+<p><img data-src="img/heft_graph.png" height="600"></p>
+</section>
+<section id="heftcpop-12" class="slide level2">
+<h2>HEFT/CPOP</h2>
+
+<img data-src="img/heft_cpop.png" class="r-stretch quarto-figure-center"><p class="caption">HEFT - (a), CPOP - (b)</p></section></section>
+<section>
+<section id="dask-scheduling" class="title-slide slide level1 center">
+<h1>Dask Scheduling</h1>
+
+</section>
+<section id="dask" class="slide level2">
+<h2>Dask</h2>
+<p>Dask is a library to perform parallel computation for analytics. <img data-src="img/dask_layers.png"></p>
+</section>
+<section id="scheduling-7" class="slide level2">
+<h2>Scheduling</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>What does Dask scheduler do?</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>execute DAGs on parallel hardware</li>
+<li>manage resource allocation across DAG nodes</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="dask-scheduling-1" class="slide level2">
+<h2>Dask Scheduling</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Dask Scheduler types</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>Single-machine scheduler:</strong> This scheduler provides basic features on a local process or thread pool. This scheduler was made first and is the default. It is simple and cheap to use, although it can only be used on a single machine and does not scale</li>
+<li><strong>Distributed scheduler:</strong> This scheduler is more sophisticated, offers more features, but also requires a bit more effort to set up. It can run locally or distributed across a cluster</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="dag" class="slide level2">
+<h2>DAG</h2>
+
+<img data-src="img/dask-overview.png" class="r-stretch"></section>
+<section id="dask-scheduling-2" class="slide level2">
+<h2>Dask Scheduling</h2>
+
+<img data-src="img/dask_dist.png" class="r-stretch"></section>
+<section id="scheduling-8" class="slide level2">
+<h2>Scheduling</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Single-thread scheduler</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a></a><span class="im">import</span> dask</span>
+<span id="cb1-2"><a></a>dask.config.<span class="bu">set</span>(scheduler<span class="op">=</span><span class="st">'synchronous'</span>)  <span class="co"># overwrite default with single-threaded scheduler</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Notes</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>Useful for debugging or profiling</li>
+<li>No parallelism at all</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="scheduling-9" class="slide level2">
+<h2>Scheduling</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Thread scheduler</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a></a><span class="im">import</span> dask</span>
+<span id="cb2-2"><a></a>dask.config.<span class="bu">set</span>(scheduler<span class="op">=</span><span class="st">'threads'</span>)  <span class="co"># overwrite default with threaded scheduler </span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Notes</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>Small overhead of 50 microseconds per task</li>
+<li>Only provides parallelism when executing non-Python code (because of GIL)</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="scheduling-10" class="slide level2">
+<h2>Scheduling</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Process scheduler</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a></a><span class="im">import</span> dask</span>
+<span id="cb3-2"><a></a>dask.config.<span class="bu">set</span>(scheduler<span class="op">=</span><span class="st">'processes'</span>)  <span class="co"># overwrite default with multiprocessing scheduler</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Notes</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>Performance penalties when inter-process communication is heavy</li>
+<li>Can provide parallelism when executing Python code</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="scheduling-11" class="slide level2">
+<h2>Scheduling</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Distributed (local) scheduler</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a></a><span class="im">from</span> dask.distributed <span class="im">import</span> Client</span>
+<span id="cb4-2"><a></a>client <span class="op">=</span> Client()</span>
+<span id="cb4-3"><a></a><span class="co"># or</span></span>
+<span id="cb4-4"><a></a>client <span class="op">=</span> Client(processes<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Notes</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>Can be more efficient than the multiprocessing scheduler on workloads that require multiple processes</li>
+<li>Diagnostic dashboard and async API</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="scheduling-12" class="slide level2">
+<h2>Scheduling</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Distributed (cluster) scheduler</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a></a><span class="co"># You can swap out LocalCluster for other cluster types</span></span>
+<span id="cb5-2"><a></a></span>
+<span id="cb5-3"><a></a><span class="im">from</span> dask.distributed <span class="im">import</span> LocalCluster</span>
+<span id="cb5-4"><a></a><span class="im">from</span> dask_kubernetes <span class="im">import</span> KubeCluster</span>
+<span id="cb5-5"><a></a></span>
+<span id="cb5-6"><a></a><span class="co"># cluster = LocalCluster()</span></span>
+<span id="cb5-7"><a></a>cluster <span class="op">=</span> KubeCluster()  <span class="co"># example, you can swap out for Kubernetes</span></span>
+<span id="cb5-8"><a></a></span>
+<span id="cb5-9"><a></a>client <span class="op">=</span> cluster.get_client()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Notes</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>Can be setup either locally, or e.g.&nbsp;on a pre-existing Kubernetes cluster</li>
+<li>Different cluster backends easy to swap</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="scheduling-13" class="slide level2">
+<h2>Scheduling</h2>
+
+<img data-src="img/scheduling_overhead.png" class="r-stretch"></section>
+<section id="issues" class="slide level2">
+<h2>Issues</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Issues</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>Resource starvation</li>
+<li>Worker failures</li>
+<li>Data loss</li>
+</ul>
+</div>
+</div>
+</div>
+</section></section>
+<section>
+<section id="dask-internals" class="title-slide slide level1 center">
+<h1>Dask Internals</h1>
+
+</section>
+<section id="dask-1" class="slide level2">
+<h2>Dask</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Parallel</strong></p>
+</div>
+<div class="callout-content">
+<p>We refer to algorithms that use multiple cores simultaneously as <strong>parallel</strong>.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Out-of-core</strong></p>
+</div>
+<div class="callout-content">
+<p>We refer to systems that efficiently use disk as extensions of memory as <strong>out-of-core</strong>.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="dask-2" class="slide level2">
+<h2>Dask</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>How to execute parallel code?</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>represent the structure of our program explicitly as data within the program itself</li>
+<li>encode task schedules programmatically within a framework</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="dask-3" class="slide level2">
+<h2>Dask</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Dask Graph definition</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>A Python dictionary</strong> mapping keys to tasks or values.</li>
+<li><strong>A key</strong> is any Python hashable</li>
+<li><strong>a value</strong> is any Python object that is not a <strong>task</strong></li>
+<li><strong>a task</strong> is a Python tuple with a callable first element.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="dask-4" class="slide level2">
+<h2>Dask</h2>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a></a><span class="kw">def</span> inc(i):</span>
+<span id="cb6-2"><a></a>  <span class="cf">return</span> i <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb6-3"><a></a></span>
+<span id="cb6-4"><a></a><span class="kw">def</span> add(a, b):</span>
+<span id="cb6-5"><a></a>  <span class="cf">return</span> a <span class="op">+</span> b</span>
+<span id="cb6-6"><a></a></span>
+<span id="cb6-7"><a></a>x <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb6-8"><a></a>y <span class="op">=</span> inc(x)</span>
+<span id="cb6-9"><a></a>z <span class="op">=</span> add(y, <span class="dv">10</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="dask-5" class="slide level2">
+<h2>Dask</h2>
+
+<img data-src="img/dask_simple_dag.png" class="r-stretch"></section>
+<section id="dask-6" class="slide level2">
+<h2>Dask</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Dictionary representation</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a></a>d <span class="op">=</span> {<span class="st">'x'</span>: <span class="dv">1</span>,</span>
+<span id="cb7-2"><a></a>     <span class="st">'y'</span>: (inc, <span class="st">'x'</span>),</span>
+<span id="cb7-3"><a></a>     <span class="st">'z'</span>: (add, <span class="st">'y'</span>, <span class="dv">10</span>)}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</section>
+<section id="dask-7" class="slide level2">
+<h2>Dask</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Dask computation</strong></p>
+</div>
+<div class="callout-content">
+<p>Dask represents a computation as a directed acyclic graph of tasks with data dependencies.</p>
+<p>It can be said that Dask is a specification to encode such a graph using ordinary Python data structures, namely dicts, tuples, functions, and arbitrary Python values.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="dask-8" class="slide level2">
+<h2>Dask</h2>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a></a>{<span class="st">'x'</span>: <span class="dv">1</span>,</span>
+<span id="cb8-2"><a></a> <span class="st">'y'</span>: <span class="dv">2</span>,</span>
+<span id="cb8-3"><a></a> <span class="st">'z'</span>: (add, <span class="st">'x'</span>, <span class="st">'y'</span>),</span>
+<span id="cb8-4"><a></a> <span class="st">'w'</span>: (<span class="bu">sum</span>, [<span class="st">'x'</span>, <span class="st">'y'</span>, <span class="st">'z'</span>])}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
 <p><strong>Examples</strong></p>
 </div>
 <div class="callout-content">
 <ul>
-<li>AES</li>
-<li>Salsa20</li>
-<li>Twofish</li>
-<li>DES</li>
+<li><strong>key</strong>: <code>'x'</code>, <code>('x', 2, 3)</code></li>
+<li><strong>task</strong>: <code>(add, 'x', 'y')</code></li>
+<li><strong>task argument</strong>: <code>'x'</code>, <code>1</code>, <code>(inc, 'x')</code>, <code>[1, 'x', (inc, 'x')]</code></li>
 </ul>
 </div>
 </div>
 </div>
 </section>
-<section id="rustpyo3-example-3" class="slide level2">
-<h2>Rust/PyO3 example</h2>
+<section id="dask-9" class="slide level2">
+<h2>Dask</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
-<p><strong>Types</strong></p>
+<p><strong>Valid tasks in a Dask graph</strong></p>
 </div>
 <div class="callout-content">
-<ul>
-<li>block ciphers</li>
-<li>stream ciphers</li>
-<li>hash functions</li>
-</ul>
-</div>
-</div>
-</div>
-</section>
-<section id="rustpyo3-example-4" class="slide level2">
-<h2>Rust/PyO3 example</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Overview</strong></p>
-</div>
-<div class="callout-content">
-<p><span class="math display">\[
-f: \mathcal{K}\times\mathcal{D} \rightarrow C
-\]</span> where</p>
-<ul>
-<li><span class="math inline">\(\mathcal{K}\)</span> is <strong>key space</strong></li>
-<li><span class="math inline">\(\mathcal{D}\)</span> is <strong>domain</strong> (or <strong>message space</strong>)</li>
-<li><span class="math inline">\(\mathcal{C}\)</span> is <strong>co-domain</strong> (or <strong>ciphertext space</strong>)</li>
-</ul>
-</div>
-</div>
-</div>
-</section>
-<section id="rustpyo3-example-5" class="slide level2">
-<h2>Rust/PyO3 example</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Shannon cipher</strong></p>
-</div>
-<div class="callout-content">
-<p>A <strong>Shannon cipher</strong> is a pair <span class="math inline">\(\mathcal{E} = (E,D)\)</span> of functions:</p>
-<ul>
-<li>The function <span class="math inline">\(E\)</span> (the <strong>encryption function</strong>) takes as input a <strong>key</strong> <span class="math inline">\(k\)</span> and <strong>message</strong> <span class="math inline">\(m\)</span> (also called <strong>plaintext</strong>) and produces as output a <strong>ciphertext</strong> <span class="math inline">\(c):\)</span>$ c = E(k,m) $$</li>
-</ul>
-<p><span class="math inline">\(c\)</span> is the <strong>encryption</strong> of <span class="math inline">\(m\)</span> <strong>under</strong> <span class="math inline">\(k\)</span>.</p>
-<ul>
-<li>The function <span class="math inline">\(D\)</span> (the <strong>decryption function</strong>) takes as input a key <span class="math inline">\(k\)</span> and ciphertext <span class="math inline">\(c\)</span>, and produces a message <span class="math inline">\(m\)</span>: <span class="math display">\[
-m = D(k,c)
-\]</span></li>
-</ul>
-<p><span class="math inline">\(m\)</span> is the <strong>decryption</strong> of <span class="math inline">\(c\)</span> <strong>under</strong> <span class="math inline">\(k\)</span>.</p>
-</div>
-</div>
-</div>
-</section>
-<section id="rustpyo3-example-6" class="slide level2">
-<h2>Rust/PyO3 example</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Correctness property</strong></p>
-</div>
-<div class="callout-content">
-<p>For all keys <span class="math inline">\(k\)</span> and messages <span class="math inline">\(m\)</span>, we have <span class="math display">\[
-D(k, E(k,m)) = m
-\]</span></p>
-</div>
-</div>
-</div>
-</section>
-<section id="rustpyo3-example-7" class="slide level2">
-<h2>Rust/PyO3 example</h2>
-<div class="callout callout-important no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Parameters</strong></p>
-</div>
-<div class="callout-content">
-<p>Now we describe the cipher.</p>
-<p>First, we define cipher <em>parameters</em>:</p>
-<ul>
-<li>An alphabet <span class="math inline">\(A\)</span> with size <span class="math inline">\(L \equiv |A|\)</span>.</li>
-<li>A matrix <span class="math inline">\(M\)</span> with size <span class="math inline">\(N \gg L\)</span></li>
-<li><span class="math inline">\(\sigma_1, \sigma_2\)</span> are some permutations <span class="math inline">\(N \rightarrow N\)</span></li>
-<li><span class="math inline">\(\phi\)</span> is some bit sequence of length <span class="math inline">\(P\)</span>: <span class="math inline">\(\phi \in \{0,1\}^P\)</span></li>
-</ul>
-<p>A triple <span class="math inline">\((\sigma_1, \sigma_2, \phi)\)</span> will be our <strong>secret key</strong>.</p>
-<p>We define each symbol <span class="math inline">\(z\)</span> by a corresponding set of diagonals <span class="math inline">\(D\)</span> in the matrix <span class="math inline">\(M\)</span>, so that <span class="math inline">\(\forall (x,y) \in D: x - y = z (\mod L)\)</span> (see Figure 1).</p>
-</div>
-</div>
-</div>
-</section>
-<section id="rustpyo3-example-8" class="slide level2">
-<h2>Rust/PyO3 example</h2>
-
-<img data-src="img/matrix.png" class="r-stretch"></section>
-<section id="rustpyo3-example-9" class="slide level2">
-<h2>Rust/PyO3 example</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Encoder flow</strong></p>
-</div>
-<div class="callout-content">
-<p>Suppose we receive some text <span class="math inline">\(T\)</span> containing symbols to be encoded.</p>
-<p>For each <span class="math inline">\(t_i \in T\)</span>, obtain its numeric representation <span class="math inline">\(z_i\)</span>. <span class="math display">\[
-z_i \in [0,L)
-\]</span> Then we map each <span class="math inline">\(z_i\)</span> to a pair of matrix coordinates <span class="math inline">\((x_i, y_i)\)</span> such that:</p>
-<ol type="1">
-<li><p>First, we pick a random <span class="math inline">\(x_i \in [0,N)\)</span> (e.g., horizontal coordinate in a matrix)</p></li>
-<li><p>Then, we randomly pick some <span class="math inline">\(y_i \in [0,N)\)</span> such that: <span class="math display">\[
-x_i - y_i = z_i (\mod L)
-\]</span></p></li>
-</ol>
-</div>
-</div>
-</div>
-</section>
-<section id="rustpyo3-example-10" class="slide level2">
-<h2>Rust/PyO3 example</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Encoder flow</strong></p>
-</div>
-<div class="callout-content">
-<p>Having thus obtained a sequence <span class="math inline">\(\{(x_i, y_i), \, i \in [0, |T|) \}\)</span>, we now apply permutations <span class="math inline">\(\sigma_k: [0,N) \rightarrow [0,N), \, k=1,2\)</span>: <span class="math display">\[
-\text{ciphertext } (\xi,\eta) := (\sigma_j(x),\sigma_{j+1}(y))
-\]</span> where <span class="math display">\[
-\sigma_j = \begin{cases}
-\sigma_1, \; \text{if}\; \phi_j=0,\\
-\sigma_2\; \text{otherwise}
-\end{cases}
-\]</span></p>
-</div>
-</div>
-</div>
-</section>
-<section id="rustpyo3-example-11" class="slide level2">
-<h2>Rust/PyO3 example</h2>
-<div class="callout callout-note no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Decoder flow</strong></p>
-</div>
-<div class="callout-content">
-<p>Below are steps executing during decoding phase:</p>
-<ol type="1">
-<li><p>Receive encoded ciphertext <span class="math inline">\(\{(\xi_i, \eta_i)\}\)</span>.</p></li>
-<li><p>Apply inverse permutations <span class="math inline">\(\sigma_j^{-1}, \sigma_{j+1}^{-1}\)</span>: <span class="math display">\[
-(x_i,y_i) = (\sigma_j^{-1}(\xi_i), \sigma_{j+1}^{-1}(\eta_i))
-\]</span></p></li>
-<li><p>Find <span class="math inline">\(z_i\)</span>: <span class="math display">\[
-z_i = x_i - y_i \; (\mod L)
-\]</span></p></li>
-</ol>
-</div>
-</div>
-</div>
-</section>
-<section id="rustpyo3-example-12" class="slide level2">
-<h2>Rust/PyO3 example</h2>
-<div class="callout callout-note no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Implementation: PyO3</strong></p>
-</div>
-<div class="callout-content">
-<ul>
-<li>Rust bindings for Python extension modules</li>
-</ul>
-</div>
-</div>
-</div>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Users</strong></p>
-</div>
-<div class="callout-content">
-<ul>
-<li>Qiskit <a href="https://www.ibm.com/quantum/qiskit" class="uri">https://www.ibm.com/quantum/qiskit</a></li>
-<li>Python Cryptography package <a href="https://github.com/pyca/cryptography" class="uri">https://github.com/pyca/cryptography</a></li>
-<li>Scallop <a href="https://www.scallop-lang.org" class="uri">https://www.scallop-lang.org</a></li>
-<li>HuggingFace Tokenizers <a href="https://github.com/huggingface/tokenizers" class="uri">https://github.com/huggingface/tokenizers</a></li>
-</ul>
-</div>
-</div>
-</div>
-</section>
-<section id="rustpyo3-example-13" class="slide level2">
-<h2>Rust/PyO3 example</h2>
-<div class="callout callout-note no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Rust wrapper</strong></p>
-</div>
-<div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode numberSource rust number-lines code-with-copy"><code class="sourceCode rust"><span id="cb1-1"><a></a><span class="co">/// A Python module implemented in Rust.</span></span>
-<span id="cb1-2"><a></a><span class="at">#[</span>pymodule<span class="at">]</span></span>
-<span id="cb1-3"><a></a><span class="kw">fn</span> cipher(m<span class="op">:</span> <span class="op">&amp;</span>Bound<span class="op">&lt;</span><span class="ot">'_</span><span class="op">,</span> PyModule<span class="op">&gt;</span>) <span class="op">-&gt;</span> PyResult<span class="op">&lt;</span>()<span class="op">&gt;</span> <span class="op">{</span></span>
-<span id="cb1-4"><a></a>    m<span class="op">.</span>add_function(<span class="pp">wrap_pyfunction!</span>(encode<span class="op">,</span> m)<span class="op">?</span>)<span class="op">?;</span></span>
-<span id="cb1-5"><a></a>    m<span class="op">.</span>add_function(<span class="pp">wrap_pyfunction!</span>(decode<span class="op">,</span> m)<span class="op">?</span>)<span class="op">?;</span></span>
-<span id="cb1-6"><a></a>    <span class="cn">Ok</span>(())</span>
-<span id="cb1-7"><a></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</div>
-</div>
-</section>
-<section id="rustpyo3-example-14" class="slide level2">
-<h2>Rust/PyO3 example</h2>
-<div class="callout callout-important no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Encoding</strong></p>
-</div>
-<div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode numberSource rust number-lines code-with-copy"><code class="sourceCode rust"><span id="cb2-1"><a></a><span class="co">// Generate random permutation of N integers</span></span>
-<span id="cb2-2"><a></a><span class="kw">let</span> <span class="kw">mut</span> numbers<span class="op">:</span> <span class="dt">Vec</span><span class="op">&lt;</span><span class="dt">usize</span><span class="op">&gt;</span> <span class="op">=</span> (<span class="dv">0</span><span class="op">..</span>N)<span class="op">.</span>collect()<span class="op">;</span></span>
-<span id="cb2-3"><a></a><span class="kw">let</span> <span class="kw">mut</span> rng <span class="op">=</span> thread_rng()<span class="op">;</span></span>
-<span id="cb2-4"><a></a>numbers<span class="op">.</span>shuffle(<span class="op">&amp;</span><span class="kw">mut</span> rng)<span class="op">;</span></span>
-<span id="cb2-5"><a></a><span class="kw">let</span> permutation <span class="op">=</span> numbers<span class="op">;</span></span>
-<span id="cb2-6"><a></a></span>
-<span id="cb2-7"><a></a><span class="co">// Generate pairs for each z</span></span>
-<span id="cb2-8"><a></a><span class="kw">let</span> <span class="kw">mut</span> pairs <span class="op">=</span> <span class="dt">Vec</span><span class="pp">::</span>with_capacity(zs<span class="op">.</span>len())<span class="op">;</span></span>
-<span id="cb2-9"><a></a><span class="cf">for</span> <span class="op">&amp;</span>z <span class="kw">in</span> <span class="op">&amp;</span>zs <span class="op">{</span></span>
-<span id="cb2-10"><a></a>    <span class="co">// Generate random x between 0 and N-1</span></span>
-<span id="cb2-11"><a></a>    <span class="kw">let</span> x <span class="op">=</span> rng<span class="op">.</span>gen_range(<span class="dv">0</span><span class="op">..</span>N)<span class="op">;</span></span>
-<span id="cb2-12"><a></a></span>
-<span id="cb2-13"><a></a>    <span class="co">// Compute y such that x - y = z (mod L)</span></span>
-<span id="cb2-14"><a></a>    <span class="kw">let</span> y <span class="op">=</span> <span class="cf">if</span> x <span class="op">&gt;=</span> z <span class="op">{</span></span>
-<span id="cb2-15"><a></a>        (x <span class="op">-</span> z) <span class="op">%</span> L</span>
-<span id="cb2-16"><a></a>    <span class="op">}</span> <span class="cf">else</span> <span class="op">{</span></span>
-<span id="cb2-17"><a></a>        ((x <span class="op">+</span> L) <span class="op">-</span> z) <span class="op">%</span> L</span>
-<span id="cb2-18"><a></a>    <span class="op">};</span></span>
-<span id="cb2-19"><a></a></span>
-<span id="cb2-20"><a></a>    <span class="co">// Apply permutation to x and y</span></span>
-<span id="cb2-21"><a></a>    <span class="kw">let</span> px <span class="op">=</span> permutation[x]<span class="op">;</span></span>
-<span id="cb2-22"><a></a>    <span class="kw">let</span> py <span class="op">=</span> permutation[y]<span class="op">;</span></span>
-<span id="cb2-23"><a></a>    pairs<span class="op">.</span>push((px<span class="op">,</span> py))<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</div>
-</div>
-</section>
-<section id="rustpyo3-example-15" class="slide level2">
-<h2>Rust/PyO3 example</h2>
-<div class="callout callout-important no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Decoding</strong></p>
-</div>
-<div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode numberSource rust number-lines code-with-copy"><code class="sourceCode rust"><span id="cb3-1"><a></a><span class="co">// Create inverse permutation</span></span>
-<span id="cb3-2"><a></a><span class="kw">let</span> <span class="kw">mut</span> inverse <span class="op">=</span> <span class="pp">vec!</span>[<span class="dv">0</span><span class="op">;</span> N]<span class="op">;</span></span>
-<span id="cb3-3"><a></a><span class="cf">for</span> (i<span class="op">,</span> <span class="op">&amp;</span>p) <span class="kw">in</span> permutation<span class="op">.</span>iter()<span class="op">.</span>enumerate() <span class="op">{</span></span>
-<span id="cb3-4"><a></a>    inverse[p] <span class="op">=</span> i<span class="op">;</span></span>
-<span id="cb3-5"><a></a><span class="op">}</span></span>
-<span id="cb3-6"><a></a></span>
-<span id="cb3-7"><a></a><span class="co">// Recover z for each pair</span></span>
-<span id="cb3-8"><a></a><span class="kw">let</span> <span class="kw">mut</span> zs <span class="op">=</span> <span class="dt">Vec</span><span class="pp">::</span>with_capacity(pairs<span class="op">.</span>len())<span class="op">;</span></span>
-<span id="cb3-9"><a></a><span class="cf">for</span> <span class="op">&amp;</span>(px<span class="op">,</span> py) <span class="kw">in</span> pairs <span class="op">{</span></span>
-<span id="cb3-10"><a></a>    <span class="co">// Apply inverse permutation to get x and y</span></span>
-<span id="cb3-11"><a></a>    <span class="kw">let</span> x <span class="op">=</span> inverse[px]<span class="op">;</span></span>
-<span id="cb3-12"><a></a>    <span class="kw">let</span> y <span class="op">=</span> inverse[py]<span class="op">;</span></span>
-<span id="cb3-13"><a></a></span>
-<span id="cb3-14"><a></a>    <span class="co">// Compute z = x - y (mod L)</span></span>
-<span id="cb3-15"><a></a>    <span class="kw">let</span> z <span class="op">=</span> <span class="cf">if</span> x <span class="op">&gt;=</span> y <span class="op">{</span></span>
-<span id="cb3-16"><a></a>        (x <span class="op">-</span> y) <span class="op">%</span> L</span>
-<span id="cb3-17"><a></a>    <span class="op">}</span> <span class="cf">else</span> <span class="op">{</span></span>
-<span id="cb3-18"><a></a>        ((x <span class="op">+</span> L) <span class="op">-</span> y) <span class="op">%</span> L</span>
-<span id="cb3-19"><a></a>    <span class="op">};</span></span>
-<span id="cb3-20"><a></a>    zs<span class="op">.</span>push(z)<span class="op">;</span></span>
-<span id="cb3-21"><a></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</div>
-</div>
-</section>
-<section id="rustpyo3-example-16" class="slide level2">
-<h2>Rust/PyO3 example</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Python</strong></p>
-</div>
-<div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a></a>mkdir cipher<span class="op">;</span> cd cipher</span>
-<span id="cb4-2"><a></a>python <span class="op">-</span>m venv venv</span>
-<span id="cb4-3"><a></a>. venv<span class="op">/</span><span class="bu">bin</span><span class="op">/</span>activate</span>
-<span id="cb4-4"><a></a><span class="op">!</span>pip install maturin</span>
-<span id="cb4-5"><a></a>maturin init</span>
-<span id="cb4-6"><a></a>maturin develop</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</div>
-</div>
-<div class="callout callout-note no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Usage</strong></p>
-</div>
-<div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a></a><span class="im">import</span> cipher</span>
-<span id="cb5-2"><a></a>encoded <span class="op">=</span> cipher.encode(<span class="st">"Whazzuuupppp??!!"</span>)</span>
-<span id="cb5-3"><a></a>decoded <span class="op">=</span> cipher.decode(encoded)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a></a>(add, <span class="dv">1</span>, <span class="dv">2</span>)</span>
+<span id="cb9-2"><a></a>(add, <span class="st">'x'</span> , <span class="dv">2</span>)</span>
+<span id="cb9-3"><a></a>(add, (inc, <span class="st">'x'</span>), <span class="dv">2</span>)</span>
+<span id="cb9-4"><a></a>(<span class="bu">sum</span>, [<span class="dv">1</span>, <span class="dv">2</span>])</span>
+<span id="cb9-5"><a></a>(<span class="bu">sum</span>, [<span class="st">'x'</span>, (inc, <span class="st">'x'</span>)])</span>
+<span id="cb9-6"><a></a>(np.dot, np.array([...]), np.array([...]))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
 </section></section>
 <section>
-<section id="distributed-computing" class="title-slide slide level1 center">
-<h1>Distributed computing</h1>
+<section id="arrays" class="title-slide slide level1 center">
+<h1>Arrays</h1>
 
 </section>
-<section id="distributed-computing-1" class="slide level2">
-<h2>Distributed computing</h2>
+<section id="dask-10" class="slide level2">
+<h2>Dask</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Dask Array</strong></p>
+</div>
+<div class="callout-content">
+<p>The <code>dask.array</code> submodule uses dask graphs to create a NumPy-like library that uses all of your cores and operates on datasets that do not fit in memory.</p>
+<p>It does this by building up a dask graph of <strong>blocked array algorithms</strong>.</p>
+<p>Dask array functions produce Array objects that hold on to Dask graphs. These Dask graphs use several NumPy functions to achieve the full result.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="dask-11" class="slide level2">
+<h2>Dask</h2>
 <div class="callout callout-note no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
-<p><strong>Types</strong></p>
+<p><strong>Blocked Array Algorithms</strong></p>
+</div>
+<div class="callout-content">
+<p>Blocked algorithms compute a large result like</p>
+<ul>
+<li>“take the sum of these trillion numbers”</li>
+</ul>
+<p>with many small computations like</p>
+<ul>
+<li>“break up the trillion numbers into one million chunks of size one million”,</li>
+<li>“sum each chunk”,</li>
+<li>“then sum all of the intermediate sums.”</li>
+</ul>
+<p>Through tricks like this we can evaluate one large problem by solving very many small problems.</p>
+<p>Blocked algorithm organizes a computation so that it works on contiguous chunks of data.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="dask-12" class="slide level2">
+<h2>Dask</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Blocked Array Algorithms</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/blocked_matrix_mult.png" height="600"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="dask-13" class="slide level2">
+<h2>Dask</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Unblocked</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(N):</span>
+<span id="cb10-2"><a></a> <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(N):</span>
+<span id="cb10-3"><a></a>   r <span class="op">=</span> X[i,k]</span>
+<span id="cb10-4"><a></a>   <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(N):</span>
+<span id="cb10-5"><a></a>     Z[i,j] <span class="op">+=</span> r<span class="op">*</span>Y[k,j]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Blocked</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a></a><span class="cf">for</span> kk <span class="kw">in</span> <span class="bu">range</span>(N<span class="op">/</span>B):</span>
+<span id="cb11-2"><a></a> <span class="cf">for</span> jj <span class="kw">in</span> <span class="bu">range</span>(N<span class="op">/</span>B): </span>
+<span id="cb11-3"><a></a>   <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(N):</span>
+<span id="cb11-4"><a></a>     <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(kk, <span class="bu">min</span>(kk<span class="op">+</span>B<span class="op">-</span><span class="dv">1</span>, N)):</span>
+<span id="cb11-5"><a></a>       r <span class="op">=</span> X[i,k]</span>
+<span id="cb11-6"><a></a>       <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(jj, <span class="bu">min</span>(jj<span class="op">+</span>B<span class="op">-</span><span class="dv">1</span>,N)):</span>
+<span id="cb11-7"><a></a>         Z[i,j] <span class="op">+=</span> r<span class="op">*</span>Y[k,j]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</section>
+<section id="dask-14" class="slide level2">
+<h2>Dask</h2>
+<div class="callout callout-note callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Note</strong></p>
+</div>
+<div class="callout-content">
+<p>It is well known that the memory hierarchy can be better utilized if scientific algorithms are blocked.</p>
+<p>Blocking is also known as <strong>tiling</strong>.</p>
+<p>In matrix multiplication example: instead of operating on individual matrix entries, the calculation is performed on submatrices.</p>
+<p><code>B</code> is a <strong>blocking factor</strong>.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="dask-15" class="slide level2">
+<h2>Dask</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Blocking features</strong></p>
 </div>
 <div class="callout-content">
 <ul>
-<li><strong>Cluster computing:</strong> collection of similar workstations</li>
-<li><strong>Grid computing</strong>: federation of different computer systems</li>
-<li><strong>Cloud computing:</strong> provide the facilities to dynamically construct an infrastructure and compose what is needed from available services. Not only providing lots of resources.</li>
+<li>Blocking is a general optimization technique for increasing the effectiveness of a memory hierarchy.</li>
+<li>By reusing data in the faster level of the hierarchy, it cuts down the average <strong>access latency</strong>.</li>
+<li>It also reduces the <strong>number of references</strong> made to slower levels of the hierarchy.</li>
+<li>Blocking is superior to optimization such as <strong>prefetching</strong>, which hides the latency but does not reduce the memory bandwidth requirement.</li>
+<li>This reduction is especially im portant for multiprocessors since memory bandwidth is often the bottleneck of the system.</li>
 </ul>
 </div>
 </div>
 </div>
 </section>
-<section id="distributed-computing-2" class="slide level2">
-<h2>Distributed computing</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Original Beowulf cluster at NASA (1994)</strong></p>
-</div>
-<div class="callout-content">
-<p><img data-src="img/beowulf.jpg" height="500"></p>
-</div>
-</div>
-</div>
-</section>
-<section id="distributed-computing-3" class="slide level2">
-<h2>Distributed computing</h2>
+<section id="dask-16" class="slide level2">
+<h2>Dask</h2>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a></a><span class="im">import</span> dask.array <span class="im">as</span> da</span>
+<span id="cb12-2"><a></a>x <span class="op">=</span> da.arange(<span class="dv">15</span>, chunks<span class="op">=</span>(<span class="dv">5</span>,))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+<img data-src="img/dask_array_chunks.png" class="r-stretch"></section>
+<section id="dask-17" class="slide level2">
+<h2>Dask</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
-<p><strong>Beowulf cluster diagram</strong></p>
+<p><strong>Metadata</strong></p>
 </div>
 <div class="callout-content">
-<p><img data-src="img/beowulf_diagram.png"></p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a></a>x <span class="co"># Array object metadata</span></span>
+<span id="cb13-2"><a></a>dask.array<span class="op">&lt;</span>x<span class="op">-</span><span class="dv">1</span>, shape<span class="op">=</span>(<span class="dv">15</span>,), chunks<span class="op">=</span>((<span class="dv">5</span>, <span class="dv">5</span>, <span class="dv">5</span>)), dtype<span class="op">=</span>int64<span class="op">&gt;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Dask Graph</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a></a>x.dask <span class="co"># Every dask array holds a dask graph</span></span>
+<span id="cb14-2"><a></a>{(<span class="st">'x'</span> , <span class="dv">0</span>): (np.arange, <span class="dv">0</span>, <span class="dv">5</span>),</span>
+<span id="cb14-3"><a></a> (<span class="st">'x'</span>, <span class="dv">1</span>): (np.arange, <span class="dv">5</span>, <span class="dv">10</span>),</span>
+<span id="cb14-4"><a></a> (<span class="st">'x'</span> , <span class="dv">2</span>): (np.arange, <span class="dv">10</span>, <span class="dv">15</span>)}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
 </section>
-<section id="distributed-computing-4" class="slide level2">
-<h2>Distributed computing</h2>
-<div class="columns">
-<div class="column" data-background-color="lightgray" style="width:50%;">
-<div class="callout callout-note no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Grid architecture diagram (Foster et al.&nbsp;2001)</strong></p>
-</div>
-<div class="callout-content">
-<p><img data-src="img/grid_arch_diagram.png"></p>
-</div>
-</div>
-</div>
-</div><div class="column" data-background-color="lightgray" style="width:50%;">
+<section id="dask-18" class="slide level2">
+<h2>Dask</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
-<p><strong>Notation</strong></p>
+<p><strong>More complex graph</strong></p>
 </div>
 <div class="callout-content">
-<div style="font-size: 0.8em;">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a></a>z <span class="op">=</span> (x <span class="op">+</span> <span class="dv">100</span>).<span class="bu">sum</span>()</span>
+<span id="cb15-2"><a></a>z.dask</span>
+<span id="cb15-3"><a></a>{(<span class="st">'x'</span>, <span class="dv">0</span>): (np.arange, <span class="dv">0</span>, <span class="dv">5</span>),</span>
+<span id="cb15-4"><a></a>(<span class="st">'x'</span>, <span class="dv">1</span>): (np.arange, <span class="dv">5</span>, <span class="dv">10</span>),</span>
+<span id="cb15-5"><a></a>(<span class="st">'x'</span>, <span class="dv">2</span>): (np.arange, <span class="dv">10</span>, <span class="dv">15</span>),</span>
+<span id="cb15-6"><a></a>(<span class="st">'y'</span>, <span class="dv">0</span>): (add, (<span class="st">'x'</span>, <span class="dv">0</span>), <span class="dv">100</span>),</span>
+<span id="cb15-7"><a></a>(<span class="st">'y'</span>, <span class="dv">1</span>): (add, (<span class="st">'x'</span>, <span class="dv">1</span>), <span class="dv">100</span>),</span>
+<span id="cb15-8"><a></a>(<span class="st">'y'</span>, <span class="dv">2</span>): (add, (<span class="st">'x'</span>, <span class="dv">2</span>), <span class="dv">100</span>),</span>
+<span id="cb15-9"><a></a>(<span class="st">'z'</span>, <span class="dv">0</span>): (np.<span class="bu">sum</span>, (<span class="st">'y'</span>, <span class="dv">0</span>)),</span>
+<span id="cb15-10"><a></a>(<span class="st">'z'</span>, <span class="dv">1</span>): (np.<span class="bu">sum</span>, (<span class="st">'y'</span>, <span class="dv">1</span>)),</span>
+<span id="cb15-11"><a></a>(<span class="st">'z'</span>, <span class="dv">2</span>): (np.<span class="bu">sum</span>, (<span class="st">'y'</span>, <span class="dv">2</span>)),</span>
+<span id="cb15-12"><a></a>(<span class="st">'z'</span>,): (<span class="bu">sum</span>, [(<span class="st">'z'</span>, <span class="dv">0</span>), (<span class="st">'z'</span>, <span class="dv">1</span>), (<span class="st">'z'</span>, <span class="dv">2</span>)])}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Execute the Graph</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a></a>z.compute()</span>
+<span id="cb16-2"><a></a><span class="dv">1605</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</section>
+<section id="dask-19" class="slide level2">
+<h2>Dask</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>dask.array.Array objects</strong></p>
+</div>
+<div class="callout-content">
+<p><code>x</code> and <code>z</code> are both <code>dask.array.Array</code> objects containing:</p>
 <ul>
-<li><strong>fabric:</strong> interfaces to local resources at a specific site</li>
-<li><strong>connectivity</strong>: communication protocols for supporting grid transactions that span the usage of multiple resources</li>
-<li><strong>resource:</strong> responsible for managing a single resource</li>
-<li><strong>collective:</strong> handling access to multiple resources and typically consists of services for resource discovery, allocation and scheduling of tasks onto multiple resources, data replication, and so on</li>
-<li><strong>application:</strong> applications that operate within a virtual organization</li>
+<li>Dask graph <code>.dask</code></li>
+<li>array shape and chunk shape <code>.chunks</code></li>
+<li>a name identifying which keys in the graph correspond to the result, <code>.name</code></li>
+<li>a dtype</li>
 </ul>
 </div>
 </div>
 </div>
-</div>
-</div></div>
 </section>
-<section id="distributed-computing-5" class="slide level2">
-<h2>Distributed computing</h2>
+<section id="dask-20" class="slide level2">
+<h2>Dask</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Chunks</strong></p>
+</div>
+<div class="callout-content">
+<p>A normal NumPy array knows its shape, a dask array must know its shape and the shape of all of the internal NumPy blocks that make up the larger array.</p>
+<p>These shapes can be concisely described by a tuple of tuples of integers, where each internal tuple corresponds to the lengths along a single dimension.</p>
+<p>In the example above we have a 20 by 24 array cut into uniform blocks of size 5 by 8. The chunks attribute describing this array is the following:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a></a>chunks <span class="op">=</span> ((<span class="dv">5</span>, <span class="dv">5</span>, <span class="dv">5</span>, <span class="dv">5</span>), (<span class="dv">8</span>, <span class="dv">8</span>, <span class="dv">8</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</section>
+<section id="dask-21" class="slide level2">
+<h2>Dask</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
-<p><strong>Cloud architecture</strong></p>
+<p><strong>Chunks need not be uniform!</strong></p>
 </div>
 <div class="callout-content">
-<p><img data-src="img/cloud_arch.png"></p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a></a>x[::<span class="dv">2</span>].chunks</span>
+<span id="cb18-2"><a></a>((<span class="dv">3</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">2</span>), (<span class="dv">8</span>, <span class="dv">8</span>, <span class="dv">8</span>))</span>
+<span id="cb18-3"><a></a>x[::<span class="dv">2</span>].T.chunks</span>
+<span id="cb18-4"><a></a>((<span class="dv">8</span>, <span class="dv">8</span>, <span class="dv">8</span>), (<span class="dv">3</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">2</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
-
-
+</section>
+<section id="dask-22" class="slide level2">
+<h2>Dask</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Dask Array operations</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>arithmetic and scalar math: <code>+</code>, <code>*</code>, <code>exp</code>, <code>log</code></li>
+<li>reductions along axes: <code>sum()</code>, <code>mean()</code>, <code>std()</code>, <code>sum(axis=0)</code></li>
+<li>tensor contractions / dot products / matrix multiplication: <code>tensordot</code></li>
+<li>axis reordering / transposition: <code>transpose</code></li>
+<li>slicing: <code>x[:100, 500:100:-2]</code></li>
+<li>utility functions: <code>bincount</code>, <code>where</code></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="dask-23" class="slide level2">
+<h2>Dask</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Ahead-of-time shape limitations</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a></a>x[x <span class="op">&gt;</span> <span class="dv">0</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
 </section></section>
+<section>
+<section id="dask-task-scheduling" class="title-slide slide level1 center">
+<h1>Dask Task Scheduling</h1>
+
+</section>
+<section id="dask-24" class="slide level2">
+<h2>Dask</h2>
+<p>Graph creation and graph scheduling are separate problems!</p>
+<p>Current Dask scheduler is <strong>dynamic</strong>.</p>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Current Dask scheduler logic</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>A worker reports that it has completed a task and that it is ready for another.</li>
+<li>We update runtime state to record the finished task,</li>
+<li>mark which new tasks can be run, which data can be released, etc.</li>
+<li>We then choose a task to give to this worker from among the set of ready-to-run tasks. This small choice governs the macroscale performance of the scheduler.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="dask-25" class="slide level2">
+<h2>Dask</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Out-of-core computation - which task to choose?</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>last in, first out</li>
+<li>select tasks whose data dependencies were most recently made available.</li>
+<li>this causes a behavior where long chains of related tasks trigger each other</li>
+<li>it forces the scheduler to finish related tasks before starting new ones.</li>
+<li><strong>implementation:</strong> a simple stack, which can operate in constant time.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="dask-26" class="slide level2">
+<h2>Dask</h2>
+
+<img data-src="img/dask_custom_scheduler.png" class="r-stretch"></section>
+<section id="dask-27" class="slide level2">
+<h2>Dask</h2>
+
+<img data-src="img/dask_blas_comparison.png" class="r-stretch"></section></section>
+<section>
+<section id="other-dask-collections" class="title-slide slide level1 center">
+<h1>Other Dask collections</h1>
+
+</section>
+<section id="dask-28" class="slide level2">
+<h2>Dask</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Collections</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>dask.array</strong> = numpy+ threading</li>
+<li><strong>dask.bag</strong> = toolz+ multiprocessing</li>
+<li><strong>dask.dataframe</strong> = pandas+ threading</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="dask-29" class="slide level2">
+<h2>Dask</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Dask Bag - Definition</strong></p>
+</div>
+<div class="callout-content">
+<p>A <strong>bag</strong> is an unordered collection with repeats.</p>
+<p>It is like a Python list but does not guarantee the order of elements.</p>
+<p>The <code>dask.bag</code> API contains functions like <strong>map</strong> and <strong>filter</strong> and generally follows the PyToolz API.</p>
+<!-- %We find that it is particularly useful on the front lines of data analysis, particularly in parsing and cleaning up initial data dumps like JSON or log files because it combines the streaming properties and solid performance of projects like cytoolz. -->
+</div>
+</div>
+</div>
+</section>
+<section id="dask-30" class="slide level2">
+<h2>Dask</h2>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a></a><span class="op">&gt;&gt;&gt;</span> <span class="im">import</span> dask.bag <span class="im">as</span> db</span>
+<span id="cb20-2"><a></a><span class="op">&gt;&gt;&gt;</span> <span class="im">import</span> json</span>
+<span id="cb20-3"><a></a><span class="op">&gt;&gt;&gt;</span> b <span class="op">=</span> db.from_filenames(<span class="st">'2014-*.json.gz'</span>).<span class="bu">map</span>(json.loads)</span>
+<span id="cb20-4"><a></a><span class="op">&gt;&gt;&gt;</span> alices <span class="op">=</span> b.<span class="bu">filter</span>(<span class="kw">lambda</span> d: d[<span class="st">'name'</span>] <span class="op">==</span> <span class="st">'Alice'</span>)</span>
+<span id="cb20-5"><a></a><span class="op">&gt;&gt;&gt;</span> alices.take(<span class="dv">3</span>)</span>
+<span id="cb20-6"><a></a>({<span class="st">'name'</span>: <span class="st">'Alice'</span>, <span class="st">'city'</span>: <span class="st">'LA'</span>, <span class="st">'balance'</span>: <span class="dv">100</span>},</span>
+<span id="cb20-7"><a></a>{<span class="st">'name'</span>: <span class="st">'Alice'</span>, <span class="st">'city'</span>: <span class="st">'LA'</span>, <span class="st">'balance'</span>: <span class="dv">200</span>},</span>
+<span id="cb20-8"><a></a>{<span class="st">'name'</span>: <span class="st">'Alice'</span>, <span class="st">'city'</span>: <span class="st">'NYC'</span>, <span class="st">'balance'</span>: <span class="dv">300</span>},)</span>
+<span id="cb20-9"><a></a></span>
+<span id="cb20-10"><a></a><span class="op">&gt;&gt;&gt;</span> <span class="bu">dict</span>(alices.pluck(<span class="st">'city'</span>).frequencies())</span>
+<span id="cb20-11"><a></a>{<span class="st">'LA'</span>: <span class="dv">10000</span>, <span class="st">'NYC'</span>: <span class="dv">20000</span>, ...}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="dask-31" class="slide level2">
+<h2>Dask</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>S3 example</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a></a><span class="op">&gt;&gt;&gt;</span> <span class="im">import</span> dask.bag <span class="im">as</span> db</span>
+<span id="cb21-2"><a></a><span class="op">&gt;&gt;&gt;</span> b <span class="op">=</span> db.from_s3(<span class="st">'githubarchive-data'</span>, <span class="st">'2015-01-01-*.json.gz'</span>)</span>
+<span id="cb21-3"><a></a>          .<span class="bu">map</span>(json.loads)</span>
+<span id="cb21-4"><a></a>          .<span class="bu">map</span>(<span class="kw">lambda</span> d: d[<span class="st">'type'</span>] <span class="op">==</span> <span class="st">'PushEvent'</span>)</span>
+<span id="cb21-5"><a></a>          .count()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</section>
+<section id="dask-32" class="slide level2">
+<h2>Dask</h2>
+<p><!-- %https://blog.dask.org/2015/06/26/Complex-Graphs --> <img data-src="img/dask_bag_graph.png"></p>
+</section>
+<section id="dask-33" class="slide level2">
+<h2>Dask</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Dask DataFrame - Definition</strong></p>
+</div>
+<div class="callout-content">
+<p>The <strong>dask.dataframe</strong> module implements a large dataframe out of many Pandas DataFrames.</p>
+<p>It uses a threaded scheduler.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="dask-34" class="slide level2">
+<h2>Dask</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Partitioned datasets</strong></p>
+</div>
+<div class="callout-content">
+<p>The dask dataframe can compute efficiently on <strong>partitioned datasets</strong> where the different blocks are well separated along an index.</p>
+<p>For example in time series data we may know that all of January is in one block while all of February is in another.</p>
+<p><code>Join</code>, <code>groupby</code>, and <code>range</code> queries along this index are significantly faster when working on partitioned datasets.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="dask-35" class="slide level2">
+<h2>Dask</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Dask DataFrame <code>join</code></strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/dask_ddf_join.png" height="600"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="dask-36" class="slide level2">
+<h2>Dask</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Out-of-core parallel SVD example</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a></a><span class="op">&gt;&gt;&gt;</span> <span class="im">import</span> dask.array <span class="im">as</span> da</span>
+<span id="cb22-2"><a></a><span class="op">&gt;&gt;&gt;</span> x <span class="op">=</span> da.ones((<span class="dv">5000</span>, <span class="dv">1000</span>), chunks<span class="op">=</span>(<span class="dv">1000</span>, <span class="dv">1000</span>))</span>
+<span id="cb22-3"><a></a><span class="op">&gt;&gt;&gt;</span> u, s, v <span class="op">=</span> da.svd(x)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Out-of-core parallel non-negative matrix factorizations on top of <code>dask.array</code>.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="dask-37" class="slide level2">
+<h2>Dask</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Out-of-core parallel SVD</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/dask_parallel_svd.png" height="600"></p>
+</div>
+</div>
+</div>
+</section></section>
+<section>
+<section id="usage" class="title-slide slide level1 center">
+<h1>Usage</h1>
+
+</section>
+<section id="usage-1" class="slide level2">
+<h2>Usage</h2>
+
+<img data-src="img/dask_scida.png" class="r-stretch quarto-figure-center"><p class="caption">scida.io - astrophysical simulations</p></section>
+<section id="usage-2" class="slide level2">
+<h2>Usage</h2>
+
+<img data-src="img/pangeo_sea_water_temp.png" class="r-stretch quarto-figure-center"><p class="caption">Pangeo - open, reproducible, scalable geoscience. A global slice of Sea Water Temperature</p><p><!-- %https://medium.com/pangeo/using-kerchunk-with-uncompressed-netcdf-64-bit-offset-files-cloud-optimized-access-to-hycom-ocean-9008ba6d0d67 --> <!-- %https://www.earthdata.nasa.gov/learn/articles/pangeo-project --></p>
+</section>
+<section id="usage-3" class="slide level2">
+<h2>Usage</h2>
+<p><!-- %\textsc{Pangeo - open, reproducible, scalable geoscience} --> <!-- %https://stories.dask.org/en/latest/network-modeling.html --> <img data-src="img/dask_wireless_modeling.png" height="600" alt="Line-Of-Sight (LOS) coverage from a lamp post in San Jose."></p>
+</section></section>
+<section>
+<section id="dask-vs-spark" class="title-slide slide level1 center">
+<h1>Dask vs Spark</h1>
+
+</section>
+<section id="comparison-with-spark" class="slide level2">
+<h2>Comparison with Spark</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Setup</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>BigBrain20, a 3-D image of the human brain, <strong>total data size</strong> of 606 GiB.</li>
+<li>dataset provided by the Consortium for Reliability and Reproducibility, entire dataset is 379.83 GiB, used all 3,491 anatomical images, representing 26.67 GiB overall. <!-- %containing anatomical, diffusion, and functional images of 1,654 subjects acquired in 35 sites, --></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="comparison-with-spark-1" class="slide level2">
+<h2>Comparison with Spark</h2>
+<p><img data-src="img/dask_spark_graphs.png" height="700"></p>
+</section>
+<section id="comparison-with-spark-2" class="slide level2">
+<h2>Comparison with Spark</h2>
+
+<img data-src="img/dask_spark_increment.png" class="r-stretch"></section>
+<section id="comparison-with-spark-3" class="slide level2">
+<h2>Comparison with Spark</h2>
+
+
+
+<img data-src="img/dask_spark_histogram.png" class="r-stretch"></section></section>
     </div>
   <div class="quarto-auto-generated-content" style="display: none;">
 <div class="footer footer-default">
