@@ -1,5 +1,5 @@
 ---
-title: "Big Data: Intro"
+title: "Intro to Docker"
 author: 
   - name: MSDE
     affiliation: Lviv University
@@ -19,6 +19,10 @@ diagram:
         \usetikzlibrary{decorations.pathreplacing}
 filters:
   - diagram
+title-slide-attributes:
+  data-background-image: img/docker_ship.jpg
+  data-background-size: contain
+  data-background-opacity: "0.5"
 format: 
   revealjs:
     preview-links: auto
@@ -30,367 +34,967 @@ format:
       id: 'ceb96efc411836bb262565b446653921d89b7ccf140a4d923b70660482df2ced'
 ---
 
+# Docker overview
 
-## What is Big Data?
-:::{.callout-important icon=false}
-## Definition
- Big Data is a set of technologies designed to store, manage and analyze data that is:
 
-- too large to fit on a single machine 
-- while accommodating for the issue of growing discrepancy between capacity, throughput and latency.
-:::
+## Why now?
 
-## Prefixes
-:::{.callout-important icon=false}
-## Prefixes
-
-- **kilo (k)** 1,000 (3 zeros)
-- **Mega (M)** 1,000,000 (6 zeros)
-- **Giga (G)** 1,000,000,000 (9 zeros)
-- **Tera (T)** 1,000,000,000,000 (12 zeros)
-- **Peta (P)** 1,000,000,000,000,000 (15 zeros)
-- **Exa (E)** 1,000,000,000,000,000,000 (18 zeros)
-- **Zetta (Z)** 1,000,000,000,000,000,000,000 (21 zeros)
-- **Yotta (Y)** 1,000,000,000,000,000,000,000,000 (24 zeros)
-- **Ronna (R)** 1,000,000,000,000,000,000,000,000,000 (27 zeros)
-- **Quetta (Q)** 1,000,000,000,000,000,000,000,000,000,000 (30 zeros) 
-:::
-
-## Total estimate
-:::{.callout-important icon=false}
-## Estimate
-The total amount of data stored digitally worldwide is estimated to be getting close to 100 ZB as of 2021 (zettabytes) 
-:::
-
-![](img/total_data_vol)
-
-# The three Vs of Big Data
-
-## Three Vs
 :::: {.columns}
 
-::: {.column width="30%" background-color="lightgray"}
-- **Volume**
-- **Variety**
-- **Velocity**
+::: {.column width="50%" background-color="lightgray"}
+:::{.callout-important icon=false}
+## Before
+
+- monolithic applications
+- long development cycles
+- single environment
+- slowly scaling up
+:::
 :::
 
-::: {.column width="70%"}
-![](img/3vs)
-:::
+::: {.column width="50%" background-color="lightgray"}
+:::{.callout-tip icon=false}
+## Now:
 
+- decoupled services
+- fast, iterative improvements
+- multiple environments
+- quickly scaling out
+:::
+:::
 ::::
 
-## Volume
-:::{.callout-important icon=false}
-## Issue
-Data volume has exponentially increased in recent decades.
+## Deployment
+
+:::{.callout-warning}
+
+## Complexity
+
+Many different stacks:
+
+- languages
+- frameworks
+- databases
+
+Many different targets:
+
+- individual development environments
+- pre-production, QA, staging...
+- production: on prem, cloud, hybrid
 :::
+
+
+## Deployment
+![](img/docker_deployment_problem)
+
+## Deployment
+![](img/docker_matrix)
+
+## Deployment
+![](img/docker_shipping_industry)
+
+## Deployment
+![](img/docker_shipping_industry2)
+
+## Deployment
+![](img/docker_shipping_industry3)
+
+## Deployment
+![](img/docker_shipping_industry4)
+
+## Deployment
+![](img/docker_matrix2)
+
+## Docker
+
+:::{.callout-important icon=false}
+## Results
+
+- Dev-to-prod reduced from 9 months to 15 minutes (ING)
+- Continuous integration job time reduced by more than 60% (BBC)
+- Deploy 100 times a day instead of once a week (GILT)
+- 70% infrastructure consolidation (MetLife)
+:::
+
+## Docker
+
+:::{.callout-tip}
+## How to deploy now?
+
+**Escape dependency hell:**
+
+- Write installation instructions into an `INSTALL.txt` file
+- Using this file, write an `install.sh` script that works for you
+- Turn this file into a `Dockerfile`, test it on your machine
+- If the Dockerfile builds on your machine, it will build anywhere
+- Rejoice as you escape dependency hell and "works on my machine"
+- Never again "worked in dev - ops problem now!"
+:::
+
+## Docker
+
+:::{.callout-tip}
+## How to deploy now?
+
+Quick onboarding
+
+- Write Dockerfiles for your application components
+- Use pre-made images from the Docker Hub (mysql, redis...)
+- Describe your stack with a Compose file
+- On-board somebody with two commands:
+```
+git clone ...
+docker-compose up
+```
+:::
+
+
+## Docker
+
+:::{.callout-tip}
+## Implement reliable CI easily
+
+- Build test environment with a Dockerfile or Compose file
+- For each test run, stage up a new container or stack
+- Each run is now in a clean environment
+- No pollution from previous tests
+:::
+
+## Docker
+:::{.callout-tip}
+## Use container images as build artefacts
+
+- Build your app from Dockerfiles
+- Store the resulting images in a registry
+- Keep them forever (or as long as necessary)
+- Test those images in QA, CI, integration...
+- Run the same images in production
+- Something goes wrong? Rollback to previous image
+- Investigating old regression? Old image has your back!
+- Images contain all the libraries, dependencies, etc. needed to run the app.
+:::
+
+## Docker: Formats
+:::: {.columns}
+
+::: {.column width="50%" background-color="lightgray"}
+:::{.callout-important icon=false}
+## Before
+
+- No standardized exchange format.
+<!-- (No, a rootfs tarball is not a format!) -->
+- Containers are hard to use for developers.
+<!-- (Where's the equivalent of docker run debian?) -->
+- As a result, they are hidden from the end users.
+- No re-usable components, APIs, tools.
+<!-- (At best: VM abstractions, e.g. libvirt.) -->
+
+<!-- Analogy: -->
+
+<!-- Shipping containers are not just steel boxes. -->
+<!-- They are steel boxes that are a standard size, with the same hooks and holes. -->
+:::
+:::
+
+::: {.column width="50%" background-color="lightgray"}
 
 :::{.callout-tip icon=false}
-## Wait but why?
+## After
 
-- Internet-of-Things sensor data
-- Social networks
-- Storage device progress
+- Standardize the container format, because containers were not portable.
+- Make containers easy to use for developers.
+- Emphasis on re-usable components, APIs, ecosystem of standard tools.
+- Improvement over ad-hoc, in-house, specific tools.
 :::
+:::
+::::
 
-## Variety
+## Docker: Deployment
+:::: {.columns}
+
+::: {.column width="50%" background-color="lightgray"}
 :::{.callout-important icon=false}
-## Types
+## Before
 
-- **trees** - XML, JSON, Parquet, Avro, etc
-- **unstructured** - text, pictures, audio, video
-- **data cubes**
-- **graphs**
+- Ship packages: deb, rpm, gem, jar, homebrew...
+- Dependency hell.
+- "Works on my machine."
+- Base deployment often done from scratch and unreliable.
+:::
 :::
 
-## Velocity
+::: {.column width="50%" background-color="lightgray"}
+
+:::{.callout-tip icon=false}
+## After
+
+- Ship container images with all their dependencies.
+- Images are bigger, but they are broken down into layers.
+- Only ship layers that have changed.
+- Save disk, network, memory usage.
+:::
+:::
+::::
+
+## Docker
+
 :::{.callout-note icon=false}
-## Definion
-Speed at which data is being generated, collected, and processed. 
+## Example
+
+Layers:
+
+- CentOS
+- JRE
+- Tomcat
+- Dependencies
+- Application JAR
+- Configuration
 :::
+
+## Docker: Devops
+:::: {.columns}
+
+::: {.column width="50%" background-color="lightgray"}
 :::{.callout-important icon=false}
-## Attributes
+## Before
 
-- **Capacity**: how much data can we store per unit of volume?
-- **Throughput**: how many bytes can we read per unit of time?
-- **Latency**: how much time do we need to wait until the bytes start arriving?
+- Drop a tarball (or a commit hash) with instructions.
+- Dev environment very different from production.
+- Ops don't always have a dev environment themselves ...
+- ... and when they do, it can differ from the devs'.
+- Ops have to sort out differences and make it work ...
+- ... or bounce it back to devs.
+- Shipping code causes frictions and delays.
+:::
 :::
 
-## Velocity
-Evolution since 1950s
-![](img/velocity)
+::: {.column width="50%" background-color="lightgray"}
 
-# Features of Big Data systems
+:::{.callout-tip icon=false}
+## After
 
-## Features
+- Drop a container image or a Compose file.
+- Ops can always run that container image.
+- Ops can always run that Compose file.
+- Ops still have to adapt to prod environment, but at least they have a reference point.
+- Ops have tools allowing to use the same image in dev and prod.
+- Devs can be empowered to make releases themselves more easily.
+:::
+:::
+::::
+
+
+## Docker history
+
+![](img/docker_vps_age)
+
+
+## Docker history
+
 :::{.callout-note icon=false}
-## Features
+## dotCloud
 
-- **Reliability**
-- **Scalability**
-- **Maintainability**
+-dotCloud was operating a PaaS, using a custom container engine.
+- This engine was based on OpenVZ (and later, LXC) and AUFS.
+- It started (circa 2008) as a single Python script.
+- By 2012, the engine had multiple (~10) Python components.
+(and ~100 other micro-services!)
+- End of 2012, dotCloud refactors this container engine.
+- The codename for this project is "Docker."
 :::
 
-## Reliability
+## Docker history
+
+:::{.callout-note icon=false}
+## First public release
+
+- March 2013, PyCon, Santa Clara:
+  - "Docker" is shown to a public audience for the first time.
+- It is released with an open source license.
+- Very positive reactions and feedback!
+- The dotCloud team progressively shifts to Docker development.
+- The same year, dotCloud changes name to Docker.
+<!-- In 2014, the PaaS activity is sold. -->
+:::
+
+## Docker history
+
+:::{.callout-note icon=false}
+## After release
+
+- 2013: fixing bugs around OS support
+- 2014: Docker Compose v1 (written in Python)
+- 2015: version 1.0, Open Containers Initiative
+- 2015: creation of the Cloud Native Computing Foundation
+- 2020: Docker Compose v2 (re-written in Go)
+:::
+
+# Installation
+
+## Docker installation
+:::{.callout-tip}
+## What is Docker?
+
+- "Installing Docker" really means "Installing the Docker Engine and CLI".
+- The Docker Engine is a daemon (a service running in the background).
+- This daemon manages containers, the same way that a hypervisor manages VMs.
+- We interact with the Docker Engine by using the Docker CLI.
+- The Docker CLI and the Docker Engine communicate through an API.
+- There are many other programs and client libraries which use that API.
+:::
+
+## Docker installation
 :::{.callout-important icon=false}
-## Kleppmann's definition
-The system should continue to work correctly (performing the correct function at the desired level of performance) even in the face of adversity
+## Docker Desktop
 
-- hardware faults
-- software faults
-- and even human error
+- Leverages the host OS virtualization subsystem
+- Under the hood, runs a tiny VM
+- Accesses network resources like normal applications
+- Supports filesystem sharing through volumes
 :::
 
-## Reliability
+## Docker installation
+:::{.callout-tip icon=false}
+## Docker Desktop
+
+When you execute docker version from the terminal:
+
+- the CLI connects to the Docker Engine over a standard socket,
+- the Docker Engine is, in fact, running in a VM,
+- ... but the CLI doesn't know or care about that,
+- the CLI sends a request using the REST API,
+- the Docker Engine in the VM processes the request,
+- the CLI gets the response and displays it to you.
+:::
+
+## Docker installation
+:::{.callout-important icon=false}
+## Check that it works
+
+```
+$ docker version
+
+Client:
+ Version:           28.2.2
+ API version:       1.50
+ Go version:        go1.24.3
+ Git commit:        e6534b4
+ Built:             Fri May 30 12:07:35 2025
+ OS/Arch:           darwin/arm64
+ Context:           desktop-linux
+
+Server: Docker Desktop 4.42.1 (196648)
+ Engine:
+  Version:          28.2.2
+  API version:      1.50 (minimum version 1.24)
+  Go version:       go1.24.3
+  Git commit:       45873be
+  Built:            Fri May 30 12:07:27 2025
+  OS/Arch:          linux/arm64
+  Experimental:     false
+ containerd:
+  Version:          1.7.27
+  GitCommit:        05044ec0a9a75232cad458027ca83437aae3f4da
+ runc:
+  Version:          1.2.5
+  GitCommit:        v1.2.5-0-g59923ef
+ docker-init:
+  Version:          0.19.0
+  GitCommit:        de40ad0
+
+```
+:::
+
+## Docker installation: Busybox
+![](img/docker_busybox)
+
+:::{.callout-tip icon=false}
+## What is it?
+
+- provides several Unix utilities in a single executable file.
+- very space-efficient
+- created for embedded operating systems with very limited resources.
+:::
+
+:::{.callout-note icon=false}
+## Check that it works
+
+
+```
+$ docker run busybox echo hello world
+Unable to find image 'busybox:latest' locally
+latest: Pulling from library/busybox
+499bcf3c8ead: Pull complete
+Digest: sha256:d82f458899c9696cb26a7c02d5568f81c8c8223f8661bb2a7988b269c8b9051e
+Status: Downloaded newer image for busybox:latest
+hello world
+```
+:::
+
+# Interactive containers
+
+## Docker installation: Ubuntu
+![](img/docker_ubuntu.png){height=150}
+
+:::{.callout-important icon=false}
+## Running Ubuntu
+```
+$ docker run -it ubuntu
+Unable to find image 'ubuntu:latest' locally
+latest: Pulling from library/ubuntu
+59a5d47f84c3: Pull complete
+Digest: sha256:353675e2a41babd526e2b837d7ec780c2a05bca0164f7ea5dbbd433d21d166fc
+Status: Downloaded newer image for ubuntu:latest
+root@014ed1f2eac1:/# sudo apt-get moo
+bash: sudo: command not found
+root@014ed1f2eac1:/# apt-get moo
+                 (__)
+                 (oo)
+           /------\/
+          / |    ||
+         *  /\---/\
+            ~~   ~~
+..."Have you mooed today?"...
+root@014ed1f2eac1:/#
+```
+:::
+
+## Docker installation: Ubuntu
+:::{.callout-note}
+## What does this mean?
+
+- It runs a bare-bones, no-frills ubuntu system.
+- `-it` is shorthand for -i -t.
+- `-i` tells Docker to connect us to the container's `stdin.`: e.g. **interactive** mode.
+- `-t` tells Docker that we want a pseudo-terminal.
+:::
+
+## Docker installation: Ubuntu
+:::{.callout-important icon=false}
+## Run something
+```
+root@014ed1f2eac1:/# figlet hello
+bash: figlet: command not found
+
+root@014ed1f2eac1:/# apt-get update && apt-get install figlet
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+The following NEW packages will be installed:
+  figlet
+...
+Unpacking figlet (2.2.5-3) ...
+root@014ed1f2eac1:/# figlet hello
+ _          _ _
+| |__   ___| | | ___
+| '_ \ / _ \ | |/ _ \
+| | | |  __/ | | (_) |
+|_| |_|\___|_|_|\___/
+
+root@014ed1f2eac1:/#
+```
+:::
+
+## Docker installation: Ubuntu
+
+:::{.callout-important}
+
+Exit the container via `exit` or `Ctrl-D`.
+
+If we try running `figlet` again, this won't work - it's only installed **inside** the container.
+:::
+
+## Docker installation: Ubuntu
+:::{.callout-tip icon=false}
+## Hosts vs Containers
+
+- We ran an ubuntu container on an Linux/Windows/macOS host.
+- They have different, independent packages.
+- Installing something on the host doesn't expose it to the container.
+- And vice-versa.
+- Even if both the host and the container have the same Linux distro!
+- We can run any container on any host.
+:::
+
+
+## Docker
+
 :::{.callout-warning icon=false}
-## Faults
-Basically, theses are things that could go wrong.
+## Where's our container now
 
-Systems that can anticipate faults are called **fault-tolerant** or **resilient**.
-
-Fault can be defined as one component of the system deviating from the spec.
+- in a **stopped** state
+- using **disk storage**
+- NOT using **CPU** or **memory**
 :::
+
+## Docker
+
+:::{.callout-warning icon=false}
+## Start a new container
+```
+docker run -it ubuntu
+root@5c6dc90eb867:/# figlet
+bash: figlet: command not found
+root@5c6dc90eb867:/#
+```
+
+Why?
+
+- We started a brand new container.
+- The basic Ubuntu **image** was used, and figlet is not here.
+:::
+
+## Docker
+
+:::{.callout-warning icon=false}
+## Can we restore our container somehow?
+
+We can, but that's not the **default workflow** with Docker.
+:::
+
+:::{.callout-tip icon=false}
+## What's the default workflow, then?
+
+- Always start with a fresh container.
+- If we need something installed in our container, build a custom image.
+:::
+
+
+:::{.callout-note icon=false}
+## Why so complicated?
+
+- It's quite easy actually
+- This puts a strong emphasis on automation and repeatability. Let's see why ...
+:::
+
+## Docker
+![](img/docker_pets_cattle.png)
+
+## Docker
+
+:::: {.columns}
+
+::: {.column width="50%" background-color="lightgray"}
+:::{.callout-important icon=false}
+## Pets
+
+- have distinctive names and unique configurations
+- when they have an outage, we do everything we can to fix them
+:::
+:::
+
+::: {.column width="50%" background-color="lightgray"}
+:::{.callout-tip icon=false}
+## Cattle
+
+- have generic names (e.g. with numbers) and generic configuration
+- configuration is enforced by configuration management, golden images ...
+- when they have an outage, we can replace them immediately with a new server
+:::
+:::
+::::
+
+## Docker
 
 :::{.callout-important icon=false}
-## Failures
-Failures occur when system stops providing services to the user.
+## Pet VM
+
+When we use local VMs (with e.g. VirtualBox or VMware), our workflow looks like this:
+
+- create VM from base template (Ubuntu, CentOS...)
+- install packages, set up environment
+- work on project
+- when done, shut down VM
+- next time we need to work on project, restart VM as we left it
+- if we need to tweak the environment, we do it live
+- Over time, the VM configuration evolves, diverges.
+- We don't have a clean, reliable, deterministic way to provision that environment.
 :::
 
-**Faults** *might* degenerate into [**failures**]{style="color:red;"}.
 
+## Docker
 
-## Reliability
+:::{.callout-important icon=false}
+## Cattle container
+
+With Docker, the workflow looks like this:
+
+- create container image with our dev environment
+- run container with that image
+- work on project
+- when done, shut down container
+- next time we need to work on project, start a new container
+- if we need to tweak the environment, we create a new image
+- We have a clear definition of our environment, and can share it reliably with others.
+:::
+
+# Background containers
+
+## Docker
 :::{.callout-tip icon=false}
-## Types of errors
+## Non-interactive containers
 
-- Hardware
-- Software
-- Human
+Our first containers were interactive.
+
+We will now see how to:
+
+- Run a non-interactive container.
+- Run a container in the background.
+- List running containers.
+- Check the logs of a container.
+- Stop a container.
+- List stopped containers.
 :::
 
-## Reliability
-![](img/error_stats)
-<!-- https://www.salvationdata.com/knowledge/8-most-common-reasons-for-data-loss/ -->
+## Non-interactive containers
+:::{.callout-tip icon=false}
+## Example
 
-## Scalability
-:::{.callout-note icon=false}
-## Kleppmann
-As the system grows (in data volume, traffic volume, or complexity), there should be reasonable ways of dealing with that growth.
+We will run a small custom container.
 
-In other words, **scalability** is a system’s ability to cope with increased load.
+This container just displays the time every second.
+```
+$ docker run jpetazzo/clock
+Unable to find image 'jpetazzo/clock:latest' locally
+latest: Pulling from jpetazzo/clock
+36fbfd22ebfc: Pull complete
+Digest: sha256:dc06bbc3744f7200404bff0bbb2516925e7adea115e07de9da8b36bf15fe3dd3
+Status: Downloaded newer image for jpetazzo/clock:latest
+Sat Sep 20 11:00:45 UTC 2025
+Sat Sep 20 11:00:46 UTC 2025
+Sat Sep 20 11:00:47 UTC 2025
+Sat Sep 20 11:00:48 UTC 2025
+^C%
+```
+
+- This container will run forever.
+- To stop it, press ^C.
+- Docker has automatically downloaded the image jpetazzo/clock.
+- This image is a user image, created by `jpetazzo.`
+<!-- - We will hear more about user images (and other types of images) later. -->
+:::
+
+## Non-interactive containers
+
+:::{.callout-important icon=false}
+## Ctrl-C might now always work!
+
+What happens when we hit `Ctrl-C`:
+
+- SIGINT gets sent to the container, which means:
+- SIGINT gets sent to PID 1 (default case)
+- SIGINT gets sent to foreground processes when running with -ti
+
+But there is a special case for PID 1: it ignores all signals!
+
+- except SIGKILL and SIGSTOP
+- except signals handled explicitly
+
+**TL,DR:** there are many circumstances when ^C won't stop the container.
+:::
+
+## Non-interactive containers
+:::{.callout-note}
+## Why is PID 1 special?
+
+PID 1 has some extra responsibilities:
+
+- it starts (directly or indirectly) every other process
+- when a process exits, its processes are "reparented" under PID 1
+- When PID 1 exits, everything stops:
+- on a "regular" machine, it causes a kernel panic
+- in a container, it kills all the processes
+
+**Ergo:** We don't want PID 1 to stop accidentally. That's why it has these extra protections.
+:::
+
+## Non-interactive containers
+
+:::{.callout-important icon=false}
+## Solution
+![](img/docker_kill.jpg){height=500}
+:::
+
+## Non-interactive containers
+:::{.callout-important icon=false}
+## Daemon mode
+
+Containers can be started in the background, with the -d flag (daemon mode):
+```
+$ docker run -d jpetazzo/clock
+896ffc453901fc7d7c417381c8bde9a8911182d07b819dc988aa0b4d1c298d3e
+```
+
+- We don't see the output of the container.
+- But don't worry: Docker collects that output and logs it!
+- Docker gives us the ID of the container.
+:::
+
+
+## Non-interactive containers
+:::{.callout-tip icon=false}
+## Maxwell demon: MIT's Project MAC
+![](img/docker_maxwell_demon)
 :::
 
 ::: aside
-Note that scalability is a multi-dimensional term. When saying "system scales well", it's important to state exactly along which axis.
+https://en.wikipedia.org/wiki/Maxwell's_demon
 :::
+<!-- https://stackoverflow.com/questions/33690277/why-are-daemons-called-daemons -->
+<!-- https://english.stackexchange.com/questions/31430/what-is-the-origin-of-daemon-with-regards-to-computing -->
 
-## Scalability
-:::{.callout-tip icon=false}
-## What is **load**?
-Load is described by **load parameters**. These might include:
-
-- **data set size**
-- **data write speed**
-- **data read speed**
-- **computational complexity**
-- etc...
-:::
-
-## Scalability
-:::{.callout-important icon=false}
-## Performance
-Increasing **load** affects **performance**. There are several meanings to this term:
-
-- **throughput** -- time required to process a dataset of certain size
-- **response time** -- time between sending a request and receiving a response
-- **latency** -- duration of waiting for a request to be processed. Included in response time.
-
-:::
-
-::: aside
-Performance might be more strictly defined by service level objectives (*SLOs*) and service level agreements (*SLAs*).
-:::
-
-## Scalability
+## Non-interactive containers
 :::{.callout-note icon=false}
-## How to deal with load
+## List running containers
 
-- **vertical scaling** - scaling up
-- **horizontal scaling** - scaling out
-- **architectural changes**
+How can we check that our container is still running?
+
+With `docker ps`, just like the UNIX ps command, lists running processes.
+
+```
+$ docker ps
+CONTAINER ID   IMAGE            COMMAND                  CREATED         STATUS                PORTS                                             NAMES
+896ffc453901   jpetazzo/clock   "/bin/sh -c 'while d…"   5 minutes ago   Up 5 minutes                                                            quirky_wilson
+
+```
+Docker tells us:
+
+- The (truncated) ID of our container.
+- The image used to start the container.
+- That our container has been running (Up) for a couple of minutes.
+- Other information (COMMAND, PORTS, NAMES) that we will explain later.
 :::
 
-:::{.callout-tip icon=false}
-## Elasticity
-An approach to load handling whereby a system automatically adds resources in case of load increase, and can decrease resources if load decreases. 
-:::
-
-## Scalability
-:::{.callout-tip icon=false}
-## Common wisdom
-- Keep your **database** on a **single node** (scale up) until scaling cost or high-availability requirements forces you to make it **[distributed]{style="color:blue;"}**.
-- **Optimize code** so that it can run on a **single node**.
-:::
-
-## Maintainability
-:::{.callout-tip icon=false}
-## Kleppmann
-Over time, many different people will work on the system
-
-- engineering
-- operations
-- both maintaining current behavior and adapting the system to new use cases),
-
-and they should all be able to work on it **productively**.
-:::
-
-## Maintainability
+## Non-interactive containers
 :::{.callout-note icon=false}
-## Principles
+## More containers
 
-- **Operability** -- make it easy for operations teams to keep the system running smoothly.
-- **Simplicity** -- make it easy for new engineers to understand the system, by removing as much complexity as possible from the system.
-- **Evolvability** -- Make it easy for engineers to make changes to the system in the future, adapting it for unanticipated use cases as requirements change. Also known as **extensibility**, **modifiability**, or **plasticity**.
+Run 2 more:
+```
+$ docker run -d jpetazzo/clock
+
+42518eae35544162179d3f7086410949256a767244e36e40518f0f9d1dd223ae
+$ docker run -d jpetazzo/clock
+
+31a2d9cc7e40d58280b9e5cdd6135cf824559bc1ab6409f026c3a0c82419273e
+```
+
+Check running:
+
+```
+$ docker ps
+CONTAINER ID   IMAGE            COMMAND                  CREATED          STATUS                PORTS                                             NAMES
+31a2d9cc7e40   jpetazzo/clock   "/bin/sh -c 'while d…"   30 seconds ago   Up 29 seconds                                                           optimistic_payne
+42518eae3554   jpetazzo/clock   "/bin/sh -c 'while d…"   31 seconds ago   Up 30 seconds                                                           beautiful_kalam
+896ffc453901   jpetazzo/clock   "/bin/sh -c 'while d…"   7 minutes ago    Up 7 minutes                                                            quirky_wilson
+```
 :::
 
-## Maintainability
+## Non-interactive containers
+:::{.callout-important icon=false}
+## Last run container
+
+```
+$ docker ps -l
+CONTAINER ID   IMAGE            COMMAND                  CREATED              STATUS              PORTS     NAMES
+31a2d9cc7e40   jpetazzo/clock   "/bin/sh -c 'while d…"   About a minute ago   Up About a minute             optimistic_payne
+```
+:::
+
+
 :::{.callout-note icon=false}
-## Operability
+## IDs only
 
-- Health monitoring
-- Good deployment practices
-- Configuration management
-- Visibility into the internals of the system
-- Knowledge preservation -- **documentation** **[(!)]{style="color:red;"}**.
-- etc...
+```
+$ docker ps -q
+31a2d9cc7e40
+42518eae3554
+896ffc453901
+```
 :::
 
-## Maintainability
+## Non-interactive containers
 :::{.callout-important icon=false}
-## Complexity symptoms
+## Container logs
 
-- Lots of hidden state
-- Loose cohesion, tight coupling
-- Bad naming (!)
-- Unnecessary hacks
-- etc...
+```
+$ docker logs 31a
+...
+...
+...
+Sat Sep 20 11:18:46 UTC 2025
+Sat Sep 20 11:18:47 UTC 2025
+Sat Sep 20 11:18:48 UTC 2025
+Sat Sep 20 11:18:49 UTC 2025
+Sat Sep 20 11:18:50 UTC 2025
+Sat Sep 20 11:18:51 UTC 2025
+Sat Sep 20 11:18:52 UTC 2025
+Sat Sep 20 11:18:53 UTC 2025
+Sat Sep 20 11:18:54 UTC 2025
+Sat Sep 20 11:18:55 UTC 2025
+Sat Sep 20 11:18:56 UTC 2025
+Sat Sep 20 11:18:57 UTC 2025
+Sat Sep 20 11:18:58 UTC 2025
+Sat Sep 20 11:18:59 UTC 2025
+Sat Sep 20 11:19:00 UTC 2025
+
+```
+
+**All** logs are dumped - a bit too much.
 :::
 
-## Maintainability: Complexity
-<!-- https://storage.googleapis.com/dzkocnicjyofie/loose-coupling-vs-tight-coupling-java.html -->
-![](img/cohesion_coupling.jpg)
-
-## Maintainability: Complexity
-:::{.callout-tip icon=false}
-## Types
-- **incidental**
-- **accidental**
-:::
-
-## Maintainability: Complexity
-
-:::{.callout-tip icon=false}
-## Incidental
-> Easy things can be complex. There can be complex constructs that are succinctly described, familiar, available and easy to use. That is incidental complexity.
-
-Rich Hickey talk "Simple made easy": [https://www.youtube.com/watch?v=SxdOUGdseq4](https://www.youtube.com/watch?v=SxdOUGdseq4)
-:::
-
-## Maintainability: complexity
-**However**:  Complexity is often caused by
-
-:::{.callout-important icon=false}
-## Accidental complexity
-Moseley and Marks define complexity as accidental if it is not inherent in the problem that the software solves (as seen by the users) but arises only from the implementation.
-:::
-
-:::{.callout-tip icon=false}
-## How to remove?
-By providing proper **abstractions**.
-:::
-
-## Maintainability: abstractions
-:::{.callout-note}
-## Definition (Ousterhout)
-An abstraction is a simplified view of an entity, which omits unimportant details.
-
-In modular programming, each module provides an abstraction in the
-form of its **interface.**
-:::
-
-![](img/abstractions_modules.png)
-
-## Maintainability: abstractions
-:::{.callout-note}
-## What can abstractions do?
-
-- Hide implementation details
-- Provide reusable building blocks
-:::
-
-
-## Maintainability
-:::{.callout-tip icon=false}
-## Evolvability
-One needs to adapt their big data system to possible future requirements changes.
-
-However, keep in mind the following:
-
-- Inability to foresee exact nature of changes
-- Need to strike the balance of flexibility and fitness for a particular task
-:::
-
-## Types of big data analytics
-:::{.callout-important icon=false}
-## Types
-
-- Prescriptive
-- Diagnostic
-- Descriptive
-- Predictive
-:::
-
-## Types: Prescriptive
-:::{.callout-important icon=false}
-## Prescriptive
-
-- Forward looking
-- Optimal decisions for future situations
-:::
-
-## Types: Diagnostic
-:::{.callout-important icon=false}
-## Diagnostic
-
-- Backward looking
-- Focused on causal relationships 
-:::
-
-## Types: Descriptive
-:::{.callout-tip icon=false}
-## Descriptive
-
-- Backward looking
-- Focused on descriptions and comparisons
-:::
-
-## Types: Descriptive
+## Non-interactive containers
 :::{.callout-note icon=false}
-## Predictive
+## Container logs tail
 
-- Forward looking
-- Focused on the prediction of future states, relationship, and patterns
+```
+$ docker logs --tail 5 31a
+Sat Sep 20 11:19:55 UTC 2025
+Sat Sep 20 11:19:56 UTC 2025
+Sat Sep 20 11:19:57 UTC 2025
+Sat Sep 20 11:19:58 UTC 2025
+Sat Sep 20 11:19:59 UTC 2025
+```
 :::
 
-## Challenges
+:::{.callout-tip icon=false}
+## Container logs tail & follow
 
-There are 2 main challenges associated with Big Data.
+```
+$ docker logs --tail 1 --follow 31a
+Sat Sep 20 11:21:45 UTC 2025
+Sat Sep 20 11:21:46 UTC 2025
+Sat Sep 20 11:21:47 UTC 2025
+Sat Sep 20 11:21:48 UTC 2025
+Sat Sep 20 11:21:49 UTC 2025
+
+```
+:::
+
+## Non-interactive containers
+:::{.callout-warning}
+## Stopping
+
+There are two ways we can terminate our detached container.
+
+- Killing it using the `docker kill` command.
+  - stops the container immediately, by using the KILL signal.
+- Stopping it using the `docker stop` command.
+  - sends a TERM signal, and after 10 seconds, if the container has not stopped, it sends KILL.
+
+**Reminder:** the KILL signal cannot be intercepted, and will forcibly terminate the container.
+:::
+
+## Non-interactive containers
+:::{.callout-warning}
+## Stopping: Example
+
+```
+$ docker stop 31a
+<10 seconds pass>
+31a
+```
+
+- Docker sends the TERM signal;
+- the container doesn't react to this signal (it's a simple Shell script with no special signal handling);
+- 10 seconds later, since the container is still running, Docker sends the KILL signal;
+- this terminates the container.
+:::
+
+## Non-interactive containers
+:::{.callout-warning}
+## Killing: Example
+```
+$ docker kill 425 896
+425
+896
+```
+
+Those containers will be terminated immediately (without the 10-second delay).
+:::
+
+## Non-interactive containers
+:::{.callout-tip}
+## List stopped containers
+
+We can also see stopped containers, with the -a (--all) option.
+```
+$ docker ps -a
+CONTAINER ID   IMAGE                                          COMMAND                  CREATED             STATUS                            PORTS     NAMES
+31a2d9cc7e40   jpetazzo/clock                                 "/bin/sh -c 'while d…"   12 minutes ago      Exited (137) 2 minutes ago                  optimistic_payne
+42518eae3554   jpetazzo/clock                                 "/bin/sh -c 'while d…"   12 minutes ago      Exited (137) About a minute ago             beautiful_kalam
+896ffc453901   jpetazzo/clock                                 "/bin/sh -c 'while d…"   19 minutes ago      Exited (137) About a minute ago             quirky_wilson
+74b84530ad71   jpetazzo/clock                                 "/bin/sh -c 'while d…"   26 minutes ago      Exited (130) 26 minutes ago                 amazing_cohen
+5c6dc90eb867   ubuntu                                         "/bin/bash"              40 minutes ago      Exited (130) 26 minutes ago                 thirsty_bardeen
+014ed1f2eac1   ubuntu                                         "/bin/bash"              52 minutes ago      Exited (0) 40 minutes ago                   elated_darwin
+42f574fdf1af   busybox                                        "echo hello world"       About an hour ago   Exited (0) About an hour ago                suspicious_franklin
+
+```
+:::
+
+# Restarting and attaching to containers
+
+## Restarting and attaching
+:::{.callout-important}
+## Background vs foreground
+
+- The distinction between foreground and background containers is arbitrary.
+- From Docker's point of view, all containers are the same.
+- All containers run the same way, whether there is a client attached to them or not.
+- It is always possible to detach from a container, and to reattach to a container.
+- Analogy: attaching to a container is like plugging a keyboard and screen to a physical server.
+:::
+
+## Restarting and attaching
+:::{.callout-note icon=false}
+## Detaching from containers
+
+If you have started an interactive container (with option -it), you can detach from it.
+
+The "detach" sequence is `Ctrl-P Ctrl-Q` or `Ctrl-C` on Windows.
+
+Otherwise you can detach by killing the Docker client.
+<!-- (But not by hitting ^C, as this would deliver SIGINT to the container.) -->
+:::
+
+## Restarting and attaching
 
 :::{.callout-important icon=false}
-## Challenges
+## Custom detach
 
-- how do we store and manage such a **huge volume of data** efficiently?
-- how do we process and extract valuable information from the data within the given **time frame**? 
+You can change the sequence with `docker run --detach-keys`.
+
+This can also be passed as a global option to the engine.
+
+Start a container with a custom detach command:
+
+```
+$ docker run -ti --detach-keys ctrl-x,x jpetazzo/clock
+```
+Detach by hitting `Ctrl-X x`.
+```
+$ docker ps -l
+```
+:::
+
+## Restarting and attaching
+
+:::{.callout-important icon=false}
+## Attaching
+You can attach to a container:
+```
+$ docker attach <containerID>
+```
+
+The container must be running.
+
+There can be multiple clients attached to the same container.
+
+If you don't specify `--detach-keys` when attaching, it defaults back to `Ctrl-P Ctrl-Q`.
+
+Try it on our previous container:
+```
+$ docker attach $(docker ps -lq)
+```
+
 :::
