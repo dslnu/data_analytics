@@ -998,3 +998,586 @@ $ docker attach $(docker ps -lq)
 ```
 
 :::
+
+## Restarting and attaching
+
+:::{.callout-note icon=false}
+## Detaching from non-interactive containers
+
+Warning: if the container was started without `-it...`, you won't be able to detach with `Ctrl-P Ctrl-Q`.
+If you hit `Ctrl-C`, the signal will be proxied to the container.
+
+**Remember:** you can always detach by killing the Docker client.
+:::
+
+## Restarting and attaching
+
+:::{.callout-note icon=false}
+## Restarting a container
+
+When a container has exited, it is in stopped state.
+
+It can then be restarted with the start command.
+```
+$ docker start <yourContainerID>
+```
+
+The container will be restarted using the same options you launched it with.
+
+You can re-attach to it if you want to interact with it:
+```
+$ docker attach <yourContainerID>
+```
+Use `docker ps -a` to identify the container ID of a previous `jpetazzo/clock` container, and try those commands.
+:::
+
+## Restarting and attaching
+:::{.callout-tip icon=false}
+## Attaching to a REPL
+REPL = Read Eval Print Loop
+Shells, interpreters, TUI ...
+Symptom: you docker attach, and see nothing
+The REPL doesn't know that you just attached, and doesn't print anything
+Try hitting ^L or Enter
+:::
+
+:::{.callout-important icon=false}
+## SIGWINCH
+
+When you docker attach, the Docker Engine sends SIGWINCH signals to the container.
+
+SIGWINCH = WINdow CHange; indicates a change in window size.
+
+This will cause some CLI and TUI programs to redraw the screen.
+
+But not all of them.
+:::
+
+# Docker Images
+
+## Docker Images
+![](img/docker_understanding_images)
+
+
+:::{.callout-important icon=false}
+## Outline
+
+What we will go through now:
+
+- What is an image.
+- What is a layer.
+- The various image namespaces.
+- How to search and download images.
+- Image tags and when to use them.
+:::
+
+## Docker Images
+
+:::{.callout-note icon=false}
+## What is an image?
+
+- Image = files + metadata
+- These files form the root filesystem of our container.
+- The metadata can indicate a number of things, e.g.:
+  - the author of the image
+  - the command to execute in the container when starting it
+  - environment variables to be set
+  - etc.
+- Images are made of layers, conceptually stacked on top of each other.
+- Each layer can add, change, and remove files and/or metadata.
+- Images can share layers to optimize disk usage, transfer times, and memory use.
+:::
+
+## Docker Images
+
+:::{.callout-important icon=false}
+## Docker Image Example: Website
+
+The images will contain these layers:
+
+- CentOS base layer
+- Packages and configuration files added by our local IT
+- Python installation
+- Flask/Django
+- Our application's dependencies
+- Our application code and assets
+- Our application configuration
+:::
+
+:::{.callout-note}
+App config is generally added by orchestration facilities.
+:::
+
+## Docker Images
+:::{.callout-tip icon=false}
+## Read-write layer
+
+Exists on top of image layers.
+
+![](img/docker_rw_layer.jpg)
+:::
+
+## Docker Images
+:::{.callout-warning}
+## Containers vs Images
+
+- an image is a **read-only** filesystem.
+- a container is an encapsulated set of processes,
+- running in a read-write copy of that filesystem.
+- to optimize container boot time, copy-on-write is used instead of regular copy.
+- docker run starts a container from a given image.
+:::
+
+## Docker Images
+![](img/docker_sharing_layers.jpg)
+
+## Docker Images
+:::{.callout-important icon=false}
+## Compared to Python objects/classes
+
+- **Images** are conceptually similar to **classes.**
+- **Layers** are conceptually similar to **inheritance.**
+- **Containers** are conceptually similar to **instances.**
+:::
+
+## Docker Images
+:::{.callout-tip icon=false}
+## How do change read-only images?
+
+If an image is read-only, how do we change it?
+
+- We don't.
+- We create a new container from that image.
+- Then we make changes to that container.
+- When we are satisfied with those changes, we transform them into a new layer.
+- A new image is created by stacking the new layer on top of the old image.
+:::
+
+## Docker Images
+:::{.callout-note icon=false}
+## How do we create empty images?
+
+1. There is a special empty image called `scratch.`
+<br/>&emsp;It allows to build from scratch.
+
+2. The `docker import` command loads a tarball into Docker.
+<br/>&emsp;The imported tarball becomes a standalone image.
+<br/>&emsp;That new image has a single layer.
+
+**Note:** you will probably never have to do this yourself.
+:::
+
+## Docker Images
+:::{.callout-important icon=false}
+## How do we create other images?
+
+1.`docker commit`
+
+  - Saves all the changes made to a container into a new layer.
+  - Creates a new image (effectively a copy of the container).
+2. `docker build` (used 99% of the time)
+
+  - Performs a repeatable build sequence.
+  - This is the preferred method!
+:::
+
+## Docker Images
+:::{.callout-tip icon=false}
+## Image namespaces
+Images have names, and these names can belong to three **namespaces**:
+
+- Official images (root namespace)
+
+&emsp;e.g. `ubuntu`, `busybox` ...
+
+- User (and organizations) images (user namespace)
+
+&emsp;e.g. `jpetazzo/clock`
+
+- Self-hosted images (self-hosted namespace)
+
+&emsp;e.g. `registry.example.com:5000/my-private/image`
+:::
+
+## Docker Images
+:::{.callout-note icon=false}
+## Root namespace
+
+- The root namespace is for official images.
+- They are gated by Docker Inc.
+- They are generally authored and maintained by third parties.
+- Those images include:
+- Small, "swiss-army-knife" images like `busybox.`
+- Distro images to be used as bases for your builds, like `ubuntu`, `fedora...`
+- Ready-to-use components and services, like `redis`, `postgresql...`
+:::
+
+## Docker Images
+:::{.callout-tip icon=false}
+## User namespace
+
+The user namespace holds images for Docker Hub users and organizations.
+For example:
+
+`jpetazzo/clock`
+
+The Docker Hub user is:
+
+`jpetazzo`
+
+The image name is:
+
+`clock`
+
+:::
+
+## Docker Images
+:::{.callout-note icon=false}
+## Self-hosted namespace
+
+This namespace holds images which are not hosted on Docker Hub, but on third party registries.
+
+They contain the hostname (or IP address), and optionally the port, of the registry server.
+
+For example:
+
+`localhost:5000/wordpress`
+
+- `localhost:5000` is the host and port of the registry
+- `wordpress` is the name of the image
+
+Other examples:
+```
+quay.io/coreos/etcd
+gcr.io/google-containers/hugo
+```
+:::
+
+## Docker Images
+:::{.callout-warning icon=false}
+## Image storage
+
+Images can be stored:
+
+- On your Docker host.
+- In a Docker registry.
+
+You can use the Docker client to download (pull) or upload (push) images.
+
+<!-- To be more accurate: you can use the Docker client to tell a Docker Engine to push and pull images to and from a registry. -->
+:::
+
+## Docker Images
+:::{.callout-tip icon=false}
+## Current images
+
+```
+$ docker images
+REPOSITORY                                     TAG            IMAGE ID       CREATED         SIZE
+ubuntu                                         latest         353675e2a41b   11 days ago     139MB
+mongo                                          latest         a6bda40d00e5   8 weeks ago     1.19GB
+mysql                                          8.0            18dee92bbc23   2 months ago    1.06GB
+bitnami/redis                                  latest         5927ff3702df   2 months ago    253MB
+postgres                                       14             563a4985838f   3 months ago    623MB
+node                                           18.20.5        8b7f2b36c945   10 months ago   1.56GB
+busybox                                        latest         d82f458899c9   11 months ago   6.21MB
+mysql                                          8.0.35         c6812f0dcd97   21 months ago   809MB
+postgres                                       11-alpine      ea50b9fd617b   21 months ago   337MB
+node                                           16             f77a1aef2da8   2 years ago     1.27GB
+maven                                          3-openjdk-11   805f366910ae   3 years ago     1.03GB
+jpetazzo/clock                                 latest         dc06bbc3744f   4 years ago     2.32MB
+```
+:::
+
+## Docker Images
+:::{.callout-note icon=false}
+## Image search
+
+We cannot list all images on a remote registry, but we can search for a specific keyword:
+```
+$ docker search jupyter
+NAME                               DESCRIPTION                                     STARS     OFFICIAL
+islasgeci/jupyter                  Jupyter para Ciencia de Datos • GECI            0
+opendatacube/jupyter               An image with OpenDataCube and Jupyter          1
+datajoint/jupyter                  **Deprecated**: Official DataJoint Jupyter n…   0
+jupyter/scipy-notebook             Scientific Jupyter Notebook Python Stack fro…   467
+jupyter/all-spark-notebook         Python, Scala, R and Spark Jupyter Notebook …   439
+jupyter/pyspark-notebook           Python and Spark Jupyter Notebook Stack from…   316
+jupyter/tensorflow-notebook        Scientific Jupyter Notebook Python Stack w/ …   372
+biocontainers/jupyter                                                              0
+jupyter/datascience-notebook       Data Science Jupyter Notebook Python Stack f…   1092
+jupyter/minimal-notebook           Minimal Jupyter Notebook Python Stack from h…   199
+jupyter/base-notebook              Base image for Jupyter Notebook stacks from …   237
+jupyter/nbviewer                   Jupyter Notebook Viewer                         34
+jupyter/r-notebook                 R Jupyter Notebook Stack from https://github…   62
+jupyter/repo2docker                Turn git repositories into Jupyter enabled D…   22
+jupyter/docker-stacks-foundation   Tiny base image on which Jupyter apps can be…   6
+jupyter/demo                       (DEPRECATED) Demo of the IPython/Jupyter Not…   16
+jupyter/julia-notebook             Julia Jupyter Notebook Stack from https://gi…   4
+
+```
+
+- **Stars** indicate the popularity of the image.
+- **Official** images are those in the root namespace.
+<!-- - **Automated** images are built automatically by the Docker Hub. -->
+<!-- (This means that their build recipe is always available.) -->
+:::
+
+## Docker Images
+:::{.callout-note icon=false}
+## Downloading images
+
+There are two ways to download images.
+
+1. Explicitly, with docker pull.
+2. Implicitly, when executing docker run and the image is not found locally.
+:::
+
+## Docker Images
+:::{.callout-note icon=false}
+## Pulling an image
+```
+$ docker pull debian:jessie
+jessie: Pulling from library/debian
+f24aff4096a5: Pull complete
+Digest: sha256:32ad5050caffb2c7e969dac873bce2c370015c2256ff984b70c1c08b3a2816a0
+Status: Downloaded newer image for debian:jessie
+docker.io/library/debian:jessie
+```
+
+- As seen previously, images are made up of layers.
+- Docker has downloaded all the necessary layers.
+- In this example, `:jessie` indicates which exact version of Debian we would like.
+
+It is a **version tag**.
+:::
+
+## Docker Images
+:::{.callout-note icon=false}
+## Image tags
+
+Images can have tags.
+
+- Tags define image versions or variants.
+- `docker pull ubuntu` will refer to ubuntu:latest.
+- The `:latest` tag is generally updated often.
+:::
+
+## Docker Images
+:::{.callout-important icon=false}
+## Don't specify tags:
+
+- When doing rapid testing and prototyping.
+- When experimenting.
+- When you want the latest version.
+:::
+
+:::{.callout-tip icon=false}
+##  Do specify tags:
+
+- When recording a procedure into a script.
+- When going to production.
+- To ensure that the same version will be used everywhere.
+- To ensure repeatability later.
+- This is similar to what we would do with `pip install`, `npm install`, etc.
+:::
+
+## Docker Images
+:::{.callout-note icon=false}
+## Multi-arch images
+
+An image can support multiple architectures
+
+More precisely, a specific tag in a given repository can have either:
+
+- a single manifest referencing an image for a single architecture
+- a manifest list (or fat manifest) referencing multiple images
+
+In a manifest list, each image is identified by a combination of:
+
+- os (linux, windows)
+- architecture (amd64, arm, arm64...)
+- optional fields like variant (for arm and arm64), os.version (for windows)
+:::
+
+## Docker Images
+:::{.callout-note icon=false}
+## Working with multi-arch images
+
+- The Docker Engine will pull "native" images when available
+(images matching its own os/architecture/variant)
+
+- We can ask for a specific image platform with `--platform`
+
+- The Docker Engine can run non-native images thanks to QEMU+binfmt
+(automatically on Docker Desktop; with a bit of setup on Linux)
+:::
+
+# Building images interactively
+
+## Building images interactively
+:::{.callout-tip icon=false}
+## What we will do
+
+We will create our first container image.
+It will be a basic distribution image, but we will pre-install the package figlet.
+
+We will:
+
+- Create a container from a base image.
+- Install software manually in the container, and turn it into a new image.
+- Learn about new commands: 
+  - docker commit
+  - docker tag
+  - and docker diff.
+:::
+
+## Building images interactively
+:::{.callout-tip icon=false}
+## Plan
+
+1. Create a container (with `docker run`) using our base distro of choice.
+2. Run a bunch of commands to install and set up our software in the container.
+3. [(Optionally)]{style="color:blue;"} review changes in the container with `docker diff`.
+4. Turn the container into a new image with `docker commit`.
+5. [(Optionally)]{style="color:blue;"} add tags to the image with `docker tag`.
+:::
+
+## Building images interactively
+:::{.callout-tip icon=false}
+## Setting up container
+
+1. Start an Ubuntu container:
+```
+$ docker run -it ubuntu
+root@65d17729ff6e:/#
+
+```
+2. Run the commands:
+  - `apt-get update` to refresh the list of packages available to install.
+  - `apt-get install figlet` to install the program we are interested in.
+:::
+
+## Building images interactively
+:::{.callout-tip icon=false}
+## Setting up container
+```
+root@65d17729ff6e:/# apt-get update
+Get:1 http://ports.ubuntu.com/ubuntu-ports noble InRelease [256 kB]
+...
+Get:18 http://ports.ubuntu.com/ubuntu-ports noble-security/restricted arm64 Packages [3119 kB]
+Fetched 34.7 MB in 2s (14.7 MB/s)
+Reading package lists... Done
+root@65d17729ff6e:/# apt-get install figlet
+...
+After this operation, 745 kB of additional disk space will be used.
+Get:1 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 figlet arm64 2.2.5-3 [130 kB]
+Unpacking figlet (2.2.5-3) ...
+Setting up figlet (2.2.5-3) ...
+...
+root@65d17729ff6e:/# exit
+
+```
+:::
+
+## Building images interactively
+:::{.callout-tip icon=false}
+## Check changes
+
+- Type `exit` at the container prompt to leave the interactive session.
+- Now let's run `docker diff` to see the difference between the base image and our container
+
+```
+docker diff 65d1
+C /usr
+C /usr/bin
+A /usr/bin/chkfont
+A /usr/bin/figlist
+A /usr/bin/figlet-figlet
+A /usr/bin/figlet
+A /usr/bin/showfigfonts
+C /usr/share
+C /usr/share/doc
+A /usr/share/doc/figlet
+A /usr/share/doc/figlet/examples
+A /usr/share/doc/figlet/changelog.Debian.gz
+A /usr/share/doc/figlet/copyright
+A /usr/share/emacs
+A /usr/share/emacs/site-lisp
+A /usr/share/emacs/site-lisp/figlet
+...
+```
+:::
+
+## Building images interactively
+:::{.callout-tip icon=false}
+## Docker tracks filesystem changes
+
+- An image is read-only.
+- When we make changes, they happen in a copy of the image.
+- Docker can show the difference between the image, and its copy.
+- For performance, Docker uses copy-on-write systems.
+(i.e. starting a container based on a big image doesn't incur a huge copy.)
+- Containers can also be started in read-only mode
+(their root filesystem will be read-only, but they can still have read-write data volumes)
+:::
+
+## Building images interactively
+:::{.callout-tip icon=false}
+## Committing changes
+
+The `docker commit` command will:
+
+1. Create a new layer with those changes
+2. And a new image using this new layer.
+
+```
+$ docker commit 65d1
+sha256:289e61ad4776d701b9133249e91c481f6597b4a178f050d1bcc5df171a2a5bec
+```
+
+The output of the docker commit command will be the ID for your newly created image.
+We can use it as an argument to `docker run`.
+:::
+## Building images interactively
+:::{.callout-tip icon=false}
+## Testing new image
+```
+$ docker run -it 289e6
+root@e88f50c79e4c:/# figlet whazzzuuuppp
+          _
+__      _| |__   __ _ _____________   _ _   _ _   _ _ __  _ __  _ __
+\ \ /\ / / '_ \ / _` |_  /_  /_  / | | | | | | | | | '_ \| '_ \| '_ \
+ \ V  V /| | | | (_| |/ / / / / /| |_| | |_| | |_| | |_) | |_) | |_) |
+  \_/\_/ |_| |_|\__,_/___/___/___|\__,_|\__,_|\__,_| .__/| .__/| .__/
+                                                   |_|   |_|   |_|
+root@e88f50c79e4c:/#
+```
+:::
+
+## Building images interactively
+:::{.callout-tip icon=false}
+## Tagging images
+
+Referring to an image by its ID is not convenient. Let's tag it instead.
+
+We can use the tag command:
+
+```
+$ docker tag 289e6 figlet
+```
+
+But we can also specify the tag as an extra argument to commit:
+
+```
+$ docker commit 65d1 figlet
+sha256:b2e5078491301fbba4fdb585e2e7a826998e438dd698d1c96547df72ce22f470
+```
+
+And then run it using its tag:
+```
+$ docker run -it figlet
+```
+:::
+
+
