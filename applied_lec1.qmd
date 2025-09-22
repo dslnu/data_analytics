@@ -31,8 +31,8 @@ format:
     theme: default
     multiplex:
       url: 'https://mplex.vitv.ly'
-      secret: 'fad1947f4c744674d25d0769c690f8d7'
-      id: 'ceb96efc411836bb262565b446653921d89b7ccf140a4d923b70660482df2ced'
+      secret: '8b3248b8cdcb4f5758410057d5ee0136'
+      id: 'b6b01bae63a135f60d4f5ada5c27b5b1fbe3b67526aa828518f2a54c702e3ffe'
 ---
 
 # Docker overview
@@ -64,6 +64,29 @@ format:
 :::
 :::
 ::::
+
+## VMs
+:::{.callout-note}
+## Description
+
+- Virtual machines emulate physical computers by running operating systems in isolated instances.
+- Multiple VMs are commonly hosted on a single server, with a **hypervisor** acting as a lightweight software layer positioned between the physical host and the VMs.
+- This hypervisor efficiently manages access to resources, enabling virtual machines to function as distinct servers while offering enhanced flexibility and agility.
+- Gained popularity in the 2000s due to consolidation and cost saving initiatives
+:::
+
+## Containers
+:::{.callout-tip}
+## Description
+
+- A container is an isolated, lightweight silo for running an application on the host operating system.
+- Containers build on top of the host operating system's kernel
+- Containers contain only apps and some lightweight operating system APIs and services
+:::
+
+## VMs vs Containers
+![](img/docker_vms_containers)
+<!-- https://www.redhat.com/en/topics/containers/containers-vs-vms -->
 
 ## Deployment
 
@@ -102,6 +125,9 @@ Many different targets:
 
 ## Deployment
 ![](img/docker_shipping_industry4)
+
+## Deployment
+![](img/docker_breakbulk)
 
 ## Deployment
 ![](img/docker_matrix2)
@@ -295,7 +321,7 @@ Layers:
 :::{.callout-note icon=false}
 ## dotCloud
 
--dotCloud was operating a PaaS, using a custom container engine.
+- dotCloud was operating a PaaS, using a custom container engine.
 - This engine was based on OpenVZ (and later, LXC) and AUFS.
 - It started (circa 2008) as a single Python script.
 - By 2012, the engine had multiple (~10) Python components.
@@ -329,6 +355,9 @@ Layers:
 - 2015: creation of the Cloud Native Computing Foundation
 - 2020: Docker Compose v2 (re-written in Go)
 :::
+
+## containerd
+![](img/docker_containerd_architecture)
 
 # Installation
 
@@ -435,7 +464,7 @@ hello world
 # Interactive containers
 
 ## Docker installation: Ubuntu
-![](img/docker_ubuntu.png){height=150}
+![](img/docker_ubuntu.png){height=100}
 
 :::{.callout-important icon=false}
 ## Running Ubuntu
@@ -652,7 +681,6 @@ We will now see how to:
 ## Example
 
 We will run a small custom container.
-
 This container just displays the time every second.
 ```
 $ docker run jpetazzo/clock
@@ -664,7 +692,6 @@ Status: Downloaded newer image for jpetazzo/clock:latest
 Sat Sep 20 11:00:45 UTC 2025
 Sat Sep 20 11:00:46 UTC 2025
 Sat Sep 20 11:00:47 UTC 2025
-Sat Sep 20 11:00:48 UTC 2025
 ^C%
 ```
 
@@ -691,7 +718,7 @@ But there is a special case for PID 1: it ignores all signals!
 - except SIGKILL and SIGSTOP
 - except signals handled explicitly
 
-**TL,DR:** there are many circumstances when ^C won't stop the container.
+**TL,DR:** there are many circumstances when `Ctrl-C` won't stop the container.
 :::
 
 ## Non-interactive containers
@@ -1031,7 +1058,7 @@ $ docker attach <yourContainerID>
 ```
 Use `docker ps -a` to identify the container ID of a previous `jpetazzo/clock` container, and try those commands.
 :::
-
+<!--
 ## Restarting and attaching
 :::{.callout-tip icon=false}
 ## Attaching to a REPL
@@ -1053,6 +1080,7 @@ This will cause some CLI and TUI programs to redraw the screen.
 
 But not all of them.
 :::
+-->
 
 # Docker Images
 
@@ -1172,14 +1200,18 @@ If an image is read-only, how do we change it?
 :::{.callout-important icon=false}
 ## How do we create other images?
 
-1.`docker commit`
+`docker commit`
 
-  - Saves all the changes made to a container into a new layer.
-  - Creates a new image (effectively a copy of the container).
-2. `docker build` (used 99% of the time)
+- Saves all the changes made to a container into a new layer.
+- Creates a new image (effectively a copy of the container).
+:::
 
-  - Performs a repeatable build sequence.
-  - This is the preferred method!
+:::{.callout-tip icon=false}
+## Another option
+`docker build` (used 99% of the time)
+
+- Performs a repeatable build sequence.
+- This is the preferred method!
 :::
 
 ## Docker Images
@@ -1330,8 +1362,8 @@ jupyter/julia-notebook             Julia Jupyter Notebook Stack from https://giâ
 
 There are two ways to download images.
 
-1. Explicitly, with docker pull.
-2. Implicitly, when executing docker run and the image is not found locally.
+1. Explicitly, with `docker pull`.
+2. Implicitly, when executing `docker run` and the image is not found locally.
 :::
 
 ## Docker Images
