@@ -207,7 +207,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>In this lab we’ll start looking into parallelisation as a way of optimizing data analysis workflows.</p>
 <p>Why - because today’s systems are <strong>multicore</strong> (sometimes very much so).</p>
 <p>Check yours:</p>
-<div id="df85f02f" class="cell" data-execution_count="2">
+<div id="1f55ade9" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>os.cpu_count()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="1">
@@ -247,16 +247,16 @@ Note
 <li>closures</li>
 </ul>
 <p>First off, functions can be values in Python:</p>
-<div id="1425c5f4" class="cell" data-execution_count="3">
+<div id="e72ae82f" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>add <span class="op">=</span> <span class="kw">lambda</span> x, y: x <span class="op">+</span> y  </span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span> (<span class="ss">f"add = </span><span class="sc">{</span>add<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>add = &lt;function &lt;lambda&gt; at 0x106368cc0&gt;</code></pre>
+<pre><code>add = &lt;function &lt;lambda&gt; at 0x10efab100&gt;</code></pre>
 </div>
 </div>
 <p>All variables support some operations on them: addition for integers, or e.g.&nbsp;<code>read_csv</code> on Pandas DataFrame.</p>
 <p>Function variables support a single operation: <em>application</em>.</p>
-<div id="1271bbf1" class="cell" data-execution_count="4">
+<div id="04fc7b67" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>i <span class="op">=</span> <span class="dv">0</span>  </span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>j <span class="op">=</span> <span class="dv">1</span>    </span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>add <span class="op">=</span> <span class="kw">lambda</span> x, y: x <span class="op">+</span> y  </span>
@@ -272,7 +272,7 @@ z = 1</code></pre>
 </div>
 </div>
 <p><em>Partial</em> function application is also supported. We’ll use <code>functools</code> package (https://docs.python.org/3/library/functools.html).</p>
-<div id="59c5bae0" class="cell" data-execution_count="5">
+<div id="fe03dd2c" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> functools <span class="im">import</span> partial  </span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>i <span class="op">=</span> <span class="dv">0</span>  </span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>j <span class="op">=</span> <span class="dv">1</span>    </span>
@@ -288,7 +288,7 @@ z = 1</code></pre>
 </div>
 <p><strong>Note:</strong> the code above both passes <code>add</code> as an argument to <code>partial</code>, and stores the return value of <code>partial</code> function into a new variable <code>inc</code>.</p>
 <p>The lambda in the example above accepts two arguments essentially. This can be simplified by <em>currying</em>:</p>
-<div id="f0f3aac0" class="cell" data-execution_count="6">
+<div id="3c73709d" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>i <span class="op">=</span> <span class="dv">0</span>  </span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>j <span class="op">=</span> <span class="dv">1</span>    </span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>add <span class="op">=</span> <span class="kw">lambda</span> x: <span class="kw">lambda</span> y: x <span class="op">+</span> y  </span>
@@ -330,7 +330,7 @@ Note
 </div>
 </div>
 <p>A monstrous example:</p>
-<div id="933d0618" class="cell" data-execution_count="7">
+<div id="7f6f8079" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> f_5(a, b, c, d, e):</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> a <span class="op">+</span> b <span class="op">+</span> c <span class="op">+</span> d <span class="op">+</span> e</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -346,13 +346,13 @@ Note
 <span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> c_4</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>How to use?</p>
-<div id="2f8883d6" class="cell" data-execution_count="8">
+<div id="dea5750d" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>f_5(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="7">
 <pre><code>15</code></pre>
 </div>
 </div>
-<div id="1c5ced9e" class="cell" data-execution_count="9">
+<div id="bf4dc2e3" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>c_5(<span class="dv">1</span>)(<span class="dv">2</span>)(<span class="dv">3</span>)(<span class="dv">4</span>)(<span class="dv">5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="8">
 <pre><code>15</code></pre>
@@ -409,11 +409,11 @@ Note
 </div>
 </div>
 <p>Using above examples, we can easily implement <code>map</code> using list comprehensions as as:</p>
-<div id="0a024ab3" class="cell" data-execution_count="10">
+<div id="6b61b07f" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="bu">map</span> <span class="op">=</span> <span class="kw">lambda</span> f, l: [f(x) <span class="cf">for</span> x <span class="kw">in</span> l]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Let’s use it:</p>
-<div id="351dc24f" class="cell" data-execution_count="11">
+<div id="b7e43135" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>int_list <span class="op">=</span> [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>]</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>inc_list <span class="op">=</span> <span class="bu">map</span>(inc, int_list)</span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(inc_list)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -422,7 +422,7 @@ Note
 </div>
 </div>
 <p>And <code>reduce</code> can be implemented as:</p>
-<div id="f39044b5" class="cell" data-execution_count="12">
+<div id="555b8ba7" class="cell" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> reduce_v1 (f, <span class="bu">id</span>, s):  </span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> <span class="bu">len</span>(s)  </span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> n <span class="op">==</span> <span class="dv">0</span>:  </span>
@@ -433,7 +433,7 @@ Note
 <span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> f(reduce_v1(f, <span class="bu">id</span>, s[<span class="dv">1</span>:]), s[<span class="dv">0</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Usage example:</p>
-<div id="2f30644b" class="cell" data-execution_count="13">
+<div id="0db41181" class="cell" data-execution_count="12">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>add <span class="op">=</span> <span class="kw">lambda</span> x, y: x <span class="op">+</span> y  </span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>res <span class="op">=</span> reduce_v1(add, <span class="dv">0</span>, int_list)</span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(res)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -445,7 +445,7 @@ Note
 <h3 class="anchored" data-anchor-id="limitations-and-parallelisation-types">Limitations and parallelisation types</h3>
 <p>Some tasks can be trivially parallelised - these are called <em>embarrassingly parallel</em>. <code>inc</code> is a simple example of this type.</p>
 <p>Other tasks have a degree of interdependence. Consider below example, adapted from the reduce above:</p>
-<div id="e135806c" class="cell" data-execution_count="14">
+<div id="e08c5357" class="cell" data-execution_count="13">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Sum all elements of int_list</span></span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> <span class="bu">sum</span>(lst):</span>
 <span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">sum</span> <span class="op">=</span> <span class="dv">0</span></span>
@@ -461,7 +461,7 @@ Note
 </div>
 </div>
 <p>How can it be parallelised? By using a technique called chunking:</p>
-<div id="14f8d733" class="cell" data-execution_count="15">
+<div id="2461d982" class="cell" data-execution_count="14">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>chunk1 <span class="op">=</span> int_list[:<span class="dv">3</span>]</span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>chunk2 <span class="op">=</span> int_list[<span class="dv">3</span>:]</span>
 <span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -480,7 +480,7 @@ Note
 <section id="pythons-builtin-map" class="level3">
 <h3 class="anchored" data-anchor-id="pythons-builtin-map">Python’s builtin map</h3>
 <p>Suppose we want to square each number in a list. A naive approach would be:</p>
-<div id="f9496188" class="cell" data-execution_count="16">
+<div id="ca26f9a4" class="cell" data-execution_count="15">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>number_list <span class="op">=</span> [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>]</span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> squarev1(lst):</span>
@@ -495,7 +495,7 @@ Note
 </div>
 </div>
 <p>Or we can use a built-in (<a href="https://docs.python.org/3/library/functions.html#map" class="uri">https://docs.python.org/3/library/functions.html#map</a>):</p>
-<div id="493aa6e0" class="cell" data-execution_count="17">
+<div id="bbd5c715" class="cell" data-execution_count="16">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Note that we return a map object that has to be converted to a list first</span></span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> squarev2(lst):</span>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">list</span>(<span class="bu">map</span>(<span class="kw">lambda</span> x: x<span class="op">*</span>x, lst))</span>
@@ -509,14 +509,14 @@ Note
 <section id="python-parallel-map" class="level3">
 <h3 class="anchored" data-anchor-id="python-parallel-map">Python parallel map</h3>
 <p>Map function can be made to execute in parallel on multiple CPU cores. How? We need to use multiprocessing library (https://docs.python.org/3/library/multiprocessing.html)</p>
-<div id="76021968" class="cell" data-execution_count="18">
+<div id="b0217754" class="cell" data-execution_count="17">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> multiprocessing <span class="im">import</span> Pool</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>There are limitations though: in order to arrange communication between proceses, Python uses <em>pickling</em>: a method of serializing/deserializing objects so that they can be sent between processes.</p>
 <p>Python cannot pickle closures, nested functions or classes! More info on pickling: <a href="https://docs.python.org/3/library/pickle.html" class="uri">https://docs.python.org/3/library/pickle.html</a>.</p>
 <p>Moreover, we have to move <code>sqr</code> definition into a separate file (<a href="https://stackoverflow.com/questions/41385708/multiprocessing-example-giving-attributeerror" class="uri">https://stackoverflow.com/questions/41385708/multiprocessing-example-giving-attributeerror</a>)</p>
-<div id="efdcca21" class="cell" data-execution_count="19">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> files.defs <span class="im">as</span> defs</span>
+<div id="b940f917" class="cell" data-execution_count="18">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> _files.defs <span class="im">as</span> defs</span>
 <span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> squarev3(lst):</span>
 <span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>    pool <span class="op">=</span> Pool()</span>
@@ -558,7 +558,7 @@ uv add toolz</code></pre>
 <h2 class="anchored" data-anchor-id="numpy-vectorization">Numpy vectorization</h2>
 <p>Numpy automatically vectorizes array operations. However, we can explicitly invoke <code>vectorize()</code>:</p>
 <p>In this context vectorization refers to low-level CPU vectorization (single CPU instruction processing items in a vector)</p>
-<div id="e735938d" class="cell" data-execution_count="20">
+<div id="3d7aeb51" class="cell" data-execution_count="19">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>np_array <span class="op">=</span> np.array(number_list)</span>
