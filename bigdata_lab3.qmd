@@ -1,0 +1,233 @@
+---
+title: "Big Data Analytics: Lab 3"
+execute:
+  enabled: true
+  echo: true
+  cache: true
+format:
+  html:
+    code-fold: false
+jupyter: python3
+diagram:
+  cache: true
+  cache-dir: ./cache
+  engine:
+    tikz:
+      execpath: lualatex
+filters:
+  - diagram
+---
+
+# map-reduce cont'd
+
+## Function pipelines
+
+Suppose we want to apply several transformations. What can we do?
+
+1. Several maps.
+2. Chain functions with `compose`.
+3. Create a function pipeline with `pipe`.
+
+Suppose we want to apply $f(x) = \exp(\sin(x))$ to a list of numbers.
+
+**Option 1:**
+
+
+```{python}
+import math
+
+float_list = [0.234, -1.96, 5.071]
+
+# several maps
+lst1 = map(math.sin, float_list)
+lst2 = map(math.exp, lst1)
+
+print(list(lst2))
+```
+**Option 2:**
+we'll use the `toolz` package we installed in lab2.
+
+```{python}
+from toolz.functoolz import compose
+
+composed = compose(math.exp, math.sin) # note reverse order
+
+print(list(map(composed, float_list)))
+```
+
+**Option 3:**
+
+And there is also `pipe`:
+
+```{python}
+from toolz.functoolz import pipe
+
+piped = lambda x: pipe(x, math.sin, math.exp) # now the order is proper
+
+print(list(map(piped, float_list)))
+```
+
+## Laziness
+`map` is lazy! This is the opposite to being `eager`. That's why we apply `list` first to *materialize* results of `map` application.
+
+Laziness provides **memory efficiency**.
+
+## Filter
+
+In addition to `map`, there are also `filter` and `zip`.
+
+Variations:
+```{python}
+from itertools import filterfalse
+from toolz.dicttoolz import keyfilter, valfilter, itemfilter
+
+def is_even(x):
+    if x % 2 == 0: return True
+    else: return False
+        
+def both_are_even(x):
+    k,v = x
+    if is_even(k) and is_even(v): return True
+    else: return False
+        
+print(list(filterfalse(is_even, range(10))))
+# [1, 3, 5, 7, 9]
+print(list(keyfilter(is_even, {1:2, 2:3, 3:4, 4:5, 5:6})))
+# [2, 4]
+print(list(valfilter(is_even, {1:2, 2:3, 3:4, 4:5, 5:6})))
+# [1, 3, 5]
+print(list(itemfilter(both_are_even, {1:5, 2:4, 3:3, 4:2, 5:1}))) # [2, 4]
+```
+
+### zip
+
+```{python}
+prices = [25, 20, 40]
+items = ["peas", "chicken", "beef"]
+
+zipped = list(zip(prices, items))
+
+import pandas as pd
+
+df = pd.DataFrame(list(zipped), columns=['price', 'name'])
+
+df
+```
+
+## Iterators
+
+Python documentation defines iterator as:
+```
+An iterator is an object representing a stream of data; this object returns the data one element at a time.
+
+An object is called iterable if you can get an iterator for it.
+```
+
+Iterator classes implement `__iter__()` and `__next__()` methods. This means one can create their own iterator, like this:
+```{python}
+class SequenceIterator:
+    def __init__(self, sequence):
+        self._sequence = sequence
+        self._index = 0
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self._index < len(self._sequence):
+            item = self._sequence[self._index]
+            self._index += 1
+            return item
+        else:
+            raise StopIteration
+```
+
+And then use it:
+```{python}
+for el in SequenceIterator([1,2,3]):
+    print(el)
+```
+
+## Generators
+
+Generators are simply an easy way to create iterators.
+
+A generator example, using `yield` keyword:
+
+
+## Generators
+
+Generators are simply an easy way to create iterators.
+
+A generator example, using `yield` keyword:
+
+```{python}
+def even_numbers(n):
+    i=1
+    while i <= n:
+        yield i*2
+        i += 1
+```
+
+And that's how we use it:
+```{python}
+for i in even_numbers(20):
+    print(i)
+```
+
+A generator example, using an ad-hoc syntax similar to list comprehensions:
+
+```{python}
+first_100_even = (i*2 for i in range(1,20))
+print(list(first_100_even))
+```
+
+Memory usage comparison:
+```{python}
+# Generator function
+def generate_numbers(n):
+    for i in range(n):
+        yield i
+
+# For Loop Example
+def generate_numbers_list(n):
+    numbers = []
+    for i in range(n):
+        numbers.append(i)
+    return numbers
+
+# comparing memory usage
+import sys
+
+n = 1000000  # generating 1 million numbers
+
+# memory usage for Generator
+generator_memory = sys.getsizeof(generate_numbers(n))
+
+# memory usage for For Loop
+for_loop_memory = sys.getsizeof(generate_numbers_list(n))
+
+print("memory usage for Generator:", generator_memory, "bytes")
+print("memory usage for For Loop:", for_loop_memory, "bytes")
+```
+
+And now, what is all the fuss about? We can actually use `map`, `reduce`, and friends, on iterables, not just on lists:
+```{python}
+# map example
+gen_mapped = map(lambda x: x*x, even_numbers(30))
+print(list(gen_mapped))
+```
+
+```{python}
+# reduce example
+from functools import reduce
+gen_reduced = reduce(lambda acc, el: acc+el, even_numbers(5), 0)
+print(gen_reduced)
+```
+
+## Exercises
+
+1. Implement versions of `map`, `filter`, and `compose` using `reduce`.
+2. Using a csv file you've downloaded in lab1, create a generator that will `yield` first 3 columns of the file. And use this generator to create a `Pandas.DataFrame`. Hint: use https://docs.python.org/3/library/csv.html
+
+**Additional reading:** https://docs.python.org/3/howto/functional.html

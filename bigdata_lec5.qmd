@@ -1,0 +1,515 @@
+---
+title: "Big Data: Dask intro"
+author: 
+  - name: MSDE
+    affiliation: Lviv University
+code-fold: false
+execute:
+  enabled: false
+  cache: true
+diagram:
+  cache: true
+  cache-dir: ./cache
+  engine:
+    tikz:
+      execpath: lualatex
+      additional-packages: |
+        \usetikzlibrary{arrows.meta}
+        \usetikzlibrary{positioning}
+        \usetikzlibrary{decorations.pathreplacing}
+filters:
+  - diagram
+format: 
+  revealjs:
+    preview-links: auto
+    slide-number: true
+    theme: default
+    multiplex:
+      url: 'https://mplex.vitv.ly'
+      secret: '72e3e4752087503350542062956d183f'
+      id: '39acf32c2c1a12d43592e19daab1de68e0891d6223245c617d9943bb251c7a4d'
+---
+
+# Dask Internals
+
+## Dask
+:::{.callout-tip icon=false}
+## Parallel
+We refer to algorithms that use multiple cores simultaneously as **parallel**. 
+:::
+
+:::{.callout-note icon=false}
+## Out-of-core
+We refer to systems that efficiently use disk as extensions
+of memory as **out-of-core**.
+:::
+
+## Dask
+:::{.callout-note icon=false}
+## How to execute parallel code?
+
+- represent the structure of our program explicitly as data
+within the program itself
+- encode task schedules programmatically within a framework
+:::
+
+## Dask
+:::{.callout-important icon=false}
+## Dask Graph definition
+
+- **A Python dictionary** mapping keys to tasks or values. 
+- **A key** is any Python hashable 
+- **a value** is any Python object that is not a **task**
+- **a task** is a Python tuple with a callable first element.
+:::
+
+## Dask
+```python
+def inc(i):
+  return i + 1
+
+def add(a, b):
+  return a + b
+
+x = 1
+y = inc(x)
+z = add(y, 10)
+```
+
+## Dask
+![](img/dask_simple_dag)
+
+## Dask
+:::{.callout-tip icon=false}
+## Dictionary representation
+```python
+d = {'x': 1,
+     'y': (inc, 'x'),
+     'z': (add, 'y', 10)}
+```
+:::
+
+## Dask
+:::{.callout-important icon=false}
+## Dask computation
+Dask represents a computation as a directed acyclic graph of tasks
+with data dependencies. 
+
+It can be said that Dask is a specification to encode such a
+graph using ordinary Python data structures, namely dicts, tuples,
+functions, and arbitrary Python values.
+:::
+
+## Dask
+```python
+{'x': 1,
+ 'y': 2,
+ 'z': (add, 'x', 'y'),
+ 'w': (sum, ['x', 'y', 'z'])}
+```
+
+:::{.callout-tip icon=false}
+## Examples
+
+- **key**: `'x'`, `('x', 2, 3)`
+- **task**: `(add, 'x', 'y')`
+- **task argument**: `'x'`, `1`, `(inc, 'x')`, `[1, 'x', (inc, 'x')]`
+:::
+
+## Dask
+:::{.callout-tip icon=false}
+## Valid tasks in a Dask graph
+```python
+(add, 1, 2)
+(add, 'x' , 2)
+(add, (inc, 'x'), 2)
+(sum, [1, 2])
+(sum, ['x', (inc, 'x')])
+(np.dot, np.array([...]), np.array([...]))
+```
+:::
+
+# Arrays
+
+## Dask
+:::{.callout-important icon=false}
+## Dask Array
+The `dask.array` submodule uses dask graphs to create a
+NumPy-like library that uses all of your cores and operates on
+datasets that do not fit in memory. 
+
+It does this by building up a
+dask graph of **blocked array algorithms**.
+
+Dask array functions produce Array objects that hold on to Dask
+graphs. These Dask graphs use several NumPy functions to achieve
+the full result.
+:::
+
+## Dask
+:::{.callout-note icon=false}
+## Blocked Array Algorithms
+Blocked algorithms compute a large result like 
+
+- "take the sum of these trillion numbers"
+
+with many small computations like
+
+- "break up the trillion numbers into one million chunks of size one million",
+- "sum each chunk", 
+- "then sum all of the intermediate sums."
+
+Through tricks like this we can evaluate one large problem by solving very many small problems.
+
+Blocked algorithm organizes a computation so that it works on contiguous chunks of data.
+:::
+
+## Dask
+:::{.callout-tip icon=false}
+## Blocked Array Algorithms
+![](img/blocked_matrix_mult){height=600}
+:::
+
+## Dask
+:::{.callout-tip icon=false}
+## Unblocked
+```python
+for i in range(N):
+ for k in range(N):
+   r = X[i,k]
+   for j in range(N):
+     Z[i,j] += r*Y[k,j]
+```
+:::
+
+:::{.callout-important icon=false}
+## Blocked
+```python
+for kk in range(N/B):
+ for jj in range(N/B): 
+   for i in range(N):
+     for k in range(kk, min(kk+B-1, N)):
+       r = X[i,k]
+       for j in range(jj, min(jj+B-1,N)):
+         Z[i,j] += r*Y[k,j]
+```
+:::
+
+## Dask
+
+:::{.callout-note}
+It is well known that the memory hierarchy can be better utilized if scientific algorithms are blocked.
+
+Blocking is also known as **tiling**. 
+
+In matrix multiplication example: instead of operating on individual matrix entries, the calculation is performed on submatrices.
+
+`B` is a **blocking factor**.
+:::
+
+## Dask
+:::{.callout-important icon=false}
+## Blocking features
+
+- Blocking is a general optimization technique for increasing the effectiveness of a memory hierarchy. 
+- By reusing data in the faster level of the hierarchy, it cuts down the average **access latency**.
+- It also reduces the **number of references** made to slower levels of the hierarchy. 
+- Blocking is superior to optimization such as **prefetching**, which hides the latency but does not reduce the memory bandwidth requirement. 
+- This reduction is especially im portant for multiprocessors since memory bandwidth is often the bottleneck of the system. 
+:::
+
+## Dask
+```python
+import dask.array as da
+x = da.arange(15, chunks=(5,))
+```
+
+![](img/dask_array_chunks)
+
+## Dask
+:::{.callout-important icon=false}
+## Metadata
+```python
+x # Array object metadata
+dask.array<x-1, shape=(15,), chunks=((5, 5, 5)), dtype=int64>
+```
+:::
+
+:::{.callout-tip icon=false}
+## Dask Graph
+```python
+x.dask # Every dask array holds a dask graph
+{('x' , 0): (np.arange, 0, 5),
+ ('x', 1): (np.arange, 5, 10),
+ ('x' , 2): (np.arange, 10, 15)}
+```
+:::
+
+
+## Dask
+:::{.callout-tip icon=false}
+## More complex graph
+```python
+z = (x + 100).sum()
+z.dask
+{('x', 0): (np.arange, 0, 5),
+('x', 1): (np.arange, 5, 10),
+('x', 2): (np.arange, 10, 15),
+('y', 0): (add, ('x', 0), 100),
+('y', 1): (add, ('x', 1), 100),
+('y', 2): (add, ('x', 2), 100),
+('z', 0): (np.sum, ('y', 0)),
+('z', 1): (np.sum, ('y', 1)),
+('z', 2): (np.sum, ('y', 2)),
+('z',): (sum, [('z', 0), ('z', 1), ('z', 2)])}
+```
+:::
+
+:::{.callout-note icon=false}
+## Execute the Graph
+```python
+z.compute()
+1605
+```
+:::
+
+
+## Dask
+:::{.callout-important icon=false}
+## dask.array.Array objects
+`x` and `z` are both `dask.array.Array` objects containing:
+
+- Dask graph `.dask`
+- array shape and chunk shape `.chunks`
+- a name identifying which keys in the graph correspond
+to the result, `.name`
+- a dtype
+:::
+
+## Dask
+:::{.callout-note icon=false}
+## Chunks
+    
+A normal NumPy array knows its shape, a dask array must
+know its shape and the shape of all of the internal NumPy blocks
+that make up the larger array. 
+
+These shapes can be concisely
+described by a tuple of tuples of integers, where each internal
+tuple corresponds to the lengths along a single dimension.
+
+In the example above we have a 20 by 24 array cut into
+uniform blocks of size 5 by 8. The chunks attribute describing
+this array is the following:
+
+```python
+chunks = ((5, 5, 5, 5), (8, 8, 8))
+```
+:::
+
+
+## Dask
+:::{.callout-important icon=false}
+## Chunks need not be uniform!
+```python
+x[::2].chunks
+((3, 2, 3, 2), (8, 8, 8))
+x[::2].T.chunks
+((8, 8, 8), (3, 2, 3, 2))
+```
+:::
+
+
+## Dask
+:::{.callout-tip icon=false}
+## Dask Array operations
+
+- arithmetic and scalar math: `+`, `*`, `exp`, `log`
+- reductions along axes: `sum()`, `mean()`, `std()`, `sum(axis=0)`
+- tensor contractions / dot products / matrix multiplication: `tensordot`
+- axis reordering / transposition: `transpose`
+- slicing: `x[:100, 500:100:-2]`
+- utility functions: `bincount`, `where`
+:::
+
+
+## Dask
+:::{.callout-important icon=false}
+## Ahead-of-time shape limitations
+```python
+x[x > 0]
+```
+:::
+
+# Dask Task Scheduling
+
+## Dask
+Graph creation and graph scheduling are separate problems!
+
+Current Dask scheduler is **dynamic**.
+
+:::{.callout-important icon=false}
+## Current Dask scheduler logic
+
+- A worker reports that it has completed a task and that it
+is ready for another.
+- We update runtime state to record the finished
+task, 
+- mark which new tasks can be run, which data can be released,
+etc. 
+- We then choose a task to give to this worker from among the
+set of ready-to-run tasks. This small choice governs the macroscale performance of the scheduler.
+:::
+
+## Dask
+:::{.callout-tip icon=false}
+## Out-of-core computation - which task to choose?
+
+- last in, first out 
+- select tasks whose data dependencies were most recently made available. 
+- this causes a behavior where long chains of related tasks trigger each other
+- it forces the scheduler to finish related tasks before starting new ones. 
+- **implementation:** a simple stack, which can operate in constant time.
+:::
+
+## Dask
+![](img/dask_custom_scheduler)
+
+## Dask
+![](img/dask_blas_comparison)
+
+# Other Dask collections
+
+## Dask
+:::{.callout-important icon=false}
+## Collections
+
+- **dask.array** = numpy+ threading
+- **dask.bag** = toolz+ multiprocessing
+- **dask.dataframe** = pandas+ threading
+:::
+
+## Dask
+:::{.callout-tip icon=false}
+## Dask Bag - Definition
+A **bag** is an unordered collection with repeats. 
+
+It is like a Python list but does not guarantee the order of elements. 
+
+The `dask.bag` API contains functions like **map** and **filter** and generally follows the PyToolz API. 
+
+<!-- %We find that it is particularly useful on the front lines of data analysis, particularly in parsing and cleaning up initial data dumps like JSON or log files because it combines the streaming properties and solid performance of projects like cytoolz. -->
+:::
+
+## Dask
+```python
+>>> import dask.bag as db
+>>> import json
+>>> b = db.from_filenames('2014-*.json.gz').map(json.loads)
+>>> alices = b.filter(lambda d: d['name'] == 'Alice')
+>>> alices.take(3)
+({'name': 'Alice', 'city': 'LA', 'balance': 100},
+{'name': 'Alice', 'city': 'LA', 'balance': 200},
+{'name': 'Alice', 'city': 'NYC', 'balance': 300},)
+
+>>> dict(alices.pluck('city').frequencies())
+{'LA': 10000, 'NYC': 20000, ...}
+```
+
+## Dask
+:::{.callout-important icon=false}
+## S3 example
+```python
+>>> import dask.bag as db
+>>> b = db.from_s3('githubarchive-data', '2015-01-01-*.json.gz')
+          .map(json.loads)
+          .map(lambda d: d['type'] == 'PushEvent')
+          .count()
+```
+:::
+
+## Dask
+  <!-- %https://blog.dask.org/2015/06/26/Complex-Graphs -->
+![](img/dask_bag_graph)
+
+## Dask
+:::{.callout-note icon=false}
+## Dask DataFrame - Definition
+The **dask.dataframe** module implements a large dataframe
+out of many Pandas DataFrames.
+
+It uses a threaded scheduler.
+:::
+
+## Dask
+:::{.callout-important icon=false}
+## Partitioned datasets
+The dask dataframe can compute efficiently on **partitioned datasets** where the different blocks are well separated along an index. 
+
+For example in time series data we may know that all of
+January is in one block while all of February is in another.
+
+`Join`, `groupby`, and `range` queries along this index are significantly faster
+when working on partitioned datasets.
+:::
+
+## Dask
+:::{.callout-tip icon=false}
+## Dask DataFrame `join`
+![](img/dask_ddf_join){height=600}
+:::
+
+## Dask
+:::{.callout-important icon=false}
+## Out-of-core parallel SVD example
+```python
+>>> import dask.array as da
+>>> x = da.ones((5000, 1000), chunks=(1000, 1000))
+>>> u, s, v = da.svd(x)
+```
+Out-of-core parallel non-negative matrix factorizations on top of `dask.array`.
+:::
+
+## Dask
+:::{.callout-tip icon=false}
+## Out-of-core parallel SVD
+![](img/dask_parallel_svd){height=600}
+:::
+
+# Usage
+
+## Usage
+![scida.io - astrophysical simulations](img/dask_scida)
+
+## Usage
+![Pangeo - open, reproducible, scalable geoscience. A global slice of Sea Water Temperature](img/pangeo_sea_water_temp)
+
+  <!-- %https://medium.com/pangeo/using-kerchunk-with-uncompressed-netcdf-64-bit-offset-files-cloud-optimized-access-to-hycom-ocean-9008ba6d0d67 -->
+  <!-- %https://www.earthdata.nasa.gov/learn/articles/pangeo-project -->
+
+## Usage
+  <!-- %\textsc{Pangeo - open, reproducible, scalable geoscience} -->
+  <!-- %https://stories.dask.org/en/latest/network-modeling.html -->
+![Line-Of-Sight (LOS) coverage from a lamp post in San Jose.](img/dask_wireless_modeling){height=600}
+
+# Dask vs Spark
+
+## Comparison with Spark
+:::{.callout-important icon=false}
+## Setup
+
+- BigBrain20, a 3-D image of the human brain, **total data size** of 606 GiB. 
+- dataset provided by the Consortium for Reliability and Reproducibility, entire dataset is 379.83 GiB, used all 3,491 anatomical images, representing 26.67 GiB overall.
+<!-- %containing anatomical, diffusion, and functional images of 1,654 subjects acquired in 35 sites, -->
+:::
+
+## Comparison with Spark
+
+![](img/dask_spark_graphs.png){height=700}
+
+## Comparison with Spark
+![](img/dask_spark_increment.png)
+
+## Comparison with Spark
+![](img/dask_spark_histogram.png)
+
