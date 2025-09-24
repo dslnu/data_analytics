@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.8.24">
 
   <meta name="author" content="MSDE">
-  <title>Big Data analytics / Applied Data analytics – Big Data: Dask intro</title>
+  <title>Big Data analytics / Applied Data analytics – Big Data: Dask intro part2</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
@@ -193,7 +193,7 @@
     <div class="slides">
 
 <section id="title-slide" class="quarto-title-block center">
-  <h1 class="title">Big Data: Dask intro</h1>
+  <h1 class="title">Big Data: Dask intro part2</h1>
 
 <div class="quarto-title-authors">
 <div class="quarto-title-author">
@@ -684,7 +684,208 @@ MSDE
 <section id="dask-26" class="slide level2">
 <h2>Dask</h2>
 
-<img data-src="img/dask_blas_comparison.png" class="r-stretch"></section></section>
+<img data-src="img/dask_blas_comparison.png" class="r-stretch"></section>
+<section id="taskvine" class="slide level2">
+<h2>Taskvine</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Description</strong></p>
+</div>
+<div class="callout-content">
+<p>TaskVine is a framework for building large scale data intensive dynamic workflows for:</p>
+<ul>
+<li>high performance computing (HPC) clusters</li>
+<li>GPU clusters</li>
+<li>cloud service providers</li>
+<li>and other distributed computing systems.</li>
+</ul>
+<p>TaskVine is our third-generation workflow system, built on our twenty years of experience creating scalable applications in fields such as</p>
+<ul>
+<li>high energy physics</li>
+<li>bioinformatics</li>
+<li>molecular dynamics</li>
+<li>and machine learning.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="taskvine-1" class="slide level2">
+<h2>Taskvine</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Workflow</strong></p>
+</div>
+<div class="callout-content">
+<p>A <strong>workflow</strong> is a collection of programs and files that are organized in a graph structure, allowing parts of the workflow to run in a parallel, reproducible way.</p>
+<p><img data-src="img/taskvine_workflow.svg"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="taskvine-2" class="slide level2">
+<h2>Taskvine</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Steps</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>A TaskVine workflow requires:
+<ul>
+<li>a <strong>manager</strong></li>
+<li>and a large number of <strong>worker</strong> processes.</li>
+</ul></li>
+<li>The application generates a large number of small tasks, which are distributed to workers.</li>
+<li>As tasks access external data sources and produce their own outputs, more and more data is pulled into local storage on cluster nodes.</li>
+<li>This data is used to accelerate future tasks and avoid re-computing existing results. The application gradually grows “like a vine” through the cluster.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="taskvine-3" class="slide level2">
+<h2>Taskvine</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Architecture</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/taskvine_architecture.svg"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="taskvine-4" class="slide level2">
+<h2>Taskvine</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Features and error handling</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>While an application is running, workers may be added or removed as computing resources become available. (<strong>elasticity</strong>)</li>
+<li>Newly added workers will gradually accumulate data within the cluster.</li>
+<li>Removed (or failed) workers are handled gracefully, and tasks will be <strong>retried</strong> elsewhere as needed.</li>
+<li>If a worker failure results in the loss of files, tasks will be re-executed as necessary to re-create them.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="taskvine-5" class="slide level2">
+<h2>Taskvine</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Coding it</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>Individual tasks can be simple Python functions, complex Unix applications, or serverless function invocations.</li>
+<li>The <strong>key idea</strong> is that you declare file objects, and then declare tasks that consume them and produce new file objects. <!-- For example, this snippet draws an input file from the Project Gutenberg repository and runs a Task to search for the string "needle", producing the file output.txt: --></li>
+</ul>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a></a>f <span class="op">=</span> m.declare_url(<span class="st">"https://www.gutenberg.org/cache/epub/2600/pg2600.txt"</span>)</span>
+<span id="cb15-2"><a></a>g <span class="op">=</span> m.declare_file(<span class="st">"myoutput.txt"</span>)</span>
+<span id="cb15-3"><a></a></span>
+<span id="cb15-4"><a></a>t <span class="op">=</span> Task(<span class="st">"grep needle warandpeace.txt &gt; output.txt"</span>)</span>
+<span id="cb15-5"><a></a>t.add_input(f, <span class="st">"warandpeace.txt"</span>)</span>
+<span id="cb15-6"><a></a>t.add_output(g, <span class="st">"output.txt"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</section>
+<section id="taskvine-6" class="slide level2">
+<h2>Taskvine</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Task options</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>Each task can be labelled with the resources (CPU cores, GPU devices, memory, disk space) that it needs to execute.</li>
+<li>If you don’t know the resources needed, you can enable a resource monitor to automatically track, report, and allocate what each task uses.</li>
+<li>This allows each worker to pack the appropriate number of tasks. For example, a worker running on a 64-core machine could run 32 dual-core tasks, 16 four-core tasks, or any other combination that adds up to 64 cores.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="taskvine-7" class="slide level2">
+<h2>Taskvine</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>As Dask Scheduler</strong></p>
+</div>
+<div class="callout-content">
+<p>TaskVine manager can be used as Dask scheduler:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a></a><span class="cf">try</span>:</span>
+<span id="cb16-2"><a></a>    <span class="im">import</span> dask</span>
+<span id="cb16-3"><a></a>    <span class="im">import</span> awkward <span class="im">as</span> ak</span>
+<span id="cb16-4"><a></a>    <span class="im">import</span> dask_awkward <span class="im">as</span> dak</span>
+<span id="cb16-5"><a></a>    <span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb16-6"><a></a><span class="cf">except</span> <span class="pp">ImportError</span>:</span>
+<span id="cb16-7"><a></a>    <span class="bu">print</span>(<span class="st">"You need dask, awkward, and numpy installed"</span>)</span>
+<span id="cb16-8"><a></a>    <span class="bu">print</span>(<span class="st">"(e.g. conda install -c conda-forge dask dask-awkward numpy) to run this example."</span>)</span>
+<span id="cb16-9"><a></a></span>
+<span id="cb16-10"><a></a>behavior: <span class="bu">dict</span> <span class="op">=</span> {}</span>
+<span id="cb16-11"><a></a></span>
+<span id="cb16-12"><a></a><span class="at">@ak.mixin_class</span>(behavior)</span>
+<span id="cb16-13"><a></a><span class="kw">class</span> Point:</span>
+<span id="cb16-14"><a></a>    <span class="kw">def</span> distance(<span class="va">self</span>, other):</span>
+<span id="cb16-15"><a></a>    <span class="cf">return</span> np.sqrt((<span class="va">self</span>.x <span class="op">-</span> other.x) <span class="op">**</span> <span class="dv">2</span> <span class="op">+</span> (<span class="va">self</span>.y <span class="op">-</span> other.y) <span class="op">**</span> <span class="dv">2</span>)</span>
+<span id="cb16-16"><a></a></span>
+<span id="cb16-17"><a></a></span>
+<span id="cb16-18"><a></a><span class="cf">if</span> <span class="va">__name__</span> <span class="op">==</span> <span class="st">"__main__"</span>:</span>
+<span id="cb16-19"><a></a>    <span class="co"># data arrays</span></span>
+<span id="cb16-20"><a></a>    points1 <span class="op">=</span> ak.Array([</span>
+<span id="cb16-21"><a></a>    [{<span class="st">"x"</span>: <span class="fl">1.0</span>, <span class="st">"y"</span>: <span class="fl">1.1</span>}, {<span class="st">"x"</span>: <span class="fl">2.0</span>, <span class="st">"y"</span>: <span class="fl">2.2</span>}, {<span class="st">"x"</span>: <span class="dv">3</span>, <span class="st">"y"</span>: <span class="fl">3.3</span>}],</span>
+<span id="cb16-22"><a></a>    [],</span>
+<span id="cb16-23"><a></a>    [{<span class="st">"x"</span>: <span class="fl">4.0</span>, <span class="st">"y"</span>: <span class="fl">4.4</span>}, {<span class="st">"x"</span>: <span class="fl">5.0</span>, <span class="st">"y"</span>: <span class="fl">5.5</span>}],</span>
+<span id="cb16-24"><a></a>    [{<span class="st">"x"</span>: <span class="fl">6.0</span>, <span class="st">"y"</span>: <span class="fl">6.6</span>}],</span>
+<span id="cb16-25"><a></a>    [{<span class="st">"x"</span>: <span class="fl">7.0</span>, <span class="st">"y"</span>: <span class="fl">7.7</span>}, {<span class="st">"x"</span>: <span class="fl">8.0</span>, <span class="st">"y"</span>: <span class="fl">8.8</span>}, {<span class="st">"x"</span>: <span class="dv">9</span>, <span class="st">"y"</span>: <span class="fl">9.9</span>}],</span>
+<span id="cb16-26"><a></a>    ])</span>
+<span id="cb16-27"><a></a></span>
+<span id="cb16-28"><a></a>    points2 <span class="op">=</span> ak.Array([</span>
+<span id="cb16-29"><a></a>    [{<span class="st">"x"</span>: <span class="fl">0.9</span>, <span class="st">"y"</span>: <span class="fl">1.0</span>}, {<span class="st">"x"</span>: <span class="fl">2.0</span>, <span class="st">"y"</span>: <span class="fl">2.2</span>}, {<span class="st">"x"</span>: <span class="fl">2.9</span>, <span class="st">"y"</span>: <span class="fl">3.0</span>}],</span>
+<span id="cb16-30"><a></a>    [],</span>
+<span id="cb16-31"><a></a>    [{<span class="st">"x"</span>: <span class="fl">3.9</span>, <span class="st">"y"</span>: <span class="fl">4.0</span>}, {<span class="st">"x"</span>: <span class="fl">5.0</span>, <span class="st">"y"</span>: <span class="fl">5.5</span>}],</span>
+<span id="cb16-32"><a></a>    [{<span class="st">"x"</span>: <span class="fl">5.9</span>, <span class="st">"y"</span>: <span class="fl">6.0</span>}],</span>
+<span id="cb16-33"><a></a>    [{<span class="st">"x"</span>: <span class="fl">6.9</span>, <span class="st">"y"</span>: <span class="fl">7.0</span>}, {<span class="st">"x"</span>: <span class="fl">8.0</span>, <span class="st">"y"</span>: <span class="fl">8.8</span>}, {<span class="st">"x"</span>: <span class="fl">8.9</span>, <span class="st">"y"</span>: <span class="fl">9.0</span>}],</span>
+<span id="cb16-34"><a></a>    ])</span>
+<span id="cb16-35"><a></a>    array1 <span class="op">=</span> dak.from_awkward(points1, npartitions<span class="op">=</span><span class="dv">3</span>)</span>
+<span id="cb16-36"><a></a>    array2 <span class="op">=</span> dak.from_awkward(points2, npartitions<span class="op">=</span><span class="dv">3</span>)</span>
+<span id="cb16-37"><a></a></span>
+<span id="cb16-38"><a></a>    array1 <span class="op">=</span> dak.with_name(array1, name<span class="op">=</span><span class="st">"Point"</span>, behavior<span class="op">=</span>behavior)</span>
+<span id="cb16-39"><a></a>    array2 <span class="op">=</span> dak.with_name(array2, name<span class="op">=</span><span class="st">"Point"</span>, behavior<span class="op">=</span>behavior)</span>
+<span id="cb16-40"><a></a></span>
+<span id="cb16-41"><a></a>    distance <span class="op">=</span> array1.distance(array2)</span>
+<span id="cb16-42"><a></a></span>
+<span id="cb16-43"><a></a>    m <span class="op">=</span> vine.DaskVine(port<span class="op">=</span><span class="dv">9123</span>, ssl<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb16-44"><a></a>    m.set_name(<span class="st">"test_manager"</span>)</span>
+<span id="cb16-45"><a></a>    <span class="bu">print</span>(<span class="ss">f"Listening for workers at port: </span><span class="sc">{</span>m<span class="sc">.</span>port<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb16-46"><a></a></span>
+<span id="cb16-47"><a></a>    f <span class="op">=</span> vine.Factory(manager<span class="op">=</span>m)</span>
+<span id="cb16-48"><a></a>    f.cores <span class="op">=</span> <span class="dv">4</span></span>
+<span id="cb16-49"><a></a>    f.max_workers <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb16-50"><a></a>    f.min_workers <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb16-51"><a></a>    <span class="cf">with</span> f:</span>
+<span id="cb16-52"><a></a>        <span class="cf">with</span> dask.config.<span class="bu">set</span>(scheduler<span class="op">=</span>m.get):</span>
+<span id="cb16-53"><a></a>            result <span class="op">=</span> distance.compute(resources<span class="op">=</span>{<span class="st">"cores"</span>: <span class="dv">1</span>}, resources_mode<span class="op">=</span><span class="st">"max"</span>, lazy_transfers<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb16-54"><a></a>            <span class="bu">print</span>(<span class="ss">f"distance = </span><span class="sc">{</span>result<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb16-55"><a></a>        <span class="bu">print</span>(<span class="st">"Terminating workers..."</span>, end<span class="op">=</span><span class="st">""</span>)</span>
+<span id="cb16-56"><a></a>    <span class="bu">print</span>(<span class="st">"done!"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</section></section>
 <section>
 <section id="other-dask-collections" class="title-slide slide level1 center">
 <h1>Other Dask collections</h1>
@@ -725,17 +926,17 @@ MSDE
 </section>
 <section id="dask-29" class="slide level2">
 <h2>Dask</h2>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a></a><span class="op">&gt;&gt;&gt;</span> <span class="im">import</span> dask.bag <span class="im">as</span> db</span>
-<span id="cb15-2"><a></a><span class="op">&gt;&gt;&gt;</span> <span class="im">import</span> json</span>
-<span id="cb15-3"><a></a><span class="op">&gt;&gt;&gt;</span> b <span class="op">=</span> db.from_filenames(<span class="st">'2014-*.json.gz'</span>).<span class="bu">map</span>(json.loads)</span>
-<span id="cb15-4"><a></a><span class="op">&gt;&gt;&gt;</span> alices <span class="op">=</span> b.<span class="bu">filter</span>(<span class="kw">lambda</span> d: d[<span class="st">'name'</span>] <span class="op">==</span> <span class="st">'Alice'</span>)</span>
-<span id="cb15-5"><a></a><span class="op">&gt;&gt;&gt;</span> alices.take(<span class="dv">3</span>)</span>
-<span id="cb15-6"><a></a>({<span class="st">'name'</span>: <span class="st">'Alice'</span>, <span class="st">'city'</span>: <span class="st">'LA'</span>, <span class="st">'balance'</span>: <span class="dv">100</span>},</span>
-<span id="cb15-7"><a></a>{<span class="st">'name'</span>: <span class="st">'Alice'</span>, <span class="st">'city'</span>: <span class="st">'LA'</span>, <span class="st">'balance'</span>: <span class="dv">200</span>},</span>
-<span id="cb15-8"><a></a>{<span class="st">'name'</span>: <span class="st">'Alice'</span>, <span class="st">'city'</span>: <span class="st">'NYC'</span>, <span class="st">'balance'</span>: <span class="dv">300</span>},)</span>
-<span id="cb15-9"><a></a></span>
-<span id="cb15-10"><a></a><span class="op">&gt;&gt;&gt;</span> <span class="bu">dict</span>(alices.pluck(<span class="st">'city'</span>).frequencies())</span>
-<span id="cb15-11"><a></a>{<span class="st">'LA'</span>: <span class="dv">10000</span>, <span class="st">'NYC'</span>: <span class="dv">20000</span>, ...}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a></a><span class="op">&gt;&gt;&gt;</span> <span class="im">import</span> dask.bag <span class="im">as</span> db</span>
+<span id="cb17-2"><a></a><span class="op">&gt;&gt;&gt;</span> <span class="im">import</span> json</span>
+<span id="cb17-3"><a></a><span class="op">&gt;&gt;&gt;</span> b <span class="op">=</span> db.from_filenames(<span class="st">'2014-*.json.gz'</span>).<span class="bu">map</span>(json.loads)</span>
+<span id="cb17-4"><a></a><span class="op">&gt;&gt;&gt;</span> alices <span class="op">=</span> b.<span class="bu">filter</span>(<span class="kw">lambda</span> d: d[<span class="st">'name'</span>] <span class="op">==</span> <span class="st">'Alice'</span>)</span>
+<span id="cb17-5"><a></a><span class="op">&gt;&gt;&gt;</span> alices.take(<span class="dv">3</span>)</span>
+<span id="cb17-6"><a></a>({<span class="st">'name'</span>: <span class="st">'Alice'</span>, <span class="st">'city'</span>: <span class="st">'LA'</span>, <span class="st">'balance'</span>: <span class="dv">100</span>},</span>
+<span id="cb17-7"><a></a>{<span class="st">'name'</span>: <span class="st">'Alice'</span>, <span class="st">'city'</span>: <span class="st">'LA'</span>, <span class="st">'balance'</span>: <span class="dv">200</span>},</span>
+<span id="cb17-8"><a></a>{<span class="st">'name'</span>: <span class="st">'Alice'</span>, <span class="st">'city'</span>: <span class="st">'NYC'</span>, <span class="st">'balance'</span>: <span class="dv">300</span>},)</span>
+<span id="cb17-9"><a></a></span>
+<span id="cb17-10"><a></a><span class="op">&gt;&gt;&gt;</span> <span class="bu">dict</span>(alices.pluck(<span class="st">'city'</span>).frequencies())</span>
+<span id="cb17-11"><a></a>{<span class="st">'LA'</span>: <span class="dv">10000</span>, <span class="st">'NYC'</span>: <span class="dv">20000</span>, ...}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="dask-30" class="slide level2">
 <h2>Dask</h2>
@@ -745,11 +946,11 @@ MSDE
 <p><strong>S3 example</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a></a><span class="op">&gt;&gt;&gt;</span> <span class="im">import</span> dask.bag <span class="im">as</span> db</span>
-<span id="cb16-2"><a></a><span class="op">&gt;&gt;&gt;</span> b <span class="op">=</span> db.from_s3(<span class="st">'githubarchive-data'</span>, <span class="st">'2015-01-01-*.json.gz'</span>)</span>
-<span id="cb16-3"><a></a>          .<span class="bu">map</span>(json.loads)</span>
-<span id="cb16-4"><a></a>          .<span class="bu">map</span>(<span class="kw">lambda</span> d: d[<span class="st">'type'</span>] <span class="op">==</span> <span class="st">'PushEvent'</span>)</span>
-<span id="cb16-5"><a></a>          .count()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a></a><span class="op">&gt;&gt;&gt;</span> <span class="im">import</span> dask.bag <span class="im">as</span> db</span>
+<span id="cb18-2"><a></a><span class="op">&gt;&gt;&gt;</span> b <span class="op">=</span> db.from_s3(<span class="st">'githubarchive-data'</span>, <span class="st">'2015-01-01-*.json.gz'</span>)</span>
+<span id="cb18-3"><a></a>          .<span class="bu">map</span>(json.loads)</span>
+<span id="cb18-4"><a></a>          .<span class="bu">map</span>(<span class="kw">lambda</span> d: d[<span class="st">'type'</span>] <span class="op">==</span> <span class="st">'PushEvent'</span>)</span>
+<span id="cb18-5"><a></a>          .count()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -795,7 +996,7 @@ MSDE
 <p><strong>Dask DataFrame <code>join</code></strong></p>
 </div>
 <div class="callout-content">
-<p><img data-src="img/dask_ddf_join.png" height="600"></p>
+<p><img data-src="img/dask_ddf_join.png" height="550"></p>
 </div>
 </div>
 </div>
@@ -808,9 +1009,9 @@ MSDE
 <p><strong>Out-of-core parallel SVD example</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a></a><span class="op">&gt;&gt;&gt;</span> <span class="im">import</span> dask.array <span class="im">as</span> da</span>
-<span id="cb17-2"><a></a><span class="op">&gt;&gt;&gt;</span> x <span class="op">=</span> da.ones((<span class="dv">5000</span>, <span class="dv">1000</span>), chunks<span class="op">=</span>(<span class="dv">1000</span>, <span class="dv">1000</span>))</span>
-<span id="cb17-3"><a></a><span class="op">&gt;&gt;&gt;</span> u, s, v <span class="op">=</span> da.svd(x)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a></a><span class="op">&gt;&gt;&gt;</span> <span class="im">import</span> dask.array <span class="im">as</span> da</span>
+<span id="cb19-2"><a></a><span class="op">&gt;&gt;&gt;</span> x <span class="op">=</span> da.ones((<span class="dv">5000</span>, <span class="dv">1000</span>), chunks<span class="op">=</span>(<span class="dv">1000</span>, <span class="dv">1000</span>))</span>
+<span id="cb19-3"><a></a><span class="op">&gt;&gt;&gt;</span> u, s, v <span class="op">=</span> da.svd(x)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Out-of-core parallel non-negative matrix factorizations on top of <code>dask.array</code>.</p>
 </div>
 </div>
@@ -870,18 +1071,18 @@ MSDE
 </section>
 <section id="comparison-with-spark-1" class="slide level2">
 <h2>Comparison with Spark</h2>
-<p><img data-src="img/dask_spark_graphs.png" height="700"></p>
+<p><img data-src="img/dask_spark_graphs.png" height="600"></p>
 </section>
 <section id="comparison-with-spark-2" class="slide level2">
 <h2>Comparison with Spark</h2>
-
-<img data-src="img/dask_spark_increment.png" class="r-stretch"></section>
+<p><img data-src="img/dask_spark_increment.png" height="600"></p>
+</section>
 <section id="comparison-with-spark-3" class="slide level2">
 <h2>Comparison with Spark</h2>
+<p><img data-src="img/dask_spark_histogram.png" height="600"></p>
 
 
-
-<img data-src="img/dask_spark_histogram.png" class="r-stretch"></section></section>
+</section></section>
     </div>
   <div class="quarto-auto-generated-content" style="display: none;">
 <div class="footer footer-default">
@@ -920,7 +1121,7 @@ MSDE
 'autoAnimateUnmatched': true,
 'jumpToSlide': true,
 'menu': {"side":"left","useTextContentForMissingTitles":true,"markers":false,"loadIcons":false,"custom":[{"title":"Tools","icon":"<i class=\"fas fa-gear\"></i>","content":"<ul class=\"slide-menu-items\">\n<li class=\"slide-tool-item active\" data-item=\"0\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.fullscreen(event)\"><kbd>f</kbd> Fullscreen</a></li>\n<li class=\"slide-tool-item\" data-item=\"1\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.speakerMode(event)\"><kbd>s</kbd> Speaker View</a></li>\n<li class=\"slide-tool-item\" data-item=\"2\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.overview(event)\"><kbd>o</kbd> Slide Overview</a></li>\n<li class=\"slide-tool-item\" data-item=\"3\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.togglePdfExport(event)\"><kbd>e</kbd> PDF Export Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"4\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.toggleScrollView(event)\"><kbd>r</kbd> Scroll View Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"5\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.keyboardHelp(event)\"><kbd>?</kbd> Keyboard Help</a></li>\n</ul>"}],"openButton":true},
-'multiplex': {"url":"https://mplex.vitv.ly","secret":null,"id":"39acf32c2c1a12d43592e19daab1de68e0891d6223245c617d9943bb251c7a4d"},
+'multiplex': {"url":"https://mplex.vitv.ly","secret":null,"id":"0b111fe44d0bbf30998913098b95e03345ee051ede45c9fb47d29cef5ff2bb18"},
 'smaller': false,
  
         // Display controls in the bottom right corner

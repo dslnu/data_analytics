@@ -305,7 +305,7 @@
     "href": "bigdata_lab3.html",
     "title": "Big Data Analytics: Lab 3",
     "section": "",
-    "text": "Suppose we want to apply several transformations. What can we do?\n\nSeveral maps.\nChain functions with compose.\nCreate a function pipeline with pipe.\n\nSuppose we want to apply \\(f(x) = \\exp(\\sin(x))\\) to a list of numbers.\nOption 1:\n\nimport math\n\nfloat_list = [0.234, -1.96, 5.071]\n\n# several maps\nlst1 = map(math.sin, float_list)\nlst2 = map(math.exp, lst1)\n\nprint(list(lst2))\n\n[1.260956241447609, 0.396447553306686, 0.3920424231508857]\n\n\nOption 2: we’ll use the toolz package we installed in lab2.\n\nfrom toolz.functoolz import compose\n\ncomposed = compose(math.exp, math.sin) # note reverse order\n\nprint(list(map(composed, float_list)))\n\n[1.260956241447609, 0.396447553306686, 0.3920424231508857]\n\n\nOption 3:\nAnd there is also pipe:\n\nfrom toolz.functoolz import pipe\n\npiped = lambda x: pipe(x, math.sin, math.exp) # now the order is proper\n\nprint(list(map(piped, float_list)))\n\n[1.260956241447609, 0.396447553306686, 0.3920424231508857]\n\n\n\n\n\nmap is lazy! This is the opposite to being eager. That’s why we apply list first to materialize results of map application.\nLaziness provides memory efficiency.\n\n\n\nIn addition to map, there are also filter and zip.\nVariations:\n\nfrom itertools import filterfalse\nfrom toolz.dicttoolz import keyfilter, valfilter, itemfilter\n\ndef is_even(x):\n    if x % 2 == 0: return True\n    else: return False\n        \ndef both_are_even(x):\n    k,v = x\n    if is_even(k) and is_even(v): return True\n    else: return False\n        \nprint(list(filterfalse(is_even, range(10))))\n# [1, 3, 5, 7, 9]\nprint(list(keyfilter(is_even, {1:2, 2:3, 3:4, 4:5, 5:6})))\n# [2, 4]\nprint(list(valfilter(is_even, {1:2, 2:3, 3:4, 4:5, 5:6})))\n# [1, 3, 5]\nprint(list(itemfilter(both_are_even, {1:5, 2:4, 3:3, 4:2, 5:1}))) # [2, 4]\n\n[1, 3, 5, 7, 9]\n[2, 4]\n[1, 3, 5]\n[2, 4]\n\n\n\n\n\nprices = [25, 20, 40]\nitems = [\"peas\", \"chicken\", \"beef\"]\n\nzipped = list(zip(prices, items))\n\nimport pandas as pd\n\ndf = pd.DataFrame(list(zipped), columns=['price', 'name'])\n\ndf\n\n\n\n\n\n\n\n\nprice\nname\n\n\n\n\n0\n25\npeas\n\n\n1\n20\nchicken\n\n\n2\n40\nbeef\n\n\n\n\n\n\n\n\n\n\n\nPython documentation defines iterator as:\nAn iterator is an object representing a stream of data; this object returns the data one element at a time.\n\nAn object is called iterable if you can get an iterator for it.\nIterator classes implement __iter__() and __next__() methods. This means one can create their own iterator, like this:\n\nclass SequenceIterator:\n    def __init__(self, sequence):\n        self._sequence = sequence\n        self._index = 0\n\n    def __iter__(self):\n        return self\n\n    def __next__(self):\n        if self._index &lt; len(self._sequence):\n            item = self._sequence[self._index]\n            self._index += 1\n            return item\n        else:\n            raise StopIteration\n\nAnd then use it:\n\nfor el in SequenceIterator([1,2,3]):\n    print(el)\n\n1\n2\n3\n\n\n\n\n\nGenerators are simply an easy way to create iterators.\nA generator example, using yield keyword:\n\n\n\nGenerators are simply an easy way to create iterators.\nA generator example, using yield keyword:\n\ndef even_numbers(n):\n    i=1\n    while i &lt;= n:\n        yield i*2\n        i += 1\n\nAnd that’s how we use it:\n\nfor i in even_numbers(20):\n    print(i)\n\n2\n4\n6\n8\n10\n12\n14\n16\n18\n20\n22\n24\n26\n28\n30\n32\n34\n36\n38\n40\n\n\nA generator example, using an ad-hoc syntax similar to list comprehensions:\n\nfirst_100_even = (i*2 for i in range(1,20))\nprint(list(first_100_even))\n\n[2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38]\n\n\nMemory usage comparison:\n\n# Generator function\ndef generate_numbers(n):\n    for i in range(n):\n        yield i\n\n# For Loop Example\ndef generate_numbers_list(n):\n    numbers = []\n    for i in range(n):\n        numbers.append(i)\n    return numbers\n\n# comparing memory usage\nimport sys\n\nn = 1000000  # generating 1 million numbers\n\n# memory usage for Generator\ngenerator_memory = sys.getsizeof(generate_numbers(n))\n\n# memory usage for For Loop\nfor_loop_memory = sys.getsizeof(generate_numbers_list(n))\n\nprint(\"memory usage for Generator:\", generator_memory, \"bytes\")\nprint(\"memory usage for For Loop:\", for_loop_memory, \"bytes\")\n\nmemory usage for Generator: 200 bytes\nmemory usage for For Loop: 8448728 bytes\n\n\nAnd now, what is all the fuss about? We can actually use map, reduce, and friends, on iterables, not just on lists:\n\n# map example\ngen_mapped = map(lambda x: x*x, even_numbers(30))\nprint(list(gen_mapped))\n\n[4, 16, 36, 64, 100, 144, 196, 256, 324, 400, 484, 576, 676, 784, 900, 1024, 1156, 1296, 1444, 1600, 1764, 1936, 2116, 2304, 2500, 2704, 2916, 3136, 3364, 3600]\n\n\n\n# reduce example\nfrom functools import reduce\ngen_reduced = reduce(lambda acc, el: acc+el, even_numbers(5), 0)\nprint(gen_reduced)\n\n30\n\n\n\n\n\n\nImplement versions of map, filter, and compose using reduce.\nUsing a csv file you’ve downloaded in lab1, create a generator that will yield first 3 columns of the file. And use this generator to create a Pandas.DataFrame. Hint: use https://docs.python.org/3/library/csv.html\n\nAdditional reading: https://docs.python.org/3/howto/functional.html"
+    "text": "Suppose we want to apply several transformations. What can we do?\n\nSeveral maps.\nChain functions with compose.\nCreate a function pipeline with pipe.\n\nSuppose we want to apply \\(f(x) = \\exp(\\sin(x))\\) to a list of numbers.\nOption 1:\n\nimport math\n\nfloat_list = [0.234, -1.96, 5.071]\n\n# several maps\nlst1 = map(math.sin, float_list)\nlst2 = map(math.exp, lst1)\n\nprint(list(lst2))\n\n[1.260956241447609, 0.396447553306686, 0.3920424231508857]\n\n\nOption 2: we’ll use the toolz package we installed in lab2.\n\nfrom toolz.functoolz import compose\n\ncomposed = compose(math.exp, math.sin) # note reverse order\n\nprint(list(map(composed, float_list)))\n\n[1.260956241447609, 0.396447553306686, 0.3920424231508857]\n\n\nOption 3:\nAnd there is also pipe:\n\nfrom toolz.functoolz import pipe\n\npiped = lambda x: pipe(x, math.sin, math.exp) # now the order is proper\n\nprint(list(map(piped, float_list)))\n\n[1.260956241447609, 0.396447553306686, 0.3920424231508857]\n\n\n\n\n\nmap is lazy! This is the opposite to being eager. That’s why we apply list first to materialize results of map application.\nLaziness provides memory efficiency.\n\n\n\nIn addition to map, there are also filter and zip.\nVariations:\n\nfrom itertools import filterfalse\nfrom toolz.dicttoolz import keyfilter, valfilter, itemfilter\n\ndef is_even(x):\n    if x % 2 == 0: return True\n    else: return False\n        \ndef both_are_even(x):\n    k,v = x\n    if is_even(k) and is_even(v): return True\n    else: return False\n        \nprint(list(filterfalse(is_even, range(10))))\n# [1, 3, 5, 7, 9]\nprint(list(keyfilter(is_even, {1:2, 2:3, 3:4, 4:5, 5:6})))\n# [2, 4]\nprint(list(valfilter(is_even, {1:2, 2:3, 3:4, 4:5, 5:6})))\n# [1, 3, 5]\nprint(list(itemfilter(both_are_even, {1:5, 2:4, 3:3, 4:2, 5:1}))) # [2, 4]\n\n[1, 3, 5, 7, 9]\n[2, 4]\n[1, 3, 5]\n[2, 4]\n\n\n\n\n\nprices = [25, 20, 40]\nitems = [\"peas\", \"chicken\", \"beef\"]\n\nzipped = list(zip(prices, items))\n\nimport pandas as pd\n\ndf = pd.DataFrame(list(zipped), columns=['price', 'name'])\n\ndf\n\n\n\n\n\n\n\n\nprice\nname\n\n\n\n\n0\n25\npeas\n\n\n1\n20\nchicken\n\n\n2\n40\nbeef\n\n\n\n\n\n\n\n\n\n\n\nPython documentation defines iterator as:\nAn iterator is an object representing a stream of data; this object returns the data one element at a time.\n\nAn object is called iterable if you can get an iterator for it.\nIterator classes implement __iter__() and __next__() methods. This means one can create their own iterator, like this:\n\nclass SequenceIterator:\n    def __init__(self, sequence):\n        self._sequence = sequence\n        self._index = 0\n\n    def __iter__(self):\n        return self\n\n    def __next__(self):\n        if self._index &lt; len(self._sequence):\n            item = self._sequence[self._index]\n            self._index += 1\n            return item\n        else:\n            raise StopIteration\n\nAnd then use it:\n\nfor el in SequenceIterator([1,2,3]):\n    print(el)\n\n1\n2\n3\n\n\n\n\n\nGenerators are simply an easy way to create iterators.\nA generator example, using yield keyword:\n\n\n\nGenerators are simply an easy way to create iterators.\nA generator example, using yield keyword:\n\ndef even_numbers(n):\n    i=1\n    while i &lt;= n:\n        yield i*2\n        i += 1\n\nAnd that’s how we use it:\n\nfor i in even_numbers(20):\n    print(i)\n\n2\n4\n6\n8\n10\n12\n14\n16\n18\n20\n22\n24\n26\n28\n30\n32\n34\n36\n38\n40\n\n\nA generator example, using an ad-hoc syntax similar to list comprehensions (generator expression):\n\nfirst_100_even = (i*2 for i in range(1,20))\nprint(list(first_100_even))\n\n[2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38]\n\n\nMemory usage comparison:\n\n# Generator function\ndef generate_numbers(n):\n    for i in range(n):\n        yield i\n\n# For Loop Example\ndef generate_numbers_list(n):\n    numbers = []\n    for i in range(n):\n        numbers.append(i)\n    return numbers\n\n# comparing memory usage\nimport sys\n\nn = 1000000  # generating 1 million numbers\n\n# memory usage for Generator\ngenerator_memory = sys.getsizeof(generate_numbers(n))\n\n# memory usage for For Loop\nfor_loop_memory = sys.getsizeof(generate_numbers_list(n))\n\nprint(\"memory usage for Generator:\", generator_memory, \"bytes\")\nprint(\"memory usage for For Loop:\", for_loop_memory, \"bytes\")\n\nmemory usage for Generator: 200 bytes\nmemory usage for For Loop: 8448728 bytes\n\n\n\n\n\n\n\n\nNoteWhat to remember\n\n\n\n\nGenerators optimize for memory.\nSometimes lists might be faster (but still use more memory)\nUsed in streaming applications.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nAnd now, what is all the fuss about? We can actually use map, reduce, and friends, on iterables, not just on lists:\n\n# map example\ngen_mapped = map(lambda x: x*x, even_numbers(30))\nprint(list(gen_mapped))\n\n[4, 16, 36, 64, 100, 144, 196, 256, 324, 400, 484, 576, 676, 784, 900, 1024, 1156, 1296, 1444, 1600, 1764, 1936, 2116, 2304, 2500, 2704, 2916, 3136, 3364, 3600]\n\n\n\n# reduce example\nfrom functools import reduce\ngen_reduced = reduce(lambda acc, el: acc+el, even_numbers(5), 0)\nprint(gen_reduced)\n\n30\n\n\n\n\n\n\nImplement versions of map, filter, and compose using reduce.\nUsing a csv file you’ve downloaded in lab1, create a generator that will yield first 3 columns of the file. And use this generator to create a Pandas.DataFrame. Hint: use https://docs.python.org/3/library/csv.html\n\nAdditional reading: https://docs.python.org/3/howto/functional.html"
   },
   {
     "objectID": "bigdata_lab3.html#function-pipelines",
@@ -347,7 +347,7 @@
     "href": "bigdata_lab3.html#generators-1",
     "title": "Big Data Analytics: Lab 3",
     "section": "",
-    "text": "Generators are simply an easy way to create iterators.\nA generator example, using yield keyword:\n\ndef even_numbers(n):\n    i=1\n    while i &lt;= n:\n        yield i*2\n        i += 1\n\nAnd that’s how we use it:\n\nfor i in even_numbers(20):\n    print(i)\n\n2\n4\n6\n8\n10\n12\n14\n16\n18\n20\n22\n24\n26\n28\n30\n32\n34\n36\n38\n40\n\n\nA generator example, using an ad-hoc syntax similar to list comprehensions:\n\nfirst_100_even = (i*2 for i in range(1,20))\nprint(list(first_100_even))\n\n[2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38]\n\n\nMemory usage comparison:\n\n# Generator function\ndef generate_numbers(n):\n    for i in range(n):\n        yield i\n\n# For Loop Example\ndef generate_numbers_list(n):\n    numbers = []\n    for i in range(n):\n        numbers.append(i)\n    return numbers\n\n# comparing memory usage\nimport sys\n\nn = 1000000  # generating 1 million numbers\n\n# memory usage for Generator\ngenerator_memory = sys.getsizeof(generate_numbers(n))\n\n# memory usage for For Loop\nfor_loop_memory = sys.getsizeof(generate_numbers_list(n))\n\nprint(\"memory usage for Generator:\", generator_memory, \"bytes\")\nprint(\"memory usage for For Loop:\", for_loop_memory, \"bytes\")\n\nmemory usage for Generator: 200 bytes\nmemory usage for For Loop: 8448728 bytes\n\n\nAnd now, what is all the fuss about? We can actually use map, reduce, and friends, on iterables, not just on lists:\n\n# map example\ngen_mapped = map(lambda x: x*x, even_numbers(30))\nprint(list(gen_mapped))\n\n[4, 16, 36, 64, 100, 144, 196, 256, 324, 400, 484, 576, 676, 784, 900, 1024, 1156, 1296, 1444, 1600, 1764, 1936, 2116, 2304, 2500, 2704, 2916, 3136, 3364, 3600]\n\n\n\n# reduce example\nfrom functools import reduce\ngen_reduced = reduce(lambda acc, el: acc+el, even_numbers(5), 0)\nprint(gen_reduced)\n\n30"
+    "text": "Generators are simply an easy way to create iterators.\nA generator example, using yield keyword:\n\ndef even_numbers(n):\n    i=1\n    while i &lt;= n:\n        yield i*2\n        i += 1\n\nAnd that’s how we use it:\n\nfor i in even_numbers(20):\n    print(i)\n\n2\n4\n6\n8\n10\n12\n14\n16\n18\n20\n22\n24\n26\n28\n30\n32\n34\n36\n38\n40\n\n\nA generator example, using an ad-hoc syntax similar to list comprehensions (generator expression):\n\nfirst_100_even = (i*2 for i in range(1,20))\nprint(list(first_100_even))\n\n[2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38]\n\n\nMemory usage comparison:\n\n# Generator function\ndef generate_numbers(n):\n    for i in range(n):\n        yield i\n\n# For Loop Example\ndef generate_numbers_list(n):\n    numbers = []\n    for i in range(n):\n        numbers.append(i)\n    return numbers\n\n# comparing memory usage\nimport sys\n\nn = 1000000  # generating 1 million numbers\n\n# memory usage for Generator\ngenerator_memory = sys.getsizeof(generate_numbers(n))\n\n# memory usage for For Loop\nfor_loop_memory = sys.getsizeof(generate_numbers_list(n))\n\nprint(\"memory usage for Generator:\", generator_memory, \"bytes\")\nprint(\"memory usage for For Loop:\", for_loop_memory, \"bytes\")\n\nmemory usage for Generator: 200 bytes\nmemory usage for For Loop: 8448728 bytes\n\n\n\n\n\n\n\n\nNoteWhat to remember\n\n\n\n\nGenerators optimize for memory.\nSometimes lists might be faster (but still use more memory)\nUsed in streaming applications.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nAnd now, what is all the fuss about? We can actually use map, reduce, and friends, on iterables, not just on lists:\n\n# map example\ngen_mapped = map(lambda x: x*x, even_numbers(30))\nprint(list(gen_mapped))\n\n[4, 16, 36, 64, 100, 144, 196, 256, 324, 400, 484, 576, 676, 784, 900, 1024, 1156, 1296, 1444, 1600, 1764, 1936, 2116, 2304, 2500, 2704, 2916, 3136, 3364, 3600]\n\n\n\n# reduce example\nfrom functools import reduce\ngen_reduced = reduce(lambda acc, el: acc+el, even_numbers(5), 0)\nprint(gen_reduced)\n\n30"
   },
   {
     "objectID": "bigdata_lab3.html#exercises",
@@ -709,308 +709,364 @@
   {
     "objectID": "bigdata_lec5.html#dask",
     "href": "bigdata_lec5.html#dask",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Dask",
     "text": "Dask\n\n\n\nParallel\n\n\nWe refer to algorithms that use multiple cores simultaneously as parallel.\n\n\n\n\n\n\nOut-of-core\n\n\nWe refer to systems that efficiently use disk as extensions of memory as out-of-core."
   },
   {
     "objectID": "bigdata_lec5.html#dask-1",
     "href": "bigdata_lec5.html#dask-1",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Dask",
     "text": "Dask\n\n\n\nHow to execute parallel code?\n\n\n\nrepresent the structure of our program explicitly as data within the program itself\nencode task schedules programmatically within a framework"
   },
   {
     "objectID": "bigdata_lec5.html#dask-2",
     "href": "bigdata_lec5.html#dask-2",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Dask",
     "text": "Dask\n\n\n\nDask Graph definition\n\n\n\nA Python dictionary mapping keys to tasks or values.\nA key is any Python hashable\na value is any Python object that is not a task\na task is a Python tuple with a callable first element."
   },
   {
     "objectID": "bigdata_lec5.html#dask-3",
     "href": "bigdata_lec5.html#dask-3",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Dask",
     "text": "Dask\ndef inc(i):\n  return i + 1\n\ndef add(a, b):\n  return a + b\n\nx = 1\ny = inc(x)\nz = add(y, 10)"
   },
   {
     "objectID": "bigdata_lec5.html#dask-4",
     "href": "bigdata_lec5.html#dask-4",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Dask",
     "text": "Dask"
   },
   {
     "objectID": "bigdata_lec5.html#dask-5",
     "href": "bigdata_lec5.html#dask-5",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Dask",
     "text": "Dask\n\n\n\nDictionary representation\n\n\nd = {'x': 1,\n     'y': (inc, 'x'),\n     'z': (add, 'y', 10)}"
   },
   {
     "objectID": "bigdata_lec5.html#dask-6",
     "href": "bigdata_lec5.html#dask-6",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Dask",
     "text": "Dask\n\n\n\nDask computation\n\n\nDask represents a computation as a directed acyclic graph of tasks with data dependencies.\nIt can be said that Dask is a specification to encode such a graph using ordinary Python data structures, namely dicts, tuples, functions, and arbitrary Python values."
   },
   {
     "objectID": "bigdata_lec5.html#dask-7",
     "href": "bigdata_lec5.html#dask-7",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Dask",
     "text": "Dask\n{'x': 1,\n 'y': 2,\n 'z': (add, 'x', 'y'),\n 'w': (sum, ['x', 'y', 'z'])}\n\n\n\nExamples\n\n\n\nkey: 'x', ('x', 2, 3)\ntask: (add, 'x', 'y')\ntask argument: 'x', 1, (inc, 'x'), [1, 'x', (inc, 'x')]"
   },
   {
     "objectID": "bigdata_lec5.html#dask-8",
     "href": "bigdata_lec5.html#dask-8",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Dask",
     "text": "Dask\n\n\n\nValid tasks in a Dask graph\n\n\n(add, 1, 2)\n(add, 'x' , 2)\n(add, (inc, 'x'), 2)\n(sum, [1, 2])\n(sum, ['x', (inc, 'x')])\n(np.dot, np.array([...]), np.array([...]))"
   },
   {
     "objectID": "bigdata_lec5.html#dask-9",
     "href": "bigdata_lec5.html#dask-9",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Dask",
     "text": "Dask\n\n\n\nDask Array\n\n\nThe dask.array submodule uses dask graphs to create a NumPy-like library that uses all of your cores and operates on datasets that do not fit in memory.\nIt does this by building up a dask graph of blocked array algorithms.\nDask array functions produce Array objects that hold on to Dask graphs. These Dask graphs use several NumPy functions to achieve the full result."
   },
   {
     "objectID": "bigdata_lec5.html#dask-10",
     "href": "bigdata_lec5.html#dask-10",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Dask",
     "text": "Dask\n\n\n\nBlocked Array Algorithms\n\n\nBlocked algorithms compute a large result like\n\n“take the sum of these trillion numbers”\n\nwith many small computations like\n\n“break up the trillion numbers into one million chunks of size one million”,\n“sum each chunk”,\n“then sum all of the intermediate sums.”\n\nThrough tricks like this we can evaluate one large problem by solving very many small problems.\nBlocked algorithm organizes a computation so that it works on contiguous chunks of data."
   },
   {
     "objectID": "bigdata_lec5.html#dask-11",
     "href": "bigdata_lec5.html#dask-11",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Dask",
     "text": "Dask\n\n\n\nBlocked Array Algorithms"
   },
   {
     "objectID": "bigdata_lec5.html#dask-12",
     "href": "bigdata_lec5.html#dask-12",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Dask",
     "text": "Dask\n\n\n\nUnblocked\n\n\nfor i in range(N):\n for k in range(N):\n   r = X[i,k]\n   for j in range(N):\n     Z[i,j] += r*Y[k,j]\n\n\n\n\n\n\nBlocked\n\n\nfor kk in range(N/B):\n for jj in range(N/B): \n   for i in range(N):\n     for k in range(kk, min(kk+B-1, N)):\n       r = X[i,k]\n       for j in range(jj, min(jj+B-1,N)):\n         Z[i,j] += r*Y[k,j]"
   },
   {
     "objectID": "bigdata_lec5.html#dask-13",
     "href": "bigdata_lec5.html#dask-13",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Dask",
     "text": "Dask\n\n\n\n\n\n\nNote\n\n\nIt is well known that the memory hierarchy can be better utilized if scientific algorithms are blocked.\nBlocking is also known as tiling.\nIn matrix multiplication example: instead of operating on individual matrix entries, the calculation is performed on submatrices.\nB is a blocking factor."
   },
   {
     "objectID": "bigdata_lec5.html#dask-14",
     "href": "bigdata_lec5.html#dask-14",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Dask",
     "text": "Dask\n\n\n\nBlocking features\n\n\n\nBlocking is a general optimization technique for increasing the effectiveness of a memory hierarchy.\nBy reusing data in the faster level of the hierarchy, it cuts down the average access latency.\nIt also reduces the number of references made to slower levels of the hierarchy.\nBlocking is superior to optimization such as prefetching, which hides the latency but does not reduce the memory bandwidth requirement.\nThis reduction is especially im portant for multiprocessors since memory bandwidth is often the bottleneck of the system."
   },
   {
     "objectID": "bigdata_lec5.html#dask-15",
     "href": "bigdata_lec5.html#dask-15",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Dask",
     "text": "Dask\nimport dask.array as da\nx = da.arange(15, chunks=(5,))"
   },
   {
     "objectID": "bigdata_lec5.html#dask-16",
     "href": "bigdata_lec5.html#dask-16",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Dask",
     "text": "Dask\n\n\n\nMetadata\n\n\nx # Array object metadata\ndask.array&lt;x-1, shape=(15,), chunks=((5, 5, 5)), dtype=int64&gt;\n\n\n\n\n\n\nDask Graph\n\n\nx.dask # Every dask array holds a dask graph\n{('x' , 0): (np.arange, 0, 5),\n ('x', 1): (np.arange, 5, 10),\n ('x' , 2): (np.arange, 10, 15)}"
   },
   {
     "objectID": "bigdata_lec5.html#dask-17",
     "href": "bigdata_lec5.html#dask-17",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Dask",
     "text": "Dask\n\n\n\nMore complex graph\n\n\nz = (x + 100).sum()\nz.dask\n{('x', 0): (np.arange, 0, 5),\n('x', 1): (np.arange, 5, 10),\n('x', 2): (np.arange, 10, 15),\n('y', 0): (add, ('x', 0), 100),\n('y', 1): (add, ('x', 1), 100),\n('y', 2): (add, ('x', 2), 100),\n('z', 0): (np.sum, ('y', 0)),\n('z', 1): (np.sum, ('y', 1)),\n('z', 2): (np.sum, ('y', 2)),\n('z',): (sum, [('z', 0), ('z', 1), ('z', 2)])}\n\n\n\n\n\n\nExecute the Graph\n\n\nz.compute()\n1605"
   },
   {
     "objectID": "bigdata_lec5.html#dask-18",
     "href": "bigdata_lec5.html#dask-18",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Dask",
     "text": "Dask\n\n\n\ndask.array.Array objects\n\n\nx and z are both dask.array.Array objects containing:\n\nDask graph .dask\narray shape and chunk shape .chunks\na name identifying which keys in the graph correspond to the result, .name\na dtype"
   },
   {
     "objectID": "bigdata_lec5.html#dask-19",
     "href": "bigdata_lec5.html#dask-19",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Dask",
     "text": "Dask\n\n\n\nChunks\n\n\nA normal NumPy array knows its shape, a dask array must know its shape and the shape of all of the internal NumPy blocks that make up the larger array.\nThese shapes can be concisely described by a tuple of tuples of integers, where each internal tuple corresponds to the lengths along a single dimension.\nIn the example above we have a 20 by 24 array cut into uniform blocks of size 5 by 8. The chunks attribute describing this array is the following:\nchunks = ((5, 5, 5, 5), (8, 8, 8))"
   },
   {
     "objectID": "bigdata_lec5.html#dask-20",
     "href": "bigdata_lec5.html#dask-20",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Dask",
     "text": "Dask\n\n\n\nChunks need not be uniform!\n\n\nx[::2].chunks\n((3, 2, 3, 2), (8, 8, 8))\nx[::2].T.chunks\n((8, 8, 8), (3, 2, 3, 2))"
   },
   {
     "objectID": "bigdata_lec5.html#dask-21",
     "href": "bigdata_lec5.html#dask-21",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Dask",
     "text": "Dask\n\n\n\nDask Array operations\n\n\n\narithmetic and scalar math: +, *, exp, log\nreductions along axes: sum(), mean(), std(), sum(axis=0)\ntensor contractions / dot products / matrix multiplication: tensordot\naxis reordering / transposition: transpose\nslicing: x[:100, 500:100:-2]\nutility functions: bincount, where"
   },
   {
     "objectID": "bigdata_lec5.html#dask-22",
     "href": "bigdata_lec5.html#dask-22",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Dask",
     "text": "Dask\n\n\n\nAhead-of-time shape limitations\n\n\nx[x &gt; 0]"
   },
   {
     "objectID": "bigdata_lec5.html#dask-23",
     "href": "bigdata_lec5.html#dask-23",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Dask",
     "text": "Dask\nGraph creation and graph scheduling are separate problems!\nCurrent Dask scheduler is dynamic.\n\n\n\nCurrent Dask scheduler logic\n\n\n\nA worker reports that it has completed a task and that it is ready for another.\nWe update runtime state to record the finished task,\nmark which new tasks can be run, which data can be released, etc.\nWe then choose a task to give to this worker from among the set of ready-to-run tasks. This small choice governs the macroscale performance of the scheduler."
   },
   {
     "objectID": "bigdata_lec5.html#dask-24",
     "href": "bigdata_lec5.html#dask-24",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Dask",
     "text": "Dask\n\n\n\nOut-of-core computation - which task to choose?\n\n\n\nlast in, first out\nselect tasks whose data dependencies were most recently made available.\nthis causes a behavior where long chains of related tasks trigger each other\nit forces the scheduler to finish related tasks before starting new ones.\nimplementation: a simple stack, which can operate in constant time."
   },
   {
     "objectID": "bigdata_lec5.html#dask-25",
     "href": "bigdata_lec5.html#dask-25",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Dask",
     "text": "Dask"
   },
   {
     "objectID": "bigdata_lec5.html#dask-26",
     "href": "bigdata_lec5.html#dask-26",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Dask",
     "text": "Dask"
   },
   {
+    "objectID": "bigdata_lec5.html#taskvine",
+    "href": "bigdata_lec5.html#taskvine",
+    "title": "Big Data: Dask intro part2",
+    "section": "Taskvine",
+    "text": "Taskvine\n\n\n\nDescription\n\n\nTaskVine is a framework for building large scale data intensive dynamic workflows for:\n\nhigh performance computing (HPC) clusters\nGPU clusters\ncloud service providers\nand other distributed computing systems.\n\nTaskVine is our third-generation workflow system, built on our twenty years of experience creating scalable applications in fields such as\n\nhigh energy physics\nbioinformatics\nmolecular dynamics\nand machine learning."
+  },
+  {
+    "objectID": "bigdata_lec5.html#taskvine-1",
+    "href": "bigdata_lec5.html#taskvine-1",
+    "title": "Big Data: Dask intro part2",
+    "section": "Taskvine",
+    "text": "Taskvine\n\n\n\nWorkflow\n\n\nA workflow is a collection of programs and files that are organized in a graph structure, allowing parts of the workflow to run in a parallel, reproducible way."
+  },
+  {
+    "objectID": "bigdata_lec5.html#taskvine-2",
+    "href": "bigdata_lec5.html#taskvine-2",
+    "title": "Big Data: Dask intro part2",
+    "section": "Taskvine",
+    "text": "Taskvine\n\n\n\nSteps\n\n\n\nA TaskVine workflow requires:\n\na manager\nand a large number of worker processes.\n\nThe application generates a large number of small tasks, which are distributed to workers.\nAs tasks access external data sources and produce their own outputs, more and more data is pulled into local storage on cluster nodes.\nThis data is used to accelerate future tasks and avoid re-computing existing results. The application gradually grows “like a vine” through the cluster."
+  },
+  {
+    "objectID": "bigdata_lec5.html#taskvine-3",
+    "href": "bigdata_lec5.html#taskvine-3",
+    "title": "Big Data: Dask intro part2",
+    "section": "Taskvine",
+    "text": "Taskvine\n\n\n\nArchitecture"
+  },
+  {
+    "objectID": "bigdata_lec5.html#taskvine-4",
+    "href": "bigdata_lec5.html#taskvine-4",
+    "title": "Big Data: Dask intro part2",
+    "section": "Taskvine",
+    "text": "Taskvine\n\n\n\nFeatures and error handling\n\n\n\nWhile an application is running, workers may be added or removed as computing resources become available. (elasticity)\nNewly added workers will gradually accumulate data within the cluster.\nRemoved (or failed) workers are handled gracefully, and tasks will be retried elsewhere as needed.\nIf a worker failure results in the loss of files, tasks will be re-executed as necessary to re-create them."
+  },
+  {
+    "objectID": "bigdata_lec5.html#taskvine-5",
+    "href": "bigdata_lec5.html#taskvine-5",
+    "title": "Big Data: Dask intro part2",
+    "section": "Taskvine",
+    "text": "Taskvine\n\n\n\nCoding it\n\n\n\nIndividual tasks can be simple Python functions, complex Unix applications, or serverless function invocations.\nThe key idea is that you declare file objects, and then declare tasks that consume them and produce new file objects. \n\nf = m.declare_url(\"https://www.gutenberg.org/cache/epub/2600/pg2600.txt\")\ng = m.declare_file(\"myoutput.txt\")\n\nt = Task(\"grep needle warandpeace.txt &gt; output.txt\")\nt.add_input(f, \"warandpeace.txt\")\nt.add_output(g, \"output.txt\")"
+  },
+  {
+    "objectID": "bigdata_lec5.html#taskvine-6",
+    "href": "bigdata_lec5.html#taskvine-6",
+    "title": "Big Data: Dask intro part2",
+    "section": "Taskvine",
+    "text": "Taskvine\n\n\n\nTask options\n\n\n\nEach task can be labelled with the resources (CPU cores, GPU devices, memory, disk space) that it needs to execute.\nIf you don’t know the resources needed, you can enable a resource monitor to automatically track, report, and allocate what each task uses.\nThis allows each worker to pack the appropriate number of tasks. For example, a worker running on a 64-core machine could run 32 dual-core tasks, 16 four-core tasks, or any other combination that adds up to 64 cores."
+  },
+  {
+    "objectID": "bigdata_lec5.html#taskvine-7",
+    "href": "bigdata_lec5.html#taskvine-7",
+    "title": "Big Data: Dask intro part2",
+    "section": "Taskvine",
+    "text": "Taskvine\n\n\n\nAs Dask Scheduler\n\n\nTaskVine manager can be used as Dask scheduler:\ntry:\n    import dask\n    import awkward as ak\n    import dask_awkward as dak\n    import numpy as np\nexcept ImportError:\n    print(\"You need dask, awkward, and numpy installed\")\n    print(\"(e.g. conda install -c conda-forge dask dask-awkward numpy) to run this example.\")\n\nbehavior: dict = {}\n\n@ak.mixin_class(behavior)\nclass Point:\n    def distance(self, other):\n    return np.sqrt((self.x - other.x) ** 2 + (self.y - other.y) ** 2)\n\n\nif __name__ == \"__main__\":\n    # data arrays\n    points1 = ak.Array([\n    [{\"x\": 1.0, \"y\": 1.1}, {\"x\": 2.0, \"y\": 2.2}, {\"x\": 3, \"y\": 3.3}],\n    [],\n    [{\"x\": 4.0, \"y\": 4.4}, {\"x\": 5.0, \"y\": 5.5}],\n    [{\"x\": 6.0, \"y\": 6.6}],\n    [{\"x\": 7.0, \"y\": 7.7}, {\"x\": 8.0, \"y\": 8.8}, {\"x\": 9, \"y\": 9.9}],\n    ])\n\n    points2 = ak.Array([\n    [{\"x\": 0.9, \"y\": 1.0}, {\"x\": 2.0, \"y\": 2.2}, {\"x\": 2.9, \"y\": 3.0}],\n    [],\n    [{\"x\": 3.9, \"y\": 4.0}, {\"x\": 5.0, \"y\": 5.5}],\n    [{\"x\": 5.9, \"y\": 6.0}],\n    [{\"x\": 6.9, \"y\": 7.0}, {\"x\": 8.0, \"y\": 8.8}, {\"x\": 8.9, \"y\": 9.0}],\n    ])\n    array1 = dak.from_awkward(points1, npartitions=3)\n    array2 = dak.from_awkward(points2, npartitions=3)\n\n    array1 = dak.with_name(array1, name=\"Point\", behavior=behavior)\n    array2 = dak.with_name(array2, name=\"Point\", behavior=behavior)\n\n    distance = array1.distance(array2)\n\n    m = vine.DaskVine(port=9123, ssl=True)\n    m.set_name(\"test_manager\")\n    print(f\"Listening for workers at port: {m.port}\")\n\n    f = vine.Factory(manager=m)\n    f.cores = 4\n    f.max_workers = 1\n    f.min_workers = 1\n    with f:\n        with dask.config.set(scheduler=m.get):\n            result = distance.compute(resources={\"cores\": 1}, resources_mode=\"max\", lazy_transfers=True)\n            print(f\"distance = {result}\")\n        print(\"Terminating workers...\", end=\"\")\n    print(\"done!\")"
+  },
+  {
     "objectID": "bigdata_lec5.html#dask-27",
     "href": "bigdata_lec5.html#dask-27",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Dask",
     "text": "Dask\n\n\n\nCollections\n\n\n\ndask.array = numpy+ threading\ndask.bag = toolz+ multiprocessing\ndask.dataframe = pandas+ threading"
   },
   {
     "objectID": "bigdata_lec5.html#dask-28",
     "href": "bigdata_lec5.html#dask-28",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Dask",
     "text": "Dask\n\n\n\nDask Bag - Definition\n\n\nA bag is an unordered collection with repeats.\nIt is like a Python list but does not guarantee the order of elements.\nThe dask.bag API contains functions like map and filter and generally follows the PyToolz API."
   },
   {
     "objectID": "bigdata_lec5.html#dask-29",
     "href": "bigdata_lec5.html#dask-29",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Dask",
     "text": "Dask\n&gt;&gt;&gt; import dask.bag as db\n&gt;&gt;&gt; import json\n&gt;&gt;&gt; b = db.from_filenames('2014-*.json.gz').map(json.loads)\n&gt;&gt;&gt; alices = b.filter(lambda d: d['name'] == 'Alice')\n&gt;&gt;&gt; alices.take(3)\n({'name': 'Alice', 'city': 'LA', 'balance': 100},\n{'name': 'Alice', 'city': 'LA', 'balance': 200},\n{'name': 'Alice', 'city': 'NYC', 'balance': 300},)\n\n&gt;&gt;&gt; dict(alices.pluck('city').frequencies())\n{'LA': 10000, 'NYC': 20000, ...}"
   },
   {
     "objectID": "bigdata_lec5.html#dask-30",
     "href": "bigdata_lec5.html#dask-30",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Dask",
     "text": "Dask\n\n\n\nS3 example\n\n\n&gt;&gt;&gt; import dask.bag as db\n&gt;&gt;&gt; b = db.from_s3('githubarchive-data', '2015-01-01-*.json.gz')\n          .map(json.loads)\n          .map(lambda d: d['type'] == 'PushEvent')\n          .count()"
   },
   {
     "objectID": "bigdata_lec5.html#dask-31",
     "href": "bigdata_lec5.html#dask-31",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Dask",
     "text": "Dask"
   },
   {
     "objectID": "bigdata_lec5.html#dask-32",
     "href": "bigdata_lec5.html#dask-32",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Dask",
     "text": "Dask\n\n\n\nDask DataFrame - Definition\n\n\nThe dask.dataframe module implements a large dataframe out of many Pandas DataFrames.\nIt uses a threaded scheduler."
   },
   {
     "objectID": "bigdata_lec5.html#dask-33",
     "href": "bigdata_lec5.html#dask-33",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Dask",
     "text": "Dask\n\n\n\nPartitioned datasets\n\n\nThe dask dataframe can compute efficiently on partitioned datasets where the different blocks are well separated along an index.\nFor example in time series data we may know that all of January is in one block while all of February is in another.\nJoin, groupby, and range queries along this index are significantly faster when working on partitioned datasets."
   },
   {
     "objectID": "bigdata_lec5.html#dask-34",
     "href": "bigdata_lec5.html#dask-34",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Dask",
     "text": "Dask\n\n\n\nDask DataFrame join"
   },
   {
     "objectID": "bigdata_lec5.html#dask-35",
     "href": "bigdata_lec5.html#dask-35",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Dask",
     "text": "Dask\n\n\n\nOut-of-core parallel SVD example\n\n\n&gt;&gt;&gt; import dask.array as da\n&gt;&gt;&gt; x = da.ones((5000, 1000), chunks=(1000, 1000))\n&gt;&gt;&gt; u, s, v = da.svd(x)\nOut-of-core parallel non-negative matrix factorizations on top of dask.array."
   },
   {
     "objectID": "bigdata_lec5.html#dask-36",
     "href": "bigdata_lec5.html#dask-36",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Dask",
     "text": "Dask\n\n\n\nOut-of-core parallel SVD"
   },
   {
     "objectID": "bigdata_lec5.html#usage-1",
     "href": "bigdata_lec5.html#usage-1",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Usage",
     "text": "Usage\n\nscida.io - astrophysical simulations"
   },
   {
     "objectID": "bigdata_lec5.html#usage-2",
     "href": "bigdata_lec5.html#usage-2",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Usage",
     "text": "Usage\n\nPangeo - open, reproducible, scalable geoscience. A global slice of Sea Water Temperature"
   },
   {
     "objectID": "bigdata_lec5.html#usage-3",
     "href": "bigdata_lec5.html#usage-3",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Usage",
     "text": "Usage"
   },
   {
     "objectID": "bigdata_lec5.html#comparison-with-spark",
     "href": "bigdata_lec5.html#comparison-with-spark",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Comparison with Spark",
     "text": "Comparison with Spark\n\n\n\nSetup\n\n\n\nBigBrain20, a 3-D image of the human brain, total data size of 606 GiB.\ndataset provided by the Consortium for Reliability and Reproducibility, entire dataset is 379.83 GiB, used all 3,491 anatomical images, representing 26.67 GiB overall."
   },
   {
     "objectID": "bigdata_lec5.html#comparison-with-spark-1",
     "href": "bigdata_lec5.html#comparison-with-spark-1",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Comparison with Spark",
     "text": "Comparison with Spark"
   },
   {
     "objectID": "bigdata_lec5.html#comparison-with-spark-2",
     "href": "bigdata_lec5.html#comparison-with-spark-2",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Comparison with Spark",
     "text": "Comparison with Spark"
   },
   {
     "objectID": "bigdata_lec5.html#comparison-with-spark-3",
     "href": "bigdata_lec5.html#comparison-with-spark-3",
-    "title": "Big Data: Dask intro",
+    "title": "Big Data: Dask intro part2",
     "section": "Comparison with Spark",
     "text": "Comparison with Spark"
   },
