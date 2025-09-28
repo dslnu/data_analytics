@@ -1,0 +1,2183 @@
+---
+title: "Intro to Docker"
+author: 
+  - name: MSDE
+    affiliation: Lviv University
+code-fold: false
+execute:
+  enabled: false
+  cache: true
+diagram:
+  cache: true
+  cache-dir: ./cache
+  engine:
+    tikz:
+      execpath: lualatex
+      additional-packages: |
+        \usetikzlibrary{arrows.meta}
+        \usetikzlibrary{positioning}
+        \usetikzlibrary{decorations.pathreplacing}
+filters:
+  - diagram
+title-slide-attributes:
+  data-background-image: img/docker_ship.jpg
+  data-background-size: contain
+  data-background-opacity: "0.5"
+format: 
+  revealjs:
+    css: ./custom.css
+    preview-links: auto
+    slide-number: true
+    theme: default
+    multiplex:
+      url: 'https://mplex.vitv.ly'
+      secret: 'd0a83ce05978b2d395f1f3aeb2108909'
+      id: '3a9cb0ec03e3c47cbf0f2cbcf9d330b0bdf4544a56c6a0dd3625969b8a9b70fa'
+---
+
+# Dockerfile
+
+## Dockerfile
+:::{.callout-note icon=false}
+## What is it?
+
+An **automated** way to construct images, as opposed to **manually** executing commands in a shell.
+
+- A Dockerfile is a build recipe for a Docker image.
+- It contains a series of instructions telling Docker how an image is constructed.
+- The docker build command builds an image from a Dockerfile.
+:::
+
+## Dockerfile
+:::{.callout-note icon=false}
+## Creating a Dockerfile
+
+Our Dockerfile must be in a new, empty directory.
+
+Create a directory to hold our Dockerfile.
+```
+$ mkdir myimage
+```
+Create a Dockerfile inside this directory.
+```
+$ cd myimage
+$ nvim Dockerfile
+```
+You can use whatever editor you like.
+:::
+
+## Dockerfile
+:::{.callout-note icon=false}
+## Contents
+```
+FROM ubuntu
+RUN apt-get update
+RUN apt-get install figlet
+```
+- [FROM]{style="color:blue;"} indicates the base image for our build.
+- Each [RUN]{style="color:blue;"} line will be executed by Docker during the build.
+- Our [RUN]{style="color:blue;"} commands must be non-interactive.
+(No input can be provided to Docker during the build.)
+
+In many cases, we will add the `-y` flag to `apt-get`.
+:::
+
+## Dockerfile
+:::{.callout-note icon=false}
+## Building
+
+Save our file, then execute:
+```
+$ docker build -t figlet .
+```
+
+- `-t` indicates the tag to apply to the image.
+- `.` indicates the location of the build context.
+We will talk more about the build context later.
+To keep things simple for now: this is the directory where our `Dockerfile` is located.
+:::
+
+## Dockerfile
+:::{.callout-note icon=false}
+## Full log
+```
+[+] Building 9.3s (8/8) FINISHED                                                                                                                                                                docker:desktop-linux
+ => [internal] load build definition from Dockerfile                                                                                                                                                            0.0s
+ => => transferring dockerfile: 95B                                                                                                                                                                             0.0s
+ => [internal] load metadata for docker.io/library/ubuntu:latest                                                                                                                                                0.1s
+ => [internal] load .dockerignore                                                                                                                                                                               0.0s
+ => => transferring context: 2B                                                                                                                                                                                 0.0s
+ => [1/3] FROM docker.io/library/ubuntu:latest@sha256:353675e2a41babd526e2b837d7ec780c2a05bca0164f7ea5dbbd433d21d166fc                                                                                          3.5s
+ => => resolve docker.io/library/ubuntu:latest@sha256:353675e2a41babd526e2b837d7ec780c2a05bca0164f7ea5dbbd433d21d166fc                                                                                          3.4s
+ => [auth] library/ubuntu:pull token for registry-1.docker.io                                                                                                                                                   0.0s
+ => [2/3] RUN apt-get update                                                                                                                                                                                    2.9s
+ => [3/3] RUN apt-get install figlet                                                                                                                                                                            1.3s
+ => exporting to image                                                                                                                                                                                          1.6s
+ => => exporting layers                                                                                                                                                                                         1.3s
+ => => exporting manifest sha256:0d82650ef2fb2b1107ee3332b4e9167a3da20e4368b8a74764827a3091819ec9                                                                                                               0.0s
+ => => exporting config sha256:474cb85cf40523c5ac0e1d337e8d97e2d3f9a3e24407a8680fd033d1820e9644                                                                                                                 0.0s
+ => => exporting attestation manifest sha256:8c2c8be4e7e3253c54cdc1b68d50dd79dad45c73625a3517c7e79ec4ae2220ea                                                                                                   0.0s
+ => => exporting manifest list sha256:6447daabcad8e301a8e7920b201c41f4ffc9889445c10d06050c085fd73ab8ea                                                                                                          0.0s
+ => => naming to docker.io/library/figlet:latest                                                                                                                                                                0.0s
+ => => unpacking to docker.io/library/figlet:latest
+```
+:::
+
+## Dockerfile
+:::{.callout-note icon=false}
+## Steps
+
+- BuildKit transfers the Dockerfile and the build context
+(these are the first two [internal] stages)
+
+- Then it executes the steps defined in the Dockerfile
+([1/3], [2/3], [3/3])
+
+- Finally, it exports the result of the build
+(image definition + collection of layers)
+:::
+
+::: aside
+In as CI, the output will be different. Revert to old output with `--progress=plain`.
+:::
+
+## Dockerfile
+:::{.callout-note icon=false}
+## Caching system
+
+
+- After each build step, Docker takes a snapshot of the resulting image.
+- Before executing a step, Docker checks if it has already built the same sequence.
+- Docker uses the exact strings defined in your Dockerfile, so:
+  - `RUN apt-get install figlet cowsay`
+  - is different from
+  - `RUN apt-get install cowsay figlet`
+
+`RUN apt-get update` is not re-executed when the mirrors are updated
+
+You can force a rebuild with `docker build --no-cache ....`
+:::
+
+## Dockerfile
+:::{.callout-note icon=false}
+## Result
+Identical to manual:
+```
+docker run -it figlet
+root@25ac5862b142:/# figlet hey
+ _
+| |__   ___ _   _
+| '_ \ / _ \ | | |
+| | | |  __/ |_| |
+|_| |_|\___|\__, |
+            |___/
+root@25ac5862b142:/#
+```
+:::
+## Dockerfile
+:::{.callout-note icon=false}
+## Image history
+
+- The history command lists all the layers composing an image.
+- For each layer, it shows its creation time, size, and creation command.
+- When an image was built with a Dockerfile, each layer corresponds to a line of the Dockerfile.
+```
+docker history figlet
+IMAGE          CREATED        CREATED BY                                      SIZE      COMMENT
+6447daabcad8   19 hours ago   RUN /bin/sh -c apt-get install figlet # buil…   1.34MB    buildkit.dockerfile.v0
+<missing>      19 hours ago   RUN /bin/sh -c apt-get update # buildkit        56.4MB    buildkit.dockerfile.v0
+<missing>      12 days ago    /bin/sh -c #(nop)  CMD ["/bin/bash"]            0B
+<missing>      12 days ago    /bin/sh -c #(nop) ADD file:4e55519deacaaab35…   110MB
+<missing>      12 days ago    /bin/sh -c #(nop)  LABEL org.opencontainers.…   0B
+<missing>      12 days ago    /bin/sh -c #(nop)  LABEL org.opencontainers.…   0B
+<missing>      12 days ago    /bin/sh -c #(nop)  ARG LAUNCHPAD_BUILD_ARCH     0B
+<missing>      12 days ago    /bin/sh -c #(nop)  ARG RELEASE                  0B
+```
+:::
+
+## Dockerfile
+:::{.callout-note}
+## Why sh -c?
+
+- On UNIX, to start a new program, we need two system calls:
+  - fork(), to create a new child process;
+  - execve(), to replace the new child process with the program to run.
+- Conceptually, execve() works like this:
+  - `execve(program, [list, of, arguments])`
+- When we run a command, e.g. `ls -l /tmp`, something needs to parse the command.
+(i.e. split the program and its arguments into a list.)
+- The shell is usually doing that.
+(It also takes care of expanding environment variables and special things like `~`.)
+:::
+
+## Dockerfile
+:::{.callout-note icon=false}
+## Exec syntax
+Docker can parse the command by itself.
+
+Instead of plain string, or **shell syntax**:
+```
+RUN apt-get install figlet
+```
+we can use JSON list, or **exec syntax**:
+```
+RUN ["apt-get", "install", "figlet"]
+```
+:::
+
+## Dockerfile
+:::{.callout-note icon=false}
+## Check exec syntax
+
+1. Change Dockerfile to
+```
+FROM ubuntu
+RUN apt-get update
+RUN ["apt-get", "install", "figlet"]
+```
+
+2. Build it:
+```
+docker build -t figlet .
+```
+
+3. Check history:
+```
+$ docker history figlet
+IMAGE          CREATED         CREATED BY                                      SIZE      COMMENT
+18c1be63d556   4 seconds ago   RUN apt-get install figlet # buildkit           1.34MB    buildkit.dockerfile.v0
+<missing>      19 hours ago    RUN /bin/sh -c apt-get update # buildkit        56.4MB    buildkit.dockerfile.v0
+...
+```
+Exact command!
+:::
+
+# CMD and ENTRYPOINT
+
+## CMD and ENTRYPOINT
+:::{.callout-note icon=false}
+## Default commands
+
+When people run our container, we want to greet them with a nice hello message, and using a custom font.
+
+For that, we will execute:
+```
+figlet -f script hello
+```
+
+`-f script` tells figlet to use a fancy font.
+
+`hello` is the message that we want it to display.
+:::
+## CMD and ENTRYPOINT
+:::{.callout-note icon=false}
+## Adding CMD to Dockerfile
+
+Our new Dockerfile will look like this:
+```
+FROM ubuntu
+RUN apt-get update
+RUN ["apt-get", "install", "figlet"]
+CMD figlet -f script hello
+CMD defines a default command to run when none is given.
+```
+
+It can appear at any point in the file.
+
+Each CMD will replace and override the previous one.
+As a result, while you can have multiple CMD lines, it is useless.
+:::
+
+## CMD and ENTRYPOINT
+:::{.callout-note icon=false}
+## Build and run
+```
+$ docker build -t figlet .
+[+] Building 3.4s (8/8) FINISHED                                                                                                                                                                docker:desktop-linux
+...
+$ docker run -it figlet
+ _          _   _
+| |        | | | |
+| |     _  | | | |  __
+|/ \   |/  |/  |/  /  \_
+|   |_/|__/|__/|__/\__/
+
+```
+:::
+
+## CMD and ENTRYPOINT
+:::{.callout-note icon=false}
+## CMD override
+
+If we want to get a shell into our container (instead of running figlet), we just have to specify a different program to run:
+```
+$ docker run -it figlet bash
+root@3e95f6bafdd9:/#
+```
+We specified bash.
+
+It replaced the value of CMD.
+:::
+## CMD and ENTRYPOINT
+:::{.callout-note icon=false}
+## Using ENTRYPOINT
+
+**Objective:** we want to be able to specify a different message on the command line, while retaining figlet and some default parameters.
+
+In other words, we would like to be able to do this:
+```
+$ docker run figlet salut
+           _            
+          | |           
+ ,   __,  | |       _|_ 
+/ \_/  |  |/  |   |  |  
+ \/ \_/|_/|__/ \_/|_/|_/
+```
+
+We will use the ENTRYPOINT verb in Dockerfile.
+:::
+## CMD and ENTRYPOINT
+:::{.callout-note icon=false}
+## Dockerfile with ENTRYPOINT
+
+Our new Dockerfile will look like this:
+```
+FROM ubuntu
+RUN apt-get update
+RUN ["apt-get", "install", "figlet"]
+ENTRYPOINT ["figlet", "-f", "script"]
+```
+
+- ENTRYPOINT defines a base command (and its parameters) for the container.
+- The command line arguments are appended to those parameters.
+- Like CMD, ENTRYPOINT can appear anywhere, and replaces the previous value.
+:::
+## CMD and ENTRYPOINT
+:::{.callout-note icon=false}
+## Build
+```
+docker build -t figlet .
+[+] Building 0.1s (7/7) FINISHED                                                                                                                                                                docker:desktop-linux
+...
+$ docker run figlet salve
+           _
+          | |
+ ,   __,  | |       _
+/ \_/  |  |/  |  |_|/
+ \/ \_/|_/|__/ \/  |__/
+
+
+```
+:::
+## CMD and ENTRYPOINT
+:::{.callout-note icon=false}
+## Using CMD and ENTRYPOING together
+
+If we use ENTRYPOINT and CMD together:
+
+- ENTRYPOINT will define the base command for our container.
+- CMD will define the default parameter(s) for this command.
+- They both have to use JSON syntax.
+:::
+
+## CMD and ENTRYPOINT
+:::{.callout-note icon=false}
+## Dockerfile
+
+```
+FROM ubuntu
+RUN apt-get update
+RUN ["apt-get", "install", "figlet"]
+ENTRYPOINT ["figlet", "-f", "script"]
+CMD ["hello world"]
+```
+- `ENTRYPOINT` defines a base command (and its parameters) for the container.
+- If we don't specify extra command-line arguments when starting the container, the value of `CMD` is appended.
+- Otherwise, our extra command-line arguments are used instead of `CMD.`
+:::
+## CMD and ENTRYPOINT
+:::{.callout-note icon=false}
+## Build and run
+
+1. Build:
+```
+$ docker build -t myfiglet .
+[+] Building 0.1s (7/7) FINISHED
+...
+```
+
+2. Run without parameters:
+```
+$ docker run myfiglet
+ _          _   _                             _
+| |        | | | |                           | |    |
+| |     _  | | | |  __             __   ,_   | |  __|
+|/ \   |/  |/  |/  /  \_  |  |  |_/  \_/  |  |/  /  |
+|   |_/|__/|__/|__/\__/    \/ \/  \__/    |_/|__/\_/|_/
+
+
+
+```
+:::
+
+## CMD and ENTRYPOINT
+:::{.callout-note icon=false}
+## Build and run
+
+3. Run with parameters:
+```
+$ docker run myfiglet hey
+ _
+| |
+| |     _
+|/ \   |/  |   |
+|   |_/|__/ \_/|/
+              /|
+              \|
+
+```
+:::
+
+## CMD and ENTRYPOINT
+:::{.callout-note icon=false}
+## ENTRYPOINT override
+
+What if we want to run a shell in our container?
+
+We cannot just do `docker run myfiglet bash` because that would just tell figlet to display the word "bash."
+
+We use the `--entrypoint` parameter:
+```
+$ docker run -it --entrypoint bash myfiglet
+root@0e2f53d52f7d:/#
+
+```
+:::
+## CMD and ENTRYPOINT
+:::{.callout-note icon=false}
+## CMD and ENTRYPOINT recap
+
+- `docker run myimage` executes `ENTRYPOINT` + `CMD`
+- `docker run myimage args` executes `ENTRYPOINT` + `args` (overriding `CMD`)
+- `docker run --entrypoint prog myimage` executes `prog` (overriding both)
+:::
+
+
+## CMD and ENTRYPOINT
+
+| Command                         | `ENTRYPOINT`       | `CMD`   | Result
+|---------------------------------|--------------------|---------|-------
+| `docker run figlet`             | none               | none    | Use values from base image (`bash`)
+| `docker run figlet hola`        | none               | none    | Error (executable `hola` not found)
+| `docker run figlet`             | `figlet -f script` | none    | `figlet -f script`
+| `docker run figlet hola`        | `figlet -f script` | none    | `figlet -f script hola`
+| `docker run figlet`             | none    | `figlet -f script` | `figlet -f script`
+| `docker run figlet hola`        | none    | `figlet -f script` | Error (executable `hola` not found)
+| `docker run figlet`             | `figlet -f script` | `hello` | `figlet -f script hello`
+| `docker run figlet hola`        | `figlet -f script` | `hello` | `figlet -f script hola`
+
+# Copying files during the build
+
+## Copying files during the build
+:::{.callout-tip icon=false}
+## Objectives
+
+- So far, we have installed things in our container images by **downloading packages**.
+- We can also copy files from the **build context** to the container that we are building.
+- The build context is the directory containing the Dockerfile.
+- for that we use  a new Dockerfile keyword: `COPY`.
+:::
+
+## Copying files during the build
+:::{.callout-tip icon=false}
+## Building C code
+
+We want to build a container that compiles a basic "Hello world" program in C.
+
+Here is the program, `hello.c`:
+```c
+int main () {
+  puts("Hello, world!");
+  return 0;
+}
+```
+Let's create a new directory, and put this file in there.
+
+Then we will write the Dockerfile.
+:::
+
+## Copying files during the build
+:::{.callout-tip icon=false}
+## Dockerfile for building
+
+On Debian and Ubuntu, the package `build-essential` will get us a compiler.
+
+When installing it, don't forget to specify the `-y` flag, otherwise the build will fail (since the build cannot be interactive).
+
+Then we will use COPY to place the source file into the container.
+
+```dockerfile
+FROM ubuntu
+RUN ["apt-get", "update"]
+RUN ["apt-get", "install", "-y", "build-essential"]
+COPY hello.c /
+RUN make hello
+CMD /hello
+```
+
+Create this Dockerfile.
+:::
+
+## Copying files during the build
+:::{.callout-tip icon=false}
+## Testing our C program
+
+- Create hello.c and Dockerfile in the same directory.
+- Run `docker build -t hello .` in this directory.
+- Run `docker run hello`, you should see `Hello, world!`.
+:::
+
+## Copying files during the build
+:::{.callout-tip icon=false}
+## COPY and the build cache
+
+- Run the build again.
+- Now, modify `hello.c` and run the build again.
+- Docker can cache steps involving `COPY`.
+- Those steps will not be executed again if the files haven't been changed.
+:::
+
+## Copying files during the build
+:::{.callout-tip icon=false}
+## Details
+
+- We can COPY whole directories recursively
+It is possible to do e.g. COPY . .
+(but it might require some extra precautions to avoid copying too much)
+
+- In older Dockerfiles, you might see the ADD command; consider it deprecated
+(it is similar to COPY but can automatically extract archives)
+
+- If we really wanted to compile C code in a container, we would:
+  - place it in a different directory, with the WORKDIR instruction
+  - even better, use the gcc official image
+:::
+
+## Copying files during the build
+:::{.callout-tip icon=false}
+## .dockerignore
+
+- We can create a file named .dockerignore
+(at the top-level of the build context)
+- It can contain file names and globs to ignore
+- They won't be sent to the builder
+(and won't end up in the resulting image)
+- See the documentation for the little details
+(exceptions can be made with !, multiple directory levels with **...)
+:::
+
+# Exercise — writing Dockerfiles
+
+## Exercise — writing Dockerfiles
+:::{.callout-tip icon=false}
+## Exercise — writing Dockerfiles
+
+- Let's write Dockerfiles for an existing application!
+- Check out the code repository
+- Read all the instructions
+- Write Dockerfiles
+- Build and test them individually
+:::
+
+## Exercise — writing Dockerfiles
+:::{.callout-tip icon=false}
+## Code repository
+
+- Clone the repository available at <https://github.com/jpetazzo/wordsmith>
+It should look like this:
+```
+├── LICENSE
+├── README
+├── db/
+│   └── words.sql
+├── web/
+│   ├── dispatcher.go
+│   └── static/
+└── words/
+    ├── pom.xml
+    └── src/
+```
+:::
+
+## Exercise — writing Dockerfiles
+:::{.callout-tip icon=false}
+## Instructions
+
+The repository contains instructions in English and French.
+<br/>
+For now, we only care about the first part (about writing Dockerfiles).
+<br/>
+Place each Dockerfile in its own directory, like this:
+```
+├── LICENSE
+├── README
+├── db/
+│   ├── Dockerfile
+│   └── words.sql
+├── web/
+│   ├── Dockerfile
+│   ├── dispatcher.go
+│   └── static/
+└── words/
+    ├── Dockerfile
+    ├── pom.xml
+    └── src/
+```
+:::
+
+## Exercise — writing Dockerfiles
+:::{.callout-tip icon=false}
+## Build and test
+
+Build and run each Dockerfile individually.
+
+For `db`, we should be able to see some messages confirming that the data set
+was loaded successfully (some `INSERT` lines in the container output).
+
+For `web` and `words`, we should be able to see some message looking like
+"server started successfully".
+
+That's all we care about for now!
+
+Bonus question: make sure that each container stops correctly when hitting Ctrl-C.
+
+:::
+
+
+# Reducing image size
+
+## Reducing image size
+
+:::{.callout-important icon=false}
+## Size consideration
+
+In the previous example, our final image contained:
+
+- our hello program
+- its source code
+- the compiler
+
+Only the first one is strictly necessary.
+
+We are going to see how to obtain an image without the superfluous components.
+:::
+
+## Reducing image size
+:::{.callout-note icon=false}
+## Can't we remove superfluous files with `RUN`?
+
+What happens if we do one of the following commands?
+
+- `RUN rm -rf ...`
+
+- `RUN apt-get remove ...`
+
+- `RUN make clean ...`
+
+
+This adds a layer which removes a bunch of files.
+But the previous layers (which added the files) still exist.
+:::
+
+## Reducing image size
+:::{.callout-note icon=false}
+## Removing files with an extra layer
+
+When downloading an image, all the layers must be downloaded.
+
+| Dockerfile instruction | Layer size | Image size |
+| ---------------------- | ---------- | ---------- |
+| `FROM ubuntu` | Size of base image | Size of base image |
+| `...` | ... | Sum of this layer <br/>+ all previous ones |
+| `RUN apt-get install somepackage` | Size of files added <br/>(e.g. a few MB) | Sum of this layer <br/>+ all previous ones |
+| `...` | ... | Sum of this layer <br/>+ all previous ones |
+| `RUN apt-get remove somepackage` | Almost zero <br/>(just metadata) | Same as previous one |
+
+Therefore, `RUN rm` does not reduce the size of the image or free up disk space.
+:::
+
+## Reducing image size
+:::{.callout-note icon=false}
+## Removing unnecessary files
+
+Various techniques are available to obtain smaller images:
+
+- collapsing layers,
+
+- adding binaries that are built outside of the Dockerfile,
+
+- squashing the final image,
+
+- multi-stage builds.
+
+Let's review them quickly.
+:::
+
+## Reducing image size
+:::{.callout-note icon=false}
+## Collapsing layers
+
+You will frequently see Dockerfiles like this:
+
+```dockerfile
+FROM ubuntu
+RUN apt-get update && apt-get install xxx && ... && apt-get remove xxx && ...
+```
+
+Or the (more readable) variant:
+
+```dockerfile
+FROM ubuntu
+RUN apt-get update \
+ && apt-get install xxx \
+ && ... \
+ && apt-get remove xxx \
+ && ...
+```
+
+This `RUN` command gives us a single layer.
+
+The files that are added, then removed in the same layer, do not grow the layer size.
+:::
+
+## Reducing image size
+:::{.callout-note icon=false}
+## Collapsing layers: pros and cons
+
+:::: {.columns}
+
+::: {.column width="50%" background-color="lightgray"}
+:::{.callout-tip icon=false}
+## Pros:
+
+- works on all versions of Docker
+
+- doesn't require extra tools
+:::
+:::
+
+::: {.column width="50%" background-color="lightgray"}
+:::{.callout-tip icon=false}
+## Cons:
+
+- not very readable
+
+- some unnecessary files might still remain if the cleanup is not thorough
+
+- that layer is expensive (slow to build)
+:::
+:::
+::::
+
+:::
+
+
+## Reducing image size
+:::{.callout-note icon=false}
+## Building binaries outside of the Dockerfile
+
+This results in a Dockerfile looking like this:
+
+```dockerfile
+FROM ubuntu
+COPY xxx /usr/local/bin
+```
+
+Of course, this implies that the file `xxx` exists in the build context.
+
+That file has to exist before you can run `docker build`.
+
+For instance, it can:
+
+- exist in the code repository,
+- be created by another tool (script, Makefile...),
+- be created by another container image and extracted from the image.
+
+See for instance the [busybox official image](https://github.com/docker-library/busybox/blob/fe634680e32659aaf0ee0594805f74f332619a90/musl/Dockerfile) or this [older busybox image](https://github.com/jpetazzo/docker-busybox).
+:::
+
+## Building binaries outside: pros and cons
+
+:::: {.columns}
+
+::: {.column width="50%" background-color="lightgray"}
+:::{.callout-tip icon=false}
+## Pros:
+
+- final image can be very small
+:::
+:::
+::: {.column width="50%" background-color="lightgray"}
+:::{.callout-tip icon=false}
+## Cons:
+
+- requires an extra build tool
+
+- we're back in dependency hell and "works on my machine"
+
+if binary is added to code repository:
+
+- breaks portability across different platforms
+
+- grows repository size a lot if the binary is updated frequently
+:::
+:::
+::::
+
+## Reducing image size
+:::{.callout-note icon=false}
+## Squashing the final image
+
+The idea is to transform the final image into a single-layer image.
+
+This can be done in (at least) two ways.
+
+- Activate experimental features and squash the final image:
+  ```bash
+  docker image build --squash ...
+  ```
+
+- Export/import the final image.
+  ```bash
+  docker build -t temp-image .
+  docker run --entrypoint true --name temp-container temp-image
+  docker export temp-container | docker import - final-image
+  docker rm temp-container
+  docker rmi temp-image
+  ```
+:::
+
+## Squashing the image: pros and cons
+
+:::: {.columns}
+
+::: {.column width="50%" background-color="lightgray"}
+:::{.callout-tip icon=false}
+## Pros:
+
+- single-layer images are smaller and faster to download
+
+- removed files no longer take up storage and network resources
+:::
+:::
+
+::: {.column width="50%" background-color="lightgray"}
+:::{.callout-tip icon=false}
+## Cons:
+
+- we still need to actively remove unnecessary files
+
+- squash operation can take a lot of time (on big images)
+
+- squash operation does not benefit from cache
+  <br/>
+  (even if we change just a tiny file, the whole image needs to be re-squashed)
+
+:::
+:::
+::::
+
+## Reducing image size
+:::{.callout-note icon=false}
+## Multi-stage builds
+
+Multi-stage builds allow us to have multiple *stages*.
+
+Each stage is a separate image, and can copy files from previous stages.
+
+We're going to see how they work in more detail.
+:::
+
+# Multi-stage builds
+
+## Multi-stage builds
+:::{.callout-note icon=false}
+## Description
+
+* At any point in our `Dockerfile`, we can add a new `FROM` line.
+
+* This line starts a new stage of our build.
+
+* Each stage can access the files of the previous stages with `COPY --from=...`.
+
+* When a build is tagged (with `docker build -t ...`), the last stage is tagged.
+
+* Previous stages are not discarded: they will be used for caching, and can be referenced.
+:::
+
+## Multi-stage builds
+:::{.callout-note icon=false}
+## Multi-stage builds in practice
+
+* Each stage is numbered, starting at `0`
+
+* We can copy a file from a previous stage by indicating its number, e.g.:
+
+  ```dockerfile
+  COPY --from=0 /file/from/first/stage /location/in/current/stage
+  ```
+
+* We can also name stages, and reference these names:
+
+  ```dockerfile
+  FROM golang AS builder
+  RUN ...
+  FROM alpine
+  COPY --from=builder /go/bin/mylittlebinary /usr/local/bin/
+  ```
+:::
+
+## Multi-stage builds
+:::{.callout-note icon=false}
+## Multi-stage builds for our C program
+
+We will change our Dockerfile to:
+
+* give a nickname to the first stage: `compiler`
+
+* add a second stage using the same `ubuntu` base image
+
+* add the `hello` binary to the second stage
+
+* make sure that `CMD` is in the second stage 
+
+The resulting Dockerfile is on the next slide.
+:::
+
+## Multi-stage builds
+:::{.callout-note icon=false}
+## Multi-stage build `Dockerfile`
+
+Here is the final Dockerfile:
+
+```dockerfile
+FROM ubuntu AS compiler
+RUN ["apt-get", "update"]
+RUN ["apt-get", "install", "-y", "build-essential"]
+COPY hello.c /
+RUN ["make", "hello"]
+
+FROM ubuntu
+COPY --from=compiler /hello /hello
+CMD /hello
+```
+
+Let's build it, and check that it works correctly:
+
+```bash
+docker build -t hellomultistage .
+docker run hellomultistage
+```
+:::
+
+## Multi-stage builds
+:::{.callout-note icon=false}
+## Comparing single/multi-stage build image sizes
+
+List our images with `docker images`, and check the size of:
+
+- the `ubuntu` base image,
+
+- the single-stage `hello` image,
+
+- the multi-stage `hellomultistage` image.
+
+We can achieve even smaller images if we use smaller base images.
+
+However, if we use common base images (e.g. if we standardize on `ubuntu`),
+these common images will be pulled only once per node, so they are
+virtually "free."
+:::
+
+## Multi-stage builds
+:::{.callout-note icon=false}
+## Results
+```bash
+$ docker images | grep ubuntu
+ubuntu                                         latest         353675e2a41b   2 weeks ago      139MB
+$ docker images | grep hello
+hellomultistage                                latest         977190f18730   55 seconds ago   139MB
+hello                                          latest         09316393a5fe   30 minutes ago   707MB
+
+```
+:::
+
+## Multi-stage builds
+:::{.callout-note icon=false}
+## Build targets
+
+* We can also tag an intermediary stage with the following command:
+  ```bash
+  docker build --target STAGE --tag NAME
+  ```
+
+* This will create an image (named `NAME`) corresponding to stage `STAGE`
+
+* This can be used to easily access an intermediary stage for inspection
+
+  (instead of parsing the output of `docker build` to find out the image ID)
+
+* This can also be used to describe multiple images from a single Dockerfile
+
+  (instead of using multiple Dockerfiles, which could go out of sync)
+:::
+
+
+## Multi-stage builds
+:::{.callout-note icon=false}
+## Dealing with download caches
+
+* In some cases, our images contain temporary downloaded files or caches
+
+  (examples: packages downloaded by `pip`, Maven, etc.)
+
+* These can sometimes be disabled
+
+  (e.g. `pip install --no-cache-dir ...`)
+
+* The cache can also be cleaned immediately after installing
+
+  (e.g. `pip install ... && rm -rf ~/.cache/pip`)
+:::
+
+
+## Multi-stage builds
+:::{.callout-note icon=false}
+## Download caches and multi-stage builds
+
+* Download+install packages in a build stage
+
+* Copy the installed packages to a run stage
+
+* Example: in the specific case of Python, use a virtual env
+
+  (install in the virtual env; then copy the virtual env directory)
+:::
+
+
+## Multi-stage builds
+:::{.callout-note icon=false}
+## Download caches and BuildKit
+
+* BuildKit has a caching feature for run stages
+
+* It can address download caches elegantly
+
+* Example:
+  ```bash
+  RUN --mount=type=cache,target=/pipcache pip install --cache-dir /pipcache ...
+  ```
+
+* The cache won't be in the final image, but it'll persist across builds
+:::
+
+# Publishing images to the Docker Hub
+
+## Publishing images to the Docker Hub
+:::{.callout-tip icon=false}
+## Overview
+We have built our first images.
+
+We can now publish it to the Docker Hub!
+
+:::
+
+## Publishing images to the Docker Hub
+:::{.callout-tip icon=false}
+## Logging into our Docker Hub account
+
+* This can be done from the Docker CLI:
+  ```bash
+  docker login
+  ```
+
+:::
+
+## Publishing images to the Docker Hub
+:::{.callout-tip icon=false}
+## Image tags and registry addresses
+
+* Docker images tags are like Git tags and branches.
+
+* They are like *bookmarks* pointing at a specific image ID.
+
+* Tagging an image doesn't *rename* an image: it adds another tag.
+
+* When pushing an image to a registry, the registry address is in the tag.
+
+  Example: `registry.example.net:5000/image`
+
+* What about Docker Hub images?
+
+:::
+
+::: aside
+
+* `jpetazzo/clock` is, in fact, `index.docker.io/jpetazzo/clock`
+
+* `ubuntu` is, in fact, `library/ubuntu`, i.e. `index.docker.io/library/ubuntu`
+
+:::
+
+## Publishing images to the Docker Hub
+:::{.callout-tip icon=false}
+## Tagging an image to push it on the Hub
+
+* Let's tag our `figlet` image (or any other to our liking):
+  ```bash
+  docker tag figlet jpetazzo/figlet
+  ```
+
+* And push it to the Hub:
+  ```bash
+  docker push jpetazzo/figlet
+  ```
+
+* That's it!
+:::
+
+::: aside
+Anybody can now `docker run jpetazzo/figlet` anywhere.
+:::
+
+## Publishing images to the Docker Hub
+:::{.callout-tip icon=false}
+## The goodness of automated builds
+
+* You can link a Docker Hub repository with a GitHub or BitBucket repository
+
+* Each push to GitHub or BitBucket will trigger a build on Docker Hub
+
+* If the build succeeds, the new image is available on Docker Hub
+
+* You can map tags and branches between source and container images
+
+* If you work with public repositories, this is free
+:::
+
+
+## Publishing images to the Docker Hub {.scrollable}
+:::{.callout-tip icon=false}
+## Setting up an automated build
+
+* We need a Dockerized repository!
+* Let's go to https://github.com/jpetazzo/trainingwheels and fork it.
+* Go to the Docker Hub (https://hub.docker.com/) and sign-in. Select "Repositories" in the blue navigation menu.
+* Select "Create" in the top-right bar, and select "Create Repository+".
+* Connect your Docker Hub account to your GitHub account.
+* Click "Create" button.
+* Then go to "Builds" folder.
+* Click on Github icon and select your user and the repository that we just forked.
+* In "Build rules" block near page bottom, put `/www` in "Build Context" column (or whichever directory the Dockerfile is in).
+* Click "Save and Build" to build the repository immediately (without waiting for a git push).
+* Subsequent builds will happen automatically, thanks to **GitHub hooks**.
+
+:::
+
+## Publishing images to the Docker Hub
+:::{.callout-tip icon=false}
+## Building on the fly
+
+- Some services can build images on the fly from a repository
+
+- Example: [ctr.run](https://ctr.run/)
+
+There might be a long pause before the first layer is pulled,
+because the API behind `docker pull` doesn't allow to stream build logs, and there is no feedback during the build.
+
+It is possible to view the build logs by setting up an account on [ctr.run](https://ctr.run/).
+:::
+
+
+# Tips for efficient Dockerfiles
+
+## Tips for efficient Dockerfiles
+:::{.callout-important icon=false}
+## Overview
+We will see how to:
+
+* Reduce the number of layers.
+
+* Leverage the build cache so that builds can be faster.
+
+* Embed unit testing in the build process.
+
+:::
+
+## Tips for efficient Dockerfiles
+:::{.callout-important icon=false}
+## Reducing the number of layers
+
+* Each line in a `Dockerfile` creates a new layer.
+
+* Build your `Dockerfile` to take advantage of Docker's caching system.
+
+* Combine commands by using `&&` to continue commands and `\` to wrap lines.
+
+Note: it is frequent to build a Dockerfile line by line:
+
+```dockerfile
+RUN apt-get install thisthing
+RUN apt-get install andthatthing andthatotherone
+RUN apt-get install somemorestuff
+```
+
+And then refactor it trivially before shipping:
+
+```dockerfile
+RUN apt-get install thisthing andthatthing andthatotherone somemorestuff
+```
+:::
+
+## Tips for efficient Dockerfiles
+:::{.callout-important icon=false}
+## Avoid re-installing dependencies at each build
+
+* Classic Dockerfile problem:
+
+>  "each time I change a line of code, all my dependencies are re-installed!"
+
+* Solution: `COPY` dependency lists (`package.json`, `requirements.txt`, etc.)
+  by themselves to avoid reinstalling unchanged dependencies every time.
+
+:::
+
+## Tips for efficient Dockerfiles
+:::{.callout-important icon=false}
+## Example "bad" `Dockerfile`
+
+The dependencies are reinstalled every time, because the build system does not know if `requirements.txt` has been updated.
+
+```bash
+FROM python
+WORKDIR /src
+COPY . .
+RUN pip install -qr requirements.txt
+EXPOSE 5000
+CMD ["python", "app.py"]
+```
+:::
+
+## Tips for efficient Dockerfiles
+:::{.callout-tip icon=false}
+## Fixed `Dockerfile`
+
+Adding the dependencies as a separate step means that Docker can cache more efficiently and only install them when `requirements.txt` changes.
+
+```bash
+FROM python
+WORKDIR /src
+COPY requirements.txt .
+RUN pip install -qr requirements.txt
+COPY . .
+EXPOSE 5000
+CMD ["python", "app.py"]
+```
+
+:::
+
+## Tips for efficient Dockerfiles
+:::{.callout-important icon=false}
+## Be careful with `chown`, `chmod`, `mv`
+
+* Layers cannot store efficiently changes in permissions or ownership.
+
+* Layers cannot represent efficiently when a file is moved either.
+
+* As a result, operations like `chown`, `chmod`, `mv` can be expensive.
+
+* For instance, in the Dockerfile snippet below, each `RUN` line
+  creates a layer with an entire copy of `some-file`.
+
+  ```dockerfile
+  COPY some-file .
+  RUN chown www-data:www-data some-file
+  RUN chmod 644 some-file
+  RUN mv some-file /var/www
+  ```
+
+* How can we avoid that?
+:::
+
+## Tips for efficient Dockerfiles
+:::{.callout-important icon=false}
+## Put files on the right place
+
+* Instead of using `mv`, directly put files at the right place.
+
+* When extracting archives (tar, zip...), merge operations in a single layer.
+
+  Example:
+
+  ```dockerfile
+    ...
+    RUN wget http://.../foo.tar.gz \
+     && tar -zxf foo.tar.gz \
+     && mv foo/fooctl /usr/local/bin \
+     && rm -rf foo foo.tar.gz
+  ...
+  ```
+
+:::
+
+## Tips for efficient Dockerfiles
+:::{.callout-important icon=false}
+## Use `COPY --chown`
+
+* The Dockerfile instruction `COPY` can take a `--chown` parameter.
+
+  Examples:
+
+  ```dockerfile
+  ...
+  COPY --chown=1000 some-file .
+  COPY --chown=1000:1000 some-file .
+  COPY --chown=www-data:www-data some-file .
+  ```
+
+* The `--chown` flag can specify a user, or a user:group pair.
+
+* The user and group can be specified as names or numbers.
+
+* When using names, the names must exist in `/etc/passwd` or `/etc/group`.
+
+  *(In the container, not on the host!)*
+
+:::
+
+## Tips for efficient Dockerfiles
+:::{.callout-important icon=false}
+## Set correct permissions locally
+
+* Instead of using `chmod`, set the right file permissions locally.
+
+* When files are copied with `COPY`, permissions are preserved.
+
+:::
+
+## Tips for efficient Dockerfiles
+:::{.callout-important icon=false}
+## Embedding unit tests in the build process
+
+```dockerfile
+FROM <baseimage>
+RUN <install dependencies>
+COPY <code>
+RUN <build code>
+RUN <install test dependencies>
+COPY <test data sets and fixtures>
+RUN <unit tests>
+FROM <baseimage>
+RUN <install dependencies>
+COPY <code>
+RUN <build code>
+CMD, EXPOSE ...
+```
+
+* The build fails as soon as an instruction fails
+* If `RUN <unit tests>` fails, the build doesn't produce an image
+* If it succeeds, it produces a clean image (without test libraries and data)
+
+:::
+
+# Dockerfile examples
+
+
+## Dockerfile examples
+:::{.callout-tip icon=false}
+## Overview
+There are a number of tips, tricks, and techniques that we can use in Dockerfiles.
+
+But sometimes, we have to use different (and even opposed) practices depending on:
+
+- the complexity of our project,
+
+- the programming language or framework that we are using,
+
+- the stage of our project (early MVP vs. super-stable production),
+
+- whether we're building a final image or a base for further images,
+
+- etc.
+
+We are going to show a few examples using very different techniques.
+
+:::
+
+## Dockerfile examples
+:::{.callout-tip icon=false}
+## When to optimize an image
+
+When authoring official images, it is a good idea to reduce as much as possible:
+
+- the number of layers,
+
+- the size of the final image.
+
+This is often done at the expense of build time and convenience for the image maintainer;
+but when an image is downloaded millions of time, saving even a few seconds of pull time
+can be worth it.
+
+```dockerfile
+RUN apt-get update && apt-get install -y libpng12-dev libjpeg-dev && rm -rf /var/lib/apt/lists/* \
+	&& docker-php-ext-configure gd --with-png-dir=/usr --with-jpeg-dir=/usr \
+	&& docker-php-ext-install gd
+...
+RUN curl -o wordpress.tar.gz -SL https://wordpress.org/wordpress-${WORDPRESS_UPSTREAM_VERSION}.tar.gz \
+	&& echo "$WORDPRESS_SHA1 *wordpress.tar.gz" | sha1sum -c - \
+	&& tar -xzf wordpress.tar.gz -C /usr/src/ \
+	&& rm wordpress.tar.gz \
+	&& chown -R www-data:www-data /usr/src/wordpress
+```
+:::
+
+::: aside
+(Source: [Wordpress official image](https://github.com/docker-library/wordpress/blob/618490d4bdff6c5774b84b717979bfe3d6ba8ad1/apache/Dockerfile))
+:::
+
+
+## Dockerfile examples
+:::{.callout-tip icon=false}
+## When to *not* optimize an image
+
+Sometimes, it is better to prioritize *maintainer convenience*.
+
+In particular, if:
+
+- the image changes a lot,
+
+- the image has very few users (e.g. only 1, the maintainer!),
+
+- the image is built and run on the same machine,
+
+- the image is built and run on machines with a very fast link ...
+
+In these cases, just keep things simple!
+
+(Next slide: a Dockerfile that can be used to preview a Jekyll / github pages site.)
+
+:::
+
+## Dockerfile examples
+:::{.callout-tip icon=false}
+## Dockerfile for Jekyll
+
+```dockerfile
+FROM debian:sid
+
+RUN apt-get update -q
+RUN apt-get install -yq build-essential make
+RUN apt-get install -yq zlib1g-dev
+RUN apt-get install -yq ruby ruby-dev
+RUN apt-get install -yq python-pygments
+RUN apt-get install -yq nodejs
+RUN apt-get install -yq cmake
+RUN gem install --no-rdoc --no-ri github-pages
+
+COPY . /blog
+WORKDIR /blog
+
+VOLUME /blog/_site
+
+EXPOSE 4000
+CMD ["jekyll", "serve", "--host", "0.0.0.0", "--incremental"]
+```
+
+:::
+
+
+## Dockerfile examples
+:::{.callout-tip icon=false}
+## Multi-dimensional versioning systems
+
+Images can have a tag, indicating the version of the image.
+
+But sometimes, there are multiple important components, and we need to indicate the versions
+for all of them.
+
+This can be done with environment variables:
+
+```dockerfile
+ENV PIP=9.0.3 \
+    ZC_BUILDOUT=2.11.2 \
+    SETUPTOOLS=38.7.0 \
+    PLONE_MAJOR=5.1 \
+    PLONE_VERSION=5.1.0 \
+    PLONE_MD5=76dc6cfc1c749d763c32fff3a9870d8d
+```
+
+:::
+
+::: aside
+(Source: [Plone official image](https://github.com/plone/plone.docker/blob/master/5.1/5.1.0/alpine/Dockerfile))
+
+:::
+
+## Dockerfile examples
+:::{.callout-tip icon=false}
+## Entrypoints and wrappers
+
+It is very common to define a custom entrypoint.
+
+That entrypoint will generally be a script, performing any combination of:
+
+- pre-flights checks (if a required dependency is not available, display
+  a nice error message early instead of an obscure one in a deep log file),
+
+- generation or validation of configuration files,
+
+- dropping privileges (with e.g. `su` or `gosu`, sometimes combined with `chown`),
+
+- and more.
+
+:::
+
+## Dockerfile examples
+:::{.callout-tip icon=false}
+## A typical entrypoint script
+
+```dockerfile
+ #!/bin/sh
+ set -e
+ 
+ # first arg is '-f' or '--some-option'
+ # or first arg is 'something.conf'
+ if [ "${1#-}" != "$1" ] || [ "${1%.conf}" != "$1" ]; then
+ 	set -- redis-server "$@"
+ fi
+ 
+ # allow the container to be started with '--user'
+ if [ "$1" = 'redis-server' -a "$(id -u)" = '0' ]; then
+ 	chown -R redis .
+ 	exec su-exec redis "$0" "$@"
+ fi
+ 
+ exec "$@"
+```
+
+:::
+
+::: aside
+(Source: [Redis official image](https://github.com/docker-library/redis/blob/d24f2be82673ccef6957210cc985e392ebdc65e4/4.0/alpine/docker-entrypoint.sh))
+
+:::
+
+## Dockerfile examples
+:::{.callout-tip icon=false}
+## Factoring information
+
+To facilitate maintenance (and avoid human errors), avoid to repeat information like:
+
+- version numbers,
+
+- remote asset URLs (e.g. source tarballs) ...
+
+Instead, use environment variables.
+
+```dockerfile
+ENV NODE_VERSION 10.2.1
+...
+RUN ...
+    && curl -fsSLO --compressed "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION.tar.xz" \
+    && curl -fsSLO --compressed "https://nodejs.org/dist/v$NODE_VERSION/SHASUMS256.txt.asc" \
+    && gpg --batch --decrypt --output SHASUMS256.txt SHASUMS256.txt.asc \
+    && grep " node-v$NODE_VERSION.tar.xz\$" SHASUMS256.txt | sha256sum -c - \
+    && tar -xf "node-v$NODE_VERSION.tar.xz" \
+    && cd "node-v$NODE_VERSION" \
+...
+```
+:::
+
+::: aside
+(Source: [Nodejs official image](https://github.com/nodejs/docker-node/blob/master/10/alpine/Dockerfile))
+:::
+
+## Dockerfile examples
+:::{.callout-tip icon=false}
+## Overrides
+
+In theory, development and production images should be the same.
+
+In practice, we often need to enable specific behaviors in development (e.g. debug statements).
+
+One way to reconcile both needs is to use Compose to enable these behaviors.
+
+Let's look at the [trainingwheels](https://github.com/jpetazzo/trainingwheels) demo app for an example.
+
+:::
+
+## Dockerfile examples
+:::{.callout-tip icon=false}
+## Production image
+
+This Dockerfile builds an image leveraging gunicorn:
+
+```dockerfile
+FROM python
+RUN pip install flask
+RUN pip install gunicorn
+RUN pip install redis
+COPY . /src
+WORKDIR /src
+CMD gunicorn --bind 0.0.0.0:5000 --workers 10 counter:app
+EXPOSE 5000
+```
+
+:::
+
+::: aside
+(Source: [trainingwheels Dockerfile](https://github.com/jpetazzo/trainingwheels/blob/master/www/Dockerfile))
+:::
+
+## Dockerfile examples
+:::{.callout-tip icon=false}
+## Development Compose file
+
+This Compose file uses the same image, but with a few overrides for development:
+
+- the Flask development server is used (overriding `CMD`),
+
+- the `DEBUG` environment variable is set,
+
+- a volume is used to provide a faster local development workflow.
+
+```yaml
+services:
+  www:
+    build: www
+    ports:
+      - 8000:5000
+    user: nobody
+    environment:
+      DEBUG: 1
+    command: python counter.py
+    volumes:
+      - ./www:/src
+```
+:::
+
+::: aside
+(Source: [trainingwheels Compose file](https://github.com/jpetazzo/trainingwheels/blob/master/docker-compose.yml))
+:::
+
+## Dockerfile examples
+
+:::{.callout-tip icon=false}
+## How to know which best practices are better?
+
+- The main goal of containers is to make our lives easier.
+
+- In this chapter, we showed many ways to write Dockerfiles.
+
+- These Dockerfiles use sometimes diametrically opposed techniques.
+
+- Yet, they were the "right" ones *for a specific situation.*
+
+- It's OK (and even encouraged) to start simple and evolve as needed.
+:::
+
+## Exercise — multi-stage builds
+
+:::{.callout-note}
+## Exercise
+Let's update our Dockerfiles to leverage multi-stage builds!
+
+The code is at: <https://github.com/jpetazzo/wordsmith>.
+
+Use a different tag for these images, so that we can compare their sizes.
+
+What's the size difference between single-stage and multi-stage builds?
+:::
+
+# Naming and inspecting containers
+
+## Naming and inspecting containers
+:::{.callout-tip icon=false}
+## Objectives
+
+In this lesson, we will learn about an important
+Docker concept: container *naming*.
+
+Naming allows us to:
+
+* Reference easily a container.
+
+* Ensure unicity of a specific container.
+
+We will also see the `inspect` command, which gives a lot of details about a container.
+
+:::
+
+## Naming and inspecting containers
+:::{.callout-tip icon=false}
+## Naming our containers
+
+So far, we have referenced containers with their ID.
+
+We have copy-pasted the ID, or used a shortened prefix.
+
+But each container can also be referenced by its name.
+
+If a container is named `thumbnail-worker`, I can do:
+
+```bash
+$ docker logs thumbnail-worker
+$ docker stop thumbnail-worker
+etc.
+```
+
+:::
+
+## Naming and inspecting containers
+:::{.callout-tip icon=false}
+## Default names
+
+When we create a container, if we don't give a specific
+name, Docker will pick one for us.
+
+It will be the concatenation of:
+
+* A mood (furious, goofy, suspicious, boring...)
+
+* The name of a famous inventor (tesla, darwin, wozniak...)
+
+Examples: `happy_curie`, `clever_hopper`, `jovial_lovelace` ...
+
+:::
+
+## Naming and inspecting containers
+:::{.callout-tip icon=false}
+## Specifying a name
+
+You can set the name of the container when you create it.
+
+```bash
+$ docker run --name ticktock jpetazzo/clock
+```
+
+If you specify a name that already exists, Docker will refuse
+to create the container.
+
+This lets us enforce unicity of a given resource.
+
+:::
+
+## Naming and inspecting containers
+:::{.callout-tip icon=false}
+## Renaming containers
+
+* You can rename containers with `docker rename`.
+
+* This allows you to "free up" a name without destroying the associated container.
+
+:::
+
+## Naming and inspecting containers
+:::{.callout-tip icon=false}
+## Inspecting a container
+
+The `docker inspect` command will output a very detailed JSON map.
+
+```bash
+$ docker inspect <containerID>
+[{
+...
+(many pages of JSON here)
+...
+```
+
+There are multiple ways to consume that information.
+
+:::
+
+## Naming and inspecting containers
+:::{.callout-tip icon=false}
+## Parsing JSON with the Shell
+
+* You *could* grep and cut or awk the output of `docker inspect`.
+
+* Please, don't.
+
+* It's painful.
+
+* If you really must parse JSON from the Shell, use JQ! (It's great.)
+
+```bash
+$ docker inspect <containerID> | jq .
+```
+
+* We will see a better solution which doesn't require extra tools.
+
+:::
+
+## Naming and inspecting containers
+:::{.callout-tip icon=false}
+## Using `--format`
+
+You can specify a format string, which will be parsed by 
+Go's text/template package.
+
+```bash
+$ docker inspect --format '{{ json .Created }}' <containerID>
+"2015-02-24T07:21:11.712240394Z"
+```
+
+* The generic syntax is to wrap the expression with double curly braces.
+
+* The expression starts with a dot representing the JSON object.
+
+* Then each field or member can be accessed in dotted notation syntax.
+
+* The optional `json` keyword asks for valid JSON output.
+  <br/>(e.g. here it adds the surrounding double-quotes.)
+
+:::
+
+# Labels
+
+## Labels
+:::{.callout-tip icon=false}
+## Overview
+* Labels allow to attach arbitrary metadata to containers.
+
+* Labels are key/value pairs.
+
+* They are specified at container creation.
+
+* You can query them with `docker inspect`.
+
+* They can also be used as filters with some commands (e.g. `docker ps`).
+
+:::
+
+## Labels
+:::{.callout-tip icon=false}
+## Using labels
+
+Let's create a few containers with a label `owner`.
+
+```bash
+docker run -d -l owner=alice nginx
+docker run -d -l owner=bob nginx
+docker run -d -l owner nginx
+```
+
+We didn't specify a value for the `owner` label in the last example.
+
+This is equivalent to setting the value to be an empty string.
+
+:::
+
+## Labels
+:::{.callout-tip icon=false}
+## Querying labels
+
+We can view the labels with `docker inspect`.
+
+```bash
+$ docker inspect $(docker ps -lq) | grep -A3 Labels
+            "Labels": {
+                "maintainer": "NGINX Docker Maintainers <docker-maint@nginx.com>",
+                "owner": ""
+            },
+```
+
+We can use the `--format` flag to list the value of a label.
+
+```bash
+$ docker inspect $(docker ps -q) --format 'OWNER={{.Config.Labels.owner}}'
+```
+
+:::
+
+## Labels
+:::{.callout-tip icon=false}
+## Using labels to select containers
+
+We can list containers having a specific label.
+
+```bash
+$ docker ps --filter label=owner
+```
+
+Or we can list containers having a specific label with a specific value.
+
+```bash
+$ docker ps --filter label=owner=alice
+```
+
+:::
+
+## Labels
+:::{.callout-tip icon=false}
+## Use-cases for labels
+
+
+* HTTP vhost of a web app or web service.
+
+  (The label is used to generate the configuration for NGINX, HAProxy, etc.)
+
+* Backup schedule for a stateful service.
+
+  (The label is used by a cron job to determine if/when to backup container data.)
+
+* Service ownership.
+
+  (To determine internal cross-billing, or who to page in case of outage.)
+
+* etc.
+:::
+
+
+# Getting inside a container
+
+## Getting inside a container
+:::{.callout-important icon=false}
+## Objectives
+
+On a traditional server or VM, we sometimes need to:
+
+* log into the machine (with SSH or on the console),
+
+* analyze the disks (by removing them or rebooting with a rescue system).
+
+In this chapter, we will see how to do that with containers.
+
+:::
+
+## Getting inside a container
+:::{.callout-important icon=false}
+## Getting a shell
+
+Every once in a while, we want to log into a machine.
+
+In an perfect world, this shouldn't be necessary.
+
+* You need to install or update packages (and their configuration)?
+
+  Use configuration management. (e.g. Ansible, Chef, Puppet, Salt...)
+
+* You need to view logs and metrics?
+
+  Collect and access them through a centralized platform.
+
+In the real world, though ... we often need shell access!
+
+:::
+
+## Getting inside a container
+:::{.callout-important icon=false}
+## Not getting a shell
+
+Even without a perfect deployment system, we can do many operations without getting a shell.
+
+* Installing packages can (and should) be done in the container image.
+
+* Configuration can be done at the image level, or when the container starts.
+
+* Dynamic configuration can be stored in a volume (shared with another container).
+
+* Logs written to stdout are automatically collected by the Docker Engine.
+
+* Other logs can be written to a shared volume.
+
+* Process information and metrics are visible from the host.
+
+_Let's save logging, volumes ... for later, but let's have a look at process information!_
+
+:::
+
+## Getting inside a container
+:::{.callout-important icon=false}
+## Viewing container processes from the host
+
+If you run Docker on Linux, container processes are visible on the host.
+
+```bash
+$ ps faux | less
+```
+
+* Scroll around the output of this command.
+
+* You should see the `jpetazzo/clock` container.
+
+* A containerized process is just like any other process on the host.
+
+* We can use tools like `lsof`, `strace`, `gdb` ... To analyze them.
+
+:::
+
+## Getting inside a container
+:::{.callout-important icon=false}
+## What's the difference between a container process and a host process?
+
+* Each process (containerized or not) belongs to *namespaces* and *cgroups*.
+
+* The namespaces and cgroups determine what a process can "see" and "do".
+
+* Analogy: each process (containerized or not) runs with a specific UID (user ID).
+
+* UID=0 is root, and has elevated privileges. Other UIDs are normal users.
+
+_We will give more details about namespaces and cgroups later._
+
+:::
+
+## Getting inside a container
+:::{.callout-important icon=false}
+## Getting a shell in a running container
+
+* Sometimes, we need to get a shell anyway.
+
+* We _could_ run some SSH server in the container ...
+
+* But it is easier to use `docker exec`.
+
+```bash
+$ docker exec -ti ticktock sh
+```
+
+* This creates a new process (running `sh`) _inside_ the container.
+
+* This can also be done "manually" with the tool `nsenter`.
+
+:::
+
+## Getting inside a container
+:::{.callout-important icon=false}
+## Caveats
+
+* The tool that you want to run needs to exist in the container.
+
+* Some tools (like `ip netns exec`) let you attach to _one_ namespace at a time.
+
+  (This lets you e.g. setup network interfaces, even if you don't have `ifconfig` or `ip` in the container.)
+
+* Most importantly: the container needs to be running.
+
+* What if the container is stopped or crashed?
+
+:::
+
+## Getting inside a container
+:::{.callout-important icon=false}
+## Getting a shell in a stopped container
+
+* A stopped container is only _storage_ (like a disk drive).
+
+* We cannot SSH into a disk drive or USB stick!
+
+* We need to connect the disk to a running machine.
+
+* How does that translate into the container world?
+
+:::
+
+## Getting inside a container
+:::{.callout-important icon=false}
+## Analyzing a stopped container
+
+As an exercise, we are going to try to find out what's wrong with `jpetazzo/crashtest`.
+
+```bash
+docker run jpetazzo/crashtest
+```
+
+The container starts, but then stops immediately, without any output.
+
+What would MacGyver&trade; do?
+
+First, let's check the status of that container.
+
+```bash
+docker ps -l
+```
+
+:::
+
+## Getting inside a container
+:::{.callout-important icon=false}
+## Viewing filesystem changes
+
+* We can use `docker diff` to see files that were added / changed / removed.
+
+```bash
+docker diff <container_id>
+```
+
+* The container ID was shown by `docker ps -l`.
+
+* We can also see it with `docker ps -lq`.
+
+* The output of `docker diff` shows some interesting log files!
+
+:::
+
+## Getting inside a container
+:::{.callout-important icon=false}
+## Accessing files
+
+* We can extract files with `docker cp`.
+
+```bash
+docker cp <container_id>:/var/log/nginx/error.log .
+```
+
+* Then we can look at that log file.
+
+```bash
+cat error.log
+```
+
+(The directory `/run/nginx` doesn't exist.)
+
+:::
+
+## Getting inside a container
+:::{.callout-important icon=false}
+## Exploring a crashed container
+
+* We can restart a container with `docker start` ...
+
+* ... But it will probably crash again immediately!
+
+* We cannot specify a different program to run with `docker start`
+
+* But we can create a new image from the crashed container
+
+```bash
+docker commit <container_id> debugimage
+```
+
+* Then we can run a new container from that image, with a custom entrypoint
+
+```bash
+docker run -ti --entrypoint sh debugimage
+```
+
+:::
+
+## Obtaining a complete dump
+
+* We can also dump the entire filesystem of a container.
+
+* This is done with `docker export`.
+
+* It generates a tar archive.
+
+```bash
+docker export <container_id> | tar tv
+```
+
+This will give a detailed listing of the content of the container.
+:::
