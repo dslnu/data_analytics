@@ -1,0 +1,3192 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-html/tabby.min.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/light-border.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-dc55a5b9e770e841cd82e46aadbfb9b0.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.8.24">
+
+  <meta name="author" content="MSDE">
+  <title>Big Data analytics / Applied Data analytics – Dockerfiles</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="site_libs/revealjs/dist/reset.css">
+  <link rel="stylesheet" href="site_libs/revealjs/dist/reveal.css">
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+      vertical-align: middle;
+    }
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      { color: #003b4f; background-color: #f1f3f5; }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span { color: #003b4f; } /* Normal */
+    code span.al { color: #ad0000; } /* Alert */
+    code span.an { color: #5e5e5e; } /* Annotation */
+    code span.at { color: #657422; } /* Attribute */
+    code span.bn { color: #ad0000; } /* BaseN */
+    code span.bu { } /* BuiltIn */
+    code span.cf { color: #003b4f; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #20794d; } /* Char */
+    code span.cn { color: #8f5902; } /* Constant */
+    code span.co { color: #5e5e5e; } /* Comment */
+    code span.cv { color: #5e5e5e; font-style: italic; } /* CommentVar */
+    code span.do { color: #5e5e5e; font-style: italic; } /* Documentation */
+    code span.dt { color: #ad0000; } /* DataType */
+    code span.dv { color: #ad0000; } /* DecVal */
+    code span.er { color: #ad0000; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #ad0000; } /* Float */
+    code span.fu { color: #4758ab; } /* Function */
+    code span.im { color: #00769e; } /* Import */
+    code span.in { color: #5e5e5e; } /* Information */
+    code span.kw { color: #003b4f; font-weight: bold; } /* Keyword */
+    code span.op { color: #5e5e5e; } /* Operator */
+    code span.ot { color: #003b4f; } /* Other */
+    code span.pp { color: #ad0000; } /* Preprocessor */
+    code span.sc { color: #5e5e5e; } /* SpecialChar */
+    code span.ss { color: #20794d; } /* SpecialString */
+    code span.st { color: #20794d; } /* String */
+    code span.va { color: #111111; } /* Variable */
+    code span.vs { color: #20794d; } /* VerbatimString */
+    code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="site_libs/revealjs/dist/theme/quarto-534cd8e3a96973385dffff3f4709048d.css">
+  <link rel="stylesheet" href="./custom.css">
+  <link href="site_libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
+  <link href="site_libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
+  <link href="site_libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
+  <link href="site_libs/revealjs/plugin/quarto-support/footer.css" rel="stylesheet">
+  <style type="text/css">
+    .reveal div.sourceCode {
+      margin: 0;
+      overflow: auto;
+    }
+    .reveal div.hanging-indent {
+      margin-left: 1em;
+      text-indent: -1em;
+    }
+    .reveal .slide:not(.center) {
+      height: 100%;
+    }
+    .reveal .slide.scrollable {
+      overflow-y: auto;
+    }
+    .reveal .footnotes {
+      height: 100%;
+      overflow-y: auto;
+    }
+    .reveal .slide .absolute {
+      position: absolute;
+      display: block;
+    }
+    .reveal .footnotes ol {
+      counter-reset: ol;
+      list-style-type: none; 
+      margin-left: 0;
+    }
+    .reveal .footnotes ol li:before {
+      counter-increment: ol;
+      content: counter(ol) ". "; 
+    }
+    .reveal .footnotes ol li > p:first-child {
+      display: inline-block;
+    }
+    .reveal .slide ul,
+    .reveal .slide ol {
+      margin-bottom: 0.5em;
+    }
+    .reveal .slide ul li,
+    .reveal .slide ol li {
+      margin-top: 0.4em;
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide ul[role="tablist"] li {
+      margin-bottom: 0;
+    }
+    .reveal .slide ul li > *:first-child,
+    .reveal .slide ol li > *:first-child {
+      margin-block-start: 0;
+    }
+    .reveal .slide ul li > *:last-child,
+    .reveal .slide ol li > *:last-child {
+      margin-block-end: 0;
+    }
+    .reveal .slide .columns:nth-child(3) {
+      margin-block-start: 0.8em;
+    }
+    .reveal blockquote {
+      box-shadow: none;
+    }
+    .reveal .tippy-content>* {
+      margin-top: 0.2em;
+      margin-bottom: 0.7em;
+    }
+    .reveal .tippy-content>*:last-child {
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide > img.stretch.quarto-figure-center,
+    .reveal .slide > img.r-stretch.quarto-figure-center {
+      display: block;
+      margin-left: auto;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-left,
+    .reveal .slide > img.r-stretch.quarto-figure-left  {
+      display: block;
+      margin-left: 0;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-right,
+    .reveal .slide > img.r-stretch.quarto-figure-right  {
+      display: block;
+      margin-left: auto;
+      margin-right: 0; 
+    }
+  </style>
+</head>
+<body class="quarto-light">
+  <div class="reveal">
+    <div class="slides">
+
+<section id="title-slide" data-background-image="img/docker_ship.jpg" data-background-opacity="0.5" data-background-size="contain" class="quarto-title-block center">
+  <h1 class="title">Dockerfiles</h1>
+
+<div class="quarto-title-authors">
+<div class="quarto-title-author">
+<div class="quarto-title-author-name">
+MSDE 
+</div>
+        <p class="quarto-title-affiliation">
+            Lviv University
+          </p>
+    </div>
+</div>
+
+</section>
+<section>
+<section id="dockerfile" class="title-slide slide level1 center">
+<h1>Dockerfile</h1>
+
+</section>
+<section id="dockerfile-1" class="slide level2">
+<h2>Dockerfile</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>What is it?</strong></p>
+</div>
+<div class="callout-content">
+<p>An <strong>automated</strong> way to construct images, as opposed to <strong>manually</strong> executing commands in a shell.</p>
+<ul>
+<li>A Dockerfile is a build recipe for a Docker image.</li>
+<li>It contains a series of instructions telling Docker how an image is constructed.</li>
+<li>The docker build command builds an image from a Dockerfile.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="dockerfile-2" class="slide level2">
+<h2>Dockerfile</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Creating a Dockerfile</strong></p>
+</div>
+<div class="callout-content">
+<p>Our Dockerfile must be in a new, empty directory.</p>
+<p>Create a directory to hold our Dockerfile.</p>
+<pre><code>$ mkdir myimage</code></pre>
+<p>Create a Dockerfile inside this directory.</p>
+<pre><code>$ cd myimage
+$ nvim Dockerfile</code></pre>
+<p>You can use whatever editor you like.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="dockerfile-3" class="slide level2">
+<h2>Dockerfile</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Contents</strong></p>
+</div>
+<div class="callout-content">
+<pre><code>FROM ubuntu
+RUN apt-get update
+RUN apt-get install figlet</code></pre>
+<ul>
+<li><span style="color:blue;">FROM</span> indicates the base image for our build.</li>
+<li>Each <span style="color:blue;">RUN</span> line will be executed by Docker during the build.</li>
+<li>Our <span style="color:blue;">RUN</span> commands must be non-interactive. (No input can be provided to Docker during the build.)</li>
+</ul>
+<p>In many cases, we will add the <code>-y</code> flag to <code>apt-get</code>.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="dockerfile-4" class="slide level2">
+<h2>Dockerfile</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Building</strong></p>
+</div>
+<div class="callout-content">
+<p>Save our file, then execute:</p>
+<pre><code>$ docker build -t figlet .</code></pre>
+<ul>
+<li><code>-t</code> indicates the tag to apply to the image.</li>
+<li><code>.</code> indicates the location of the build context. We will talk more about the build context later. To keep things simple for now: this is the directory where our <code>Dockerfile</code> is located.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="dockerfile-5" class="slide level2">
+<h2>Dockerfile</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Full log</strong></p>
+</div>
+<div class="callout-content">
+<pre><code>[+] Building 9.3s (8/8) FINISHED                                                                                                                                                                docker:desktop-linux
+ =&gt; [internal] load build definition from Dockerfile                                                                                                                                                            0.0s
+ =&gt; =&gt; transferring dockerfile: 95B                                                                                                                                                                             0.0s
+ =&gt; [internal] load metadata for docker.io/library/ubuntu:latest                                                                                                                                                0.1s
+ =&gt; [internal] load .dockerignore                                                                                                                                                                               0.0s
+ =&gt; =&gt; transferring context: 2B                                                                                                                                                                                 0.0s
+ =&gt; [1/3] FROM docker.io/library/ubuntu:latest@sha256:353675e2a41babd526e2b837d7ec780c2a05bca0164f7ea5dbbd433d21d166fc                                                                                          3.5s
+ =&gt; =&gt; resolve docker.io/library/ubuntu:latest@sha256:353675e2a41babd526e2b837d7ec780c2a05bca0164f7ea5dbbd433d21d166fc                                                                                          3.4s
+ =&gt; [auth] library/ubuntu:pull token for registry-1.docker.io                                                                                                                                                   0.0s
+ =&gt; [2/3] RUN apt-get update                                                                                                                                                                                    2.9s
+ =&gt; [3/3] RUN apt-get install figlet                                                                                                                                                                            1.3s
+ =&gt; exporting to image                                                                                                                                                                                          1.6s
+ =&gt; =&gt; exporting layers                                                                                                                                                                                         1.3s
+ =&gt; =&gt; exporting manifest sha256:0d82650ef2fb2b1107ee3332b4e9167a3da20e4368b8a74764827a3091819ec9                                                                                                               0.0s
+ =&gt; =&gt; exporting config sha256:474cb85cf40523c5ac0e1d337e8d97e2d3f9a3e24407a8680fd033d1820e9644                                                                                                                 0.0s
+ =&gt; =&gt; exporting attestation manifest sha256:8c2c8be4e7e3253c54cdc1b68d50dd79dad45c73625a3517c7e79ec4ae2220ea                                                                                                   0.0s
+ =&gt; =&gt; exporting manifest list sha256:6447daabcad8e301a8e7920b201c41f4ffc9889445c10d06050c085fd73ab8ea                                                                                                          0.0s
+ =&gt; =&gt; naming to docker.io/library/figlet:latest                                                                                                                                                                0.0s
+ =&gt; =&gt; unpacking to docker.io/library/figlet:latest</code></pre>
+</div>
+</div>
+</div>
+</section>
+<section id="dockerfile-6" class="slide level2">
+<h2>Dockerfile</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Steps</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>BuildKit transfers the Dockerfile and the build context (these are the first two [internal] stages)</p></li>
+<li><p>Then it executes the steps defined in the Dockerfile ([1/3], [2/3], [3/3])</p></li>
+<li><p>Finally, it exports the result of the build (image definition + collection of layers)</p></li>
+</ul>
+</div>
+</div>
+</div>
+
+<aside><div>
+<p>In a CI, the output will be different. Revert to old output with <code>--progress=plain</code>.</p>
+</div></aside></section>
+<section id="dockerfile-7" class="slide level2">
+<h2>Dockerfile</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Caching system</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>After each build step, Docker takes a snapshot of the resulting image.</li>
+<li>Before executing a step, Docker checks if it has already built the same sequence.</li>
+<li>Docker uses the exact strings defined in your Dockerfile, so:
+<ul>
+<li><code>RUN apt-get install figlet cowsay</code></li>
+<li>is different from</li>
+<li><code>RUN apt-get install cowsay figlet</code></li>
+</ul></li>
+</ul>
+<p><code>RUN apt-get update</code> is not re-executed when the mirrors are updated</p>
+<p>You can force a rebuild with <code>docker build --no-cache ....</code></p>
+</div>
+</div>
+</div>
+</section>
+<section id="dockerfile-8" class="slide level2">
+<h2>Dockerfile</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Result</strong></p>
+</div>
+<div class="callout-content">
+<p>Identical to manual:</p>
+<pre><code>docker run -it figlet
+root@25ac5862b142:/# figlet hey
+ _
+| |__   ___ _   _
+| '_ \ / _ \ | | |
+| | | |  __/ |_| |
+|_| |_|\___|\__, |
+            |___/
+root@25ac5862b142:/#</code></pre>
+</div>
+</div>
+</div>
+</section>
+<section id="dockerfile-9" class="slide level2">
+<h2>Dockerfile</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Image history</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>The history command lists all the layers composing an image.</li>
+<li>For each layer, it shows its creation time, size, and creation command.</li>
+<li>When an image was built with a Dockerfile, each layer corresponds to a line of the Dockerfile.</li>
+</ul>
+<pre><code>docker history figlet
+IMAGE          CREATED        CREATED BY                                      SIZE      COMMENT
+6447daabcad8   19 hours ago   RUN /bin/sh -c apt-get install figlet # buil…   1.34MB    buildkit.dockerfile.v0
+&lt;missing&gt;      19 hours ago   RUN /bin/sh -c apt-get update # buildkit        56.4MB    buildkit.dockerfile.v0
+&lt;missing&gt;      12 days ago    /bin/sh -c #(nop)  CMD ["/bin/bash"]            0B
+&lt;missing&gt;      12 days ago    /bin/sh -c #(nop) ADD file:4e55519deacaaab35…   110MB
+&lt;missing&gt;      12 days ago    /bin/sh -c #(nop)  LABEL org.opencontainers.…   0B
+&lt;missing&gt;      12 days ago    /bin/sh -c #(nop)  LABEL org.opencontainers.…   0B
+&lt;missing&gt;      12 days ago    /bin/sh -c #(nop)  ARG LAUNCHPAD_BUILD_ARCH     0B
+&lt;missing&gt;      12 days ago    /bin/sh -c #(nop)  ARG RELEASE                  0B</code></pre>
+</div>
+</div>
+</div>
+</section>
+<section id="dockerfile-10" class="slide level2">
+<h2>Dockerfile</h2>
+<div class="callout callout-note callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Why sh -c?</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>On UNIX, to start a new program, we need two system calls:
+<ul>
+<li>fork(), to create a new child process;</li>
+<li>execve(), to replace the new child process with the program to run.</li>
+</ul></li>
+<li>Conceptually, execve() works like this:
+<ul>
+<li><code>execve(program, [list, of, arguments])</code></li>
+</ul></li>
+<li>When we run a command, e.g.&nbsp;<code>ls -l /tmp</code>, something needs to parse the command. (i.e.&nbsp;split the program and its arguments into a list.)</li>
+<li>The shell is usually doing that. (It also takes care of expanding environment variables and special things like <code>~</code>.)</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="dockerfile-11" class="slide level2">
+<h2>Dockerfile</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Exec syntax</strong></p>
+</div>
+<div class="callout-content">
+<p>Docker can parse the command by itself.</p>
+<p>Instead of plain string, or <strong>shell syntax</strong>:</p>
+<pre><code>RUN apt-get install figlet</code></pre>
+<p>we can use JSON list, or <strong>exec syntax</strong>:</p>
+<pre><code>RUN ["apt-get", "install", "figlet"]</code></pre>
+</div>
+</div>
+</div>
+</section>
+<section id="dockerfile-12" class="slide level2">
+<h2>Dockerfile</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Check exec syntax</strong></p>
+</div>
+<div class="callout-content">
+<ol type="1">
+<li>Change Dockerfile to</li>
+</ol>
+<pre><code>FROM ubuntu
+RUN apt-get update
+RUN ["apt-get", "install", "figlet"]</code></pre>
+<ol start="2" type="1">
+<li>Build it:</li>
+</ol>
+<pre><code>docker build -t figlet .</code></pre>
+<ol start="3" type="1">
+<li>Check history:</li>
+</ol>
+<pre><code>$ docker history figlet
+IMAGE          CREATED         CREATED BY                                      SIZE      COMMENT
+18c1be63d556   4 seconds ago   RUN apt-get install figlet # buildkit           1.34MB    buildkit.dockerfile.v0
+&lt;missing&gt;      19 hours ago    RUN /bin/sh -c apt-get update # buildkit        56.4MB    buildkit.dockerfile.v0
+...</code></pre>
+<p>Exact command!</p>
+</div>
+</div>
+</div>
+</section></section>
+<section>
+<section id="cmd-and-entrypoint" class="title-slide slide level1 center">
+<h1>CMD and ENTRYPOINT</h1>
+
+</section>
+<section id="cmd-and-entrypoint-1" class="slide level2">
+<h2>CMD and ENTRYPOINT</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Default commands</strong></p>
+</div>
+<div class="callout-content">
+<p>When people run our container, we want to greet them with a nice hello message, and using a custom font.</p>
+<p>For that, we will execute:</p>
+<pre><code>figlet -f script hello</code></pre>
+<p><code>-f script</code> tells figlet to use a fancy font.</p>
+<p><code>hello</code> is the message that we want it to display.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="cmd-and-entrypoint-2" class="slide level2">
+<h2>CMD and ENTRYPOINT</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Adding CMD to Dockerfile</strong></p>
+</div>
+<div class="callout-content">
+<p>Our new Dockerfile will look like this:</p>
+<pre><code>FROM ubuntu
+RUN apt-get update
+RUN ["apt-get", "install", "figlet"]
+CMD figlet -f script hello
+CMD defines a default command to run when none is given.</code></pre>
+<p>It can appear at any point in the file.</p>
+<p>Each CMD will replace and override the previous one. As a result, while you can have multiple CMD lines, it is useless.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="cmd-and-entrypoint-3" class="slide level2">
+<h2>CMD and ENTRYPOINT</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Build and run</strong></p>
+</div>
+<div class="callout-content">
+<pre><code>$ docker build -t figlet .
+[+] Building 3.4s (8/8) FINISHED                                                                                                                                                                docker:desktop-linux
+...
+$ docker run -it figlet
+ _          _   _
+| |        | | | |
+| |     _  | | | |  __
+|/ \   |/  |/  |/  /  \_
+|   |_/|__/|__/|__/\__/
+</code></pre>
+</div>
+</div>
+</div>
+</section>
+<section id="cmd-and-entrypoint-4" class="slide level2">
+<h2>CMD and ENTRYPOINT</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>CMD override</strong></p>
+</div>
+<div class="callout-content">
+<p>If we want to get a shell into our container (instead of running figlet), we just have to specify a different program to run:</p>
+<pre><code>$ docker run -it figlet bash
+root@3e95f6bafdd9:/#</code></pre>
+<p>We specified bash.</p>
+<p>It replaced the value of CMD.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="cmd-and-entrypoint-5" class="slide level2">
+<h2>CMD and ENTRYPOINT</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Using ENTRYPOINT</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>Objective:</strong> we want to be able to specify a different message on the command line, while retaining figlet and some default parameters.</p>
+<p>In other words, we would like to be able to do this:</p>
+<pre><code>$ docker run figlet salut
+           _            
+          | |           
+ ,   __,  | |       _|_ 
+/ \_/  |  |/  |   |  |  
+ \/ \_/|_/|__/ \_/|_/|_/</code></pre>
+<p>We will use the ENTRYPOINT verb in Dockerfile.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="cmd-and-entrypoint-6" class="slide level2">
+<h2>CMD and ENTRYPOINT</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Dockerfile with ENTRYPOINT</strong></p>
+</div>
+<div class="callout-content">
+<p>Our new Dockerfile will look like this:</p>
+<pre><code>FROM ubuntu
+RUN apt-get update
+RUN ["apt-get", "install", "figlet"]
+ENTRYPOINT ["figlet", "-f", "script"]</code></pre>
+<ul>
+<li>ENTRYPOINT defines a base command (and its parameters) for the container.</li>
+<li>The command line arguments are appended to those parameters.</li>
+<li>Like CMD, ENTRYPOINT can appear anywhere, and replaces the previous value.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="cmd-and-entrypoint-7" class="slide level2">
+<h2>CMD and ENTRYPOINT</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Build</strong></p>
+</div>
+<div class="callout-content">
+<pre><code>docker build -t figlet .
+[+] Building 0.1s (7/7) FINISHED                                                                                                                                                                docker:desktop-linux
+...
+$ docker run figlet salve
+           _
+          | |
+ ,   __,  | |       _
+/ \_/  |  |/  |  |_|/
+ \/ \_/|_/|__/ \/  |__/
+
+</code></pre>
+</div>
+</div>
+</div>
+</section>
+<section id="cmd-and-entrypoint-8" class="slide level2">
+<h2>CMD and ENTRYPOINT</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Using CMD and ENTRYPOING together</strong></p>
+</div>
+<div class="callout-content">
+<p>If we use ENTRYPOINT and CMD together:</p>
+<ul>
+<li>ENTRYPOINT will define the base command for our container.</li>
+<li>CMD will define the default parameter(s) for this command.</li>
+<li>They both have to use JSON syntax.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="cmd-and-entrypoint-9" class="slide level2">
+<h2>CMD and ENTRYPOINT</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Dockerfile</strong></p>
+</div>
+<div class="callout-content">
+<pre><code>FROM ubuntu
+RUN apt-get update
+RUN ["apt-get", "install", "figlet"]
+ENTRYPOINT ["figlet", "-f", "script"]
+CMD ["hello world"]</code></pre>
+<ul>
+<li><code>ENTRYPOINT</code> defines a base command (and its parameters) for the container.</li>
+<li>If we don’t specify extra command-line arguments when starting the container, the value of <code>CMD</code> is appended.</li>
+<li>Otherwise, our extra command-line arguments are used instead of <code>CMD.</code></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="cmd-and-entrypoint-10" class="slide level2">
+<h2>CMD and ENTRYPOINT</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Build and run</strong></p>
+</div>
+<div class="callout-content">
+<ol type="1">
+<li>Build:</li>
+</ol>
+<pre><code>$ docker build -t myfiglet .
+[+] Building 0.1s (7/7) FINISHED
+...</code></pre>
+<ol start="2" type="1">
+<li>Run without parameters:</li>
+</ol>
+<pre><code>$ docker run myfiglet
+ _          _   _                             _
+| |        | | | |                           | |    |
+| |     _  | | | |  __             __   ,_   | |  __|
+|/ \   |/  |/  |/  /  \_  |  |  |_/  \_/  |  |/  /  |
+|   |_/|__/|__/|__/\__/    \/ \/  \__/    |_/|__/\_/|_/
+
+
+</code></pre>
+</div>
+</div>
+</div>
+</section>
+<section id="cmd-and-entrypoint-11" class="slide level2">
+<h2>CMD and ENTRYPOINT</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Build and run</strong></p>
+</div>
+<div class="callout-content">
+<ol start="3" type="1">
+<li>Run with parameters:</li>
+</ol>
+<pre><code>$ docker run myfiglet hey
+ _
+| |
+| |     _
+|/ \   |/  |   |
+|   |_/|__/ \_/|/
+              /|
+              \|
+</code></pre>
+</div>
+</div>
+</div>
+</section>
+<section id="cmd-and-entrypoint-12" class="slide level2">
+<h2>CMD and ENTRYPOINT</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>ENTRYPOINT override</strong></p>
+</div>
+<div class="callout-content">
+<p>What if we want to run a shell in our container?</p>
+<p>We cannot just do <code>docker run myfiglet bash</code> because that would just tell figlet to display the word “bash.”</p>
+<p>We use the <code>--entrypoint</code> parameter:</p>
+<pre><code>$ docker run -it --entrypoint bash myfiglet
+root@0e2f53d52f7d:/#
+</code></pre>
+</div>
+</div>
+</div>
+</section>
+<section id="cmd-and-entrypoint-13" class="slide level2">
+<h2>CMD and ENTRYPOINT</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>CMD and ENTRYPOINT recap</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><code>docker run myimage</code> executes <code>ENTRYPOINT</code> + <code>CMD</code></li>
+<li><code>docker run myimage args</code> executes <code>ENTRYPOINT</code> + <code>args</code> (overriding <code>CMD</code>)</li>
+<li><code>docker run --entrypoint prog myimage</code> executes <code>prog</code> (overriding both)</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="cmd-and-entrypoint-14" class="slide level2 font6 scrollable">
+<h2>CMD and ENTRYPOINT</h2>
+<table class="caption-top">
+<colgroup>
+<col style="width: 37%">
+<col style="width: 21%">
+<col style="width: 21%">
+<col style="width: 18%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Command</th>
+<th><code>ENTRYPOINT</code></th>
+<th><code>CMD</code></th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>docker run figlet</code></td>
+<td>none</td>
+<td>none</td>
+<td>Use values from base image (<code>bash</code>)</td>
+</tr>
+<tr class="even">
+<td><code>docker run figlet hola</code></td>
+<td>none</td>
+<td>none</td>
+<td>Error (executable <code>hola</code> not found)</td>
+</tr>
+<tr class="odd">
+<td><code>docker run figlet</code></td>
+<td><code>figlet -f script</code></td>
+<td>none</td>
+<td><code>figlet -f script</code></td>
+</tr>
+<tr class="even">
+<td><code>docker run figlet hola</code></td>
+<td><code>figlet -f script</code></td>
+<td>none</td>
+<td><code>figlet -f script hola</code></td>
+</tr>
+<tr class="odd">
+<td><code>docker run figlet</code></td>
+<td>none</td>
+<td><code>figlet -f script</code></td>
+<td><code>figlet -f script</code></td>
+</tr>
+<tr class="even">
+<td><code>docker run figlet hola</code></td>
+<td>none</td>
+<td><code>figlet -f script</code></td>
+<td>Error (executable <code>hola</code> not found)</td>
+</tr>
+<tr class="odd">
+<td><code>docker run figlet</code></td>
+<td><code>figlet -f script</code></td>
+<td><code>hello</code></td>
+<td><code>figlet -f script hello</code></td>
+</tr>
+<tr class="even">
+<td><code>docker run figlet hola</code></td>
+<td><code>figlet -f script</code></td>
+<td><code>hello</code></td>
+<td><code>figlet -f script hola</code></td>
+</tr>
+</tbody>
+</table>
+</section></section>
+<section>
+<section id="copying-files-during-the-build" class="title-slide slide level1 center">
+<h1>Copying files during the build</h1>
+
+</section>
+<section id="copying-files-during-the-build-1" class="slide level2">
+<h2>Copying files during the build</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Objectives</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>So far, we have installed things in our container images by <strong>downloading packages</strong>.</li>
+<li>We can also copy files from the <strong>build context</strong> to the container that we are building.</li>
+<li>The build context is the directory containing the Dockerfile.</li>
+<li>for that we use a new Dockerfile keyword: <code>COPY</code>.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="copying-files-during-the-build-2" class="slide level2">
+<h2>Copying files during the build</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Building C code</strong></p>
+</div>
+<div class="callout-content">
+<p>We want to build a container that compiles a basic “Hello world” program in C.</p>
+<p>Here is the program, <code>hello.c</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode numberSource c number-lines code-with-copy"><code class="sourceCode c"><span id="cb25-1"><a></a><span class="dt">int</span> main <span class="op">()</span> <span class="op">{</span></span>
+<span id="cb25-2"><a></a>  puts<span class="op">(</span><span class="st">"Hello, world!"</span><span class="op">);</span></span>
+<span id="cb25-3"><a></a>  <span class="cf">return</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb25-4"><a></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Let’s create a new directory, and put this file in there.</p>
+<p>Then we will write the Dockerfile.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="copying-files-during-the-build-3" class="slide level2">
+<h2>Copying files during the build</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Dockerfile for building</strong></p>
+</div>
+<div class="callout-content">
+<p>On Debian and Ubuntu, the package <code>build-essential</code> will get us a compiler.</p>
+<p>When installing it, don’t forget to specify the <code>-y</code> flag, otherwise the build will fail (since the build cannot be interactive).</p>
+<p>Then we will use COPY to place the source file into the container.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb26-1"><a></a><span class="kw">FROM</span> ubuntu</span>
+<span id="cb26-2"><a></a><span class="kw">RUN</span> [<span class="st">"apt-get"</span>, <span class="st">"update"</span>]</span>
+<span id="cb26-3"><a></a><span class="kw">RUN</span> [<span class="st">"apt-get"</span>, <span class="st">"install"</span>, <span class="st">"-y"</span>, <span class="st">"build-essential"</span>]</span>
+<span id="cb26-4"><a></a><span class="kw">COPY</span> hello.c /</span>
+<span id="cb26-5"><a></a><span class="kw">RUN</span> <span class="fu">make</span> hello</span>
+<span id="cb26-6"><a></a><span class="kw">CMD</span> <span class="ex">/hello</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Create this Dockerfile.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="copying-files-during-the-build-4" class="slide level2">
+<h2>Copying files during the build</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Testing our C program</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>Create hello.c and Dockerfile in the same directory.</li>
+<li>Run <code>docker build -t hello .</code> in this directory.</li>
+<li>Run <code>docker run hello</code>, you should see <code>Hello, world!</code>.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="copying-files-during-the-build-5" class="slide level2">
+<h2>Copying files during the build</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>COPY and the build cache</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>Run the build again.</li>
+<li>Now, modify <code>hello.c</code> and run the build again.</li>
+<li>Docker can cache steps involving <code>COPY</code>.</li>
+<li>Those steps will not be executed again if the files haven’t been changed.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="copying-files-during-the-build-6" class="slide level2">
+<h2>Copying files during the build</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Details</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>We can COPY whole directories recursively It is possible to do e.g.&nbsp;<code>COPY . .</code> (but it might require some extra precautions to avoid copying too much)</p></li>
+<li><p>In older Dockerfiles, you might see the <code>ADD</code> command; consider it deprecated (it is similar to <code>COPY</code> but can automatically extract archives)</p></li>
+<li><p>If we really wanted to compile C code in a container, we would:</p>
+<ul>
+<li>place it in a different directory, with the <code>WORKDIR</code> instruction</li>
+<li>even better, use the gcc official image</li>
+</ul></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="copying-files-during-the-build-7" class="slide level2">
+<h2>Copying files during the build</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>.dockerignore</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>We can create a file named <code>.dockerignore</code> (at the top-level of the build context)</li>
+<li>It can contain file names and globs to ignore</li>
+<li>They won’t be sent to the builder (and won’t end up in the resulting image)</li>
+<li>See the documentation for the little details (exceptions can be made with <code>!</code>, multiple directory levels with <code>**</code>…)</li>
+</ul>
+</div>
+</div>
+</div>
+</section></section>
+<section>
+<section id="exercise-writing-dockerfiles" class="title-slide slide level1 center">
+<h1>Exercise — writing Dockerfiles</h1>
+
+</section>
+<section id="exercise-writing-dockerfiles-1" class="slide level2">
+<h2>Exercise — writing Dockerfiles</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Exercise — writing Dockerfiles</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>Let’s write Dockerfiles for an existing application!</li>
+<li>Check out the code repository</li>
+<li>Read all the instructions</li>
+<li>Write Dockerfiles</li>
+<li>Build and test them individually</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="exercise-writing-dockerfiles-3" class="slide level2">
+<h2>Exercise — writing Dockerfiles</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Code repository</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>Clone the repository available at <a href="https://github.com/jpetazzo/wordsmith" class="uri">https://github.com/jpetazzo/wordsmith</a> It should look like this:</li>
+</ul>
+<pre><code>├── LICENSE
+├── README
+├── db/
+│   └── words.sql
+├── web/
+│   ├── dispatcher.go
+│   └── static/
+└── words/
+    ├── pom.xml
+    └── src/</code></pre>
+</div>
+</div>
+</div>
+</section>
+<section id="exercise-writing-dockerfiles-4" class="slide level2">
+<h2>Exercise — writing Dockerfiles</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Instructions</strong></p>
+</div>
+<div class="callout-content">
+<p>The repository contains instructions in English and French. <br> For now, we only care about the first part (about writing Dockerfiles). <br> Place each Dockerfile in its own directory, like this:</p>
+<pre><code>├── LICENSE
+├── README
+├── db/
+│   ├── Dockerfile
+│   └── words.sql
+├── web/
+│   ├── Dockerfile
+│   ├── dispatcher.go
+│   └── static/
+└── words/
+    ├── Dockerfile
+    ├── pom.xml
+    └── src/</code></pre>
+</div>
+</div>
+</div>
+</section>
+<section id="exercise-writing-dockerfiles-5" class="slide level2">
+<h2>Exercise — writing Dockerfiles</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Build and test</strong></p>
+</div>
+<div class="callout-content">
+<p>Build and run each Dockerfile individually.</p>
+<p>For <code>db</code>, we should be able to see some messages confirming that the data set was loaded successfully (some <code>INSERT</code> lines in the container output).</p>
+<p>For <code>web</code> and <code>words</code>, we should be able to see some message looking like “server started successfully”.</p>
+<p>That’s all we care about for now!</p>
+<p>Bonus question: make sure that each container stops correctly when hitting Ctrl-C.</p>
+</div>
+</div>
+</div>
+</section></section>
+<section>
+<section id="reducing-image-size" class="title-slide slide level1 center">
+<h1>Reducing image size</h1>
+
+</section>
+<section id="reducing-image-size-1" class="slide level2">
+<h2>Reducing image size</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Size consideration</strong></p>
+</div>
+<div class="callout-content">
+<p>In the previous example, our final image contained:</p>
+<ul>
+<li>our hello program</li>
+<li>its source code</li>
+<li>the compiler</li>
+</ul>
+<p>Only the first one is strictly necessary.</p>
+<p>We are going to see how to obtain an image without the superfluous components.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="reducing-image-size-2" class="slide level2">
+<h2>Reducing image size</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Can’t we remove superfluous files with <code>RUN</code>?</strong></p>
+</div>
+<div class="callout-content">
+<p>What happens if we do one of the following commands?</p>
+<ul>
+<li><p><code>RUN rm -rf ...</code></p></li>
+<li><p><code>RUN apt-get remove ...</code></p></li>
+<li><p><code>RUN make clean ...</code></p></li>
+</ul>
+<p>This adds a layer which removes a bunch of files. But the previous layers (which added the files) still exist.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="reducing-image-size-3" class="slide level2">
+<h2>Reducing image size</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Removing files with an extra layer</strong></p>
+</div>
+<div class="callout-content">
+<p>When downloading an image, all the layers must be downloaded.</p>
+<div class="font8">
+<table class="caption-top">
+<colgroup>
+<col style="width: 52%">
+<col style="width: 23%">
+<col style="width: 23%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Dockerfile instruction</th>
+<th>Layer size</th>
+<th>Image size</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>FROM ubuntu</code></td>
+<td>Size of base image</td>
+<td>Size of base image</td>
+</tr>
+<tr class="even">
+<td><code>...</code></td>
+<td>…</td>
+<td>Sum of this layer <br>+ all previous ones</td>
+</tr>
+<tr class="odd">
+<td><code>RUN apt-get install somepackage</code></td>
+<td>Size of files added <br>(e.g.&nbsp;a few MB)</td>
+<td>Sum of this layer <br>+ all previous ones</td>
+</tr>
+<tr class="even">
+<td><code>...</code></td>
+<td>…</td>
+<td>Sum of this layer <br>+ all previous ones</td>
+</tr>
+<tr class="odd">
+<td><code>RUN apt-get remove somepackage</code></td>
+<td>Almost zero <br>(just metadata)</td>
+<td>Same as previous one</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Therefore, <code>RUN rm</code> does not reduce the size of the image or free up disk space.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="reducing-image-size-4" class="slide level2">
+<h2>Reducing image size</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Removing unnecessary files</strong></p>
+</div>
+<div class="callout-content">
+<p>Various techniques are available to obtain smaller images:</p>
+<ul>
+<li><p>collapsing layers,</p></li>
+<li><p>adding binaries that are built outside of the Dockerfile,</p></li>
+<li><p>squashing the final image,</p></li>
+<li><p>multi-stage builds.</p></li>
+</ul>
+<p>Let’s review them quickly.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="reducing-image-size-5" class="slide level2">
+<h2>Reducing image size</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Collapsing layers</strong></p>
+</div>
+<div class="callout-content">
+<p>You will frequently see Dockerfiles like this:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb29-1"><a></a><span class="kw">FROM</span> ubuntu</span>
+<span id="cb29-2"><a></a><span class="kw">RUN</span> <span class="ex">apt-get</span> update <span class="kw">&amp;&amp;</span> <span class="ex">apt-get</span> install xxx <span class="kw">&amp;&amp;</span> <span class="ex">...</span> <span class="kw">&amp;&amp;</span> <span class="ex">apt-get</span> remove xxx <span class="kw">&amp;&amp;</span> <span class="ex">...</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Or the (more readable) variant:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb30-1"><a></a><span class="kw">FROM</span> ubuntu</span>
+<span id="cb30-2"><a></a><span class="kw">RUN</span> <span class="ex">apt-get</span> update <span class="dt">\</span></span>
+<span id="cb30-3"><a></a> <span class="kw">&amp;&amp;</span> <span class="ex">apt-get</span> install xxx <span class="dt">\</span></span>
+<span id="cb30-4"><a></a> <span class="kw">&amp;&amp;</span> <span class="ex">...</span> <span class="dt">\</span></span>
+<span id="cb30-5"><a></a> <span class="kw">&amp;&amp;</span> <span class="ex">apt-get</span> remove xxx <span class="dt">\</span></span>
+<span id="cb30-6"><a></a> <span class="kw">&amp;&amp;</span> <span class="ex">...</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This <code>RUN</code> command gives us a single layer.</p>
+<p>The files that are added, then removed in the same layer, do not grow the layer size.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="reducing-image-size-6" class="slide level2">
+<h2>Reducing image size</h2>
+<h4 id="collapsing-layers-pros-and-cons">Collapsing layers: pros and cons</h4>
+<div class="columns">
+<div class="column" data-background-color="lightgray" style="width:50%;">
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Pros:</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>works on all versions of Docker</p></li>
+<li><p>doesn’t require extra tools</p></li>
+</ul>
+</div>
+</div>
+</div>
+</div><div class="column" data-background-color="lightgray" style="width:50%;">
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Cons:</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>not very readable</p></li>
+<li><p>some unnecessary files might still remain if the cleanup is not thorough</p></li>
+<li><p>that layer is expensive (slow to build)</p></li>
+</ul>
+</div>
+</div>
+</div>
+</div></div>
+</section>
+<section id="reducing-image-size-7" class="slide level2">
+<h2>Reducing image size</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Building binaries outside of the Dockerfile</strong></p>
+</div>
+<div class="callout-content">
+<p>This results in a Dockerfile looking like this:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb31-1"><a></a><span class="kw">FROM</span> ubuntu</span>
+<span id="cb31-2"><a></a><span class="kw">COPY</span> xxx /usr/local/bin</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Of course, this implies that the file <code>xxx</code> exists in the build context.</p>
+<p>That file has to exist before you can run <code>docker build</code>.</p>
+<p>For instance, it can:</p>
+<ul>
+<li>exist in the code repository,</li>
+<li>be created by another tool (script, Makefile…),</li>
+<li>be created by another container image and extracted from the image.</li>
+</ul>
+<p>See for instance the <a href="https://github.com/docker-library/busybox/blob/fe634680e32659aaf0ee0594805f74f332619a90/musl/Dockerfile">busybox official image</a> or this <a href="https://github.com/jpetazzo/docker-busybox">older busybox image</a>.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="reducing-image-size-8" class="slide level2">
+<h2>Reducing image size</h2>
+<h4 id="building-binaries-outside-pros-and-cons">Building binaries outside: pros and cons</h4>
+<div class="columns">
+<div class="column" data-background-color="lightgray" style="width:50%;">
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Pros:</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>final image can be very small</li>
+</ul>
+</div>
+</div>
+</div>
+</div><div class="column" data-background-color="lightgray" style="width:50%;">
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Cons:</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>requires an extra build tool</p></li>
+<li><p>we’re back in dependency hell and “works on my machine”</p></li>
+</ul>
+<p>if binary is added to code repository:</p>
+<ul>
+<li><p>breaks portability across different platforms</p></li>
+<li><p>grows repository size a lot if the binary is updated frequently</p></li>
+</ul>
+</div>
+</div>
+</div>
+</div></div>
+</section>
+<section id="reducing-image-size-9" class="slide level2">
+<h2>Reducing image size</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Squashing the final image</strong></p>
+</div>
+<div class="callout-content">
+<p>The idea is to transform the final image into a single-layer image.</p>
+<p>This can be done in (at least) two ways.</p>
+<ul>
+<li><p>Activate experimental features and squash the final image:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb32"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb32-1"><a></a><span class="ex">docker</span> image build <span class="at">--squash</span> ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<li><p>Export/import the final image.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb33"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb33-1"><a></a><span class="ex">docker</span> build <span class="at">-t</span> temp-image .</span>
+<span id="cb33-2"><a></a><span class="ex">docker</span> run <span class="at">--entrypoint</span> true <span class="at">--name</span> temp-container temp-image</span>
+<span id="cb33-3"><a></a><span class="ex">docker</span> export temp-container <span class="kw">|</span> <span class="ex">docker</span> import <span class="at">-</span> final-image</span>
+<span id="cb33-4"><a></a><span class="ex">docker</span> rm temp-container</span>
+<span id="cb33-5"><a></a><span class="ex">docker</span> rmi temp-image</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="reducing-image-size-10" class="slide level2">
+<h2>Reducing image size</h2>
+<h4 id="squashing-the-image-pros-and-cons">Squashing the image: pros and cons</h4>
+<div class="columns">
+<div class="column" data-background-color="lightgray" style="width:50%;">
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Pros:</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>single-layer images are smaller and faster to download</p></li>
+<li><p>removed files no longer take up storage and network resources</p></li>
+</ul>
+</div>
+</div>
+</div>
+</div><div class="column" data-background-color="lightgray" style="width:50%;">
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Cons:</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>we still need to actively remove unnecessary files</p></li>
+<li><p>squash operation can take a lot of time (on big images)</p></li>
+<li><p>squash operation does not benefit from cache <br> (even if we change just a tiny file, the whole image needs to be re-squashed)</p></li>
+</ul>
+</div>
+</div>
+</div>
+</div></div>
+</section>
+<section id="reducing-image-size-11" class="slide level2">
+<h2>Reducing image size</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Multi-stage builds</strong></p>
+</div>
+<div class="callout-content">
+<p>Multi-stage builds allow us to have multiple <em>stages</em>.</p>
+<p>Each stage is a separate image, and can copy files from previous stages.</p>
+<p>We’re going to see how they work in more detail.</p>
+</div>
+</div>
+</div>
+</section></section>
+<section>
+<section id="multi-stage-builds-1" class="title-slide slide level1 center">
+<h1>Multi-stage builds</h1>
+
+</section>
+<section id="multi-stage-builds-2" class="slide level2">
+<h2>Multi-stage builds</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Description</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>At any point in our <code>Dockerfile</code>, we can add a new <code>FROM</code> line.</p></li>
+<li><p>This line starts a new stage of our build.</p></li>
+<li><p>Each stage can access the files of the previous stages with <code>COPY --from=...</code>.</p></li>
+<li><p>When a build is tagged (with <code>docker build -t ...</code>), the last stage is tagged.</p></li>
+<li><p>Previous stages are not discarded: they will be used for caching, and can be referenced.</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="multi-stage-builds-3" class="slide level2">
+<h2>Multi-stage builds</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Multi-stage builds in practice</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>Each stage is numbered, starting at <code>0</code></p></li>
+<li><p>We can copy a file from a previous stage by indicating its number, e.g.:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb34-1"><a></a><span class="kw">COPY</span> <span class="op">--from=0</span> /file/from/first/stage /location/in/current/stage</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<li><p>We can also name stages, and reference these names:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb35"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb35-1"><a></a><span class="kw">FROM</span> golang <span class="kw">AS</span> builder</span>
+<span id="cb35-2"><a></a><span class="kw">RUN</span> <span class="ex">...</span></span>
+<span id="cb35-3"><a></a><span class="kw">FROM</span> alpine</span>
+<span id="cb35-4"><a></a><span class="kw">COPY</span> <span class="op">--from=builder</span> /go/bin/mylittlebinary /usr/local/bin/</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="multi-stage-builds-4" class="slide level2">
+<h2>Multi-stage builds</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Multi-stage builds for our C program</strong></p>
+</div>
+<div class="callout-content">
+<p>We will change our Dockerfile to:</p>
+<ul>
+<li><p>give a nickname to the first stage: <code>compiler</code></p></li>
+<li><p>add a second stage using the same <code>ubuntu</code> base image</p></li>
+<li><p>add the <code>hello</code> binary to the second stage</p></li>
+<li><p>make sure that <code>CMD</code> is in the second stage</p></li>
+</ul>
+<p>The resulting Dockerfile is on the next slide.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="multi-stage-builds-5" class="slide level2">
+<h2>Multi-stage builds</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Multi-stage build <code>Dockerfile</code></strong></p>
+</div>
+<div class="callout-content">
+<p>Here is the final Dockerfile:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb36"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb36-1"><a></a><span class="kw">FROM</span> ubuntu <span class="kw">AS</span> compiler</span>
+<span id="cb36-2"><a></a><span class="kw">RUN</span> [<span class="st">"apt-get"</span>, <span class="st">"update"</span>]</span>
+<span id="cb36-3"><a></a><span class="kw">RUN</span> [<span class="st">"apt-get"</span>, <span class="st">"install"</span>, <span class="st">"-y"</span>, <span class="st">"build-essential"</span>]</span>
+<span id="cb36-4"><a></a><span class="kw">COPY</span> hello.c /</span>
+<span id="cb36-5"><a></a><span class="kw">RUN</span> [<span class="st">"make"</span>, <span class="st">"hello"</span>]</span>
+<span id="cb36-6"><a></a></span>
+<span id="cb36-7"><a></a><span class="kw">FROM</span> ubuntu</span>
+<span id="cb36-8"><a></a><span class="kw">COPY</span> <span class="op">--from=compiler</span> /hello /hello</span>
+<span id="cb36-9"><a></a><span class="kw">CMD</span> <span class="ex">/hello</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Let’s build it, and check that it works correctly:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb37"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb37-1"><a></a><span class="ex">docker</span> build <span class="at">-t</span> hellomultistage .</span>
+<span id="cb37-2"><a></a><span class="ex">docker</span> run hellomultistage</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</section>
+<section id="multi-stage-builds-6" class="slide level2">
+<h2>Multi-stage builds</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Comparing single/multi-stage build image sizes</strong></p>
+</div>
+<div class="callout-content">
+<p>List our images with <code>docker images</code>, and check the size of:</p>
+<ul>
+<li><p>the <code>ubuntu</code> base image,</p></li>
+<li><p>the single-stage <code>hello</code> image,</p></li>
+<li><p>the multi-stage <code>hellomultistage</code> image.</p></li>
+</ul>
+<p>We can achieve even smaller images if we use smaller base images.</p>
+<p>However, if we use common base images (e.g.&nbsp;if we standardize on <code>ubuntu</code>), these common images will be pulled only once per node, so they are virtually “free.”</p>
+</div>
+</div>
+</div>
+</section>
+<section id="multi-stage-builds-7" class="slide level2">
+<h2>Multi-stage builds</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Results</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb38"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb38-1"><a></a><span class="ex">$</span> docker images <span class="kw">|</span> <span class="fu">grep</span> ubuntu</span>
+<span id="cb38-2"><a></a><span class="ex">ubuntu</span>                                         latest         353675e2a41b   2 weeks ago      139MB</span>
+<span id="cb38-3"><a></a><span class="ex">$</span> docker images <span class="kw">|</span> <span class="fu">grep</span> hello</span>
+<span id="cb38-4"><a></a><span class="ex">hellomultistage</span>                                latest         977190f18730   55 seconds ago   139MB</span>
+<span id="cb38-5"><a></a><span class="ex">hello</span>                                          latest         09316393a5fe   30 minutes ago   707MB</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</section>
+<section id="multi-stage-builds-8" class="slide level2">
+<h2>Multi-stage builds</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Build targets</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>We can also tag an intermediary stage with the following command:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb39"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb39-1"><a></a><span class="ex">docker</span> build <span class="at">--target</span> STAGE <span class="at">--tag</span> NAME</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<li><p>This will create an image (named <code>NAME</code>) corresponding to stage <code>STAGE</code></p></li>
+<li><p>This can be used to easily access an intermediary stage for inspection</p>
+<p>(instead of parsing the output of <code>docker build</code> to find out the image ID)</p></li>
+<li><p>This can also be used to describe multiple images from a single Dockerfile</p>
+<p>(instead of using multiple Dockerfiles, which could go out of sync)</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="multi-stage-builds-9" class="slide level2">
+<h2>Multi-stage builds</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Dealing with download caches</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>In some cases, our images contain temporary downloaded files or caches</p>
+<p>(examples: packages downloaded by <code>pip</code>, Maven, etc.)</p></li>
+<li><p>These can sometimes be disabled</p>
+<p>(e.g.&nbsp;<code>pip install --no-cache-dir ...</code>)</p></li>
+<li><p>The cache can also be cleaned immediately after installing</p>
+<p>(e.g.&nbsp;<code>pip install ... &amp;&amp; rm -rf ~/.cache/pip</code>)</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="multi-stage-builds-10" class="slide level2">
+<h2>Multi-stage builds</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Download caches and multi-stage builds</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>Download+install packages in a build stage</p></li>
+<li><p>Copy the installed packages to a run stage</p></li>
+<li><p>Example: in the specific case of Python, use a virtual env</p>
+<p>(install in the virtual env; then copy the virtual env directory)</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="multi-stage-builds-11" class="slide level2">
+<h2>Multi-stage builds</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Download caches and BuildKit</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>BuildKit has a caching feature for run stages</p></li>
+<li><p>It can address download caches elegantly</p></li>
+<li><p>Example:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb40"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb40-1"><a></a><span class="ex">RUN</span> <span class="at">--mount</span><span class="op">=</span>type=cache,target=/pipcache pip install <span class="at">--cache-dir</span> /pipcache ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<li><p>The cache won’t be in the final image, but it’ll persist across builds</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section></section>
+<section>
+<section id="publishing-images-to-the-docker-hub" class="title-slide slide level1 center">
+<h1>Publishing images to the Docker Hub</h1>
+
+</section>
+<section id="publishing-images-to-the-docker-hub-1" class="slide level2">
+<h2>Publishing images to the Docker Hub</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Overview</strong></p>
+</div>
+<div class="callout-content">
+<p>We have built our first images.</p>
+<p>We can now publish it to the Docker Hub!</p>
+</div>
+</div>
+</div>
+</section>
+<section id="publishing-images-to-the-docker-hub-2" class="slide level2">
+<h2>Publishing images to the Docker Hub</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Logging into our Docker Hub account</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>This can be done from the Docker CLI:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb41"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb41-1"><a></a><span class="ex">docker</span> login</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="publishing-images-to-the-docker-hub-3" class="slide level2">
+<h2>Publishing images to the Docker Hub</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Image tags and registry addresses</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>Docker images tags are like Git tags and branches.</p></li>
+<li><p>They are like <em>bookmarks</em> pointing at a specific image ID.</p></li>
+<li><p>Tagging an image doesn’t <em>rename</em> an image: it adds another tag.</p></li>
+<li><p>When pushing an image to a registry, the registry address is in the tag.</p>
+<p>Example: <code>registry.example.net:5000/image</code></p></li>
+<li><p>What about Docker Hub images?</p></li>
+</ul>
+</div>
+</div>
+</div>
+
+<aside><div>
+<ul>
+<li><p><code>jpetazzo/clock</code> is, in fact, <code>index.docker.io/jpetazzo/clock</code></p></li>
+<li><p><code>ubuntu</code> is, in fact, <code>library/ubuntu</code>, i.e.&nbsp;<code>index.docker.io/library/ubuntu</code></p></li>
+</ul>
+</div></aside></section>
+<section id="publishing-images-to-the-docker-hub-4" class="slide level2">
+<h2>Publishing images to the Docker Hub</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Tagging an image to push it on the Hub</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>Let’s tag our <code>figlet</code> image (or any other to our liking):</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb42"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb42-1"><a></a><span class="ex">docker</span> tag figlet jpetazzo/figlet</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<li><p>And push it to the Hub:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb43"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb43-1"><a></a><span class="ex">docker</span> push jpetazzo/figlet</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<li><p>That’s it!</p></li>
+</ul>
+</div>
+</div>
+</div>
+
+<aside><div>
+<p>Anybody can now <code>docker run jpetazzo/figlet</code> anywhere.</p>
+</div></aside></section>
+<section id="publishing-images-to-the-docker-hub-5" class="slide level2">
+<h2>Publishing images to the Docker Hub</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The goodness of automated builds</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>You can link a Docker Hub repository with a GitHub or BitBucket repository</p></li>
+<li><p>Each push to GitHub or BitBucket will trigger a build on Docker Hub</p></li>
+<li><p>If the build succeeds, the new image is available on Docker Hub</p></li>
+<li><p>You can map tags and branches between source and container images</p></li>
+<li><p>If you work with public repositories, this is free</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="publishing-images-to-the-docker-hub-6" class="slide level2 scrollable">
+<h2>Publishing images to the Docker Hub</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Setting up an automated build</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>We need a Dockerized repository!</li>
+<li>Let’s go to https://github.com/jpetazzo/trainingwheels and fork it.</li>
+<li>Go to the Docker Hub (https://hub.docker.com/) and sign-in. Select “Repositories” in the blue navigation menu.</li>
+<li>Select “Create” in the top-right bar, and select “Create Repository+”.</li>
+<li>Connect your Docker Hub account to your GitHub account.</li>
+<li>Click “Create” button.</li>
+<li>Then go to “Builds” folder.</li>
+<li>Click on Github icon and select your user and the repository that we just forked.</li>
+<li>In “Build rules” block near page bottom, put <code>/www</code> in “Build Context” column (or whichever directory the Dockerfile is in).</li>
+<li>Click “Save and Build” to build the repository immediately (without waiting for a git push).</li>
+<li>Subsequent builds will happen automatically, thanks to <strong>GitHub hooks</strong>.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="publishing-images-to-the-docker-hub-7" class="slide level2">
+<h2>Publishing images to the Docker Hub</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Building on the fly</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>Some services can build images on the fly from a repository</p></li>
+<li><p>Example: <a href="https://ctr.run/">ctr.run</a></p></li>
+</ul>
+<p>There might be a long pause before the first layer is pulled, because the API behind <code>docker pull</code> doesn’t allow to stream build logs, and there is no feedback during the build.</p>
+<p>It is possible to view the build logs by setting up an account on <a href="https://ctr.run/">ctr.run</a>.</p>
+</div>
+</div>
+</div>
+</section></section>
+<section>
+<section id="tips-for-efficient-dockerfiles" class="title-slide slide level1 center">
+<h1>Tips for efficient Dockerfiles</h1>
+
+</section>
+<section id="tips-for-efficient-dockerfiles-1" class="slide level2">
+<h2>Tips for efficient Dockerfiles</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Overview</strong></p>
+</div>
+<div class="callout-content">
+<p>We will see how to:</p>
+<ul>
+<li><p>Reduce the number of layers.</p></li>
+<li><p>Leverage the build cache so that builds can be faster.</p></li>
+<li><p>Embed unit testing in the build process.</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="tips-for-efficient-dockerfiles-2" class="slide level2">
+<h2>Tips for efficient Dockerfiles</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Reducing the number of layers</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>Each line in a <code>Dockerfile</code> creates a new layer.</p></li>
+<li><p>Build your <code>Dockerfile</code> to take advantage of Docker’s caching system.</p></li>
+<li><p>Combine commands by using <code>&amp;&amp;</code> to continue commands and <code>\</code> to wrap lines.</p></li>
+</ul>
+<p>Note: it is frequent to build a Dockerfile line by line:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb44"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb44-1"><a></a><span class="kw">RUN</span> <span class="ex">apt-get</span> install thisthing</span>
+<span id="cb44-2"><a></a><span class="kw">RUN</span> <span class="ex">apt-get</span> install andthatthing andthatotherone</span>
+<span id="cb44-3"><a></a><span class="kw">RUN</span> <span class="ex">apt-get</span> install somemorestuff</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>And then refactor it trivially before shipping:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb45"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb45-1"><a></a><span class="kw">RUN</span> <span class="ex">apt-get</span> install thisthing andthatthing andthatotherone somemorestuff</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</section>
+<section id="tips-for-efficient-dockerfiles-3" class="slide level2">
+<h2>Tips for efficient Dockerfiles</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Avoid re-installing dependencies at each build</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>Classic Dockerfile problem:</li>
+</ul>
+<blockquote>
+<p>“each time I change a line of code, all my dependencies are re-installed!”</p>
+</blockquote>
+<ul>
+<li>Solution: <code>COPY</code> dependency lists (<code>package.json</code>, <code>requirements.txt</code>, etc.) by themselves to avoid reinstalling unchanged dependencies every time.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="tips-for-efficient-dockerfiles-4" class="slide level2">
+<h2>Tips for efficient Dockerfiles</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Example “bad” <code>Dockerfile</code></strong></p>
+</div>
+<div class="callout-content">
+<p>The dependencies are reinstalled every time, because the build system does not know if <code>requirements.txt</code> has been updated.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb46"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb46-1"><a></a><span class="ex">FROM</span> python</span>
+<span id="cb46-2"><a></a><span class="ex">WORKDIR</span> /src</span>
+<span id="cb46-3"><a></a><span class="ex">COPY</span> . .</span>
+<span id="cb46-4"><a></a><span class="ex">RUN</span> pip install <span class="at">-qr</span> requirements.txt</span>
+<span id="cb46-5"><a></a><span class="ex">EXPOSE</span> 5000</span>
+<span id="cb46-6"><a></a><span class="ex">CMD</span> [<span class="st">"python"</span>, <span class="st">"app.py"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</section>
+<section id="tips-for-efficient-dockerfiles-5" class="slide level2">
+<h2>Tips for efficient Dockerfiles</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Fixed <code>Dockerfile</code></strong></p>
+</div>
+<div class="callout-content">
+<p>Adding the dependencies as a separate step means that Docker can cache more efficiently and only install them when <code>requirements.txt</code> changes.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb47"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb47-1"><a></a><span class="ex">FROM</span> python</span>
+<span id="cb47-2"><a></a><span class="ex">WORKDIR</span> /src</span>
+<span id="cb47-3"><a></a><span class="ex">COPY</span> requirements.txt .</span>
+<span id="cb47-4"><a></a><span class="ex">RUN</span> pip install <span class="at">-qr</span> requirements.txt</span>
+<span id="cb47-5"><a></a><span class="ex">COPY</span> . .</span>
+<span id="cb47-6"><a></a><span class="ex">EXPOSE</span> 5000</span>
+<span id="cb47-7"><a></a><span class="ex">CMD</span> [<span class="st">"python"</span>, <span class="st">"app.py"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</section>
+<section id="tips-for-efficient-dockerfiles-6" class="slide level2">
+<h2>Tips for efficient Dockerfiles</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Be careful with <code>chown</code>, <code>chmod</code>, <code>mv</code></strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>Layers cannot store efficiently changes in permissions or ownership.</p></li>
+<li><p>Layers cannot represent efficiently when a file is moved either.</p></li>
+<li><p>As a result, operations like <code>chown</code>, <code>chmod</code>, <code>mv</code> can be expensive.</p></li>
+<li><p>For instance, in the Dockerfile snippet below, each <code>RUN</code> line creates a layer with an entire copy of <code>some-file</code>.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb48"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb48-1"><a></a><span class="kw">COPY</span> some-file .</span>
+<span id="cb48-2"><a></a><span class="kw">RUN</span> <span class="fu">chown</span> www-data:www-data some-file</span>
+<span id="cb48-3"><a></a><span class="kw">RUN</span> <span class="fu">chmod</span> 644 some-file</span>
+<span id="cb48-4"><a></a><span class="kw">RUN</span> <span class="fu">mv</span> some-file /var/www</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<li><p>How can we avoid that?</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="tips-for-efficient-dockerfiles-7" class="slide level2">
+<h2>Tips for efficient Dockerfiles</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Put files on the right place</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>Instead of using <code>mv</code>, directly put files at the right place.</p></li>
+<li><p>When extracting archives (tar, zip…), merge operations in a single layer.</p>
+<p>Example:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb49"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb49-1"><a></a>  ...</span>
+<span id="cb49-2"><a></a>  <span class="kw">RUN</span> <span class="fu">wget</span> http://.../foo.tar.gz <span class="dt">\</span></span>
+<span id="cb49-3"><a></a>   <span class="kw">&amp;&amp;</span> <span class="fu">tar</span> <span class="at">-zxf</span> foo.tar.gz <span class="dt">\</span></span>
+<span id="cb49-4"><a></a>   <span class="kw">&amp;&amp;</span> <span class="fu">mv</span> foo/fooctl /usr/local/bin <span class="dt">\</span></span>
+<span id="cb49-5"><a></a>   <span class="kw">&amp;&amp;</span> <span class="fu">rm</span> <span class="at">-rf</span> foo foo.tar.gz</span>
+<span id="cb49-6"><a></a>...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="tips-for-efficient-dockerfiles-8" class="slide level2">
+<h2>Tips for efficient Dockerfiles</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Use <code>COPY --chown</code></strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>The Dockerfile instruction <code>COPY</code> can take a <code>--chown</code> parameter.</p>
+<p>Examples:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb50"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb50-1"><a></a>...</span>
+<span id="cb50-2"><a></a><span class="kw">COPY</span> <span class="op">--chown=1000</span> some-file .</span>
+<span id="cb50-3"><a></a><span class="kw">COPY</span> <span class="op">--chown=1000:1000</span> some-file .</span>
+<span id="cb50-4"><a></a><span class="kw">COPY</span> <span class="op">--chown=www-data:www-data</span> some-file .</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<li><p>The <code>--chown</code> flag can specify a user, or a user:group pair.</p></li>
+<li><p>The user and group can be specified as names or numbers.</p></li>
+<li><p>When using names, the names must exist in <code>/etc/passwd</code> or <code>/etc/group</code>.</p>
+<p><em>(In the container, not on the host!)</em></p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="tips-for-efficient-dockerfiles-9" class="slide level2">
+<h2>Tips for efficient Dockerfiles</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Set correct permissions locally</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>Instead of using <code>chmod</code>, set the right file permissions locally.</p></li>
+<li><p>When files are copied with <code>COPY</code>, permissions are preserved.</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="tips-for-efficient-dockerfiles-10" class="slide level2">
+<h2>Tips for efficient Dockerfiles</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Embedding unit tests in the build process</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb51"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb51-1"><a></a><span class="kw">FROM</span> &lt;baseimage&gt;</span>
+<span id="cb51-2"><a></a><span class="kw">RUN</span> <span class="op">&lt;</span>install <span class="ex">dependencies</span><span class="op">&gt;</span></span>
+<span id="cb51-3"><a></a><span class="kw">COPY</span> &lt;code&gt;</span>
+<span id="cb51-4"><a></a><span class="kw">RUN</span> <span class="op">&lt;</span>build <span class="ex">code</span><span class="op">&gt;</span></span>
+<span id="cb51-5"><a></a><span class="kw">RUN</span> <span class="op">&lt;</span>install <span class="bu">test</span> dependencies<span class="op">&gt;</span></span>
+<span id="cb51-6"><a></a><span class="kw">COPY</span> &lt;test data sets and fixtures&gt;</span>
+<span id="cb51-7"><a></a><span class="kw">RUN</span> <span class="op">&lt;</span>unit <span class="ex">tests</span><span class="op">&gt;</span></span>
+<span id="cb51-8"><a></a><span class="kw">FROM</span> &lt;baseimage&gt;</span>
+<span id="cb51-9"><a></a><span class="kw">RUN</span> <span class="op">&lt;</span>install <span class="ex">dependencies</span><span class="op">&gt;</span></span>
+<span id="cb51-10"><a></a><span class="kw">COPY</span> &lt;code&gt;</span>
+<span id="cb51-11"><a></a><span class="kw">RUN</span> <span class="op">&lt;</span>build <span class="ex">code</span><span class="op">&gt;</span></span>
+<span id="cb51-12"><a></a><span class="kw">CMD</span><span class="ex">,</span> EXPOSE ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li>The build fails as soon as an instruction fails</li>
+<li>If <code>RUN &lt;unit tests&gt;</code> fails, the build doesn’t produce an image</li>
+<li>If it succeeds, it produces a clean image (without test libraries and data)</li>
+</ul>
+</div>
+</div>
+</div>
+</section></section>
+<section>
+<section id="dockerfile-examples" class="title-slide slide level1 center">
+<h1>Dockerfile examples</h1>
+
+</section>
+<section id="dockerfile-examples-1" class="slide level2">
+<h2>Dockerfile examples</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Overview</strong></p>
+</div>
+<div class="callout-content">
+<p>There are a number of tips, tricks, and techniques that we can use in Dockerfiles.</p>
+<p>But sometimes, we have to use different (and even opposed) practices depending on:</p>
+<ul>
+<li><p>the complexity of our project,</p></li>
+<li><p>the programming language or framework that we are using,</p></li>
+<li><p>the stage of our project (early MVP vs.&nbsp;super-stable production),</p></li>
+<li><p>whether we’re building a final image or a base for further images,</p></li>
+<li><p>etc.</p></li>
+</ul>
+<p>We are going to show a few examples using very different techniques.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="dockerfile-examples-2" class="slide level2 scrollable">
+<h2>Dockerfile examples</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>When to optimize an image</strong></p>
+</div>
+<div class="callout-content">
+<p>When authoring official images, it is a good idea to reduce as much as possible:</p>
+<ul>
+<li><p>the number of layers,</p></li>
+<li><p>the size of the final image.</p></li>
+</ul>
+<p>This is often done at the expense of build time and convenience for the image maintainer; but when an image is downloaded millions of time, saving even a few seconds of pull time can be worth it.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb52"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb52-1"><a></a><span class="kw">RUN</span> <span class="ex">apt-get</span> update <span class="kw">&amp;&amp;</span> <span class="ex">apt-get</span> install <span class="at">-y</span> libpng12-dev libjpeg-dev <span class="kw">&amp;&amp;</span> <span class="fu">rm</span> <span class="at">-rf</span> /var/lib/apt/lists/<span class="pp">*</span> <span class="dt">\</span></span>
+<span id="cb52-2"><a></a>    <span class="kw">&amp;&amp;</span> <span class="ex">docker-php-ext-configure</span> gd <span class="at">--with-png-dir</span><span class="op">=</span>/usr <span class="at">--with-jpeg-dir</span><span class="op">=</span>/usr <span class="dt">\</span></span>
+<span id="cb52-3"><a></a>    <span class="kw">&amp;&amp;</span> <span class="ex">docker-php-ext-install</span> gd</span>
+<span id="cb52-4"><a></a>...</span>
+<span id="cb52-5"><a></a><span class="kw">RUN</span> <span class="ex">curl</span> <span class="at">-o</span> wordpress.tar.gz <span class="at">-SL</span> https://wordpress.org/wordpress-<span class="va">${WORDPRESS_UPSTREAM_VERSION}</span>.tar.gz <span class="dt">\</span></span>
+<span id="cb52-6"><a></a>    <span class="kw">&amp;&amp;</span> <span class="bu">echo</span> <span class="st">"</span><span class="va">$WORDPRESS_SHA1</span><span class="st"> *wordpress.tar.gz"</span> <span class="kw">|</span> <span class="fu">sha1sum</span> <span class="at">-c</span> <span class="at">-</span> <span class="dt">\</span></span>
+<span id="cb52-7"><a></a>    <span class="kw">&amp;&amp;</span> <span class="fu">tar</span> <span class="at">-xzf</span> wordpress.tar.gz <span class="at">-C</span> /usr/src/ <span class="dt">\</span></span>
+<span id="cb52-8"><a></a>    <span class="kw">&amp;&amp;</span> <span class="fu">rm</span> wordpress.tar.gz <span class="dt">\</span></span>
+<span id="cb52-9"><a></a>    <span class="kw">&amp;&amp;</span> <span class="fu">chown</span> <span class="at">-R</span> www-data:www-data /usr/src/wordpress</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+
+<aside><div>
+<p>(Source: <a href="https://github.com/docker-library/wordpress/blob/618490d4bdff6c5774b84b717979bfe3d6ba8ad1/apache/Dockerfile">Wordpress official image</a>)</p>
+</div></aside></section>
+<section id="dockerfile-examples-3" class="slide level2">
+<h2>Dockerfile examples</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>When to <em>not</em> optimize an image</strong></p>
+</div>
+<div class="callout-content">
+<p>Sometimes, it is better to prioritize <em>maintainer convenience</em>.</p>
+<p>In particular, if:</p>
+<ul>
+<li><p>the image changes a lot,</p></li>
+<li><p>the image has very few users (e.g.&nbsp;only 1, the maintainer!),</p></li>
+<li><p>the image is built and run on the same machine,</p></li>
+<li><p>the image is built and run on machines with a very fast link …</p></li>
+</ul>
+<p>In these cases, just keep things simple!</p>
+<p>(Next slide: a Dockerfile that can be used to preview a Jekyll / github pages site.)</p>
+</div>
+</div>
+</div>
+</section>
+<section id="dockerfile-examples-4" class="slide level2">
+<h2>Dockerfile examples</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Dockerfile for Jekyll</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb53"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb53-1"><a></a><span class="kw">FROM</span> debian:sid</span>
+<span id="cb53-2"><a></a></span>
+<span id="cb53-3"><a></a><span class="kw">RUN</span> <span class="ex">apt-get</span> update <span class="at">-q</span></span>
+<span id="cb53-4"><a></a><span class="kw">RUN</span> <span class="ex">apt-get</span> install <span class="at">-yq</span> build-essential make</span>
+<span id="cb53-5"><a></a><span class="kw">RUN</span> <span class="ex">apt-get</span> install <span class="at">-yq</span> zlib1g-dev</span>
+<span id="cb53-6"><a></a><span class="kw">RUN</span> <span class="ex">apt-get</span> install <span class="at">-yq</span> ruby ruby-dev</span>
+<span id="cb53-7"><a></a><span class="kw">RUN</span> <span class="ex">apt-get</span> install <span class="at">-yq</span> python-pygments</span>
+<span id="cb53-8"><a></a><span class="kw">RUN</span> <span class="ex">apt-get</span> install <span class="at">-yq</span> nodejs</span>
+<span id="cb53-9"><a></a><span class="kw">RUN</span> <span class="ex">apt-get</span> install <span class="at">-yq</span> cmake</span>
+<span id="cb53-10"><a></a><span class="kw">RUN</span> <span class="ex">gem</span> install <span class="at">--no-rdoc</span> <span class="at">--no-ri</span> github-pages</span>
+<span id="cb53-11"><a></a></span>
+<span id="cb53-12"><a></a><span class="kw">COPY</span> . /blog</span>
+<span id="cb53-13"><a></a><span class="kw">WORKDIR</span> /blog</span>
+<span id="cb53-14"><a></a></span>
+<span id="cb53-15"><a></a><span class="kw">VOLUME</span> /blog/_site</span>
+<span id="cb53-16"><a></a></span>
+<span id="cb53-17"><a></a><span class="kw">EXPOSE</span> 4000</span>
+<span id="cb53-18"><a></a><span class="kw">CMD</span> [<span class="st">"jekyll"</span>, <span class="st">"serve"</span>, <span class="st">"--host"</span>, <span class="st">"0.0.0.0"</span>, <span class="st">"--incremental"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</section>
+<section id="dockerfile-examples-5" class="slide level2">
+<h2>Dockerfile examples</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Multi-dimensional versioning systems</strong></p>
+</div>
+<div class="callout-content">
+<p>Images can have a tag, indicating the version of the image.</p>
+<p>But sometimes, there are multiple important components, and we need to indicate the versions for all of them.</p>
+<p>This can be done with environment variables:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb54"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb54-1"><a></a><span class="kw">ENV</span> PIP=9.0.3 <span class="op">\</span></span>
+<span id="cb54-2"><a></a>    ZC_BUILDOUT=2.11.2 <span class="op">\</span></span>
+<span id="cb54-3"><a></a>    SETUPTOOLS=38.7.0 <span class="op">\</span></span>
+<span id="cb54-4"><a></a>    PLONE_MAJOR=5.1 <span class="op">\</span></span>
+<span id="cb54-5"><a></a>    PLONE_VERSION=5.1.0 <span class="op">\</span></span>
+<span id="cb54-6"><a></a>    PLONE_MD5=76dc6cfc1c749d763c32fff3a9870d8d</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+
+<aside><div>
+<p>(Source: <a href="https://github.com/plone/plone.docker/blob/master/5.1/5.1.0/alpine/Dockerfile">Plone official image</a>)</p>
+</div></aside></section>
+<section id="dockerfile-examples-6" class="slide level2">
+<h2>Dockerfile examples</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Entrypoints and wrappers</strong></p>
+</div>
+<div class="callout-content">
+<p>It is very common to define a custom entrypoint.</p>
+<p>That entrypoint will generally be a script, performing any combination of:</p>
+<ul>
+<li><p>pre-flights checks (if a required dependency is not available, display a nice error message early instead of an obscure one in a deep log file),</p></li>
+<li><p>generation or validation of configuration files,</p></li>
+<li><p>dropping privileges (with e.g.&nbsp;<code>su</code> or <code>gosu</code>, sometimes combined with <code>chown</code>),</p></li>
+<li><p>and more.</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="dockerfile-examples-7" class="slide level2">
+<h2>Dockerfile examples</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>A typical entrypoint script</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb55"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb55-1"><a></a> <span class="co">#!/bin/sh</span></span>
+<span id="cb55-2"><a></a> set -e</span>
+<span id="cb55-3"><a></a> </span>
+<span id="cb55-4"><a></a> <span class="co"># first arg is '-f' or '--some-option'</span></span>
+<span id="cb55-5"><a></a> <span class="co"># or first arg is 'something.conf'</span></span>
+<span id="cb55-6"><a></a> if [ <span class="st">"${1#-}"</span> != <span class="st">"$1"</span> ] || [ <span class="st">"${1%.conf}"</span> != <span class="st">"$1"</span> ]; then</span>
+<span id="cb55-7"><a></a>    set -- redis-server <span class="st">"$@"</span></span>
+<span id="cb55-8"><a></a> fi</span>
+<span id="cb55-9"><a></a> </span>
+<span id="cb55-10"><a></a> <span class="co"># allow the container to be started with '--user'</span></span>
+<span id="cb55-11"><a></a> if [ <span class="st">"$1"</span> = <span class="st">'redis-server'</span> -a <span class="st">"$(id -u)"</span> = <span class="st">'0'</span> ]; then</span>
+<span id="cb55-12"><a></a>    chown -R redis .</span>
+<span id="cb55-13"><a></a>    exec su-exec redis <span class="st">"$0"</span> <span class="st">"$@"</span></span>
+<span id="cb55-14"><a></a> fi</span>
+<span id="cb55-15"><a></a> </span>
+<span id="cb55-16"><a></a> exec <span class="st">"$@"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+
+<aside><div>
+<p>(Source: <a href="https://github.com/docker-library/redis/blob/d24f2be82673ccef6957210cc985e392ebdc65e4/4.0/alpine/docker-entrypoint.sh">Redis official image</a>)</p>
+</div></aside></section>
+<section id="dockerfile-examples-8" class="slide level2 scrollable">
+<h2>Dockerfile examples</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Factoring information</strong></p>
+</div>
+<div class="callout-content">
+<p>To facilitate maintenance (and avoid human errors), avoid to repeat information like:</p>
+<ul>
+<li><p>version numbers,</p></li>
+<li><p>remote asset URLs (e.g.&nbsp;source tarballs) …</p></li>
+</ul>
+<p>Instead, use environment variables.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb56"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb56-1"><a></a><span class="kw">ENV</span> NODE_VERSION 10.2.1</span>
+<span id="cb56-2"><a></a>...</span>
+<span id="cb56-3"><a></a><span class="kw">RUN</span> <span class="ex">...</span></span>
+<span id="cb56-4"><a></a>    &amp;&amp; curl -fsSLO --compressed <span class="st">"https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION.tar.xz"</span> <span class="op">\</span></span>
+<span id="cb56-5"><a></a>    &amp;&amp; curl -fsSLO --compressed <span class="st">"https://nodejs.org/dist/v$NODE_VERSION/SHASUMS256.txt.asc"</span> <span class="op">\</span></span>
+<span id="cb56-6"><a></a>    &amp;&amp; gpg --batch --decrypt --output SHASUMS256.txt SHASUMS256.txt.asc <span class="op">\</span></span>
+<span id="cb56-7"><a></a>    &amp;&amp; grep <span class="st">" node-v$NODE_VERSION.tar.xz\$"</span> SHASUMS256.txt | sha256sum -c - <span class="op">\</span></span>
+<span id="cb56-8"><a></a>    &amp;&amp; tar -xf <span class="st">"node-v$NODE_VERSION.tar.xz"</span> <span class="op">\</span></span>
+<span id="cb56-9"><a></a>    &amp;&amp; cd <span class="st">"node-v$NODE_VERSION"</span> <span class="op">\</span></span>
+<span id="cb56-10"><a></a>...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+
+<aside><div>
+<p>(Source: <a href="https://github.com/nodejs/docker-node/blob/master/10/alpine/Dockerfile">Nodejs official image</a>)</p>
+</div></aside></section>
+<section id="dockerfile-examples-9" class="slide level2">
+<h2>Dockerfile examples</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Overrides</strong></p>
+</div>
+<div class="callout-content">
+<p>In theory, development and production images should be the same.</p>
+<p>In practice, we often need to enable specific behaviors in development (e.g.&nbsp;debug statements).</p>
+<p>One way to reconcile both needs is to use Compose to enable these behaviors.</p>
+<p>Let’s look at the <a href="https://github.com/jpetazzo/trainingwheels">trainingwheels</a> demo app for an example.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="dockerfile-examples-10" class="slide level2">
+<h2>Dockerfile examples</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Production image</strong></p>
+</div>
+<div class="callout-content">
+<p>This Dockerfile builds an image leveraging gunicorn:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb57"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb57-1"><a></a><span class="kw">FROM</span> python</span>
+<span id="cb57-2"><a></a><span class="kw">RUN</span> <span class="ex">pip</span> install flask</span>
+<span id="cb57-3"><a></a><span class="kw">RUN</span> <span class="ex">pip</span> install gunicorn</span>
+<span id="cb57-4"><a></a><span class="kw">RUN</span> <span class="ex">pip</span> install redis</span>
+<span id="cb57-5"><a></a><span class="kw">COPY</span> . /src</span>
+<span id="cb57-6"><a></a><span class="kw">WORKDIR</span> /src</span>
+<span id="cb57-7"><a></a><span class="kw">CMD</span> <span class="ex">gunicorn</span> <span class="at">--bind</span> 0.0.0.0:5000 <span class="at">--workers</span> 10 counter:app</span>
+<span id="cb57-8"><a></a><span class="kw">EXPOSE</span> 5000</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+
+<aside><div>
+<p>(Source: <a href="https://github.com/jpetazzo/trainingwheels/blob/master/www/Dockerfile">trainingwheels Dockerfile</a>)</p>
+</div></aside></section>
+<section id="dockerfile-examples-11" class="slide level2 scrollable">
+<h2>Dockerfile examples</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Development Compose file</strong></p>
+</div>
+<div class="callout-content">
+<p>This Compose file uses the same image, but with a few overrides for development:</p>
+<ul>
+<li><p>the Flask development server is used (overriding <code>CMD</code>),</p></li>
+<li><p>the <code>DEBUG</code> environment variable is set,</p></li>
+<li><p>a volume is used to provide a faster local development workflow.</p></li>
+</ul>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb58"><pre class="sourceCode numberSource yaml number-lines code-with-copy"><code class="sourceCode yaml"><span id="cb58-1"><a></a><span class="fu">services</span><span class="kw">:</span></span>
+<span id="cb58-2"><a></a><span class="at">  </span><span class="fu">www</span><span class="kw">:</span></span>
+<span id="cb58-3"><a></a><span class="at">    </span><span class="fu">build</span><span class="kw">:</span><span class="at"> www</span></span>
+<span id="cb58-4"><a></a><span class="at">    </span><span class="fu">ports</span><span class="kw">:</span></span>
+<span id="cb58-5"><a></a><span class="at">      </span><span class="kw">-</span><span class="at"> 8000:5000</span></span>
+<span id="cb58-6"><a></a><span class="at">    </span><span class="fu">user</span><span class="kw">:</span><span class="at"> nobody</span></span>
+<span id="cb58-7"><a></a><span class="at">    </span><span class="fu">environment</span><span class="kw">:</span></span>
+<span id="cb58-8"><a></a><span class="at">      </span><span class="fu">DEBUG</span><span class="kw">:</span><span class="at"> </span><span class="dv">1</span></span>
+<span id="cb58-9"><a></a><span class="at">    </span><span class="fu">command</span><span class="kw">:</span><span class="at"> python counter.py</span></span>
+<span id="cb58-10"><a></a><span class="at">    </span><span class="fu">volumes</span><span class="kw">:</span></span>
+<span id="cb58-11"><a></a><span class="at">      </span><span class="kw">-</span><span class="at"> ./www:/src</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+
+<aside><div>
+<p>(Source: <a href="https://github.com/jpetazzo/trainingwheels/blob/master/docker-compose.yml">trainingwheels Compose file</a>)</p>
+</div></aside></section>
+<section id="dockerfile-examples-12" class="slide level2">
+<h2>Dockerfile examples</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>How to know which best practices are better?</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>The main goal of containers is to make our lives easier.</p></li>
+<li><p>In this chapter, we showed many ways to write Dockerfiles.</p></li>
+<li><p>These Dockerfiles use sometimes diametrically opposed techniques.</p></li>
+<li><p>Yet, they were the “right” ones <em>for a specific situation.</em></p></li>
+<li><p>It’s OK (and even encouraged) to start simple and evolve as needed.</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="exercise-multi-stage-builds" class="slide level2">
+<h2>Exercise — multi-stage builds</h2>
+<div class="callout callout-note callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Exercise</strong></p>
+</div>
+<div class="callout-content">
+<p>Let’s update our Dockerfiles to leverage multi-stage builds!</p>
+<p>The code is at: <a href="https://github.com/jpetazzo/wordsmith" class="uri">https://github.com/jpetazzo/wordsmith</a>.</p>
+<p>Use a different tag for these images, so that we can compare their sizes.</p>
+<p>What’s the size difference between single-stage and multi-stage builds?</p>
+</div>
+</div>
+</div>
+</section></section>
+<section>
+<section id="naming-and-inspecting-containers" class="title-slide slide level1 center">
+<h1>Naming and inspecting containers</h1>
+
+</section>
+<section id="naming-and-inspecting-containers-1" class="slide level2">
+<h2>Naming and inspecting containers</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Objectives</strong></p>
+</div>
+<div class="callout-content">
+<p>In this lesson, we will learn about an important Docker concept: container <em>naming</em>.</p>
+<p>Naming allows us to:</p>
+<ul>
+<li><p>Reference easily a container.</p></li>
+<li><p>Ensure unicity of a specific container.</p></li>
+</ul>
+<p>We will also see the <code>inspect</code> command, which gives a lot of details about a container.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="naming-and-inspecting-containers-2" class="slide level2">
+<h2>Naming and inspecting containers</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Naming our containers</strong></p>
+</div>
+<div class="callout-content">
+<p>So far, we have referenced containers with their ID.</p>
+<p>We have copy-pasted the ID, or used a shortened prefix.</p>
+<p>But each container can also be referenced by its name.</p>
+<p>If a container is named <code>thumbnail-worker</code>, I can do:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb59"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb59-1"><a></a><span class="ex">$</span> docker logs thumbnail-worker</span>
+<span id="cb59-2"><a></a><span class="ex">$</span> docker stop thumbnail-worker</span>
+<span id="cb59-3"><a></a><span class="ex">etc.</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</section>
+<section id="naming-and-inspecting-containers-3" class="slide level2">
+<h2>Naming and inspecting containers</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Default names</strong></p>
+</div>
+<div class="callout-content">
+<p>When we create a container, if we don’t give a specific name, Docker will pick one for us.</p>
+<p>It will be the concatenation of:</p>
+<ul>
+<li><p>A mood (furious, goofy, suspicious, boring…)</p></li>
+<li><p>The name of a famous inventor (tesla, darwin, wozniak…)</p></li>
+</ul>
+<p>Examples: <code>happy_curie</code>, <code>clever_hopper</code>, <code>jovial_lovelace</code> …</p>
+</div>
+</div>
+</div>
+</section>
+<section id="naming-and-inspecting-containers-4" class="slide level2">
+<h2>Naming and inspecting containers</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Specifying a name</strong></p>
+</div>
+<div class="callout-content">
+<p>You can set the name of the container when you create it.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb60"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb60-1"><a></a><span class="ex">$</span> docker run <span class="at">--name</span> ticktock jpetazzo/clock</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>If you specify a name that already exists, Docker will refuse to create the container.</p>
+<p>This lets us enforce unicity of a given resource.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="naming-and-inspecting-containers-5" class="slide level2">
+<h2>Naming and inspecting containers</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Renaming containers</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>You can rename containers with <code>docker rename</code>.</p></li>
+<li><p>This allows you to “free up” a name without destroying the associated container.</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="naming-and-inspecting-containers-6" class="slide level2">
+<h2>Naming and inspecting containers</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Inspecting a container</strong></p>
+</div>
+<div class="callout-content">
+<p>The <code>docker inspect</code> command will output a very detailed JSON map.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb61"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb61-1"><a></a><span class="ex">$</span> docker inspect <span class="op">&lt;</span>containerID<span class="op">&gt;</span></span>
+<span id="cb61-2"><a></a><span class="ex">[{</span></span>
+<span id="cb61-3"><a></a><span class="ex">...</span></span>
+<span id="cb61-4"><a></a><span class="kw">(</span><span class="ex">many</span> pages of JSON here<span class="kw">)</span></span>
+<span id="cb61-5"><a></a><span class="ex">...</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>There are multiple ways to consume that information.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="naming-and-inspecting-containers-7" class="slide level2">
+<h2>Naming and inspecting containers</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Parsing JSON with the Shell</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>You <em>could</em> grep and cut or awk the output of <code>docker inspect</code>.</p></li>
+<li><p>Please, don’t.</p></li>
+<li><p>It’s painful.</p></li>
+<li><p>If you really must parse JSON from the Shell, use JQ! (It’s great.)</p></li>
+</ul>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb62"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb62-1"><a></a><span class="ex">$</span> docker inspect <span class="op">&lt;</span>containerID<span class="op">&gt;</span> <span class="kw">|</span> <span class="ex">jq</span> .</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li>We will see a better solution which doesn’t require extra tools.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="naming-and-inspecting-containers-8" class="slide level2">
+<h2>Naming and inspecting containers</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Using <code>--format</code></strong></p>
+</div>
+<div class="callout-content">
+<p>You can specify a format string, which will be parsed by Go’s text/template package.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb63"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb63-1"><a></a><span class="ex">$</span> docker inspect <span class="at">--format</span> <span class="st">'{{ json .Created }}'</span> <span class="op">&lt;</span>containerID<span class="op">&gt;</span></span>
+<span id="cb63-2"><a></a><span class="st">"2015-02-24T07:21:11.712240394Z"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li><p>The generic syntax is to wrap the expression with double curly braces.</p></li>
+<li><p>The expression starts with a dot representing the JSON object.</p></li>
+<li><p>Then each field or member can be accessed in dotted notation syntax.</p></li>
+<li><p>The optional <code>json</code> keyword asks for valid JSON output. <br>(e.g.&nbsp;here it adds the surrounding double-quotes.)</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section></section>
+<section>
+<section id="labels" class="title-slide slide level1 center">
+<h1>Labels</h1>
+
+</section>
+<section id="labels-1" class="slide level2">
+<h2>Labels</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Overview</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>Labels allow to attach arbitrary metadata to containers.</p></li>
+<li><p>Labels are key/value pairs.</p></li>
+<li><p>They are specified at container creation.</p></li>
+<li><p>You can query them with <code>docker inspect</code>.</p></li>
+<li><p>They can also be used as filters with some commands (e.g.&nbsp;<code>docker ps</code>).</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="labels-2" class="slide level2">
+<h2>Labels</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Using labels</strong></p>
+</div>
+<div class="callout-content">
+<p>Let’s create a few containers with a label <code>owner</code>.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb64"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb64-1"><a></a><span class="ex">docker</span> run <span class="at">-d</span> <span class="at">-l</span> owner=alice nginx</span>
+<span id="cb64-2"><a></a><span class="ex">docker</span> run <span class="at">-d</span> <span class="at">-l</span> owner=bob nginx</span>
+<span id="cb64-3"><a></a><span class="ex">docker</span> run <span class="at">-d</span> <span class="at">-l</span> owner nginx</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>We didn’t specify a value for the <code>owner</code> label in the last example.</p>
+<p>This is equivalent to setting the value to be an empty string.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="labels-3" class="slide level2">
+<h2>Labels</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Querying labels</strong></p>
+</div>
+<div class="callout-content">
+<p>We can view the labels with <code>docker inspect</code>.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb65"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb65-1"><a></a><span class="ex">$</span> docker inspect <span class="va">$(</span><span class="ex">docker</span> ps <span class="at">-lq</span><span class="va">)</span> <span class="kw">|</span> <span class="fu">grep</span> <span class="at">-A3</span> Labels</span>
+<span id="cb65-2"><a></a>            <span class="st">"Labels"</span><span class="ex">:</span> {</span>
+<span id="cb65-3"><a></a>                <span class="st">"maintainer"</span><span class="ex">:</span> <span class="st">"NGINX Docker Maintainers &lt;docker-maint@nginx.com&gt;"</span>,</span>
+<span id="cb65-4"><a></a>                <span class="st">"owner"</span><span class="ex">:</span> <span class="st">""</span></span>
+<span id="cb65-5"><a></a>            <span class="er">}</span><span class="ex">,</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>We can use the <code>--format</code> flag to list the value of a label.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb66"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb66-1"><a></a><span class="ex">$</span> docker inspect <span class="va">$(</span><span class="ex">docker</span> ps <span class="at">-q</span><span class="va">)</span> <span class="at">--format</span> <span class="st">'OWNER={{.Config.Labels.owner}}'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</section>
+<section id="labels-4" class="slide level2">
+<h2>Labels</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Using labels to select containers</strong></p>
+</div>
+<div class="callout-content">
+<p>We can list containers having a specific label.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb67"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb67-1"><a></a><span class="ex">$</span> docker ps <span class="at">--filter</span> label=owner</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Or we can list containers having a specific label with a specific value.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb68"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb68-1"><a></a><span class="ex">$</span> docker ps <span class="at">--filter</span> label=owner=alice</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</section>
+<section id="labels-5" class="slide level2">
+<h2>Labels</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Use-cases for labels</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>HTTP vhost of a web app or web service.</p>
+<p>(The label is used to generate the configuration for NGINX, HAProxy, etc.)</p></li>
+<li><p>Backup schedule for a stateful service.</p>
+<p>(The label is used by a cron job to determine if/when to backup container data.)</p></li>
+<li><p>Service ownership.</p>
+<p>(To determine internal cross-billing, or who to page in case of outage.)</p></li>
+<li><p>etc.</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section></section>
+<section>
+<section id="getting-inside-a-container" class="title-slide slide level1 center">
+<h1>Getting inside a container</h1>
+
+</section>
+<section id="getting-inside-a-container-1" class="slide level2">
+<h2>Getting inside a container</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Objectives</strong></p>
+</div>
+<div class="callout-content">
+<p>On a traditional server or VM, we sometimes need to:</p>
+<ul>
+<li><p>log into the machine (with SSH or on the console),</p></li>
+<li><p>analyze the disks (by removing them or rebooting with a rescue system).</p></li>
+</ul>
+<p>In this chapter, we will see how to do that with containers.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="getting-inside-a-container-2" class="slide level2">
+<h2>Getting inside a container</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Getting a shell</strong></p>
+</div>
+<div class="callout-content">
+<p>Every once in a while, we want to log into a machine.</p>
+<p>In an perfect world, this shouldn’t be necessary.</p>
+<ul>
+<li><p>You need to install or update packages (and their configuration)?</p>
+<p>Use configuration management. (e.g.&nbsp;Ansible, Chef, Puppet, Salt…)</p></li>
+<li><p>You need to view logs and metrics?</p>
+<p>Collect and access them through a centralized platform.</p></li>
+</ul>
+<p>In the real world, though … we often need shell access!</p>
+</div>
+</div>
+</div>
+</section>
+<section id="getting-inside-a-container-3" class="slide level2">
+<h2>Getting inside a container</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Not getting a shell</strong></p>
+</div>
+<div class="callout-content">
+<p>Even without a perfect deployment system, we can do many operations without getting a shell.</p>
+<ul>
+<li><p>Installing packages can (and should) be done in the container image.</p></li>
+<li><p>Configuration can be done at the image level, or when the container starts.</p></li>
+<li><p>Dynamic configuration can be stored in a volume (shared with another container).</p></li>
+<li><p>Logs written to stdout are automatically collected by the Docker Engine.</p></li>
+<li><p>Other logs can be written to a shared volume.</p></li>
+<li><p>Process information and metrics are visible from the host.</p></li>
+</ul>
+<p><em>Let’s save logging, volumes … for later, but let’s have a look at process information!</em></p>
+</div>
+</div>
+</div>
+</section>
+<section id="getting-inside-a-container-4" class="slide level2">
+<h2>Getting inside a container</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Viewing container processes from the host</strong></p>
+</div>
+<div class="callout-content">
+<p>If you run Docker on Linux, container processes are visible on the host.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb69"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb69-1"><a></a><span class="ex">$</span> ps faux <span class="kw">|</span> <span class="fu">less</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li><p>Scroll around the output of this command.</p></li>
+<li><p>You should see the <code>jpetazzo/clock</code> container.</p></li>
+<li><p>A containerized process is just like any other process on the host.</p></li>
+<li><p>We can use tools like <code>lsof</code>, <code>strace</code>, <code>gdb</code> … To analyze them.</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="getting-inside-a-container-5" class="slide level2">
+<h2>Getting inside a container</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>What’s the difference between a container process and a host process?</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>Each process (containerized or not) belongs to <em>namespaces</em> and <em>cgroups</em>.</p></li>
+<li><p>The namespaces and cgroups determine what a process can “see” and “do”.</p></li>
+<li><p>Analogy: each process (containerized or not) runs with a specific UID (user ID).</p></li>
+<li><p>UID=0 is root, and has elevated privileges. Other UIDs are normal users.</p></li>
+</ul>
+<p><em>We will give more details about namespaces and cgroups later.</em></p>
+</div>
+</div>
+</div>
+</section>
+<section id="getting-inside-a-container-6" class="slide level2">
+<h2>Getting inside a container</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Getting a shell in a running container</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>Sometimes, we need to get a shell anyway.</p></li>
+<li><p>We <em>could</em> run some SSH server in the container …</p></li>
+<li><p>But it is easier to use <code>docker exec</code>.</p></li>
+</ul>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb70"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb70-1"><a></a><span class="ex">$</span> docker exec <span class="at">-ti</span> ticktock sh</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li><p>This creates a new process (running <code>sh</code>) <em>inside</em> the container.</p></li>
+<li><p>This can also be done “manually” with the tool <code>nsenter</code>.</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="getting-inside-a-container-7" class="slide level2">
+<h2>Getting inside a container</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Caveats</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>The tool that you want to run needs to exist in the container.</p></li>
+<li><p>Some tools (like <code>ip netns exec</code>) let you attach to <em>one</em> namespace at a time.</p>
+<p>(This lets you e.g.&nbsp;setup network interfaces, even if you don’t have <code>ifconfig</code> or <code>ip</code> in the container.)</p></li>
+<li><p>Most importantly: the container needs to be running.</p></li>
+<li><p>What if the container is stopped or crashed?</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="getting-inside-a-container-8" class="slide level2">
+<h2>Getting inside a container</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Getting a shell in a stopped container</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>A stopped container is only <em>storage</em> (like a disk drive).</p></li>
+<li><p>We cannot SSH into a disk drive or USB stick!</p></li>
+<li><p>We need to connect the disk to a running machine.</p></li>
+<li><p>How does that translate into the container world?</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="getting-inside-a-container-9" class="slide level2">
+<h2>Getting inside a container</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Analyzing a stopped container</strong></p>
+</div>
+<div class="callout-content">
+<p>As an exercise, we are going to try to find out what’s wrong with <code>jpetazzo/crashtest</code>.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb71"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb71-1"><a></a><span class="ex">docker</span> run jpetazzo/crashtest</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The container starts, but then stops immediately, without any output.</p>
+<p>What would MacGyver™ do?</p>
+<p>First, let’s check the status of that container.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb72"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb72-1"><a></a><span class="ex">docker</span> ps <span class="at">-l</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</section>
+<section id="getting-inside-a-container-10" class="slide level2">
+<h2>Getting inside a container</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Viewing filesystem changes</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>We can use <code>docker diff</code> to see files that were added / changed / removed.</li>
+</ul>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb73"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb73-1"><a></a><span class="ex">docker</span> diff <span class="op">&lt;</span>container_id<span class="op">&gt;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li><p>The container ID was shown by <code>docker ps -l</code>.</p></li>
+<li><p>We can also see it with <code>docker ps -lq</code>.</p></li>
+<li><p>The output of <code>docker diff</code> shows some interesting log files!</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="getting-inside-a-container-11" class="slide level2">
+<h2>Getting inside a container</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Accessing files</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>We can extract files with <code>docker cp</code>.</li>
+</ul>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb74"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb74-1"><a></a><span class="ex">docker</span> cp <span class="op">&lt;</span>container_id<span class="op">&gt;</span>:/var/log/nginx/error.log .</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li>Then we can look at that log file.</li>
+</ul>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb75"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb75-1"><a></a><span class="fu">cat</span> error.log</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>(The directory <code>/run/nginx</code> doesn’t exist.)</p>
+</div>
+</div>
+</div>
+</section>
+<section id="getting-inside-a-container-12" class="slide level2">
+<h2>Getting inside a container</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Exploring a crashed container</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>We can restart a container with <code>docker start</code> …</p></li>
+<li><p>… But it will probably crash again immediately!</p></li>
+<li><p>We cannot specify a different program to run with <code>docker start</code></p></li>
+<li><p>But we can create a new image from the crashed container</p></li>
+</ul>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb76"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb76-1"><a></a><span class="ex">docker</span> commit <span class="op">&lt;</span>container_id<span class="op">&gt;</span> debugimage</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li>Then we can run a new container from that image, with a custom entrypoint</li>
+</ul>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb77"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb77-1"><a></a><span class="ex">docker</span> run <span class="at">-ti</span> <span class="at">--entrypoint</span> sh debugimage</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</section>
+<section id="getting-inside-a-container-13" class="slide level2">
+<h2>Getting inside a container</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Obtaining a complete dump</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>We can also dump the entire filesystem of a container.</p></li>
+<li><p>This is done with <code>docker export</code>.</p></li>
+<li><p>It generates a tar archive.</p></li>
+</ul>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb78"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb78-1"><a></a><span class="ex">docker</span> export <span class="op">&lt;</span>container_id<span class="op">&gt;</span> <span class="kw">|</span> <span class="fu">tar</span> tv</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This will give a detailed listing of the content of the container.</p>
+</div>
+</div>
+</div>
+
+
+</section></section>
+    </div>
+  <div class="quarto-auto-generated-content" style="display: none;">
+<div class="footer footer-default">
+
+</div>
+</div></div>
+
+  <script>window.backupDefine = window.define; window.define = undefined;</script>
+  <script src="site_libs/revealjs/dist/reveal.js"></script>
+  <!-- reveal.js plugins -->
+  <script src="site_libs/revealjs/plugin/quarto-line-highlight/line-highlight.js"></script>
+  <script src="site_libs/revealjs/plugin/pdf-export/pdfexport.js"></script>
+  <script src="site_libs/revealjs/plugin/reveal-menu/menu.js"></script>
+  <script src="site_libs/revealjs/plugin/reveal-menu/quarto-menu.js"></script>
+  <script src="site_libs/revealjs/plugin/multiplex/socket.io.js"></script>
+  <script src="site_libs/revealjs/plugin/multiplex/multiplex.js"></script>
+  <script src="site_libs/revealjs/plugin/quarto-support/support.js"></script>
+  
+
+  <script src="site_libs/revealjs/plugin/notes/notes.js"></script>
+  <script src="site_libs/revealjs/plugin/search/search.js"></script>
+  <script src="site_libs/revealjs/plugin/zoom/zoom.js"></script>
+  <script src="site_libs/revealjs/plugin/math/math.js"></script>
+  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script>
+
+  <script>
+
+      // Full list of configuration options available at:
+      // https://revealjs.com/config/
+      Reveal.initialize({
+'controlsAuto': true,
+'previewLinksAuto': true,
+'pdfSeparateFragments': false,
+'autoAnimateEasing': "ease",
+'autoAnimateDuration': 1,
+'autoAnimateUnmatched': true,
+'jumpToSlide': true,
+'menu': {"side":"left","useTextContentForMissingTitles":true,"markers":false,"loadIcons":false,"custom":[{"title":"Tools","icon":"<i class=\"fas fa-gear\"></i>","content":"<ul class=\"slide-menu-items\">\n<li class=\"slide-tool-item active\" data-item=\"0\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.fullscreen(event)\"><kbd>f</kbd> Fullscreen</a></li>\n<li class=\"slide-tool-item\" data-item=\"1\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.speakerMode(event)\"><kbd>s</kbd> Speaker View</a></li>\n<li class=\"slide-tool-item\" data-item=\"2\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.overview(event)\"><kbd>o</kbd> Slide Overview</a></li>\n<li class=\"slide-tool-item\" data-item=\"3\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.togglePdfExport(event)\"><kbd>e</kbd> PDF Export Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"4\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.toggleScrollView(event)\"><kbd>r</kbd> Scroll View Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"5\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.keyboardHelp(event)\"><kbd>?</kbd> Keyboard Help</a></li>\n</ul>"}],"openButton":true},
+'multiplex': {"url":"https://mplex.vitv.ly","secret":null,"id":"1e7d1dabb099eb1fe5223fdbb0d8cddbaf2b3ded43c4b0b470bc51c8522857f6"},
+'smaller': false,
+ 
+        // Display controls in the bottom right corner
+        controls: false,
+
+        // Help the user learn the controls by providing hints, for example by
+        // bouncing the down arrow when they first encounter a vertical slide
+        controlsTutorial: false,
+
+        // Determines where controls appear, "edges" or "bottom-right"
+        controlsLayout: 'edges',
+
+        // Visibility rule for backwards navigation arrows; "faded", "hidden"
+        // or "visible"
+        controlsBackArrows: 'faded',
+
+        // Display a presentation progress bar
+        progress: true,
+
+        // Display the page number of the current slide
+        slideNumber: 'c/t',
+
+        // 'all', 'print', or 'speaker'
+        showSlideNumber: 'all',
+
+        // Add the current slide number to the URL hash so that reloading the
+        // page/copying the URL will return you to the same slide
+        hash: true,
+
+        // Start with 1 for the hash rather than 0
+        hashOneBasedIndex: false,
+
+        // Flags if we should monitor the hash and change slides accordingly
+        respondToHashChanges: true,
+
+        // Push each slide change to the browser history
+        history: true,
+
+        // Enable keyboard shortcuts for navigation
+        keyboard: true,
+
+        // Enable the slide overview mode
+        overview: true,
+
+        // Disables the default reveal.js slide layout (scaling and centering)
+        // so that you can use custom CSS layout
+        disableLayout: false,
+
+        // Vertical centering of slides
+        center: false,
+
+        // Enables touch navigation on devices with touch input
+        touch: true,
+
+        // Loop the presentation
+        loop: false,
+
+        // Change the presentation direction to be RTL
+        rtl: false,
+
+        // see https://revealjs.com/vertical-slides/#navigation-mode
+        navigationMode: 'linear',
+
+        // Randomizes the order of slides each time the presentation loads
+        shuffle: false,
+
+        // Turns fragments on and off globally
+        fragments: true,
+
+        // Flags whether to include the current fragment in the URL,
+        // so that reloading brings you to the same fragment position
+        fragmentInURL: false,
+
+        // Flags if the presentation is running in an embedded mode,
+        // i.e. contained within a limited portion of the screen
+        embedded: false,
+
+        // Flags if we should show a help overlay when the questionmark
+        // key is pressed
+        help: true,
+
+        // Flags if it should be possible to pause the presentation (blackout)
+        pause: true,
+
+        // Flags if speaker notes should be visible to all viewers
+        showNotes: false,
+
+        // Global override for autoplaying embedded media (null/true/false)
+        autoPlayMedia: null,
+
+        // Global override for preloading lazy-loaded iframes (null/true/false)
+        preloadIframes: null,
+
+        // Number of milliseconds between automatically proceeding to the
+        // next slide, disabled when set to 0, this value can be overwritten
+        // by using a data-autoslide attribute on your slides
+        autoSlide: 0,
+
+        // Stop auto-sliding after user input
+        autoSlideStoppable: true,
+
+        // Use this method for navigation when auto-sliding
+        autoSlideMethod: null,
+
+        // Specify the average time in seconds that you think you will spend
+        // presenting each slide. This is used to show a pacing timer in the
+        // speaker view
+        defaultTiming: null,
+
+        // Enable slide navigation via mouse wheel
+        mouseWheel: false,
+
+        // The display mode that will be used to show slides
+        display: 'block',
+
+        // Hide cursor if inactive
+        hideInactiveCursor: true,
+
+        // Time before the cursor is hidden (in ms)
+        hideCursorTime: 5000,
+
+        // Opens links in an iframe preview overlay
+        previewLinks: false,
+
+        // Transition style (none/fade/slide/convex/concave/zoom)
+        transition: 'none',
+
+        // Transition speed (default/fast/slow)
+        transitionSpeed: 'default',
+
+        // Transition style for full page slide backgrounds
+        // (none/fade/slide/convex/concave/zoom)
+        backgroundTransition: 'none',
+
+        // Number of slides away from the current that are visible
+        viewDistance: 3,
+
+        // Number of slides away from the current that are visible on mobile
+        // devices. It is advisable to set this to a lower number than
+        // viewDistance in order to save resources.
+        mobileViewDistance: 2,
+
+        // The "normal" size of the presentation, aspect ratio will be preserved
+        // when the presentation is scaled to fit different resolutions. Can be
+        // specified using percentage units.
+        width: 1050,
+
+        height: 700,
+
+        // Factor of the display size that should remain empty around the content
+        margin: 0.1,
+
+        math: {
+          mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@2.7.9/MathJax.js',
+          config: 'TeX-AMS_HTML-full',
+          tex2jax: {
+            inlineMath: [['\\(','\\)']],
+            displayMath: [['\\[','\\]']],
+            balanceBraces: true,
+            processEscapes: false,
+            processRefs: true,
+            processEnvironments: true,
+            preview: 'TeX',
+            skipTags: ['script','noscript','style','textarea','pre','code'],
+            ignoreClass: 'tex2jax_ignore',
+            processClass: 'tex2jax_process'
+          },
+        },
+
+        // reveal.js plugins
+        plugins: [QuartoLineHighlight, PdfExport, RevealMenu, QuartoSupport,
+
+          RevealMath,
+          
+          RevealSearch,
+          RevealZoom
+        ]
+      });
+    </script>
+    <script id="quarto-html-after-body" type="application/javascript">
+      window.document.addEventListener("DOMContentLoaded", function (event) {
+        const tabsets =  window.document.querySelectorAll(".panel-tabset-tabby")
+        tabsets.forEach(function(tabset) {
+          const tabby = new Tabby('#' + tabset.id);
+        });
+        const isCodeAnnotation = (el) => {
+          for (const clz of el.classList) {
+            if (clz.startsWith('code-annotation-')) {                     
+              return true;
+            }
+          }
+          return false;
+        }
+        const onCopySuccess = function(e) {
+          // button target
+          const button = e.trigger;
+          // don't keep focus
+          button.blur();
+          // flash "checked"
+          button.classList.add('code-copy-button-checked');
+          var currentTitle = button.getAttribute("title");
+          button.setAttribute("title", "Copied!");
+          let tooltip;
+          if (window.bootstrap) {
+            button.setAttribute("data-bs-toggle", "tooltip");
+            button.setAttribute("data-bs-placement", "left");
+            button.setAttribute("data-bs-title", "Copied!");
+            tooltip = new bootstrap.Tooltip(button, 
+              { trigger: "manual", 
+                customClass: "code-copy-button-tooltip",
+                offset: [0, -8]});
+            tooltip.show();    
+          }
+          setTimeout(function() {
+            if (tooltip) {
+              tooltip.hide();
+              button.removeAttribute("data-bs-title");
+              button.removeAttribute("data-bs-toggle");
+              button.removeAttribute("data-bs-placement");
+            }
+            button.setAttribute("title", currentTitle);
+            button.classList.remove('code-copy-button-checked');
+          }, 1000);
+          // clear code selection
+          e.clearSelection();
+        }
+        const getTextToCopy = function(trigger) {
+          const outerScaffold = trigger.parentElement.cloneNode(true);
+          const codeEl = outerScaffold.querySelector('code');
+          for (const childEl of codeEl.children) {
+            if (isCodeAnnotation(childEl)) {
+              childEl.remove();
+            }
+          }
+          return codeEl.innerText;
+        }
+        const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+          text: getTextToCopy
+        });
+        clipboard.on('success', onCopySuccess);
+        if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+          const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+            text: getTextToCopy,
+            container: window.document.getElementById('quarto-embedded-source-code-modal')
+          });
+          clipboardModal.on('success', onCopySuccess);
+        }
+          var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+          var mailtoRegex = new RegExp(/^mailto:/);
+            var filterRegex = new RegExp("https:\/\/dslnu\.github\.io\/data_analytics\/");
+          var isInternal = (href) => {
+              return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+          }
+          // Inspect non-navigation links and adorn them if external
+         var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+          for (var i=0; i<links.length; i++) {
+            const link = links[i];
+            if (!isInternal(link.href)) {
+              // undo the damage that might have been done by quarto-nav.js in the case of
+              // links that we want to consider external
+              if (link.dataset.originalHref !== undefined) {
+                link.href = link.dataset.originalHref;
+              }
+            }
+          }
+        function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+          const config = {
+            allowHTML: true,
+            maxWidth: 500,
+            delay: 100,
+            arrow: false,
+            appendTo: function(el) {
+                return el.closest('section.slide') || el.parentElement;
+            },
+            interactive: true,
+            interactiveBorder: 10,
+            theme: 'light-border',
+            placement: 'bottom-start',
+          };
+          if (contentFn) {
+            config.content = contentFn;
+          }
+          if (onTriggerFn) {
+            config.onTrigger = onTriggerFn;
+          }
+          if (onUntriggerFn) {
+            config.onUntrigger = onUntriggerFn;
+          }
+            config['offset'] = [0,0];
+            config['maxWidth'] = 700;
+          window.tippy(el, config); 
+        }
+        const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+        for (var i=0; i<noterefs.length; i++) {
+          const ref = noterefs[i];
+          tippyHover(ref, function() {
+            // use id or data attribute instead here
+            let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+            try { href = new URL(href).hash; } catch {}
+            const id = href.replace(/^#\/?/, "");
+            const note = window.document.getElementById(id);
+            if (note) {
+              return note.innerHTML;
+            } else {
+              return "";
+            }
+          });
+        }
+        const findCites = (el) => {
+          const parentEl = el.parentElement;
+          if (parentEl) {
+            const cites = parentEl.dataset.cites;
+            if (cites) {
+              return {
+                el,
+                cites: cites.split(' ')
+              };
+            } else {
+              return findCites(el.parentElement)
+            }
+          } else {
+            return undefined;
+          }
+        };
+        var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+        for (var i=0; i<bibliorefs.length; i++) {
+          const ref = bibliorefs[i];
+          const citeInfo = findCites(ref);
+          if (citeInfo) {
+            tippyHover(citeInfo.el, function() {
+              var popup = window.document.createElement('div');
+              citeInfo.cites.forEach(function(cite) {
+                var citeDiv = window.document.createElement('div');
+                citeDiv.classList.add('hanging-indent');
+                citeDiv.classList.add('csl-entry');
+                var biblioDiv = window.document.getElementById('ref-' + cite);
+                if (biblioDiv) {
+                  citeDiv.innerHTML = biblioDiv.innerHTML;
+                }
+                popup.appendChild(citeDiv);
+              });
+              return popup.innerHTML;
+            });
+          }
+        }
+      });
+      </script>
+    
+
+</body></html>

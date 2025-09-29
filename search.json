@@ -49,6 +49,454 @@
     "text": "Write a version of curried function c_5 using lambda syntax.\nWrite a program calculating a factorial using parallelisation and map-reduce.\nWrite a parallelised version of reduce (hint: use chunking).\nCompare performance of Numpy vectorization vs parallel map on a really large array of integers.\nUsing computations from previous labs, apply chunking approach to df.apply(...) using parallel map."
   },
   {
+    "objectID": "applied_lec3.html#container-networking-basics-1",
+    "href": "applied_lec3.html#container-networking-basics-1",
+    "title": "Docker Networking",
+    "section": "Container networking basics",
+    "text": "Container networking basics\n\n\n\nObjectives\n\n\nWe will now run network services (accepting requests) in containers.\nAt the end of this section, you will be able to:\n\nRun a network service in a container.\nConnect to that network service.\nFind a container’s IP address."
+  },
+  {
+    "objectID": "applied_lec3.html#container-networking-basics-2",
+    "href": "applied_lec3.html#container-networking-basics-2",
+    "title": "Docker Networking",
+    "section": "Container networking basics",
+    "text": "Container networking basics\n\n\n\nRunning a very simple service\n\n\n\nWe need something small, simple, easy to configure\n(or, even better, that doesn’t require any configuration at all)\nLet’s use the official NGINX image (named nginx)\nIt runs a static web server listening on port 80\nIt serves a default “Welcome to nginx!” page"
+  },
+  {
+    "objectID": "applied_lec3.html#container-networking-basics-3",
+    "href": "applied_lec3.html#container-networking-basics-3",
+    "title": "Docker Networking",
+    "section": "Container networking basics",
+    "text": "Container networking basics\n\n\n\nRunning an NGINX server\n\n\n$ docker run -d -P nginx\n66b1ce719198711292c8f34f84a7b68c3876cf9f67015e752b94e189d35a204e\n\nDocker will automatically pull the nginx image from the Docker Hub\n-d / --detach tells Docker to run it in the background\nP / --publish-all tells Docker to publish all ports\n(publish = make them reachable from other computers)\n…OK, how do we connect to our web server now?"
+  },
+  {
+    "objectID": "applied_lec3.html#container-networking-basics-4",
+    "href": "applied_lec3.html#container-networking-basics-4",
+    "title": "Docker Networking",
+    "section": "Container networking basics",
+    "text": "Container networking basics\n\n\n\nFinding our web server port\n\n\n\nFirst, we need to find the port number used by Docker\n(the NGINX container listens on port 80, but this port will be mapped)\nWe can use docker ps:\n$ docker ps\nCONTAINER ID  IMAGE  ...  PORTS                  ...\ne40ffb406c9e  nginx  ...  0.0.0.0:`12345`-&gt;80/tcp  ...\nThis means:\nport 12345 on the Docker host is mapped to port 80 in the container\nNow we need to connect to the Docker host!"
+  },
+  {
+    "objectID": "applied_lec3.html#container-networking-basics-5",
+    "href": "applied_lec3.html#container-networking-basics-5",
+    "title": "Docker Networking",
+    "section": "Container networking basics",
+    "text": "Container networking basics\n\n\n\nFinding the address of the Docker host\n\n\n\nWhen running Docker on your Linux workstation:\nuse localhost, or any IP address of your machine\nWhen running Docker on a remote Linux server:\nuse any IP address of the remote machine\nWhen running Docker Desktop on Mac or Windows:\nuse localhost\nIn other scenarios (docker-machine, local VM…):\nuse the IP address of the Docker VM"
+  },
+  {
+    "objectID": "applied_lec3.html#container-networking-basics-6",
+    "href": "applied_lec3.html#container-networking-basics-6",
+    "title": "Docker Networking",
+    "section": "Container networking basics",
+    "text": "Container networking basics\n\n\n\nConnecting to our web server (GUI)\n\n\nPoint your browser to the IP address of your Docker host, on the port shown by docker ps for container port 80.\n\n\n\nScreenshot"
+  },
+  {
+    "objectID": "applied_lec3.html#container-networking-basics-7",
+    "href": "applied_lec3.html#container-networking-basics-7",
+    "title": "Docker Networking",
+    "section": "Container networking basics",
+    "text": "Container networking basics\n\n\n\nConnecting to our web server (CLI)\n\n\nYou can also use curl directly from the Docker host.\nMake sure to use the right port number if it is different from the example below:\n$ curl localhost:12345\n&lt;!DOCTYPE html&gt;\n&lt;html&gt;\n&lt;head&gt;\n&lt;title&gt;Welcome to nginx!&lt;/title&gt;\n..."
+  },
+  {
+    "objectID": "applied_lec3.html#container-networking-basics-8",
+    "href": "applied_lec3.html#container-networking-basics-8",
+    "title": "Docker Networking",
+    "section": "Container networking basics",
+    "text": "Container networking basics\n\n\n\nHow does Docker know which port to map?\n\n\n\nThere is metadata in the image telling “this image has something on port 80”.\nWe can see that metadata with docker inspect:\n\n$ docker inspect --format '{{.Config.ExposedPorts}}' nginx\nmap[80/tcp:{}]\n\nThis metadata was set in the Dockerfile, with the EXPOSE keyword.\nWe can see that with docker history:\n\n$ docker history nginx\nIMAGE               CREATED             CREATED BY\n7f70b30f2cc6        11 days ago         /bin/sh -c #(nop)  CMD [\"nginx\" \"-g\" \"…\n&lt;missing&gt;           11 days ago         /bin/sh -c #(nop)  STOPSIGNAL [SIGTERM]\n&lt;missing&gt;           11 days ago         /bin/sh -c #(nop)  EXPOSE 80/tcp"
+  },
+  {
+    "objectID": "applied_lec3.html#container-networking-basics-9",
+    "href": "applied_lec3.html#container-networking-basics-9",
+    "title": "Docker Networking",
+    "section": "Container networking basics",
+    "text": "Container networking basics\n\n\n\nWhy can’t we just connect to port 80?\n\n\n\nOur Docker host has only one port 80\nTherefore, we can only have one container at a time on port 80\nTherefore, if multiple containers want port 80, only one can get it\nBy default, containers do not get “their” port number, but a random one\n(not “random” as “crypto random”, but as “it depends on various factors”)\nWe’ll see later how to force a port number (including port 80!)"
+  },
+  {
+    "objectID": "applied_lec3.html#container-networking-basics-10",
+    "href": "applied_lec3.html#container-networking-basics-10",
+    "title": "Docker Networking",
+    "section": "Container networking basics",
+    "text": "Container networking basics\n\n\n\nUsing multiple IP addresses\n\n\nHey, my network-fu is strong, and I have questions…\n\nCan I publish one container on 127.0.0.2:80, and another on 127.0.0.3:80?\nMy machine has multiple (public) IP addresses, let’s say A.A.A.A and B.B.B.B.  Can I have one container on A.A.A.A:80 and another on B.B.B.B:80?\nI have a whole IPV4 subnet, can I allocate it to my containers?\nWhat about IPV6?\n\nYou can do all these things when running Docker directly on Linux.\n(On other platforms, generally not, but there are some exceptions.)"
+  },
+  {
+    "objectID": "applied_lec3.html#container-networking-basics-11",
+    "href": "applied_lec3.html#container-networking-basics-11",
+    "title": "Docker Networking",
+    "section": "Container networking basics",
+    "text": "Container networking basics\n\n\n\nFinding the web server port in a script\n\n\nParsing the output of docker ps would be painful.\nThere is a command to help us:\n$ docker port &lt;containerID&gt; 80\n0.0.0.0:12345"
+  },
+  {
+    "objectID": "applied_lec3.html#container-networking-basics-12",
+    "href": "applied_lec3.html#container-networking-basics-12",
+    "title": "Docker Networking",
+    "section": "Container networking basics",
+    "text": "Container networking basics\n\n\n\nManual allocation of port numbers\n\n\nIf you want to set port numbers yourself, no problem:\n$ docker run -d -p 80:80 nginx\n$ docker run -d -p 8000:80 nginx\n$ docker run -d -p 8080:80 -p 8888:80 nginx\n\nWe are running three NGINX web servers.\nThe first one is exposed on port 80.\nThe second one is exposed on port 8000.\nThe third one is exposed on ports 8080 and 8888.\n\nNote: the convention is port-on-host:port-on-container."
+  },
+  {
+    "objectID": "applied_lec3.html#container-networking-basics-13",
+    "href": "applied_lec3.html#container-networking-basics-13",
+    "title": "Docker Networking",
+    "section": "Container networking basics",
+    "text": "Container networking basics\n\n\n\nPlumbing containers into your infrastructure\n\n\nThere are many ways to integrate containers in your network.\n\nStart the container, letting Docker allocate a public port for it. Then retrieve that port number and feed it to your configuration.\nPick a fixed port number in advance, when you generate your configuration. Then start your container by setting the port numbers manually.\nUse an orchestrator like Kubernetes or Swarm. The orchestrator will provide its own networking facilities.\n\nOrchestrators typically provide mechanisms to enable direct container-to-container communication across hosts, and publishing/load balancing for inbound traffic."
+  },
+  {
+    "objectID": "applied_lec3.html#container-networking-basics-14",
+    "href": "applied_lec3.html#container-networking-basics-14",
+    "title": "Docker Networking",
+    "section": "Container networking basics",
+    "text": "Container networking basics\n\n\n\nFinding the container’s IP address\n\n\nWe can use the docker inspect command to find the IP address of the container.\n$ docker inspect --format '{{ .NetworkSettings.IPAddress }}' &lt;yourContainerID&gt;\n172.17.0.3\n\ndocker inspect is an advanced command, that can retrieve a ton of information about our containers.\nHere, we provide it with a format string to extract exactly the private IP address of the container."
+  },
+  {
+    "objectID": "applied_lec3.html#container-networking-basics-15",
+    "href": "applied_lec3.html#container-networking-basics-15",
+    "title": "Docker Networking",
+    "section": "Container networking basics",
+    "text": "Container networking basics\n\n\n\nPinging our container\n\n\nLet’s try to ping our container from another container.\ndocker run alpine ping `&lt;ipaddress&gt;`\nPING 172.17.0.X (172.17.0.X): 56 data bytes\n64 bytes from 172.17.0.X: seq=0 ttl=64 time=0.106 ms\n64 bytes from 172.17.0.X: seq=1 ttl=64 time=0.250 ms\n64 bytes from 172.17.0.X: seq=2 ttl=64 time=0.188 ms\nWhen running on Linux, we can even ping that IP address directly!\n(And connect to a container’s ports even if they aren’t published.)"
+  },
+  {
+    "objectID": "applied_lec3.html#container-networking-basics-16",
+    "href": "applied_lec3.html#container-networking-basics-16",
+    "title": "Docker Networking",
+    "section": "Container networking basics",
+    "text": "Container networking basics\n\n\n\nHow often do we use -p and -P ?\n\n\n\nWhen running a stack of containers, we will often use Compose\nCompose will take care of exposing containers\n(through a ports: section in the docker-compose.yml file)\nIt is, however, fairly common to use docker run -P for a quick test\nOr docker run -p ... when an image doesn’t EXPOSE a port correctly"
+  },
+  {
+    "objectID": "applied_lec3.html#container-networking-basics-17",
+    "href": "applied_lec3.html#container-networking-basics-17",
+    "title": "Docker Networking",
+    "section": "Container networking basics",
+    "text": "Container networking basics\n\n\n\nSection summary\n\n\nWe’ve learned how to:\n\nExpose a network port.\nConnect to an application running in a container.\nFind a container’s IP address."
+  },
+  {
+    "objectID": "applied_lec3.html#container-network-drivers-1",
+    "href": "applied_lec3.html#container-network-drivers-1",
+    "title": "Docker Networking",
+    "section": "Container network drivers",
+    "text": "Container network drivers\n\n\n\nOverview\n\n\nThe Docker Engine supports different network drivers.\nThe built-in drivers include:\n\nbridge (default)\nnull (for the special network called none)\nhost (for the special network called host)\ncontainer (that one is a bit magic!)\n\nThe network is selected with docker run --net ....\nEach network is managed by a driver.\nThe different drivers are explained with more details on the following slides."
+  },
+  {
+    "objectID": "applied_lec3.html#container-network-drivers-2",
+    "href": "applied_lec3.html#container-network-drivers-2",
+    "title": "Docker Networking",
+    "section": "Container network drivers",
+    "text": "Container network drivers\n\n\n\nThe default bridge\n\n\n\nBy default, the container gets a virtual eth0 interface. (In addition to its own private lo loopback interface.)\nThat interface is provided by a veth pair.\nIt is connected to the Docker bridge. (Named docker0 by default; configurable with --bridge.)\nAddresses are allocated on a private, internal subnet. (Docker uses 172.17.0.0/16 by default; configurable with --bip.)\nOutbound traffic goes through an iptables MASQUERADE rule.\nInbound traffic goes through an iptables DNAT rule.\nThe container can have its own routes, iptables rules, etc."
+  },
+  {
+    "objectID": "applied_lec3.html#container-network-drivers-3",
+    "href": "applied_lec3.html#container-network-drivers-3",
+    "title": "Docker Networking",
+    "section": "Container network drivers",
+    "text": "Container network drivers\n\n\n\nThe null driver\n\n\n\nContainer is started with docker run --net none ...\nIt only gets the lo loopback interface. No eth0.\nIt can’t send or receive network traffic.\nUseful for isolated/untrusted workloads."
+  },
+  {
+    "objectID": "applied_lec3.html#container-network-drivers-4",
+    "href": "applied_lec3.html#container-network-drivers-4",
+    "title": "Docker Networking",
+    "section": "Container network drivers",
+    "text": "Container network drivers\n\n\n\nThe host driver\n\n\n\nContainer is started with docker run --net host ...\nIt sees (and can access) the network interfaces of the host.\nIt can bind any address, any port (for ill and for good).\nNetwork traffic doesn’t have to go through NAT, bridge, or veth.\nPerformance = native!\n\nUse cases:\n\nPerformance sensitive applications (VOIP, gaming, streaming…)\nPeer discovery (e.g. Erlang port mapper, Raft, Serf…)"
+  },
+  {
+    "objectID": "applied_lec3.html#container-network-drivers-5",
+    "href": "applied_lec3.html#container-network-drivers-5",
+    "title": "Docker Networking",
+    "section": "Container network drivers",
+    "text": "Container network drivers\n\n\n\nThe container driver\n\n\n\nContainer is started with docker run --net container:id ...\nIt re-uses the network stack of another container.\nIt shares with this other container the same interfaces, IP address(es), routes, iptables rules, etc.\nThose containers can communicate over their lo interface. (i.e. one can bind to 127.0.0.1 and the others can connect to it.)"
+  },
+  {
+    "objectID": "applied_lec3.html#the-container-network-model-1",
+    "href": "applied_lec3.html#the-container-network-model-1",
+    "title": "Docker Networking",
+    "section": "The Container Network Model",
+    "text": "The Container Network Model\n\n\n\nObjectives\n\n\nWe will learn about the CNM (Container Network Model).\nAt the end of this lesson, you will be able to:\n\nCreate a private network for a group of containers.\nUse container naming to connect services together.\nDynamically connect and disconnect containers to networks.\nSet the IP address of a container.\n\nWe will also explain the principle of overlay networks and network plugins."
+  },
+  {
+    "objectID": "applied_lec3.html#the-container-network-model-2",
+    "href": "applied_lec3.html#the-container-network-model-2",
+    "title": "Docker Networking",
+    "section": "The Container Network Model",
+    "text": "The Container Network Model\n\n\n\nThe Container Network Model\n\n\nDocker has “networks”.\nWe can manage them with the docker network commands; for instance:\n$ docker network ls\nNETWORK ID          NAME                DRIVER\n6bde79dfcf70        bridge              bridge\n8d9c78725538        none                null\neb0eeab782f4        host                host\n4c1ff84d6d3f        blog-dev            overlay\n228a4355d548        blog-prod           overlay\nNew networks can be created (with docker network create).\n(Note: networks none and host are special; let’s set them aside for now.)"
+  },
+  {
+    "objectID": "applied_lec3.html#the-container-network-model-4",
+    "href": "applied_lec3.html#the-container-network-model-4",
+    "title": "Docker Networking",
+    "section": "The Container Network Model",
+    "text": "The Container Network Model\n\n\n\nWhat’s a network?\n\n\n\nConceptually, a Docker “network” is a virtual switch\n(we can also think about it like a VLAN, or a WiFi SSID, for instance)\nBy default, containers are connected to a single network\n(but they can be connected to zero, or many networks, even dynamically)\nEach network has its own subnet (IP address range)\nA network can be local (to a single Docker Engine) or global (span multiple hosts)\nContainers can have network aliases providing DNS-based service discovery\n(and each network has its own “domain”, “zone”, or “scope”)"
+  },
+  {
+    "objectID": "applied_lec3.html#the-container-network-model-5",
+    "href": "applied_lec3.html#the-container-network-model-5",
+    "title": "Docker Networking",
+    "section": "The Container Network Model",
+    "text": "The Container Network Model\n\n\n\nService discovery\n\n\n\nA container can be given a network alias\n(e.g. with docker run --net some-network --net-alias db ...)\nThe containers running in the same network can resolve that network alias\n(i.e. if they do a DNS lookup on db, it will give the container’s address)\nWe can have a different db container in each network\n(this avoids naming conflicts between different stacks)\nWhen we name a container, it automatically adds the name as a network alias\n(i.e. docker run --name xyz ... is like docker run --net-alias xyz ..."
+  },
+  {
+    "objectID": "applied_lec3.html#the-container-network-model-6",
+    "href": "applied_lec3.html#the-container-network-model-6",
+    "title": "Docker Networking",
+    "section": "The Container Network Model",
+    "text": "The Container Network Model\n\n\n\nNetwork isolation\n\n\n\nNetworks are isolated\nBy default, containers in network A cannot reach those in network B\nA container connected to both networks A and B can act as a router or proxy\nPublished ports are always reachable through the Docker host address\n(docker run -P ... makes a container port available to everyone)"
+  },
+  {
+    "objectID": "applied_lec3.html#the-container-network-model-7",
+    "href": "applied_lec3.html#the-container-network-model-7",
+    "title": "Docker Networking",
+    "section": "The Container Network Model",
+    "text": "The Container Network Model\n\n\n\nHow to use networks\n\n\n\nWe typically create one network per “stack” or app that we deploy\nMore complex apps or stacks might require multiple networks\n(e.g. frontend, backend, …)\nNetworks allow us to deploy multiple copies of the same stack\n(e.g. prod, dev, pr-442, ….)\nIf we use Docker Compose, this is managed automatically for us"
+  },
+  {
+    "objectID": "applied_lec3.html#the-container-network-model-8",
+    "href": "applied_lec3.html#the-container-network-model-8",
+    "title": "Docker Networking",
+    "section": "The Container Network Model",
+    "text": "The Container Network Model\n\nMultiple containers on the default bridge network, on a Linux machine"
+  },
+  {
+    "objectID": "applied_lec3.html#the-container-network-model-9",
+    "href": "applied_lec3.html#the-container-network-model-9",
+    "title": "Docker Networking",
+    "section": "The Container Network Model",
+    "text": "The Container Network Model\n\nMultiple containers in multiple bridge networks, on a Linux machine"
+  },
+  {
+    "objectID": "applied_lec3.html#the-container-network-model-10",
+    "href": "applied_lec3.html#the-container-network-model-10",
+    "title": "Docker Networking",
+    "section": "The Container Network Model",
+    "text": "The Container Network Model\n\nMultiple containers in multiple bridge networks, on a Mac/Windows machine"
+  },
+  {
+    "objectID": "applied_lec3.html#the-container-network-model-11",
+    "href": "applied_lec3.html#the-container-network-model-11",
+    "title": "Docker Networking",
+    "section": "The Container Network Model",
+    "text": "The Container Network Model\n\n\n\nCNM vs CNI\n\n\n\nCNM is the model used by Docker\nKubernetes uses a different model, architectured around CNI\n(CNI is a kind of API between a container engine and CNI plugins)\nDocker model:\n\nmultiple isolated networks\nper-network service discovery\nnetwork interconnection requires extra steps\n\nKubernetes model:\n\nsingle flat network\nper-namespace service discovery\nnetwork isolation requires extra steps (Network Policies)"
+  },
+  {
+    "objectID": "applied_lec3.html#the-container-network-model-12",
+    "href": "applied_lec3.html#the-container-network-model-12",
+    "title": "Docker Networking",
+    "section": "The Container Network Model",
+    "text": "The Container Network Model\n\n\n\nCreating a network\n\n\nLet’s create a network called dev.\n$ docker network create dev\n4c1ff84d6d3f1733d3e233ee039cac276f425a9d5228a4355d54878293a889ba\nThe network is now visible with the network ls command:\n$ docker network ls\nNETWORK ID          NAME                DRIVER\n6bde79dfcf70        bridge              bridge\n8d9c78725538        none                null\neb0eeab782f4        host                host\n4c1ff84d6d3f        dev                 bridge"
+  },
+  {
+    "objectID": "applied_lec3.html#the-container-network-model-13",
+    "href": "applied_lec3.html#the-container-network-model-13",
+    "title": "Docker Networking",
+    "section": "The Container Network Model",
+    "text": "The Container Network Model\n\n\n\nPlacing containers on a network\n\n\nWe will create a named container on this network.\nIt will be reachable with its name, es.\n$ docker run -d --name es --net dev elasticsearch:2\n8abb80e229ce8926c7223beb69699f5f34d6f1d438bfc5682db893e798046863"
+  },
+  {
+    "objectID": "applied_lec3.html#the-container-network-model-14",
+    "href": "applied_lec3.html#the-container-network-model-14",
+    "title": "Docker Networking",
+    "section": "The Container Network Model",
+    "text": "The Container Network Model\n\n\n\nCommunication between containers\n\n\nNow, create another container on this network.\n$ docker run -ti --net dev alpine sh\nroot@0ecccdfa45ef:/#\nFrom this new container, we can resolve and ping the other one, using its assigned name:\n/ # ping es\nPING es (172.18.0.2) 56(84) bytes of data.\n64 bytes from es.dev (172.18.0.2): icmp_seq=1 ttl=64 time=0.221 ms\n64 bytes from es.dev (172.18.0.2): icmp_seq=2 ttl=64 time=0.114 ms\n64 bytes from es.dev (172.18.0.2): icmp_seq=3 ttl=64 time=0.114 ms\n^C\n--- es ping statistics ---\n3 packets transmitted, 3 received, 0% packet loss, time 2000ms\nrtt min/avg/max/mdev = 0.114/0.149/0.221/0.052 ms\nroot@0ecccdfa45ef:/#"
+  },
+  {
+    "objectID": "applied_lec3.html#the-container-network-model-15",
+    "href": "applied_lec3.html#the-container-network-model-15",
+    "title": "Docker Networking",
+    "section": "The Container Network Model",
+    "text": "The Container Network Model\n\n\n\nResolving container addresses\n\n\nSince Docker Engine 1.10, name resolution is implemented by a dynamic resolver.\nArcheological note: when CNM was intoduced (in Docker Engine 1.9, November 2015) name resolution was implemented with /etc/hosts, and it was updated each time CONTAINERs were added/removed. This could cause interesting race conditions since /etc/hosts was a bind-mount (and couldn’t be updated atomically).\n[root@0ecccdfa45ef /]# cat /etc/hosts\n172.18.0.3  0ecccdfa45ef\n127.0.0.1       localhost\n::1     localhost ip6-localhost ip6-loopback\nfe00::0 ip6-localnet\nff00::0 ip6-mcastprefix\nff02::1 ip6-allnodes\nff02::2 ip6-allrouters\n172.18.0.2      es\n172.18.0.2      es.dev"
+  },
+  {
+    "objectID": "applied_lec3.html#service-discovery-with-containers-1",
+    "href": "applied_lec3.html#service-discovery-with-containers-1",
+    "title": "Docker Networking",
+    "section": "Service discovery with containers",
+    "text": "Service discovery with containers\n\n\n\nOverview\n\n\n\nLet’s try to run an application that requires two containers.\nThe first container is a web server.\nThe other one is a redis data store.\nWe will place them both on the dev network created before."
+  },
+  {
+    "objectID": "applied_lec3.html#service-discovery-with-containers-2",
+    "href": "applied_lec3.html#service-discovery-with-containers-2",
+    "title": "Docker Networking",
+    "section": "Service discovery with containers",
+    "text": "Service discovery with containers\n\n\n\nRunning the web server\n\n\n\nThe application is provided by the container image jpetazzo/trainingwheels.\nWe don’t know much about it so we will try to run it and see what happens!\n\nStart the container, exposing all its ports:\n$ docker run --net dev -d -P jpetazzo/trainingwheels\nCheck the port that has been allocated to it:\n$ docker ps -l"
+  },
+  {
+    "objectID": "applied_lec3.html#service-discovery-with-containers-3",
+    "href": "applied_lec3.html#service-discovery-with-containers-3",
+    "title": "Docker Networking",
+    "section": "Service discovery with containers",
+    "text": "Service discovery with containers\n\n\n\nTest the web server\n\n\n\nIf we connect to the application now, we will see an error page:\n\n\n\n\nTrainingwheels error\n\n\n\nThis is because the Redis service is not running.\nThis container tries to resolve the name redis.\n\nNote: we’re not using a FQDN or an IP address here; just redis."
+  },
+  {
+    "objectID": "applied_lec3.html#service-discovery-with-containers-4",
+    "href": "applied_lec3.html#service-discovery-with-containers-4",
+    "title": "Docker Networking",
+    "section": "Service discovery with containers",
+    "text": "Service discovery with containers\n\n\n\nStart the data store\n\n\n\nWe need to start a Redis container.\nThat container must be on the same network as the web server.\nIt must have the right network alias (redis) so the application can find it.\n\nStart the container:\n$ docker run --net dev --net-alias redis -d redis"
+  },
+  {
+    "objectID": "applied_lec3.html#service-discovery-with-containers-5",
+    "href": "applied_lec3.html#service-discovery-with-containers-5",
+    "title": "Docker Networking",
+    "section": "Service discovery with containers",
+    "text": "Service discovery with containers\n\n\n\nTest the web server again\n\n\n\nIf we connect to the application now, we should see that the app is working correctly:\n\n\n\n\nTrainingwheels OK\n\n\n\nWhen the app tries to resolve redis, instead of getting a DNS error, it gets the IP address of our Redis container."
+  },
+  {
+    "objectID": "applied_lec3.html#service-discovery-with-containers-6",
+    "href": "applied_lec3.html#service-discovery-with-containers-6",
+    "title": "Docker Networking",
+    "section": "Service discovery with containers",
+    "text": "Service discovery with containers\n\n\n\nA few words on scope\n\n\n\nContainer names are unique (there can be only one --name redis)\nNetwork aliases are not unique\nWe can have the same network alias in different networks:\ndocker run --net dev --net-alias redis ...\ndocker run --net prod --net-alias redis ...\nWe can even have multiple containers with the same alias in the same network\n(in that case, we get multiple DNS entries, aka “DNS round robin”)"
+  },
+  {
+    "objectID": "applied_lec3.html#service-discovery-with-containers-7",
+    "href": "applied_lec3.html#service-discovery-with-containers-7",
+    "title": "Docker Networking",
+    "section": "Service discovery with containers",
+    "text": "Service discovery with containers\n\n\n\nNames are local to each network\n\n\nLet’s try to ping our es container from another container, when that other container is not on the dev network.\n$ docker run --rm alpine ping es\nping: bad address 'es'\nNames can be resolved only when containers are on the same network.\nContainers can contact each other only when they are on the same network (you can try to ping using the IP address to verify)."
+  },
+  {
+    "objectID": "applied_lec3.html#service-discovery-with-containers-8",
+    "href": "applied_lec3.html#service-discovery-with-containers-8",
+    "title": "Docker Networking",
+    "section": "Service discovery with containers",
+    "text": "Service discovery with containers\n\n\n\nNetwork aliases\n\n\nWe would like to have another network, prod, with its own es container. But there can be only one container named es!\nWe will use network aliases.\nA container can have multiple network aliases.\nNetwork aliases are local to a given network (only exist in this network).\nMultiple containers can have the same network alias (even on the same network).\nSince Docker Engine 1.11, resolving a network alias yields the IP addresses of all containers holding this alias."
+  },
+  {
+    "objectID": "applied_lec3.html#service-discovery-with-containers-9",
+    "href": "applied_lec3.html#service-discovery-with-containers-9",
+    "title": "Docker Networking",
+    "section": "Service discovery with containers",
+    "text": "Service discovery with containers\n\n\n\nCreating containers on another network\n\n\nCreate the prod network.\n$ docker network create prod\n5a41562fecf2d8f115bedc16865f7336232a04268bdf2bd816aecca01b68d50c\nWe can now create multiple containers with the es alias on the new prod network.\n$ docker run -d --name prod-es-1 --net-alias es --net prod elasticsearch:2\n38079d21caf0c5533a391700d9e9e920724e89200083df73211081c8a356d771\n$ docker run -d --name prod-es-2 --net-alias es --net prod elasticsearch:2\n1820087a9c600f43159688050dcc164c298183e1d2e62d5694fd46b10ac3bc3d"
+  },
+  {
+    "objectID": "applied_lec3.html#service-discovery-with-containers-10",
+    "href": "applied_lec3.html#service-discovery-with-containers-10",
+    "title": "Docker Networking",
+    "section": "Service discovery with containers",
+    "text": "Service discovery with containers\n\n\n\nResolving network aliases\n\n\nLet’s try DNS resolution first, using the nslookup tool that ships with the alpine image.\n$ docker run --net prod --rm alpine nslookup es\nName:      es\nAddress 1: 172.23.0.3 prod-es-2.prod\nAddress 2: 172.23.0.2 prod-es-1.prod\n(You can ignore the can't resolve '(null)' errors.)"
+  },
+  {
+    "objectID": "applied_lec3.html#service-discovery-with-containers-11",
+    "href": "applied_lec3.html#service-discovery-with-containers-11",
+    "title": "Docker Networking",
+    "section": "Service discovery with containers",
+    "text": "Service discovery with containers\n\n\n\nConnecting to aliased containers\n\n\nEach ElasticSearch instance has a name (generated when it is started). This name can be seen when we issue a simple HTTP request on the ElasticSearch API endpoint.\nTry the following command a few times:\n.small[\n$ docker run --rm --net dev centos curl -s es:9200\n{\n  \"name\" : \"Tarot\",\n...\n}\n]\nThen try it a few times by replacing --net dev with --net prod:\n.small[\n$ docker run --rm --net prod centos curl -s es:9200\n{\n  \"name\" : \"The Symbiote\",\n...\n}\n]"
+  },
+  {
+    "objectID": "applied_lec3.html#service-discovery-with-containers-12",
+    "href": "applied_lec3.html#service-discovery-with-containers-12",
+    "title": "Docker Networking",
+    "section": "Service discovery with containers",
+    "text": "Service discovery with containers\n\n\n\nGood to know …\n\n\n\nDocker will not create network names and aliases on the default bridge network.\nTherefore, if you want to use those features, you have to create a custom network first.\nNetwork aliases are not unique on a given network.\ni.e., multiple containers can have the same alias on the same network.\nIn that scenario, the Docker DNS server will return multiple records.  (i.e. you will get DNS round robin out of the box.)\nEnabling Swarm Mode gives access to clustering and load balancing with IPVS.\nCreation of networks and network aliases is generally automated with tools like Compose."
+  },
+  {
+    "objectID": "applied_lec3.html#service-discovery-with-containers-13",
+    "href": "applied_lec3.html#service-discovery-with-containers-13",
+    "title": "Docker Networking",
+    "section": "Service discovery with containers",
+    "text": "Service discovery with containers\n\n\n\nA few words about round robin DNS\n\n\nDon’t rely exclusively on round robin DNS to achieve load balancing.\nMany factors can affect DNS resolution, and you might see:\n\nall traffic going to a single instance;\ntraffic being split (unevenly) between some instances;\ndifferent behavior depending on your application language;\ndifferent behavior depending on your base distro;\ndifferent behavior depending on other factors (sic).\n\nIt’s OK to use DNS to discover available endpoints, but remember that you have to re-resolve every now and then to discover new endpoints."
+  },
+  {
+    "objectID": "applied_lec3.html#service-discovery-with-containers-14",
+    "href": "applied_lec3.html#service-discovery-with-containers-14",
+    "title": "Docker Networking",
+    "section": "Service discovery with containers",
+    "text": "Service discovery with containers\n\n\n\nCustom networks\n\n\nWhen creating a network, extra options can be provided.\n\n--internal disables outbound traffic (the network won’t have a default gateway).\n--gateway indicates which address to use for the gateway (when outbound traffic is allowed).\n--subnet (in CIDR notation) indicates the subnet to use.\n--ip-range (in CIDR notation) indicates the subnet to allocate from.\n--aux-address allows specifying a list of reserved addresses (which won’t be allocated to containers)."
+  },
+  {
+    "objectID": "applied_lec3.html#service-discovery-with-containers-15",
+    "href": "applied_lec3.html#service-discovery-with-containers-15",
+    "title": "Docker Networking",
+    "section": "Service discovery with containers",
+    "text": "Service discovery with containers\n\n\n\nSetting containers’ IP address\n\n\n\nIt is possible to set a container’s address with --ip.\nThe IP address has to be within the subnet used for the container.\n\nA full example would look like this.\n$ docker network create --subnet 10.66.0.0/16 pubnet\n42fb16ec412383db6289a3e39c3c0224f395d7f85bcb1859b279e7a564d4e135\n$ docker run --net pubnet --ip 10.66.66.66 -d nginx\nb2887adeb5578a01fd9c55c435cad56bbbe802350711d2743691f95743680b09\nNote: don’t hard code container IP addresses in your code!\nI repeat: don’t hard code container IP addresses in your code!"
+  },
+  {
+    "objectID": "applied_lec3.html#service-discovery-with-containers-16",
+    "href": "applied_lec3.html#service-discovery-with-containers-16",
+    "title": "Docker Networking",
+    "section": "Service discovery with containers",
+    "text": "Service discovery with containers\n\n\n\nNetwork drivers\n\n\n\nA network is managed by a driver.\nThe built-in drivers include:\n\nbridge (default)\nnone\nhost\nmacvlan\noverlay (for Swarm clusters)\n\nMore drivers can be provided by plugins (OVS, VLAN…)\nA network can have a custom IPAM (IP allocator)."
+  },
+  {
+    "objectID": "applied_lec3.html#service-discovery-with-containers-17",
+    "href": "applied_lec3.html#service-discovery-with-containers-17",
+    "title": "Docker Networking",
+    "section": "Service discovery with containers",
+    "text": "Service discovery with containers\n\n\n\nOverlay networks\n\n\n\nThe features we’ve seen so far only work when all containers are on a single host.\nIf containers span multiple hosts, we need an overlay network to connect them together.\nDocker ships with a default network plugin, overlay, implementing an overlay network leveraging VXLAN, enabled with Swarm Mode.\nOther plugins (Weave, Calico…) can provide overlay networks as well.\nOnce you have an overlay network, all the features that we’ve used in this chapter work identically across multiple hosts."
+  },
+  {
+    "objectID": "applied_lec3.html#service-discovery-with-containers-18",
+    "href": "applied_lec3.html#service-discovery-with-containers-18",
+    "title": "Docker Networking",
+    "section": "Service discovery with containers",
+    "text": "Service discovery with containers\n\n\n\nMulti-host networking (overlay)\n\n\nOut of the scope for this intro-level workshop!\nVery short instructions:\n\nenable Swarm Mode (docker swarm init then docker swarm join on other nodes)\ndocker network create mynet --driver overlay\ndocker service create --network mynet myimage\n\nIf you want to learn more about Swarm mode, you can check this video or these slides."
+  },
+  {
+    "objectID": "applied_lec3.html#service-discovery-with-containers-19",
+    "href": "applied_lec3.html#service-discovery-with-containers-19",
+    "title": "Docker Networking",
+    "section": "Service discovery with containers",
+    "text": "Service discovery with containers\n\n\n\nMulti-host networking (plugins)\n\n\nOut of the scope for this intro-level workshop!\nGeneral idea:\n\ninstall the plugin (they often ship within containers)\nrun the plugin (if it’s in a container, it will often require extra parameters; don’t just docker run it blindly!)\nsome plugins require configuration or activation (creating a special file that tells Docker “use the plugin whose control socket is at the following location”)\nyou can then docker network create --driver pluginname"
+  },
+  {
+    "objectID": "applied_lec3.html#service-discovery-with-containers-20",
+    "href": "applied_lec3.html#service-discovery-with-containers-20",
+    "title": "Docker Networking",
+    "section": "Service discovery with containers",
+    "text": "Service discovery with containers\n\n\n\nConnecting and disconnecting dynamically\n\n\n\nSo far, we have specified which network to use when starting the container.\nThe Docker Engine also allows connecting and disconnecting while the container is running.\nThis feature is exposed through the Docker API, and through two Docker CLI commands:\n\ndocker network connect &lt;network&gt; &lt;container&gt;\ndocker network disconnect &lt;network&gt; &lt;container&gt;"
+  },
+  {
+    "objectID": "applied_lec3.html#service-discovery-with-containers-21",
+    "href": "applied_lec3.html#service-discovery-with-containers-21",
+    "title": "Docker Networking",
+    "section": "Service discovery with containers",
+    "text": "Service discovery with containers\n\n\n\nDynamically connecting to a network\n\n\n\nWe have a container named es connected to a network named dev.\nLet’s start a simple alpine container on the default network:\n$ docker run -ti alpine sh\n/ #\nIn this container, try to ping the es container:\n/ # ping es\nping: bad address 'es'\nThis doesn’t work, but we will change that by connecting the container."
+  },
+  {
+    "objectID": "applied_lec3.html#service-discovery-with-containers-22",
+    "href": "applied_lec3.html#service-discovery-with-containers-22",
+    "title": "Docker Networking",
+    "section": "Service discovery with containers",
+    "text": "Service discovery with containers\n\n\n\nFinding the container ID and connecting it\n\n\n\nFigure out the ID of our alpine container; here are two methods:\n\nlooking at /etc/hostname in the container,\nrunning docker ps -lq on the host.\n\nRun the following command on the host:\n$ docker network connect dev `&lt;container_id&gt;`"
+  },
+  {
+    "objectID": "applied_lec3.html#service-discovery-with-containers-23",
+    "href": "applied_lec3.html#service-discovery-with-containers-23",
+    "title": "Docker Networking",
+    "section": "Service discovery with containers",
+    "text": "Service discovery with containers\n\n\n\nChecking what we did\n\n\n\nTry again to ping es from the container.\nIt should now work correctly:\n/ # ping es\nPING es (172.20.0.3): 56 data bytes\n64 bytes from 172.20.0.3: seq=0 ttl=64 time=0.376 ms\n64 bytes from 172.20.0.3: seq=1 ttl=64 time=0.130 ms\n^C\nInterrupt it with Ctrl-C."
+  },
+  {
+    "objectID": "applied_lec3.html#service-discovery-with-containers-24",
+    "href": "applied_lec3.html#service-discovery-with-containers-24",
+    "title": "Docker Networking",
+    "section": "Service discovery with containers",
+    "text": "Service discovery with containers\n\n\n\nLooking at the network setup in the container\n\n\nWe can look at the list of network interfaces with ifconfig, ip a, or ip l:\n/ # ip a\n1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 65536 qdisc noqueue state UNKNOWN qlen 1000\n    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00\n    inet 127.0.0.1/8 scope host lo\n       valid_lft forever preferred_lft forever\n18: eth0@if19: &lt;BROADCAST,MULTICAST,UP,LOWER_UP,M-DOWN&gt; mtu 1500 qdisc noqueue state UP\n    link/ether 02:42:ac:11:00:02 brd ff:ff:ff:ff:ff:ff\n    inet 172.17.0.2/16 brd 172.17.255.255 scope global eth0\n       valid_lft forever preferred_lft forever\n20: eth1@if21: &lt;BROADCAST,MULTICAST,UP,LOWER_UP,M-DOWN&gt; mtu 1500 qdisc noqueue state UP\n    link/ether 02:42:ac:14:00:04 brd ff:ff:ff:ff:ff:ff\n    inet 172.20.0.4/16 brd 172.20.255.255 scope global eth1\n       valid_lft forever preferred_lft forever\n/ #\nEach network connection is materialized with a virtual network interface.\nAs we can see, we can be connected to multiple networks at the same time."
+  },
+  {
+    "objectID": "applied_lec3.html#service-discovery-with-containers-25",
+    "href": "applied_lec3.html#service-discovery-with-containers-25",
+    "title": "Docker Networking",
+    "section": "Service discovery with containers",
+    "text": "Service discovery with containers\n\n\n\nDisconnecting from a network\n\n\n\nLet’s try the symmetrical command to disconnect the container:\n$ docker network disconnect dev &lt;container_id&gt;\nFrom now on, if we try to ping es, it will not resolve:\n/ # ping es\nping: bad address 'es'\nTrying to ping the IP address directly won’t work either:\n/ # ping 172.20.0.3\n... (nothing happens until we interrupt it with Ctrl-C)"
+  },
+  {
+    "objectID": "applied_lec3.html#service-discovery-with-containers-26",
+    "href": "applied_lec3.html#service-discovery-with-containers-26",
+    "title": "Docker Networking",
+    "section": "Service discovery with containers",
+    "text": "Service discovery with containers\n\n\n\nNetwork aliases are scoped per network\n\n\n\nEach network has its own set of network aliases.\nWe saw this earlier: es resolves to different addresses in dev and prod.\nIf we are connected to multiple networks, the resolver looks up names in each of them (as of Docker Engine 18.03, it is the connection order) and stops as soon as the name is found.\nTherefore, if we are connected to both dev and prod, resolving es will not give us the addresses of all the es services; but only the ones in dev or prod.\nHowever, we can lookup es.dev or es.prod if we need to."
+  },
+  {
+    "objectID": "applied_lec3.html#service-discovery-with-containers-27",
+    "href": "applied_lec3.html#service-discovery-with-containers-27",
+    "title": "Docker Networking",
+    "section": "Service discovery with containers",
+    "text": "Service discovery with containers\n\n\n\nFinding out about our networks and names\n\n\n\nWe can do reverse DNS lookups on containers’ IP addresses.\nIf the IP address belongs to a network (other than the default bridge), the result will be:\nname-or-first-alias-or-container-id.network-name\nExample:\n\n$ docker run -ti --net prod --net-alias hello alpine\n/ # apk add --no-cache drill\n...\nOK: 5 MiB in 13 packages\n/ # ifconfig\neth0      Link encap:Ethernet  HWaddr 02:42:AC:15:00:03\n          inet addr:`172.21.0.3`  Bcast:172.21.255.255  Mask:255.255.0.0\n          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1\n...\n/ # drill -t ptr `3.0.21.172`.in-addr.arpa\n...\n;; ANSWER SECTION:\n3.0.21.172.in-addr.arpa.    600 IN  PTR `hello.prod`.\n..."
+  },
+  {
+    "objectID": "applied_lec3.html#service-discovery-with-containers-28",
+    "href": "applied_lec3.html#service-discovery-with-containers-28",
+    "title": "Docker Networking",
+    "section": "Service discovery with containers",
+    "text": "Service discovery with containers\n\n\n\nBuilding with a custom network\n\n\n\nWe can build a Dockerfile with a custom network with docker build --network NAME.\nThis can be used to check that a build doesn’t access the network.\n(But keep in mind that most Dockerfiles will fail, because they need to install remote packages and dependencies!)\nThis may be used to access an internal package repository.\n(But try to use a multi-stage build instead, if possible!)"
+  },
+  {
     "objectID": "bigdata.html",
     "href": "bigdata.html",
     "title": "Big Data Analytics",
@@ -1089,7 +1537,7 @@
     "href": "applied.html#lectures",
     "title": "Applied Data Analytics",
     "section": "Lectures",
-    "text": "Lectures\nIntro to Docker"
+    "text": "Lectures\nIntro to Docker\nDockerfiles\nDocker Networking"
   },
   {
     "objectID": "applied.html#labs",
@@ -1741,6 +2189,804 @@
     "title": "Applied Analytics: Lab 3",
     "section": "",
     "text": "Overview\nThis lab is about completing Docker installation/first steps from Docker intro lecture."
+  },
+  {
+    "objectID": "applied_lec2.html#dockerfile-1",
+    "href": "applied_lec2.html#dockerfile-1",
+    "title": "Dockerfiles",
+    "section": "Dockerfile",
+    "text": "Dockerfile\n\n\n\nWhat is it?\n\n\nAn automated way to construct images, as opposed to manually executing commands in a shell.\n\nA Dockerfile is a build recipe for a Docker image.\nIt contains a series of instructions telling Docker how an image is constructed.\nThe docker build command builds an image from a Dockerfile."
+  },
+  {
+    "objectID": "applied_lec2.html#dockerfile-2",
+    "href": "applied_lec2.html#dockerfile-2",
+    "title": "Dockerfiles",
+    "section": "Dockerfile",
+    "text": "Dockerfile\n\n\n\nCreating a Dockerfile\n\n\nOur Dockerfile must be in a new, empty directory.\nCreate a directory to hold our Dockerfile.\n$ mkdir myimage\nCreate a Dockerfile inside this directory.\n$ cd myimage\n$ nvim Dockerfile\nYou can use whatever editor you like."
+  },
+  {
+    "objectID": "applied_lec2.html#dockerfile-3",
+    "href": "applied_lec2.html#dockerfile-3",
+    "title": "Dockerfiles",
+    "section": "Dockerfile",
+    "text": "Dockerfile\n\n\n\nContents\n\n\nFROM ubuntu\nRUN apt-get update\nRUN apt-get install figlet\n\nFROM indicates the base image for our build.\nEach RUN line will be executed by Docker during the build.\nOur RUN commands must be non-interactive. (No input can be provided to Docker during the build.)\n\nIn many cases, we will add the -y flag to apt-get."
+  },
+  {
+    "objectID": "applied_lec2.html#dockerfile-4",
+    "href": "applied_lec2.html#dockerfile-4",
+    "title": "Dockerfiles",
+    "section": "Dockerfile",
+    "text": "Dockerfile\n\n\n\nBuilding\n\n\nSave our file, then execute:\n$ docker build -t figlet .\n\n-t indicates the tag to apply to the image.\n. indicates the location of the build context. We will talk more about the build context later. To keep things simple for now: this is the directory where our Dockerfile is located."
+  },
+  {
+    "objectID": "applied_lec2.html#dockerfile-5",
+    "href": "applied_lec2.html#dockerfile-5",
+    "title": "Dockerfiles",
+    "section": "Dockerfile",
+    "text": "Dockerfile\n\n\n\nFull log\n\n\n[+] Building 9.3s (8/8) FINISHED                                                                                                                                                                docker:desktop-linux\n =&gt; [internal] load build definition from Dockerfile                                                                                                                                                            0.0s\n =&gt; =&gt; transferring dockerfile: 95B                                                                                                                                                                             0.0s\n =&gt; [internal] load metadata for docker.io/library/ubuntu:latest                                                                                                                                                0.1s\n =&gt; [internal] load .dockerignore                                                                                                                                                                               0.0s\n =&gt; =&gt; transferring context: 2B                                                                                                                                                                                 0.0s\n =&gt; [1/3] FROM docker.io/library/ubuntu:latest@sha256:353675e2a41babd526e2b837d7ec780c2a05bca0164f7ea5dbbd433d21d166fc                                                                                          3.5s\n =&gt; =&gt; resolve docker.io/library/ubuntu:latest@sha256:353675e2a41babd526e2b837d7ec780c2a05bca0164f7ea5dbbd433d21d166fc                                                                                          3.4s\n =&gt; [auth] library/ubuntu:pull token for registry-1.docker.io                                                                                                                                                   0.0s\n =&gt; [2/3] RUN apt-get update                                                                                                                                                                                    2.9s\n =&gt; [3/3] RUN apt-get install figlet                                                                                                                                                                            1.3s\n =&gt; exporting to image                                                                                                                                                                                          1.6s\n =&gt; =&gt; exporting layers                                                                                                                                                                                         1.3s\n =&gt; =&gt; exporting manifest sha256:0d82650ef2fb2b1107ee3332b4e9167a3da20e4368b8a74764827a3091819ec9                                                                                                               0.0s\n =&gt; =&gt; exporting config sha256:474cb85cf40523c5ac0e1d337e8d97e2d3f9a3e24407a8680fd033d1820e9644                                                                                                                 0.0s\n =&gt; =&gt; exporting attestation manifest sha256:8c2c8be4e7e3253c54cdc1b68d50dd79dad45c73625a3517c7e79ec4ae2220ea                                                                                                   0.0s\n =&gt; =&gt; exporting manifest list sha256:6447daabcad8e301a8e7920b201c41f4ffc9889445c10d06050c085fd73ab8ea                                                                                                          0.0s\n =&gt; =&gt; naming to docker.io/library/figlet:latest                                                                                                                                                                0.0s\n =&gt; =&gt; unpacking to docker.io/library/figlet:latest"
+  },
+  {
+    "objectID": "applied_lec2.html#dockerfile-6",
+    "href": "applied_lec2.html#dockerfile-6",
+    "title": "Dockerfiles",
+    "section": "Dockerfile",
+    "text": "Dockerfile\n\n\n\nSteps\n\n\n\nBuildKit transfers the Dockerfile and the build context (these are the first two [internal] stages)\nThen it executes the steps defined in the Dockerfile ([1/3], [2/3], [3/3])\nFinally, it exports the result of the build (image definition + collection of layers)\n\n\n\n\n\n\nIn a CI, the output will be different. Revert to old output with --progress=plain."
+  },
+  {
+    "objectID": "applied_lec2.html#dockerfile-7",
+    "href": "applied_lec2.html#dockerfile-7",
+    "title": "Dockerfiles",
+    "section": "Dockerfile",
+    "text": "Dockerfile\n\n\n\nCaching system\n\n\n\nAfter each build step, Docker takes a snapshot of the resulting image.\nBefore executing a step, Docker checks if it has already built the same sequence.\nDocker uses the exact strings defined in your Dockerfile, so:\n\nRUN apt-get install figlet cowsay\nis different from\nRUN apt-get install cowsay figlet\n\n\nRUN apt-get update is not re-executed when the mirrors are updated\nYou can force a rebuild with docker build --no-cache ...."
+  },
+  {
+    "objectID": "applied_lec2.html#dockerfile-8",
+    "href": "applied_lec2.html#dockerfile-8",
+    "title": "Dockerfiles",
+    "section": "Dockerfile",
+    "text": "Dockerfile\n\n\n\nResult\n\n\nIdentical to manual:\ndocker run -it figlet\nroot@25ac5862b142:/# figlet hey\n _\n| |__   ___ _   _\n| '_ \\ / _ \\ | | |\n| | | |  __/ |_| |\n|_| |_|\\___|\\__, |\n            |___/\nroot@25ac5862b142:/#"
+  },
+  {
+    "objectID": "applied_lec2.html#dockerfile-9",
+    "href": "applied_lec2.html#dockerfile-9",
+    "title": "Dockerfiles",
+    "section": "Dockerfile",
+    "text": "Dockerfile\n\n\n\nImage history\n\n\n\nThe history command lists all the layers composing an image.\nFor each layer, it shows its creation time, size, and creation command.\nWhen an image was built with a Dockerfile, each layer corresponds to a line of the Dockerfile.\n\ndocker history figlet\nIMAGE          CREATED        CREATED BY                                      SIZE      COMMENT\n6447daabcad8   19 hours ago   RUN /bin/sh -c apt-get install figlet # buil…   1.34MB    buildkit.dockerfile.v0\n&lt;missing&gt;      19 hours ago   RUN /bin/sh -c apt-get update # buildkit        56.4MB    buildkit.dockerfile.v0\n&lt;missing&gt;      12 days ago    /bin/sh -c #(nop)  CMD [\"/bin/bash\"]            0B\n&lt;missing&gt;      12 days ago    /bin/sh -c #(nop) ADD file:4e55519deacaaab35…   110MB\n&lt;missing&gt;      12 days ago    /bin/sh -c #(nop)  LABEL org.opencontainers.…   0B\n&lt;missing&gt;      12 days ago    /bin/sh -c #(nop)  LABEL org.opencontainers.…   0B\n&lt;missing&gt;      12 days ago    /bin/sh -c #(nop)  ARG LAUNCHPAD_BUILD_ARCH     0B\n&lt;missing&gt;      12 days ago    /bin/sh -c #(nop)  ARG RELEASE                  0B"
+  },
+  {
+    "objectID": "applied_lec2.html#dockerfile-10",
+    "href": "applied_lec2.html#dockerfile-10",
+    "title": "Dockerfiles",
+    "section": "Dockerfile",
+    "text": "Dockerfile\n\n\n\n\n\n\nWhy sh -c?\n\n\n\nOn UNIX, to start a new program, we need two system calls:\n\nfork(), to create a new child process;\nexecve(), to replace the new child process with the program to run.\n\nConceptually, execve() works like this:\n\nexecve(program, [list, of, arguments])\n\nWhen we run a command, e.g. ls -l /tmp, something needs to parse the command. (i.e. split the program and its arguments into a list.)\nThe shell is usually doing that. (It also takes care of expanding environment variables and special things like ~.)"
+  },
+  {
+    "objectID": "applied_lec2.html#dockerfile-11",
+    "href": "applied_lec2.html#dockerfile-11",
+    "title": "Dockerfiles",
+    "section": "Dockerfile",
+    "text": "Dockerfile\n\n\n\nExec syntax\n\n\nDocker can parse the command by itself.\nInstead of plain string, or shell syntax:\nRUN apt-get install figlet\nwe can use JSON list, or exec syntax:\nRUN [\"apt-get\", \"install\", \"figlet\"]"
+  },
+  {
+    "objectID": "applied_lec2.html#dockerfile-12",
+    "href": "applied_lec2.html#dockerfile-12",
+    "title": "Dockerfiles",
+    "section": "Dockerfile",
+    "text": "Dockerfile\n\n\n\nCheck exec syntax\n\n\n\nChange Dockerfile to\n\nFROM ubuntu\nRUN apt-get update\nRUN [\"apt-get\", \"install\", \"figlet\"]\n\nBuild it:\n\ndocker build -t figlet .\n\nCheck history:\n\n$ docker history figlet\nIMAGE          CREATED         CREATED BY                                      SIZE      COMMENT\n18c1be63d556   4 seconds ago   RUN apt-get install figlet # buildkit           1.34MB    buildkit.dockerfile.v0\n&lt;missing&gt;      19 hours ago    RUN /bin/sh -c apt-get update # buildkit        56.4MB    buildkit.dockerfile.v0\n...\nExact command!"
+  },
+  {
+    "objectID": "applied_lec2.html#cmd-and-entrypoint-1",
+    "href": "applied_lec2.html#cmd-and-entrypoint-1",
+    "title": "Dockerfiles",
+    "section": "CMD and ENTRYPOINT",
+    "text": "CMD and ENTRYPOINT\n\n\n\nDefault commands\n\n\nWhen people run our container, we want to greet them with a nice hello message, and using a custom font.\nFor that, we will execute:\nfiglet -f script hello\n-f script tells figlet to use a fancy font.\nhello is the message that we want it to display."
+  },
+  {
+    "objectID": "applied_lec2.html#cmd-and-entrypoint-2",
+    "href": "applied_lec2.html#cmd-and-entrypoint-2",
+    "title": "Dockerfiles",
+    "section": "CMD and ENTRYPOINT",
+    "text": "CMD and ENTRYPOINT\n\n\n\nAdding CMD to Dockerfile\n\n\nOur new Dockerfile will look like this:\nFROM ubuntu\nRUN apt-get update\nRUN [\"apt-get\", \"install\", \"figlet\"]\nCMD figlet -f script hello\nCMD defines a default command to run when none is given.\nIt can appear at any point in the file.\nEach CMD will replace and override the previous one. As a result, while you can have multiple CMD lines, it is useless."
+  },
+  {
+    "objectID": "applied_lec2.html#cmd-and-entrypoint-3",
+    "href": "applied_lec2.html#cmd-and-entrypoint-3",
+    "title": "Dockerfiles",
+    "section": "CMD and ENTRYPOINT",
+    "text": "CMD and ENTRYPOINT\n\n\n\nBuild and run\n\n\n$ docker build -t figlet .\n[+] Building 3.4s (8/8) FINISHED                                                                                                                                                                docker:desktop-linux\n...\n$ docker run -it figlet\n _          _   _\n| |        | | | |\n| |     _  | | | |  __\n|/ \\   |/  |/  |/  /  \\_\n|   |_/|__/|__/|__/\\__/"
+  },
+  {
+    "objectID": "applied_lec2.html#cmd-and-entrypoint-4",
+    "href": "applied_lec2.html#cmd-and-entrypoint-4",
+    "title": "Dockerfiles",
+    "section": "CMD and ENTRYPOINT",
+    "text": "CMD and ENTRYPOINT\n\n\n\nCMD override\n\n\nIf we want to get a shell into our container (instead of running figlet), we just have to specify a different program to run:\n$ docker run -it figlet bash\nroot@3e95f6bafdd9:/#\nWe specified bash.\nIt replaced the value of CMD."
+  },
+  {
+    "objectID": "applied_lec2.html#cmd-and-entrypoint-5",
+    "href": "applied_lec2.html#cmd-and-entrypoint-5",
+    "title": "Dockerfiles",
+    "section": "CMD and ENTRYPOINT",
+    "text": "CMD and ENTRYPOINT\n\n\n\nUsing ENTRYPOINT\n\n\nObjective: we want to be able to specify a different message on the command line, while retaining figlet and some default parameters.\nIn other words, we would like to be able to do this:\n$ docker run figlet salut\n           _            \n          | |           \n ,   __,  | |       _|_ \n/ \\_/  |  |/  |   |  |  \n \\/ \\_/|_/|__/ \\_/|_/|_/\nWe will use the ENTRYPOINT verb in Dockerfile."
+  },
+  {
+    "objectID": "applied_lec2.html#cmd-and-entrypoint-6",
+    "href": "applied_lec2.html#cmd-and-entrypoint-6",
+    "title": "Dockerfiles",
+    "section": "CMD and ENTRYPOINT",
+    "text": "CMD and ENTRYPOINT\n\n\n\nDockerfile with ENTRYPOINT\n\n\nOur new Dockerfile will look like this:\nFROM ubuntu\nRUN apt-get update\nRUN [\"apt-get\", \"install\", \"figlet\"]\nENTRYPOINT [\"figlet\", \"-f\", \"script\"]\n\nENTRYPOINT defines a base command (and its parameters) for the container.\nThe command line arguments are appended to those parameters.\nLike CMD, ENTRYPOINT can appear anywhere, and replaces the previous value."
+  },
+  {
+    "objectID": "applied_lec2.html#cmd-and-entrypoint-7",
+    "href": "applied_lec2.html#cmd-and-entrypoint-7",
+    "title": "Dockerfiles",
+    "section": "CMD and ENTRYPOINT",
+    "text": "CMD and ENTRYPOINT\n\n\n\nBuild\n\n\ndocker build -t figlet .\n[+] Building 0.1s (7/7) FINISHED                                                                                                                                                                docker:desktop-linux\n...\n$ docker run figlet salve\n           _\n          | |\n ,   __,  | |       _\n/ \\_/  |  |/  |  |_|/\n \\/ \\_/|_/|__/ \\/  |__/"
+  },
+  {
+    "objectID": "applied_lec2.html#cmd-and-entrypoint-8",
+    "href": "applied_lec2.html#cmd-and-entrypoint-8",
+    "title": "Dockerfiles",
+    "section": "CMD and ENTRYPOINT",
+    "text": "CMD and ENTRYPOINT\n\n\n\nUsing CMD and ENTRYPOING together\n\n\nIf we use ENTRYPOINT and CMD together:\n\nENTRYPOINT will define the base command for our container.\nCMD will define the default parameter(s) for this command.\nThey both have to use JSON syntax."
+  },
+  {
+    "objectID": "applied_lec2.html#cmd-and-entrypoint-9",
+    "href": "applied_lec2.html#cmd-and-entrypoint-9",
+    "title": "Dockerfiles",
+    "section": "CMD and ENTRYPOINT",
+    "text": "CMD and ENTRYPOINT\n\n\n\nDockerfile\n\n\nFROM ubuntu\nRUN apt-get update\nRUN [\"apt-get\", \"install\", \"figlet\"]\nENTRYPOINT [\"figlet\", \"-f\", \"script\"]\nCMD [\"hello world\"]\n\nENTRYPOINT defines a base command (and its parameters) for the container.\nIf we don’t specify extra command-line arguments when starting the container, the value of CMD is appended.\nOtherwise, our extra command-line arguments are used instead of CMD."
+  },
+  {
+    "objectID": "applied_lec2.html#cmd-and-entrypoint-10",
+    "href": "applied_lec2.html#cmd-and-entrypoint-10",
+    "title": "Dockerfiles",
+    "section": "CMD and ENTRYPOINT",
+    "text": "CMD and ENTRYPOINT\n\n\n\nBuild and run\n\n\n\nBuild:\n\n$ docker build -t myfiglet .\n[+] Building 0.1s (7/7) FINISHED\n...\n\nRun without parameters:\n\n$ docker run myfiglet\n _          _   _                             _\n| |        | | | |                           | |    |\n| |     _  | | | |  __             __   ,_   | |  __|\n|/ \\   |/  |/  |/  /  \\_  |  |  |_/  \\_/  |  |/  /  |\n|   |_/|__/|__/|__/\\__/    \\/ \\/  \\__/    |_/|__/\\_/|_/"
+  },
+  {
+    "objectID": "applied_lec2.html#cmd-and-entrypoint-11",
+    "href": "applied_lec2.html#cmd-and-entrypoint-11",
+    "title": "Dockerfiles",
+    "section": "CMD and ENTRYPOINT",
+    "text": "CMD and ENTRYPOINT\n\n\n\nBuild and run\n\n\n\nRun with parameters:\n\n$ docker run myfiglet hey\n _\n| |\n| |     _\n|/ \\   |/  |   |\n|   |_/|__/ \\_/|/\n              /|\n              \\|"
+  },
+  {
+    "objectID": "applied_lec2.html#cmd-and-entrypoint-12",
+    "href": "applied_lec2.html#cmd-and-entrypoint-12",
+    "title": "Dockerfiles",
+    "section": "CMD and ENTRYPOINT",
+    "text": "CMD and ENTRYPOINT\n\n\n\nENTRYPOINT override\n\n\nWhat if we want to run a shell in our container?\nWe cannot just do docker run myfiglet bash because that would just tell figlet to display the word “bash.”\nWe use the --entrypoint parameter:\n$ docker run -it --entrypoint bash myfiglet\nroot@0e2f53d52f7d:/#"
+  },
+  {
+    "objectID": "applied_lec2.html#cmd-and-entrypoint-13",
+    "href": "applied_lec2.html#cmd-and-entrypoint-13",
+    "title": "Dockerfiles",
+    "section": "CMD and ENTRYPOINT",
+    "text": "CMD and ENTRYPOINT\n\n\n\nCMD and ENTRYPOINT recap\n\n\n\ndocker run myimage executes ENTRYPOINT + CMD\ndocker run myimage args executes ENTRYPOINT + args (overriding CMD)\ndocker run --entrypoint prog myimage executes prog (overriding both)"
+  },
+  {
+    "objectID": "applied_lec2.html#cmd-and-entrypoint-14",
+    "href": "applied_lec2.html#cmd-and-entrypoint-14",
+    "title": "Dockerfiles",
+    "section": "CMD and ENTRYPOINT",
+    "text": "CMD and ENTRYPOINT\n\n\n\n\n\n\n\n\n\nCommand\nENTRYPOINT\nCMD\nResult\n\n\n\n\ndocker run figlet\nnone\nnone\nUse values from base image (bash)\n\n\ndocker run figlet hola\nnone\nnone\nError (executable hola not found)\n\n\ndocker run figlet\nfiglet -f script\nnone\nfiglet -f script\n\n\ndocker run figlet hola\nfiglet -f script\nnone\nfiglet -f script hola\n\n\ndocker run figlet\nnone\nfiglet -f script\nfiglet -f script\n\n\ndocker run figlet hola\nnone\nfiglet -f script\nError (executable hola not found)\n\n\ndocker run figlet\nfiglet -f script\nhello\nfiglet -f script hello\n\n\ndocker run figlet hola\nfiglet -f script\nhello\nfiglet -f script hola"
+  },
+  {
+    "objectID": "applied_lec2.html#copying-files-during-the-build-1",
+    "href": "applied_lec2.html#copying-files-during-the-build-1",
+    "title": "Dockerfiles",
+    "section": "Copying files during the build",
+    "text": "Copying files during the build\n\n\n\nObjectives\n\n\n\nSo far, we have installed things in our container images by downloading packages.\nWe can also copy files from the build context to the container that we are building.\nThe build context is the directory containing the Dockerfile.\nfor that we use a new Dockerfile keyword: COPY."
+  },
+  {
+    "objectID": "applied_lec2.html#copying-files-during-the-build-2",
+    "href": "applied_lec2.html#copying-files-during-the-build-2",
+    "title": "Dockerfiles",
+    "section": "Copying files during the build",
+    "text": "Copying files during the build\n\n\n\nBuilding C code\n\n\nWe want to build a container that compiles a basic “Hello world” program in C.\nHere is the program, hello.c:\nint main () {\n  puts(\"Hello, world!\");\n  return 0;\n}\nLet’s create a new directory, and put this file in there.\nThen we will write the Dockerfile."
+  },
+  {
+    "objectID": "applied_lec2.html#copying-files-during-the-build-3",
+    "href": "applied_lec2.html#copying-files-during-the-build-3",
+    "title": "Dockerfiles",
+    "section": "Copying files during the build",
+    "text": "Copying files during the build\n\n\n\nDockerfile for building\n\n\nOn Debian and Ubuntu, the package build-essential will get us a compiler.\nWhen installing it, don’t forget to specify the -y flag, otherwise the build will fail (since the build cannot be interactive).\nThen we will use COPY to place the source file into the container.\nFROM ubuntu\nRUN [\"apt-get\", \"update\"]\nRUN [\"apt-get\", \"install\", \"-y\", \"build-essential\"]\nCOPY hello.c /\nRUN make hello\nCMD /hello\nCreate this Dockerfile."
+  },
+  {
+    "objectID": "applied_lec2.html#copying-files-during-the-build-4",
+    "href": "applied_lec2.html#copying-files-during-the-build-4",
+    "title": "Dockerfiles",
+    "section": "Copying files during the build",
+    "text": "Copying files during the build\n\n\n\nTesting our C program\n\n\n\nCreate hello.c and Dockerfile in the same directory.\nRun docker build -t hello . in this directory.\nRun docker run hello, you should see Hello, world!."
+  },
+  {
+    "objectID": "applied_lec2.html#copying-files-during-the-build-5",
+    "href": "applied_lec2.html#copying-files-during-the-build-5",
+    "title": "Dockerfiles",
+    "section": "Copying files during the build",
+    "text": "Copying files during the build\n\n\n\nCOPY and the build cache\n\n\n\nRun the build again.\nNow, modify hello.c and run the build again.\nDocker can cache steps involving COPY.\nThose steps will not be executed again if the files haven’t been changed."
+  },
+  {
+    "objectID": "applied_lec2.html#copying-files-during-the-build-6",
+    "href": "applied_lec2.html#copying-files-during-the-build-6",
+    "title": "Dockerfiles",
+    "section": "Copying files during the build",
+    "text": "Copying files during the build\n\n\n\nDetails\n\n\n\nWe can COPY whole directories recursively It is possible to do e.g. COPY . . (but it might require some extra precautions to avoid copying too much)\nIn older Dockerfiles, you might see the ADD command; consider it deprecated (it is similar to COPY but can automatically extract archives)\nIf we really wanted to compile C code in a container, we would:\n\nplace it in a different directory, with the WORKDIR instruction\neven better, use the gcc official image"
+  },
+  {
+    "objectID": "applied_lec2.html#copying-files-during-the-build-7",
+    "href": "applied_lec2.html#copying-files-during-the-build-7",
+    "title": "Dockerfiles",
+    "section": "Copying files during the build",
+    "text": "Copying files during the build\n\n\n\n.dockerignore\n\n\n\nWe can create a file named .dockerignore (at the top-level of the build context)\nIt can contain file names and globs to ignore\nThey won’t be sent to the builder (and won’t end up in the resulting image)\nSee the documentation for the little details (exceptions can be made with !, multiple directory levels with **…)"
+  },
+  {
+    "objectID": "applied_lec2.html#exercise-writing-dockerfiles-1",
+    "href": "applied_lec2.html#exercise-writing-dockerfiles-1",
+    "title": "Dockerfiles",
+    "section": "Exercise — writing Dockerfiles",
+    "text": "Exercise — writing Dockerfiles\n\n\n\nExercise — writing Dockerfiles\n\n\n\nLet’s write Dockerfiles for an existing application!\nCheck out the code repository\nRead all the instructions\nWrite Dockerfiles\nBuild and test them individually"
+  },
+  {
+    "objectID": "applied_lec2.html#exercise-writing-dockerfiles-3",
+    "href": "applied_lec2.html#exercise-writing-dockerfiles-3",
+    "title": "Dockerfiles",
+    "section": "Exercise — writing Dockerfiles",
+    "text": "Exercise — writing Dockerfiles\n\n\n\nCode repository\n\n\n\nClone the repository available at https://github.com/jpetazzo/wordsmith It should look like this:\n\n├── LICENSE\n├── README\n├── db/\n│   └── words.sql\n├── web/\n│   ├── dispatcher.go\n│   └── static/\n└── words/\n    ├── pom.xml\n    └── src/"
+  },
+  {
+    "objectID": "applied_lec2.html#exercise-writing-dockerfiles-4",
+    "href": "applied_lec2.html#exercise-writing-dockerfiles-4",
+    "title": "Dockerfiles",
+    "section": "Exercise — writing Dockerfiles",
+    "text": "Exercise — writing Dockerfiles\n\n\n\nInstructions\n\n\nThe repository contains instructions in English and French.  For now, we only care about the first part (about writing Dockerfiles).  Place each Dockerfile in its own directory, like this:\n├── LICENSE\n├── README\n├── db/\n│   ├── Dockerfile\n│   └── words.sql\n├── web/\n│   ├── Dockerfile\n│   ├── dispatcher.go\n│   └── static/\n└── words/\n    ├── Dockerfile\n    ├── pom.xml\n    └── src/"
+  },
+  {
+    "objectID": "applied_lec2.html#exercise-writing-dockerfiles-5",
+    "href": "applied_lec2.html#exercise-writing-dockerfiles-5",
+    "title": "Dockerfiles",
+    "section": "Exercise — writing Dockerfiles",
+    "text": "Exercise — writing Dockerfiles\n\n\n\nBuild and test\n\n\nBuild and run each Dockerfile individually.\nFor db, we should be able to see some messages confirming that the data set was loaded successfully (some INSERT lines in the container output).\nFor web and words, we should be able to see some message looking like “server started successfully”.\nThat’s all we care about for now!\nBonus question: make sure that each container stops correctly when hitting Ctrl-C."
+  },
+  {
+    "objectID": "applied_lec2.html#reducing-image-size-1",
+    "href": "applied_lec2.html#reducing-image-size-1",
+    "title": "Dockerfiles",
+    "section": "Reducing image size",
+    "text": "Reducing image size\n\n\n\nSize consideration\n\n\nIn the previous example, our final image contained:\n\nour hello program\nits source code\nthe compiler\n\nOnly the first one is strictly necessary.\nWe are going to see how to obtain an image without the superfluous components."
+  },
+  {
+    "objectID": "applied_lec2.html#reducing-image-size-2",
+    "href": "applied_lec2.html#reducing-image-size-2",
+    "title": "Dockerfiles",
+    "section": "Reducing image size",
+    "text": "Reducing image size\n\n\n\nCan’t we remove superfluous files with RUN?\n\n\nWhat happens if we do one of the following commands?\n\nRUN rm -rf ...\nRUN apt-get remove ...\nRUN make clean ...\n\nThis adds a layer which removes a bunch of files. But the previous layers (which added the files) still exist."
+  },
+  {
+    "objectID": "applied_lec2.html#reducing-image-size-3",
+    "href": "applied_lec2.html#reducing-image-size-3",
+    "title": "Dockerfiles",
+    "section": "Reducing image size",
+    "text": "Reducing image size\n\n\n\nRemoving files with an extra layer\n\n\nWhen downloading an image, all the layers must be downloaded.\n\n\n\n\n\n\n\n\n\nDockerfile instruction\nLayer size\nImage size\n\n\n\n\nFROM ubuntu\nSize of base image\nSize of base image\n\n\n...\n…\nSum of this layer + all previous ones\n\n\nRUN apt-get install somepackage\nSize of files added (e.g. a few MB)\nSum of this layer + all previous ones\n\n\n...\n…\nSum of this layer + all previous ones\n\n\nRUN apt-get remove somepackage\nAlmost zero (just metadata)\nSame as previous one\n\n\n\n\nTherefore, RUN rm does not reduce the size of the image or free up disk space."
+  },
+  {
+    "objectID": "applied_lec2.html#reducing-image-size-4",
+    "href": "applied_lec2.html#reducing-image-size-4",
+    "title": "Dockerfiles",
+    "section": "Reducing image size",
+    "text": "Reducing image size\n\n\n\nRemoving unnecessary files\n\n\nVarious techniques are available to obtain smaller images:\n\ncollapsing layers,\nadding binaries that are built outside of the Dockerfile,\nsquashing the final image,\nmulti-stage builds.\n\nLet’s review them quickly."
+  },
+  {
+    "objectID": "applied_lec2.html#reducing-image-size-5",
+    "href": "applied_lec2.html#reducing-image-size-5",
+    "title": "Dockerfiles",
+    "section": "Reducing image size",
+    "text": "Reducing image size\n\n\n\nCollapsing layers\n\n\nYou will frequently see Dockerfiles like this:\nFROM ubuntu\nRUN apt-get update && apt-get install xxx && ... && apt-get remove xxx && ...\nOr the (more readable) variant:\nFROM ubuntu\nRUN apt-get update \\\n && apt-get install xxx \\\n && ... \\\n && apt-get remove xxx \\\n && ...\nThis RUN command gives us a single layer.\nThe files that are added, then removed in the same layer, do not grow the layer size."
+  },
+  {
+    "objectID": "applied_lec2.html#reducing-image-size-6",
+    "href": "applied_lec2.html#reducing-image-size-6",
+    "title": "Dockerfiles",
+    "section": "Reducing image size",
+    "text": "Reducing image size\nCollapsing layers: pros and cons\n\n\n\n\n\nPros:\n\n\n\nworks on all versions of Docker\ndoesn’t require extra tools\n\n\n\n\n\n\n\n\nCons:\n\n\n\nnot very readable\nsome unnecessary files might still remain if the cleanup is not thorough\nthat layer is expensive (slow to build)"
+  },
+  {
+    "objectID": "applied_lec2.html#reducing-image-size-7",
+    "href": "applied_lec2.html#reducing-image-size-7",
+    "title": "Dockerfiles",
+    "section": "Reducing image size",
+    "text": "Reducing image size\n\n\n\nBuilding binaries outside of the Dockerfile\n\n\nThis results in a Dockerfile looking like this:\nFROM ubuntu\nCOPY xxx /usr/local/bin\nOf course, this implies that the file xxx exists in the build context.\nThat file has to exist before you can run docker build.\nFor instance, it can:\n\nexist in the code repository,\nbe created by another tool (script, Makefile…),\nbe created by another container image and extracted from the image.\n\nSee for instance the busybox official image or this older busybox image."
+  },
+  {
+    "objectID": "applied_lec2.html#reducing-image-size-8",
+    "href": "applied_lec2.html#reducing-image-size-8",
+    "title": "Dockerfiles",
+    "section": "Reducing image size",
+    "text": "Reducing image size\nBuilding binaries outside: pros and cons\n\n\n\n\n\nPros:\n\n\n\nfinal image can be very small\n\n\n\n\n\n\n\n\nCons:\n\n\n\nrequires an extra build tool\nwe’re back in dependency hell and “works on my machine”\n\nif binary is added to code repository:\n\nbreaks portability across different platforms\ngrows repository size a lot if the binary is updated frequently"
+  },
+  {
+    "objectID": "applied_lec2.html#reducing-image-size-9",
+    "href": "applied_lec2.html#reducing-image-size-9",
+    "title": "Dockerfiles",
+    "section": "Reducing image size",
+    "text": "Reducing image size\n\n\n\nSquashing the final image\n\n\nThe idea is to transform the final image into a single-layer image.\nThis can be done in (at least) two ways.\n\nActivate experimental features and squash the final image:\ndocker image build --squash ...\nExport/import the final image.\ndocker build -t temp-image .\ndocker run --entrypoint true --name temp-container temp-image\ndocker export temp-container | docker import - final-image\ndocker rm temp-container\ndocker rmi temp-image"
+  },
+  {
+    "objectID": "applied_lec2.html#reducing-image-size-10",
+    "href": "applied_lec2.html#reducing-image-size-10",
+    "title": "Dockerfiles",
+    "section": "Reducing image size",
+    "text": "Reducing image size\nSquashing the image: pros and cons\n\n\n\n\n\nPros:\n\n\n\nsingle-layer images are smaller and faster to download\nremoved files no longer take up storage and network resources\n\n\n\n\n\n\n\n\nCons:\n\n\n\nwe still need to actively remove unnecessary files\nsquash operation can take a lot of time (on big images)\nsquash operation does not benefit from cache  (even if we change just a tiny file, the whole image needs to be re-squashed)"
+  },
+  {
+    "objectID": "applied_lec2.html#reducing-image-size-11",
+    "href": "applied_lec2.html#reducing-image-size-11",
+    "title": "Dockerfiles",
+    "section": "Reducing image size",
+    "text": "Reducing image size\n\n\n\nMulti-stage builds\n\n\nMulti-stage builds allow us to have multiple stages.\nEach stage is a separate image, and can copy files from previous stages.\nWe’re going to see how they work in more detail."
+  },
+  {
+    "objectID": "applied_lec2.html#multi-stage-builds-2",
+    "href": "applied_lec2.html#multi-stage-builds-2",
+    "title": "Dockerfiles",
+    "section": "Multi-stage builds",
+    "text": "Multi-stage builds\n\n\n\nDescription\n\n\n\nAt any point in our Dockerfile, we can add a new FROM line.\nThis line starts a new stage of our build.\nEach stage can access the files of the previous stages with COPY --from=....\nWhen a build is tagged (with docker build -t ...), the last stage is tagged.\nPrevious stages are not discarded: they will be used for caching, and can be referenced."
+  },
+  {
+    "objectID": "applied_lec2.html#multi-stage-builds-3",
+    "href": "applied_lec2.html#multi-stage-builds-3",
+    "title": "Dockerfiles",
+    "section": "Multi-stage builds",
+    "text": "Multi-stage builds\n\n\n\nMulti-stage builds in practice\n\n\n\nEach stage is numbered, starting at 0\nWe can copy a file from a previous stage by indicating its number, e.g.:\nCOPY --from=0 /file/from/first/stage /location/in/current/stage\nWe can also name stages, and reference these names:\nFROM golang AS builder\nRUN ...\nFROM alpine\nCOPY --from=builder /go/bin/mylittlebinary /usr/local/bin/"
+  },
+  {
+    "objectID": "applied_lec2.html#multi-stage-builds-4",
+    "href": "applied_lec2.html#multi-stage-builds-4",
+    "title": "Dockerfiles",
+    "section": "Multi-stage builds",
+    "text": "Multi-stage builds\n\n\n\nMulti-stage builds for our C program\n\n\nWe will change our Dockerfile to:\n\ngive a nickname to the first stage: compiler\nadd a second stage using the same ubuntu base image\nadd the hello binary to the second stage\nmake sure that CMD is in the second stage\n\nThe resulting Dockerfile is on the next slide."
+  },
+  {
+    "objectID": "applied_lec2.html#multi-stage-builds-5",
+    "href": "applied_lec2.html#multi-stage-builds-5",
+    "title": "Dockerfiles",
+    "section": "Multi-stage builds",
+    "text": "Multi-stage builds\n\n\n\nMulti-stage build Dockerfile\n\n\nHere is the final Dockerfile:\nFROM ubuntu AS compiler\nRUN [\"apt-get\", \"update\"]\nRUN [\"apt-get\", \"install\", \"-y\", \"build-essential\"]\nCOPY hello.c /\nRUN [\"make\", \"hello\"]\n\nFROM ubuntu\nCOPY --from=compiler /hello /hello\nCMD /hello\nLet’s build it, and check that it works correctly:\ndocker build -t hellomultistage .\ndocker run hellomultistage"
+  },
+  {
+    "objectID": "applied_lec2.html#multi-stage-builds-6",
+    "href": "applied_lec2.html#multi-stage-builds-6",
+    "title": "Dockerfiles",
+    "section": "Multi-stage builds",
+    "text": "Multi-stage builds\n\n\n\nComparing single/multi-stage build image sizes\n\n\nList our images with docker images, and check the size of:\n\nthe ubuntu base image,\nthe single-stage hello image,\nthe multi-stage hellomultistage image.\n\nWe can achieve even smaller images if we use smaller base images.\nHowever, if we use common base images (e.g. if we standardize on ubuntu), these common images will be pulled only once per node, so they are virtually “free.”"
+  },
+  {
+    "objectID": "applied_lec2.html#multi-stage-builds-7",
+    "href": "applied_lec2.html#multi-stage-builds-7",
+    "title": "Dockerfiles",
+    "section": "Multi-stage builds",
+    "text": "Multi-stage builds\n\n\n\nResults\n\n\n$ docker images | grep ubuntu\nubuntu                                         latest         353675e2a41b   2 weeks ago      139MB\n$ docker images | grep hello\nhellomultistage                                latest         977190f18730   55 seconds ago   139MB\nhello                                          latest         09316393a5fe   30 minutes ago   707MB"
+  },
+  {
+    "objectID": "applied_lec2.html#multi-stage-builds-8",
+    "href": "applied_lec2.html#multi-stage-builds-8",
+    "title": "Dockerfiles",
+    "section": "Multi-stage builds",
+    "text": "Multi-stage builds\n\n\n\nBuild targets\n\n\n\nWe can also tag an intermediary stage with the following command:\ndocker build --target STAGE --tag NAME\nThis will create an image (named NAME) corresponding to stage STAGE\nThis can be used to easily access an intermediary stage for inspection\n(instead of parsing the output of docker build to find out the image ID)\nThis can also be used to describe multiple images from a single Dockerfile\n(instead of using multiple Dockerfiles, which could go out of sync)"
+  },
+  {
+    "objectID": "applied_lec2.html#multi-stage-builds-9",
+    "href": "applied_lec2.html#multi-stage-builds-9",
+    "title": "Dockerfiles",
+    "section": "Multi-stage builds",
+    "text": "Multi-stage builds\n\n\n\nDealing with download caches\n\n\n\nIn some cases, our images contain temporary downloaded files or caches\n(examples: packages downloaded by pip, Maven, etc.)\nThese can sometimes be disabled\n(e.g. pip install --no-cache-dir ...)\nThe cache can also be cleaned immediately after installing\n(e.g. pip install ... && rm -rf ~/.cache/pip)"
+  },
+  {
+    "objectID": "applied_lec2.html#multi-stage-builds-10",
+    "href": "applied_lec2.html#multi-stage-builds-10",
+    "title": "Dockerfiles",
+    "section": "Multi-stage builds",
+    "text": "Multi-stage builds\n\n\n\nDownload caches and multi-stage builds\n\n\n\nDownload+install packages in a build stage\nCopy the installed packages to a run stage\nExample: in the specific case of Python, use a virtual env\n(install in the virtual env; then copy the virtual env directory)"
+  },
+  {
+    "objectID": "applied_lec2.html#multi-stage-builds-11",
+    "href": "applied_lec2.html#multi-stage-builds-11",
+    "title": "Dockerfiles",
+    "section": "Multi-stage builds",
+    "text": "Multi-stage builds\n\n\n\nDownload caches and BuildKit\n\n\n\nBuildKit has a caching feature for run stages\nIt can address download caches elegantly\nExample:\nRUN --mount=type=cache,target=/pipcache pip install --cache-dir /pipcache ...\nThe cache won’t be in the final image, but it’ll persist across builds"
+  },
+  {
+    "objectID": "applied_lec2.html#publishing-images-to-the-docker-hub-1",
+    "href": "applied_lec2.html#publishing-images-to-the-docker-hub-1",
+    "title": "Dockerfiles",
+    "section": "Publishing images to the Docker Hub",
+    "text": "Publishing images to the Docker Hub\n\n\n\nOverview\n\n\nWe have built our first images.\nWe can now publish it to the Docker Hub!"
+  },
+  {
+    "objectID": "applied_lec2.html#publishing-images-to-the-docker-hub-2",
+    "href": "applied_lec2.html#publishing-images-to-the-docker-hub-2",
+    "title": "Dockerfiles",
+    "section": "Publishing images to the Docker Hub",
+    "text": "Publishing images to the Docker Hub\n\n\n\nLogging into our Docker Hub account\n\n\n\nThis can be done from the Docker CLI:\ndocker login"
+  },
+  {
+    "objectID": "applied_lec2.html#publishing-images-to-the-docker-hub-3",
+    "href": "applied_lec2.html#publishing-images-to-the-docker-hub-3",
+    "title": "Dockerfiles",
+    "section": "Publishing images to the Docker Hub",
+    "text": "Publishing images to the Docker Hub\n\n\n\nImage tags and registry addresses\n\n\n\nDocker images tags are like Git tags and branches.\nThey are like bookmarks pointing at a specific image ID.\nTagging an image doesn’t rename an image: it adds another tag.\nWhen pushing an image to a registry, the registry address is in the tag.\nExample: registry.example.net:5000/image\nWhat about Docker Hub images?\n\n\n\n\n\n\n\njpetazzo/clock is, in fact, index.docker.io/jpetazzo/clock\nubuntu is, in fact, library/ubuntu, i.e. index.docker.io/library/ubuntu"
+  },
+  {
+    "objectID": "applied_lec2.html#publishing-images-to-the-docker-hub-4",
+    "href": "applied_lec2.html#publishing-images-to-the-docker-hub-4",
+    "title": "Dockerfiles",
+    "section": "Publishing images to the Docker Hub",
+    "text": "Publishing images to the Docker Hub\n\n\n\nTagging an image to push it on the Hub\n\n\n\nLet’s tag our figlet image (or any other to our liking):\ndocker tag figlet jpetazzo/figlet\nAnd push it to the Hub:\ndocker push jpetazzo/figlet\nThat’s it!\n\n\n\n\n\n\nAnybody can now docker run jpetazzo/figlet anywhere."
+  },
+  {
+    "objectID": "applied_lec2.html#publishing-images-to-the-docker-hub-5",
+    "href": "applied_lec2.html#publishing-images-to-the-docker-hub-5",
+    "title": "Dockerfiles",
+    "section": "Publishing images to the Docker Hub",
+    "text": "Publishing images to the Docker Hub\n\n\n\nThe goodness of automated builds\n\n\n\nYou can link a Docker Hub repository with a GitHub or BitBucket repository\nEach push to GitHub or BitBucket will trigger a build on Docker Hub\nIf the build succeeds, the new image is available on Docker Hub\nYou can map tags and branches between source and container images\nIf you work with public repositories, this is free"
+  },
+  {
+    "objectID": "applied_lec2.html#publishing-images-to-the-docker-hub-6",
+    "href": "applied_lec2.html#publishing-images-to-the-docker-hub-6",
+    "title": "Dockerfiles",
+    "section": "Publishing images to the Docker Hub",
+    "text": "Publishing images to the Docker Hub\n\n\n\nSetting up an automated build\n\n\n\nWe need a Dockerized repository!\nLet’s go to https://github.com/jpetazzo/trainingwheels and fork it.\nGo to the Docker Hub (https://hub.docker.com/) and sign-in. Select “Repositories” in the blue navigation menu.\nSelect “Create” in the top-right bar, and select “Create Repository+”.\nConnect your Docker Hub account to your GitHub account.\nClick “Create” button.\nThen go to “Builds” folder.\nClick on Github icon and select your user and the repository that we just forked.\nIn “Build rules” block near page bottom, put /www in “Build Context” column (or whichever directory the Dockerfile is in).\nClick “Save and Build” to build the repository immediately (without waiting for a git push).\nSubsequent builds will happen automatically, thanks to GitHub hooks."
+  },
+  {
+    "objectID": "applied_lec2.html#publishing-images-to-the-docker-hub-7",
+    "href": "applied_lec2.html#publishing-images-to-the-docker-hub-7",
+    "title": "Dockerfiles",
+    "section": "Publishing images to the Docker Hub",
+    "text": "Publishing images to the Docker Hub\n\n\n\nBuilding on the fly\n\n\n\nSome services can build images on the fly from a repository\nExample: ctr.run\n\nThere might be a long pause before the first layer is pulled, because the API behind docker pull doesn’t allow to stream build logs, and there is no feedback during the build.\nIt is possible to view the build logs by setting up an account on ctr.run."
+  },
+  {
+    "objectID": "applied_lec2.html#tips-for-efficient-dockerfiles-1",
+    "href": "applied_lec2.html#tips-for-efficient-dockerfiles-1",
+    "title": "Dockerfiles",
+    "section": "Tips for efficient Dockerfiles",
+    "text": "Tips for efficient Dockerfiles\n\n\n\nOverview\n\n\nWe will see how to:\n\nReduce the number of layers.\nLeverage the build cache so that builds can be faster.\nEmbed unit testing in the build process."
+  },
+  {
+    "objectID": "applied_lec2.html#tips-for-efficient-dockerfiles-2",
+    "href": "applied_lec2.html#tips-for-efficient-dockerfiles-2",
+    "title": "Dockerfiles",
+    "section": "Tips for efficient Dockerfiles",
+    "text": "Tips for efficient Dockerfiles\n\n\n\nReducing the number of layers\n\n\n\nEach line in a Dockerfile creates a new layer.\nBuild your Dockerfile to take advantage of Docker’s caching system.\nCombine commands by using && to continue commands and \\ to wrap lines.\n\nNote: it is frequent to build a Dockerfile line by line:\nRUN apt-get install thisthing\nRUN apt-get install andthatthing andthatotherone\nRUN apt-get install somemorestuff\nAnd then refactor it trivially before shipping:\nRUN apt-get install thisthing andthatthing andthatotherone somemorestuff"
+  },
+  {
+    "objectID": "applied_lec2.html#tips-for-efficient-dockerfiles-3",
+    "href": "applied_lec2.html#tips-for-efficient-dockerfiles-3",
+    "title": "Dockerfiles",
+    "section": "Tips for efficient Dockerfiles",
+    "text": "Tips for efficient Dockerfiles\n\n\n\nAvoid re-installing dependencies at each build\n\n\n\nClassic Dockerfile problem:\n\n\n“each time I change a line of code, all my dependencies are re-installed!”\n\n\nSolution: COPY dependency lists (package.json, requirements.txt, etc.) by themselves to avoid reinstalling unchanged dependencies every time."
+  },
+  {
+    "objectID": "applied_lec2.html#tips-for-efficient-dockerfiles-4",
+    "href": "applied_lec2.html#tips-for-efficient-dockerfiles-4",
+    "title": "Dockerfiles",
+    "section": "Tips for efficient Dockerfiles",
+    "text": "Tips for efficient Dockerfiles\n\n\n\nExample “bad” Dockerfile\n\n\nThe dependencies are reinstalled every time, because the build system does not know if requirements.txt has been updated.\nFROM python\nWORKDIR /src\nCOPY . .\nRUN pip install -qr requirements.txt\nEXPOSE 5000\nCMD [\"python\", \"app.py\"]"
+  },
+  {
+    "objectID": "applied_lec2.html#tips-for-efficient-dockerfiles-5",
+    "href": "applied_lec2.html#tips-for-efficient-dockerfiles-5",
+    "title": "Dockerfiles",
+    "section": "Tips for efficient Dockerfiles",
+    "text": "Tips for efficient Dockerfiles\n\n\n\nFixed Dockerfile\n\n\nAdding the dependencies as a separate step means that Docker can cache more efficiently and only install them when requirements.txt changes.\nFROM python\nWORKDIR /src\nCOPY requirements.txt .\nRUN pip install -qr requirements.txt\nCOPY . .\nEXPOSE 5000\nCMD [\"python\", \"app.py\"]"
+  },
+  {
+    "objectID": "applied_lec2.html#tips-for-efficient-dockerfiles-6",
+    "href": "applied_lec2.html#tips-for-efficient-dockerfiles-6",
+    "title": "Dockerfiles",
+    "section": "Tips for efficient Dockerfiles",
+    "text": "Tips for efficient Dockerfiles\n\n\n\nBe careful with chown, chmod, mv\n\n\n\nLayers cannot store efficiently changes in permissions or ownership.\nLayers cannot represent efficiently when a file is moved either.\nAs a result, operations like chown, chmod, mv can be expensive.\nFor instance, in the Dockerfile snippet below, each RUN line creates a layer with an entire copy of some-file.\nCOPY some-file .\nRUN chown www-data:www-data some-file\nRUN chmod 644 some-file\nRUN mv some-file /var/www\nHow can we avoid that?"
+  },
+  {
+    "objectID": "applied_lec2.html#tips-for-efficient-dockerfiles-7",
+    "href": "applied_lec2.html#tips-for-efficient-dockerfiles-7",
+    "title": "Dockerfiles",
+    "section": "Tips for efficient Dockerfiles",
+    "text": "Tips for efficient Dockerfiles\n\n\n\nPut files on the right place\n\n\n\nInstead of using mv, directly put files at the right place.\nWhen extracting archives (tar, zip…), merge operations in a single layer.\nExample:\n  ...\n  RUN wget http://.../foo.tar.gz \\\n   && tar -zxf foo.tar.gz \\\n   && mv foo/fooctl /usr/local/bin \\\n   && rm -rf foo foo.tar.gz\n..."
+  },
+  {
+    "objectID": "applied_lec2.html#tips-for-efficient-dockerfiles-8",
+    "href": "applied_lec2.html#tips-for-efficient-dockerfiles-8",
+    "title": "Dockerfiles",
+    "section": "Tips for efficient Dockerfiles",
+    "text": "Tips for efficient Dockerfiles\n\n\n\nUse COPY --chown\n\n\n\nThe Dockerfile instruction COPY can take a --chown parameter.\nExamples:\n...\nCOPY --chown=1000 some-file .\nCOPY --chown=1000:1000 some-file .\nCOPY --chown=www-data:www-data some-file .\nThe --chown flag can specify a user, or a user:group pair.\nThe user and group can be specified as names or numbers.\nWhen using names, the names must exist in /etc/passwd or /etc/group.\n(In the container, not on the host!)"
+  },
+  {
+    "objectID": "applied_lec2.html#tips-for-efficient-dockerfiles-9",
+    "href": "applied_lec2.html#tips-for-efficient-dockerfiles-9",
+    "title": "Dockerfiles",
+    "section": "Tips for efficient Dockerfiles",
+    "text": "Tips for efficient Dockerfiles\n\n\n\nSet correct permissions locally\n\n\n\nInstead of using chmod, set the right file permissions locally.\nWhen files are copied with COPY, permissions are preserved."
+  },
+  {
+    "objectID": "applied_lec2.html#tips-for-efficient-dockerfiles-10",
+    "href": "applied_lec2.html#tips-for-efficient-dockerfiles-10",
+    "title": "Dockerfiles",
+    "section": "Tips for efficient Dockerfiles",
+    "text": "Tips for efficient Dockerfiles\n\n\n\nEmbedding unit tests in the build process\n\n\nFROM &lt;baseimage&gt;\nRUN &lt;install dependencies&gt;\nCOPY &lt;code&gt;\nRUN &lt;build code&gt;\nRUN &lt;install test dependencies&gt;\nCOPY &lt;test data sets and fixtures&gt;\nRUN &lt;unit tests&gt;\nFROM &lt;baseimage&gt;\nRUN &lt;install dependencies&gt;\nCOPY &lt;code&gt;\nRUN &lt;build code&gt;\nCMD, EXPOSE ...\n\nThe build fails as soon as an instruction fails\nIf RUN &lt;unit tests&gt; fails, the build doesn’t produce an image\nIf it succeeds, it produces a clean image (without test libraries and data)"
+  },
+  {
+    "objectID": "applied_lec2.html#dockerfile-examples-1",
+    "href": "applied_lec2.html#dockerfile-examples-1",
+    "title": "Dockerfiles",
+    "section": "Dockerfile examples",
+    "text": "Dockerfile examples\n\n\n\nOverview\n\n\nThere are a number of tips, tricks, and techniques that we can use in Dockerfiles.\nBut sometimes, we have to use different (and even opposed) practices depending on:\n\nthe complexity of our project,\nthe programming language or framework that we are using,\nthe stage of our project (early MVP vs. super-stable production),\nwhether we’re building a final image or a base for further images,\netc.\n\nWe are going to show a few examples using very different techniques."
+  },
+  {
+    "objectID": "applied_lec2.html#dockerfile-examples-2",
+    "href": "applied_lec2.html#dockerfile-examples-2",
+    "title": "Dockerfiles",
+    "section": "Dockerfile examples",
+    "text": "Dockerfile examples\n\n\n\nWhen to optimize an image\n\n\nWhen authoring official images, it is a good idea to reduce as much as possible:\n\nthe number of layers,\nthe size of the final image.\n\nThis is often done at the expense of build time and convenience for the image maintainer; but when an image is downloaded millions of time, saving even a few seconds of pull time can be worth it.\nRUN apt-get update && apt-get install -y libpng12-dev libjpeg-dev && rm -rf /var/lib/apt/lists/* \\\n    && docker-php-ext-configure gd --with-png-dir=/usr --with-jpeg-dir=/usr \\\n    && docker-php-ext-install gd\n...\nRUN curl -o wordpress.tar.gz -SL https://wordpress.org/wordpress-${WORDPRESS_UPSTREAM_VERSION}.tar.gz \\\n    && echo \"$WORDPRESS_SHA1 *wordpress.tar.gz\" | sha1sum -c - \\\n    && tar -xzf wordpress.tar.gz -C /usr/src/ \\\n    && rm wordpress.tar.gz \\\n    && chown -R www-data:www-data /usr/src/wordpress\n\n\n\n\n\n(Source: Wordpress official image)"
+  },
+  {
+    "objectID": "applied_lec2.html#dockerfile-examples-3",
+    "href": "applied_lec2.html#dockerfile-examples-3",
+    "title": "Dockerfiles",
+    "section": "Dockerfile examples",
+    "text": "Dockerfile examples\n\n\n\nWhen to not optimize an image\n\n\nSometimes, it is better to prioritize maintainer convenience.\nIn particular, if:\n\nthe image changes a lot,\nthe image has very few users (e.g. only 1, the maintainer!),\nthe image is built and run on the same machine,\nthe image is built and run on machines with a very fast link …\n\nIn these cases, just keep things simple!\n(Next slide: a Dockerfile that can be used to preview a Jekyll / github pages site.)"
+  },
+  {
+    "objectID": "applied_lec2.html#dockerfile-examples-4",
+    "href": "applied_lec2.html#dockerfile-examples-4",
+    "title": "Dockerfiles",
+    "section": "Dockerfile examples",
+    "text": "Dockerfile examples\n\n\n\nDockerfile for Jekyll\n\n\nFROM debian:sid\n\nRUN apt-get update -q\nRUN apt-get install -yq build-essential make\nRUN apt-get install -yq zlib1g-dev\nRUN apt-get install -yq ruby ruby-dev\nRUN apt-get install -yq python-pygments\nRUN apt-get install -yq nodejs\nRUN apt-get install -yq cmake\nRUN gem install --no-rdoc --no-ri github-pages\n\nCOPY . /blog\nWORKDIR /blog\n\nVOLUME /blog/_site\n\nEXPOSE 4000\nCMD [\"jekyll\", \"serve\", \"--host\", \"0.0.0.0\", \"--incremental\"]"
+  },
+  {
+    "objectID": "applied_lec2.html#dockerfile-examples-5",
+    "href": "applied_lec2.html#dockerfile-examples-5",
+    "title": "Dockerfiles",
+    "section": "Dockerfile examples",
+    "text": "Dockerfile examples\n\n\n\nMulti-dimensional versioning systems\n\n\nImages can have a tag, indicating the version of the image.\nBut sometimes, there are multiple important components, and we need to indicate the versions for all of them.\nThis can be done with environment variables:\nENV PIP=9.0.3 \\\n    ZC_BUILDOUT=2.11.2 \\\n    SETUPTOOLS=38.7.0 \\\n    PLONE_MAJOR=5.1 \\\n    PLONE_VERSION=5.1.0 \\\n    PLONE_MD5=76dc6cfc1c749d763c32fff3a9870d8d\n\n\n\n\n\n(Source: Plone official image)"
+  },
+  {
+    "objectID": "applied_lec2.html#dockerfile-examples-6",
+    "href": "applied_lec2.html#dockerfile-examples-6",
+    "title": "Dockerfiles",
+    "section": "Dockerfile examples",
+    "text": "Dockerfile examples\n\n\n\nEntrypoints and wrappers\n\n\nIt is very common to define a custom entrypoint.\nThat entrypoint will generally be a script, performing any combination of:\n\npre-flights checks (if a required dependency is not available, display a nice error message early instead of an obscure one in a deep log file),\ngeneration or validation of configuration files,\ndropping privileges (with e.g. su or gosu, sometimes combined with chown),\nand more."
+  },
+  {
+    "objectID": "applied_lec2.html#dockerfile-examples-7",
+    "href": "applied_lec2.html#dockerfile-examples-7",
+    "title": "Dockerfiles",
+    "section": "Dockerfile examples",
+    "text": "Dockerfile examples\n\n\n\nA typical entrypoint script\n\n\n #!/bin/sh\n set -e\n \n # first arg is '-f' or '--some-option'\n # or first arg is 'something.conf'\n if [ \"${1#-}\" != \"$1\" ] || [ \"${1%.conf}\" != \"$1\" ]; then\n    set -- redis-server \"$@\"\n fi\n \n # allow the container to be started with '--user'\n if [ \"$1\" = 'redis-server' -a \"$(id -u)\" = '0' ]; then\n    chown -R redis .\n    exec su-exec redis \"$0\" \"$@\"\n fi\n \n exec \"$@\"\n\n\n\n\n\n(Source: Redis official image)"
+  },
+  {
+    "objectID": "applied_lec2.html#dockerfile-examples-8",
+    "href": "applied_lec2.html#dockerfile-examples-8",
+    "title": "Dockerfiles",
+    "section": "Dockerfile examples",
+    "text": "Dockerfile examples\n\n\n\nFactoring information\n\n\nTo facilitate maintenance (and avoid human errors), avoid to repeat information like:\n\nversion numbers,\nremote asset URLs (e.g. source tarballs) …\n\nInstead, use environment variables.\nENV NODE_VERSION 10.2.1\n...\nRUN ...\n    && curl -fsSLO --compressed \"https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION.tar.xz\" \\\n    && curl -fsSLO --compressed \"https://nodejs.org/dist/v$NODE_VERSION/SHASUMS256.txt.asc\" \\\n    && gpg --batch --decrypt --output SHASUMS256.txt SHASUMS256.txt.asc \\\n    && grep \" node-v$NODE_VERSION.tar.xz\\$\" SHASUMS256.txt | sha256sum -c - \\\n    && tar -xf \"node-v$NODE_VERSION.tar.xz\" \\\n    && cd \"node-v$NODE_VERSION\" \\\n...\n\n\n\n\n\n(Source: Nodejs official image)"
+  },
+  {
+    "objectID": "applied_lec2.html#dockerfile-examples-9",
+    "href": "applied_lec2.html#dockerfile-examples-9",
+    "title": "Dockerfiles",
+    "section": "Dockerfile examples",
+    "text": "Dockerfile examples\n\n\n\nOverrides\n\n\nIn theory, development and production images should be the same.\nIn practice, we often need to enable specific behaviors in development (e.g. debug statements).\nOne way to reconcile both needs is to use Compose to enable these behaviors.\nLet’s look at the trainingwheels demo app for an example."
+  },
+  {
+    "objectID": "applied_lec2.html#dockerfile-examples-10",
+    "href": "applied_lec2.html#dockerfile-examples-10",
+    "title": "Dockerfiles",
+    "section": "Dockerfile examples",
+    "text": "Dockerfile examples\n\n\n\nProduction image\n\n\nThis Dockerfile builds an image leveraging gunicorn:\nFROM python\nRUN pip install flask\nRUN pip install gunicorn\nRUN pip install redis\nCOPY . /src\nWORKDIR /src\nCMD gunicorn --bind 0.0.0.0:5000 --workers 10 counter:app\nEXPOSE 5000\n\n\n\n\n\n(Source: trainingwheels Dockerfile)"
+  },
+  {
+    "objectID": "applied_lec2.html#dockerfile-examples-11",
+    "href": "applied_lec2.html#dockerfile-examples-11",
+    "title": "Dockerfiles",
+    "section": "Dockerfile examples",
+    "text": "Dockerfile examples\n\n\n\nDevelopment Compose file\n\n\nThis Compose file uses the same image, but with a few overrides for development:\n\nthe Flask development server is used (overriding CMD),\nthe DEBUG environment variable is set,\na volume is used to provide a faster local development workflow.\n\nservices:\n  www:\n    build: www\n    ports:\n      - 8000:5000\n    user: nobody\n    environment:\n      DEBUG: 1\n    command: python counter.py\n    volumes:\n      - ./www:/src\n\n\n\n\n\n(Source: trainingwheels Compose file)"
+  },
+  {
+    "objectID": "applied_lec2.html#dockerfile-examples-12",
+    "href": "applied_lec2.html#dockerfile-examples-12",
+    "title": "Dockerfiles",
+    "section": "Dockerfile examples",
+    "text": "Dockerfile examples\n\n\n\nHow to know which best practices are better?\n\n\n\nThe main goal of containers is to make our lives easier.\nIn this chapter, we showed many ways to write Dockerfiles.\nThese Dockerfiles use sometimes diametrically opposed techniques.\nYet, they were the “right” ones for a specific situation.\nIt’s OK (and even encouraged) to start simple and evolve as needed."
+  },
+  {
+    "objectID": "applied_lec2.html#exercise-multi-stage-builds",
+    "href": "applied_lec2.html#exercise-multi-stage-builds",
+    "title": "Dockerfiles",
+    "section": "Exercise — multi-stage builds",
+    "text": "Exercise — multi-stage builds\n\n\n\n\n\n\nExercise\n\n\nLet’s update our Dockerfiles to leverage multi-stage builds!\nThe code is at: https://github.com/jpetazzo/wordsmith.\nUse a different tag for these images, so that we can compare their sizes.\nWhat’s the size difference between single-stage and multi-stage builds?"
+  },
+  {
+    "objectID": "applied_lec2.html#naming-and-inspecting-containers-1",
+    "href": "applied_lec2.html#naming-and-inspecting-containers-1",
+    "title": "Dockerfiles",
+    "section": "Naming and inspecting containers",
+    "text": "Naming and inspecting containers\n\n\n\nObjectives\n\n\nIn this lesson, we will learn about an important Docker concept: container naming.\nNaming allows us to:\n\nReference easily a container.\nEnsure unicity of a specific container.\n\nWe will also see the inspect command, which gives a lot of details about a container."
+  },
+  {
+    "objectID": "applied_lec2.html#naming-and-inspecting-containers-2",
+    "href": "applied_lec2.html#naming-and-inspecting-containers-2",
+    "title": "Dockerfiles",
+    "section": "Naming and inspecting containers",
+    "text": "Naming and inspecting containers\n\n\n\nNaming our containers\n\n\nSo far, we have referenced containers with their ID.\nWe have copy-pasted the ID, or used a shortened prefix.\nBut each container can also be referenced by its name.\nIf a container is named thumbnail-worker, I can do:\n$ docker logs thumbnail-worker\n$ docker stop thumbnail-worker\netc."
+  },
+  {
+    "objectID": "applied_lec2.html#naming-and-inspecting-containers-3",
+    "href": "applied_lec2.html#naming-and-inspecting-containers-3",
+    "title": "Dockerfiles",
+    "section": "Naming and inspecting containers",
+    "text": "Naming and inspecting containers\n\n\n\nDefault names\n\n\nWhen we create a container, if we don’t give a specific name, Docker will pick one for us.\nIt will be the concatenation of:\n\nA mood (furious, goofy, suspicious, boring…)\nThe name of a famous inventor (tesla, darwin, wozniak…)\n\nExamples: happy_curie, clever_hopper, jovial_lovelace …"
+  },
+  {
+    "objectID": "applied_lec2.html#naming-and-inspecting-containers-4",
+    "href": "applied_lec2.html#naming-and-inspecting-containers-4",
+    "title": "Dockerfiles",
+    "section": "Naming and inspecting containers",
+    "text": "Naming and inspecting containers\n\n\n\nSpecifying a name\n\n\nYou can set the name of the container when you create it.\n$ docker run --name ticktock jpetazzo/clock\nIf you specify a name that already exists, Docker will refuse to create the container.\nThis lets us enforce unicity of a given resource."
+  },
+  {
+    "objectID": "applied_lec2.html#naming-and-inspecting-containers-5",
+    "href": "applied_lec2.html#naming-and-inspecting-containers-5",
+    "title": "Dockerfiles",
+    "section": "Naming and inspecting containers",
+    "text": "Naming and inspecting containers\n\n\n\nRenaming containers\n\n\n\nYou can rename containers with docker rename.\nThis allows you to “free up” a name without destroying the associated container."
+  },
+  {
+    "objectID": "applied_lec2.html#naming-and-inspecting-containers-6",
+    "href": "applied_lec2.html#naming-and-inspecting-containers-6",
+    "title": "Dockerfiles",
+    "section": "Naming and inspecting containers",
+    "text": "Naming and inspecting containers\n\n\n\nInspecting a container\n\n\nThe docker inspect command will output a very detailed JSON map.\n$ docker inspect &lt;containerID&gt;\n[{\n...\n(many pages of JSON here)\n...\nThere are multiple ways to consume that information."
+  },
+  {
+    "objectID": "applied_lec2.html#naming-and-inspecting-containers-7",
+    "href": "applied_lec2.html#naming-and-inspecting-containers-7",
+    "title": "Dockerfiles",
+    "section": "Naming and inspecting containers",
+    "text": "Naming and inspecting containers\n\n\n\nParsing JSON with the Shell\n\n\n\nYou could grep and cut or awk the output of docker inspect.\nPlease, don’t.\nIt’s painful.\nIf you really must parse JSON from the Shell, use JQ! (It’s great.)\n\n$ docker inspect &lt;containerID&gt; | jq .\n\nWe will see a better solution which doesn’t require extra tools."
+  },
+  {
+    "objectID": "applied_lec2.html#naming-and-inspecting-containers-8",
+    "href": "applied_lec2.html#naming-and-inspecting-containers-8",
+    "title": "Dockerfiles",
+    "section": "Naming and inspecting containers",
+    "text": "Naming and inspecting containers\n\n\n\nUsing --format\n\n\nYou can specify a format string, which will be parsed by Go’s text/template package.\n$ docker inspect --format '{{ json .Created }}' &lt;containerID&gt;\n\"2015-02-24T07:21:11.712240394Z\"\n\nThe generic syntax is to wrap the expression with double curly braces.\nThe expression starts with a dot representing the JSON object.\nThen each field or member can be accessed in dotted notation syntax.\nThe optional json keyword asks for valid JSON output. (e.g. here it adds the surrounding double-quotes.)"
+  },
+  {
+    "objectID": "applied_lec2.html#labels-1",
+    "href": "applied_lec2.html#labels-1",
+    "title": "Dockerfiles",
+    "section": "Labels",
+    "text": "Labels\n\n\n\nOverview\n\n\n\nLabels allow to attach arbitrary metadata to containers.\nLabels are key/value pairs.\nThey are specified at container creation.\nYou can query them with docker inspect.\nThey can also be used as filters with some commands (e.g. docker ps)."
+  },
+  {
+    "objectID": "applied_lec2.html#labels-2",
+    "href": "applied_lec2.html#labels-2",
+    "title": "Dockerfiles",
+    "section": "Labels",
+    "text": "Labels\n\n\n\nUsing labels\n\n\nLet’s create a few containers with a label owner.\ndocker run -d -l owner=alice nginx\ndocker run -d -l owner=bob nginx\ndocker run -d -l owner nginx\nWe didn’t specify a value for the owner label in the last example.\nThis is equivalent to setting the value to be an empty string."
+  },
+  {
+    "objectID": "applied_lec2.html#labels-3",
+    "href": "applied_lec2.html#labels-3",
+    "title": "Dockerfiles",
+    "section": "Labels",
+    "text": "Labels\n\n\n\nQuerying labels\n\n\nWe can view the labels with docker inspect.\n$ docker inspect $(docker ps -lq) | grep -A3 Labels\n            \"Labels\": {\n                \"maintainer\": \"NGINX Docker Maintainers &lt;docker-maint@nginx.com&gt;\",\n                \"owner\": \"\"\n            },\nWe can use the --format flag to list the value of a label.\n$ docker inspect $(docker ps -q) --format 'OWNER={{.Config.Labels.owner}}'"
+  },
+  {
+    "objectID": "applied_lec2.html#labels-4",
+    "href": "applied_lec2.html#labels-4",
+    "title": "Dockerfiles",
+    "section": "Labels",
+    "text": "Labels\n\n\n\nUsing labels to select containers\n\n\nWe can list containers having a specific label.\n$ docker ps --filter label=owner\nOr we can list containers having a specific label with a specific value.\n$ docker ps --filter label=owner=alice"
+  },
+  {
+    "objectID": "applied_lec2.html#labels-5",
+    "href": "applied_lec2.html#labels-5",
+    "title": "Dockerfiles",
+    "section": "Labels",
+    "text": "Labels\n\n\n\nUse-cases for labels\n\n\n\nHTTP vhost of a web app or web service.\n(The label is used to generate the configuration for NGINX, HAProxy, etc.)\nBackup schedule for a stateful service.\n(The label is used by a cron job to determine if/when to backup container data.)\nService ownership.\n(To determine internal cross-billing, or who to page in case of outage.)\netc."
+  },
+  {
+    "objectID": "applied_lec2.html#getting-inside-a-container-1",
+    "href": "applied_lec2.html#getting-inside-a-container-1",
+    "title": "Dockerfiles",
+    "section": "Getting inside a container",
+    "text": "Getting inside a container\n\n\n\nObjectives\n\n\nOn a traditional server or VM, we sometimes need to:\n\nlog into the machine (with SSH or on the console),\nanalyze the disks (by removing them or rebooting with a rescue system).\n\nIn this chapter, we will see how to do that with containers."
+  },
+  {
+    "objectID": "applied_lec2.html#getting-inside-a-container-2",
+    "href": "applied_lec2.html#getting-inside-a-container-2",
+    "title": "Dockerfiles",
+    "section": "Getting inside a container",
+    "text": "Getting inside a container\n\n\n\nGetting a shell\n\n\nEvery once in a while, we want to log into a machine.\nIn an perfect world, this shouldn’t be necessary.\n\nYou need to install or update packages (and their configuration)?\nUse configuration management. (e.g. Ansible, Chef, Puppet, Salt…)\nYou need to view logs and metrics?\nCollect and access them through a centralized platform.\n\nIn the real world, though … we often need shell access!"
+  },
+  {
+    "objectID": "applied_lec2.html#getting-inside-a-container-3",
+    "href": "applied_lec2.html#getting-inside-a-container-3",
+    "title": "Dockerfiles",
+    "section": "Getting inside a container",
+    "text": "Getting inside a container\n\n\n\nNot getting a shell\n\n\nEven without a perfect deployment system, we can do many operations without getting a shell.\n\nInstalling packages can (and should) be done in the container image.\nConfiguration can be done at the image level, or when the container starts.\nDynamic configuration can be stored in a volume (shared with another container).\nLogs written to stdout are automatically collected by the Docker Engine.\nOther logs can be written to a shared volume.\nProcess information and metrics are visible from the host.\n\nLet’s save logging, volumes … for later, but let’s have a look at process information!"
+  },
+  {
+    "objectID": "applied_lec2.html#getting-inside-a-container-4",
+    "href": "applied_lec2.html#getting-inside-a-container-4",
+    "title": "Dockerfiles",
+    "section": "Getting inside a container",
+    "text": "Getting inside a container\n\n\n\nViewing container processes from the host\n\n\nIf you run Docker on Linux, container processes are visible on the host.\n$ ps faux | less\n\nScroll around the output of this command.\nYou should see the jpetazzo/clock container.\nA containerized process is just like any other process on the host.\nWe can use tools like lsof, strace, gdb … To analyze them."
+  },
+  {
+    "objectID": "applied_lec2.html#getting-inside-a-container-5",
+    "href": "applied_lec2.html#getting-inside-a-container-5",
+    "title": "Dockerfiles",
+    "section": "Getting inside a container",
+    "text": "Getting inside a container\n\n\n\nWhat’s the difference between a container process and a host process?\n\n\n\nEach process (containerized or not) belongs to namespaces and cgroups.\nThe namespaces and cgroups determine what a process can “see” and “do”.\nAnalogy: each process (containerized or not) runs with a specific UID (user ID).\nUID=0 is root, and has elevated privileges. Other UIDs are normal users.\n\nWe will give more details about namespaces and cgroups later."
+  },
+  {
+    "objectID": "applied_lec2.html#getting-inside-a-container-6",
+    "href": "applied_lec2.html#getting-inside-a-container-6",
+    "title": "Dockerfiles",
+    "section": "Getting inside a container",
+    "text": "Getting inside a container\n\n\n\nGetting a shell in a running container\n\n\n\nSometimes, we need to get a shell anyway.\nWe could run some SSH server in the container …\nBut it is easier to use docker exec.\n\n$ docker exec -ti ticktock sh\n\nThis creates a new process (running sh) inside the container.\nThis can also be done “manually” with the tool nsenter."
+  },
+  {
+    "objectID": "applied_lec2.html#getting-inside-a-container-7",
+    "href": "applied_lec2.html#getting-inside-a-container-7",
+    "title": "Dockerfiles",
+    "section": "Getting inside a container",
+    "text": "Getting inside a container\n\n\n\nCaveats\n\n\n\nThe tool that you want to run needs to exist in the container.\nSome tools (like ip netns exec) let you attach to one namespace at a time.\n(This lets you e.g. setup network interfaces, even if you don’t have ifconfig or ip in the container.)\nMost importantly: the container needs to be running.\nWhat if the container is stopped or crashed?"
+  },
+  {
+    "objectID": "applied_lec2.html#getting-inside-a-container-8",
+    "href": "applied_lec2.html#getting-inside-a-container-8",
+    "title": "Dockerfiles",
+    "section": "Getting inside a container",
+    "text": "Getting inside a container\n\n\n\nGetting a shell in a stopped container\n\n\n\nA stopped container is only storage (like a disk drive).\nWe cannot SSH into a disk drive or USB stick!\nWe need to connect the disk to a running machine.\nHow does that translate into the container world?"
+  },
+  {
+    "objectID": "applied_lec2.html#getting-inside-a-container-9",
+    "href": "applied_lec2.html#getting-inside-a-container-9",
+    "title": "Dockerfiles",
+    "section": "Getting inside a container",
+    "text": "Getting inside a container\n\n\n\nAnalyzing a stopped container\n\n\nAs an exercise, we are going to try to find out what’s wrong with jpetazzo/crashtest.\ndocker run jpetazzo/crashtest\nThe container starts, but then stops immediately, without any output.\nWhat would MacGyver™ do?\nFirst, let’s check the status of that container.\ndocker ps -l"
+  },
+  {
+    "objectID": "applied_lec2.html#getting-inside-a-container-10",
+    "href": "applied_lec2.html#getting-inside-a-container-10",
+    "title": "Dockerfiles",
+    "section": "Getting inside a container",
+    "text": "Getting inside a container\n\n\n\nViewing filesystem changes\n\n\n\nWe can use docker diff to see files that were added / changed / removed.\n\ndocker diff &lt;container_id&gt;\n\nThe container ID was shown by docker ps -l.\nWe can also see it with docker ps -lq.\nThe output of docker diff shows some interesting log files!"
+  },
+  {
+    "objectID": "applied_lec2.html#getting-inside-a-container-11",
+    "href": "applied_lec2.html#getting-inside-a-container-11",
+    "title": "Dockerfiles",
+    "section": "Getting inside a container",
+    "text": "Getting inside a container\n\n\n\nAccessing files\n\n\n\nWe can extract files with docker cp.\n\ndocker cp &lt;container_id&gt;:/var/log/nginx/error.log .\n\nThen we can look at that log file.\n\ncat error.log\n(The directory /run/nginx doesn’t exist.)"
+  },
+  {
+    "objectID": "applied_lec2.html#getting-inside-a-container-12",
+    "href": "applied_lec2.html#getting-inside-a-container-12",
+    "title": "Dockerfiles",
+    "section": "Getting inside a container",
+    "text": "Getting inside a container\n\n\n\nExploring a crashed container\n\n\n\nWe can restart a container with docker start …\n… But it will probably crash again immediately!\nWe cannot specify a different program to run with docker start\nBut we can create a new image from the crashed container\n\ndocker commit &lt;container_id&gt; debugimage\n\nThen we can run a new container from that image, with a custom entrypoint\n\ndocker run -ti --entrypoint sh debugimage"
+  },
+  {
+    "objectID": "applied_lec2.html#getting-inside-a-container-13",
+    "href": "applied_lec2.html#getting-inside-a-container-13",
+    "title": "Dockerfiles",
+    "section": "Getting inside a container",
+    "text": "Getting inside a container\n\n\n\nObtaining a complete dump\n\n\n\nWe can also dump the entire filesystem of a container.\nThis is done with docker export.\nIt generates a tar archive.\n\ndocker export &lt;container_id&gt; | tar tv\nThis will give a detailed listing of the content of the container."
   },
   {
     "objectID": "applied_lec1.html#why-now",
@@ -2427,180 +3673,5 @@
     "title": "Intro to Docker",
     "section": "Building images interactively",
     "text": "Building images interactively\n\n\n\nTagging images\n\n\nReferring to an image by its ID is not convenient. Let’s tag it instead.\nWe can use the tag command:\n$ docker tag 289e6 figlet\nBut we can also specify the tag as an extra argument to commit:\n$ docker commit 65d1 figlet\nsha256:b2e5078491301fbba4fdb585e2e7a826998e438dd698d1c96547df72ce22f470\nAnd then run it using its tag:\n$ docker run -it figlet"
-  },
-  {
-    "objectID": "applied_lec1.html#dockerfile-1",
-    "href": "applied_lec1.html#dockerfile-1",
-    "title": "Intro to Docker",
-    "section": "Dockerfile",
-    "text": "Dockerfile\n\n\n\nWhat is it?\n\n\nAn automated way to construct images, as opposed to manually executing commands in a shell.\n\nA Dockerfile is a build recipe for a Docker image.\nIt contains a series of instructions telling Docker how an image is constructed.\nThe docker build command builds an image from a Dockerfile."
-  },
-  {
-    "objectID": "applied_lec1.html#dockerfile-2",
-    "href": "applied_lec1.html#dockerfile-2",
-    "title": "Intro to Docker",
-    "section": "Dockerfile",
-    "text": "Dockerfile\n\n\n\nCreating a Dockerfile\n\n\nOur Dockerfile must be in a new, empty directory.\nCreate a directory to hold our Dockerfile.\n$ mkdir myimage\nCreate a Dockerfile inside this directory.\n$ cd myimage\n$ nvim Dockerfile\nYou can use whatever editor you like."
-  },
-  {
-    "objectID": "applied_lec1.html#dockerfile-3",
-    "href": "applied_lec1.html#dockerfile-3",
-    "title": "Intro to Docker",
-    "section": "Dockerfile",
-    "text": "Dockerfile\n\n\n\nContents\n\n\nFROM ubuntu\nRUN apt-get update\nRUN apt-get install figlet\n\nFROM indicates the base image for our build.\nEach RUN line will be executed by Docker during the build.\nOur RUN commands must be non-interactive. (No input can be provided to Docker during the build.)\n\nIn many cases, we will add the -y flag to apt-get."
-  },
-  {
-    "objectID": "applied_lec1.html#dockerfile-4",
-    "href": "applied_lec1.html#dockerfile-4",
-    "title": "Intro to Docker",
-    "section": "Dockerfile",
-    "text": "Dockerfile\n\n\n\nBuilding\n\n\nSave our file, then execute:\n$ docker build -t figlet .\n\n-t indicates the tag to apply to the image.\n. indicates the location of the build context. We will talk more about the build context later. To keep things simple for now: this is the directory where our Dockerfile is located."
-  },
-  {
-    "objectID": "applied_lec1.html#dockerfile-5",
-    "href": "applied_lec1.html#dockerfile-5",
-    "title": "Intro to Docker",
-    "section": "Dockerfile",
-    "text": "Dockerfile\n\n\n\nFull log\n\n\n[+] Building 9.3s (8/8) FINISHED                                                                                                                                                                docker:desktop-linux\n =&gt; [internal] load build definition from Dockerfile                                                                                                                                                            0.0s\n =&gt; =&gt; transferring dockerfile: 95B                                                                                                                                                                             0.0s\n =&gt; [internal] load metadata for docker.io/library/ubuntu:latest                                                                                                                                                0.1s\n =&gt; [internal] load .dockerignore                                                                                                                                                                               0.0s\n =&gt; =&gt; transferring context: 2B                                                                                                                                                                                 0.0s\n =&gt; [1/3] FROM docker.io/library/ubuntu:latest@sha256:353675e2a41babd526e2b837d7ec780c2a05bca0164f7ea5dbbd433d21d166fc                                                                                          3.5s\n =&gt; =&gt; resolve docker.io/library/ubuntu:latest@sha256:353675e2a41babd526e2b837d7ec780c2a05bca0164f7ea5dbbd433d21d166fc                                                                                          3.4s\n =&gt; [auth] library/ubuntu:pull token for registry-1.docker.io                                                                                                                                                   0.0s\n =&gt; [2/3] RUN apt-get update                                                                                                                                                                                    2.9s\n =&gt; [3/3] RUN apt-get install figlet                                                                                                                                                                            1.3s\n =&gt; exporting to image                                                                                                                                                                                          1.6s\n =&gt; =&gt; exporting layers                                                                                                                                                                                         1.3s\n =&gt; =&gt; exporting manifest sha256:0d82650ef2fb2b1107ee3332b4e9167a3da20e4368b8a74764827a3091819ec9                                                                                                               0.0s\n =&gt; =&gt; exporting config sha256:474cb85cf40523c5ac0e1d337e8d97e2d3f9a3e24407a8680fd033d1820e9644                                                                                                                 0.0s\n =&gt; =&gt; exporting attestation manifest sha256:8c2c8be4e7e3253c54cdc1b68d50dd79dad45c73625a3517c7e79ec4ae2220ea                                                                                                   0.0s\n =&gt; =&gt; exporting manifest list sha256:6447daabcad8e301a8e7920b201c41f4ffc9889445c10d06050c085fd73ab8ea                                                                                                          0.0s\n =&gt; =&gt; naming to docker.io/library/figlet:latest                                                                                                                                                                0.0s\n =&gt; =&gt; unpacking to docker.io/library/figlet:latest"
-  },
-  {
-    "objectID": "applied_lec1.html#dockerfile-6",
-    "href": "applied_lec1.html#dockerfile-6",
-    "title": "Intro to Docker",
-    "section": "Dockerfile",
-    "text": "Dockerfile\n\n\n\nSteps\n\n\n\nBuildKit transfers the Dockerfile and the build context (these are the first two [internal] stages)\nThen it executes the steps defined in the Dockerfile ([1/3], [2/3], [3/3])\nFinally, it exports the result of the build (image definition + collection of layers)\n\n\n\n\n\n\nIn as CI, the output will be different. Revert to old output with --progress=plain."
-  },
-  {
-    "objectID": "applied_lec1.html#dockerfile-7",
-    "href": "applied_lec1.html#dockerfile-7",
-    "title": "Intro to Docker",
-    "section": "Dockerfile",
-    "text": "Dockerfile\n\n\n\nCaching system\n\n\n\nAfter each build step, Docker takes a snapshot of the resulting image.\nBefore executing a step, Docker checks if it has already built the same sequence.\nDocker uses the exact strings defined in your Dockerfile, so:\n\nRUN apt-get install figlet cowsay\nis different from\nRUN apt-get install cowsay figlet\n\n\nRUN apt-get update is not re-executed when the mirrors are updated\nYou can force a rebuild with docker build --no-cache ...."
-  },
-  {
-    "objectID": "applied_lec1.html#dockerfile-8",
-    "href": "applied_lec1.html#dockerfile-8",
-    "title": "Intro to Docker",
-    "section": "Dockerfile",
-    "text": "Dockerfile\n\n\n\nResult\n\n\nIdentical to manual:\ndocker run -it figlet\nroot@25ac5862b142:/# figlet hey\n _\n| |__   ___ _   _\n| '_ \\ / _ \\ | | |\n| | | |  __/ |_| |\n|_| |_|\\___|\\__, |\n            |___/\nroot@25ac5862b142:/#"
-  },
-  {
-    "objectID": "applied_lec1.html#dockerfile-9",
-    "href": "applied_lec1.html#dockerfile-9",
-    "title": "Intro to Docker",
-    "section": "Dockerfile",
-    "text": "Dockerfile\n\n\n\nImage history\n\n\n\nThe history command lists all the layers composing an image.\nFor each layer, it shows its creation time, size, and creation command.\nWhen an image was built with a Dockerfile, each layer corresponds to a line of the Dockerfile.\n\ndocker history figlet\nIMAGE          CREATED        CREATED BY                                      SIZE      COMMENT\n6447daabcad8   19 hours ago   RUN /bin/sh -c apt-get install figlet # buil…   1.34MB    buildkit.dockerfile.v0\n&lt;missing&gt;      19 hours ago   RUN /bin/sh -c apt-get update # buildkit        56.4MB    buildkit.dockerfile.v0\n&lt;missing&gt;      12 days ago    /bin/sh -c #(nop)  CMD [\"/bin/bash\"]            0B\n&lt;missing&gt;      12 days ago    /bin/sh -c #(nop) ADD file:4e55519deacaaab35…   110MB\n&lt;missing&gt;      12 days ago    /bin/sh -c #(nop)  LABEL org.opencontainers.…   0B\n&lt;missing&gt;      12 days ago    /bin/sh -c #(nop)  LABEL org.opencontainers.…   0B\n&lt;missing&gt;      12 days ago    /bin/sh -c #(nop)  ARG LAUNCHPAD_BUILD_ARCH     0B\n&lt;missing&gt;      12 days ago    /bin/sh -c #(nop)  ARG RELEASE                  0B"
-  },
-  {
-    "objectID": "applied_lec1.html#dockerfile-10",
-    "href": "applied_lec1.html#dockerfile-10",
-    "title": "Intro to Docker",
-    "section": "Dockerfile",
-    "text": "Dockerfile\n\n\n\n\n\n\nWhy sh -c?\n\n\n\nOn UNIX, to start a new program, we need two system calls:\n\nfork(), to create a new child process;\nexecve(), to replace the new child process with the program to run.\n\nConceptually, execve() works like this:\n\nexecve(program, [list, of, arguments])\n\nWhen we run a command, e.g. ls -l /tmp, something needs to parse the command. (i.e. split the program and its arguments into a list.)\nThe shell is usually doing that. (It also takes care of expanding environment variables and special things like ~.)"
-  },
-  {
-    "objectID": "applied_lec1.html#dockerfile-11",
-    "href": "applied_lec1.html#dockerfile-11",
-    "title": "Intro to Docker",
-    "section": "Dockerfile",
-    "text": "Dockerfile\n\n\n\nExec syntax\n\n\nDocker can parse the command by itself.\nInstead of plain string, or shell syntax:\nRUN apt-get install figlet\nwe can use JSON list, or exec syntax:\nRUN [\"apt-get\", \"install\", \"figlet\"]"
-  },
-  {
-    "objectID": "applied_lec1.html#dockerfile-12",
-    "href": "applied_lec1.html#dockerfile-12",
-    "title": "Intro to Docker",
-    "section": "Dockerfile",
-    "text": "Dockerfile\n\n\n\nCheck exec syntax\n\n\n\nChange Dockerfile to\n\nFROM ubuntu\nRUN apt-get update\nRUN [\"apt-get\", \"install\", \"figlet\"]\n\nBuild it:\n\ndocker build -t figlet .\n\nCheck history:\n\n$ docker history figlet\nIMAGE          CREATED         CREATED BY                                      SIZE      COMMENT\n18c1be63d556   4 seconds ago   RUN apt-get install figlet # buildkit           1.34MB    buildkit.dockerfile.v0\n&lt;missing&gt;      19 hours ago    RUN /bin/sh -c apt-get update # buildkit        56.4MB    buildkit.dockerfile.v0\n...\nExact command!"
-  },
-  {
-    "objectID": "applied_lec1.html#cmd-and-entrypoint-1",
-    "href": "applied_lec1.html#cmd-and-entrypoint-1",
-    "title": "Intro to Docker",
-    "section": "CMD and ENTRYPOINT",
-    "text": "CMD and ENTRYPOINT\n\n\n\nDefault commands\n\n\nWhen people run our container, we want to greet them with a nice hello message, and using a custom font.\nFor that, we will execute:\nfiglet -f script hello\n-f script tells figlet to use a fancy font.\nhello is the message that we want it to display."
-  },
-  {
-    "objectID": "applied_lec1.html#cmd-and-entrypoint-2",
-    "href": "applied_lec1.html#cmd-and-entrypoint-2",
-    "title": "Intro to Docker",
-    "section": "CMD and ENTRYPOINT",
-    "text": "CMD and ENTRYPOINT\n\n\n\nAdding CMD to Dockerfile\n\n\nOur new Dockerfile will look like this:\nFROM ubuntu\nRUN apt-get update\nRUN [\"apt-get\", \"install\", \"figlet\"]\nCMD figlet -f script hello\nCMD defines a default command to run when none is given.\nIt can appear at any point in the file.\nEach CMD will replace and override the previous one. As a result, while you can have multiple CMD lines, it is useless."
-  },
-  {
-    "objectID": "applied_lec1.html#cmd-and-entrypoint-3",
-    "href": "applied_lec1.html#cmd-and-entrypoint-3",
-    "title": "Intro to Docker",
-    "section": "CMD and ENTRYPOINT",
-    "text": "CMD and ENTRYPOINT\n\n\n\nBuild and run\n\n\n$ docker build -t figlet .\n[+] Building 3.4s (8/8) FINISHED                                                                                                                                                                docker:desktop-linux\n...\n$ docker run -it figlet\n _          _   _\n| |        | | | |\n| |     _  | | | |  __\n|/ \\   |/  |/  |/  /  \\_\n|   |_/|__/|__/|__/\\__/"
-  },
-  {
-    "objectID": "applied_lec1.html#cmd-and-entrypoint-4",
-    "href": "applied_lec1.html#cmd-and-entrypoint-4",
-    "title": "Intro to Docker",
-    "section": "CMD and ENTRYPOINT",
-    "text": "CMD and ENTRYPOINT\n\n\n\nCMD override\n\n\nIf we want to get a shell into our container (instead of running figlet), we just have to specify a different program to run:\n$ docker run -it figlet bash\nroot@3e95f6bafdd9:/#\nWe specified bash.\nIt replaced the value of CMD."
-  },
-  {
-    "objectID": "applied_lec1.html#cmd-and-entrypoint-5",
-    "href": "applied_lec1.html#cmd-and-entrypoint-5",
-    "title": "Intro to Docker",
-    "section": "CMD and ENTRYPOINT",
-    "text": "CMD and ENTRYPOINT\n\n\n\nUsing ENTRYPOINT\n\n\nObjective: we want to be able to specify a different message on the command line, while retaining figlet and some default parameters.\nIn other words, we would like to be able to do this:\n$ docker run figlet salut\n           _            \n          | |           \n ,   __,  | |       _|_ \n/ \\_/  |  |/  |   |  |  \n \\/ \\_/|_/|__/ \\_/|_/|_/\nWe will use the ENTRYPOINT verb in Dockerfile."
-  },
-  {
-    "objectID": "applied_lec1.html#cmd-and-entrypoint-6",
-    "href": "applied_lec1.html#cmd-and-entrypoint-6",
-    "title": "Intro to Docker",
-    "section": "CMD and ENTRYPOINT",
-    "text": "CMD and ENTRYPOINT\n\n\n\nDockerfile with ENTRYPOINT\n\n\nOur new Dockerfile will look like this:\nFROM ubuntu\nRUN apt-get update\nRUN [\"apt-get\", \"install\", \"figlet\"]\nENTRYPOINT [\"figlet\", \"-f\", \"script\"]\n\nENTRYPOINT defines a base command (and its parameters) for the container.\nThe command line arguments are appended to those parameters.\nLike CMD, ENTRYPOINT can appear anywhere, and replaces the previous value."
-  },
-  {
-    "objectID": "applied_lec1.html#cmd-and-entrypoint-7",
-    "href": "applied_lec1.html#cmd-and-entrypoint-7",
-    "title": "Intro to Docker",
-    "section": "CMD and ENTRYPOINT",
-    "text": "CMD and ENTRYPOINT\n\n\n\nBuild\n\n\ndocker build -t figlet .\n[+] Building 0.1s (7/7) FINISHED                                                                                                                                                                docker:desktop-linux\n...\n$ docker run figlet salve\n           _\n          | |\n ,   __,  | |       _\n/ \\_/  |  |/  |  |_|/\n \\/ \\_/|_/|__/ \\/  |__/"
-  },
-  {
-    "objectID": "applied_lec1.html#cmd-and-entrypoint-8",
-    "href": "applied_lec1.html#cmd-and-entrypoint-8",
-    "title": "Intro to Docker",
-    "section": "CMD and ENTRYPOINT",
-    "text": "CMD and ENTRYPOINT\n\n\n\nUsing CMD and ENTRYPOING together\n\n\nIf we use ENTRYPOINT and CMD together:\n\nENTRYPOINT will define the base command for our container.\nCMD will define the default parameter(s) for this command.\nThey both have to use JSON syntax."
-  },
-  {
-    "objectID": "applied_lec1.html#cmd-and-entrypoint-9",
-    "href": "applied_lec1.html#cmd-and-entrypoint-9",
-    "title": "Intro to Docker",
-    "section": "CMD and ENTRYPOINT",
-    "text": "CMD and ENTRYPOINT\n\n\n\nDockerfile\n\n\nFROM ubuntu\nRUN apt-get update\nRUN [\"apt-get\", \"install\", \"figlet\"]\nENTRYPOINT [\"figlet\", \"-f\", \"script\"]\nCMD [\"hello world\"]\n\nENTRYPOINT defines a base command (and its parameters) for the container.\nIf we don’t specify extra command-line arguments when starting the container, the value of CMD is appended.\nOtherwise, our extra command-line arguments are used instead of CMD."
-  },
-  {
-    "objectID": "applied_lec1.html#cmd-and-entrypoint-10",
-    "href": "applied_lec1.html#cmd-and-entrypoint-10",
-    "title": "Intro to Docker",
-    "section": "CMD and ENTRYPOINT",
-    "text": "CMD and ENTRYPOINT\n\n\n\nBuild and run\n\n\n\nBuild:\n\n$ docker build -t myfiglet .\n[+] Building 0.1s (7/7) FINISHED\n...\n\nRun without parameters:\n\n$ docker run myfiglet\n _          _   _                             _\n| |        | | | |                           | |    |\n| |     _  | | | |  __             __   ,_   | |  __|\n|/ \\   |/  |/  |/  /  \\_  |  |  |_/  \\_/  |  |/  /  |\n|   |_/|__/|__/|__/\\__/    \\/ \\/  \\__/    |_/|__/\\_/|_/"
-  },
-  {
-    "objectID": "applied_lec1.html#cmd-and-entrypoint-11",
-    "href": "applied_lec1.html#cmd-and-entrypoint-11",
-    "title": "Intro to Docker",
-    "section": "CMD and ENTRYPOINT",
-    "text": "CMD and ENTRYPOINT\n\n\n\nBuild and run\n\n\n\nRun with parameters:\n\n$ docker run myfiglet hey\n _\n| |\n| |     _\n|/ \\   |/  |   |\n|   |_/|__/ \\_/|/\n              /|\n              \\|"
-  },
-  {
-    "objectID": "applied_lec1.html#cmd-and-entrypoint-12",
-    "href": "applied_lec1.html#cmd-and-entrypoint-12",
-    "title": "Intro to Docker",
-    "section": "CMD and ENTRYPOINT",
-    "text": "CMD and ENTRYPOINT\n\n\n\nENTRYPOINT override\n\n\nWhat if we want to run a shell in our container?\nWe cannot just do docker run myfiglet bash because that would just tell figlet to display the word “bash.”\nWe use the --entrypoint parameter:\n$ docker run -it --entrypoint bash myfiglet\nroot@0e2f53d52f7d:/#"
-  },
-  {
-    "objectID": "applied_lec1.html#cmd-and-entrypoint-13",
-    "href": "applied_lec1.html#cmd-and-entrypoint-13",
-    "title": "Intro to Docker",
-    "section": "CMD and ENTRYPOINT",
-    "text": "CMD and ENTRYPOINT\n\n\n\nCMD and ENTRYPOINT recap\n\n\n\ndocker run myimage executes ENTRYPOINT + CMD\ndocker run myimage args executes ENTRYPOINT + args (overriding CMD)\ndocker run --entrypoint prog myimage executes prog (overriding both)"
   }
 ]
