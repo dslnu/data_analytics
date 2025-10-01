@@ -1,0 +1,1211 @@
+---
+title: "Big Data: Dask tutorial"
+author: 
+  - name: MSDE
+    affiliation: Lviv University
+code-fold: false
+execute:
+  enabled: true
+  cache: true
+diagram:
+  cache: true
+  cache-dir: ./cache
+  engine:
+    tikz:
+      execpath: lualatex
+      additional-packages: |
+        \usetikzlibrary{arrows.meta}
+        \usetikzlibrary{positioning}
+        \usetikzlibrary{decorations.pathreplacing}
+filters:
+  - diagram
+format: 
+  revealjs:
+    css: custom.css
+    preview-links: auto
+    slide-number: true
+    theme: default
+    multiplex:
+      url: 'https://mplex.vitv.ly'
+      secret: '2e1a4a42fa687c9b91b6b46884295a88'
+      id: 'c98a9f6491ac4446afaff3a81eced102c969d99b2e789cbc609eeb67a517bb73'
+---
+
+
+## Intro
+![](https://docs.dask.org/en/latest/_images/dask_horizontal.svg){height=250}
+
+- Dask is a parallel and distributed computing library that scales the existing Python and PyData ecosystem.
+- Dask can scale up to your full laptop capacity and out to a cloud cluster.
+
+## Installation
+:::{.callout-note}
+## With uv
+```bash
+uv add "dask[complete]"
+uv add s3fs
+uv add pyarrow
+```
+:::
+
+
+## An example Dask computation {.font8}
+
+:::{.callout-note icon=false}
+## Example
+In the following lines of code, we're reading the NYC taxi cab data from 2015 and finding the mean tip amount. 
+
+1. Import
+```python
+import dask.dataframe as dd
+from dask.distributed import Client
+```
+
+2. Create client.
+```python
+client = Client()
+client
+```
+
+3. Read data.
+```python
+ddf = dd.read_parquet(
+    "s3://dask-data/nyc-taxi/nyc-2015.parquet/part.*.parquet",
+    columns=["passenger_count", "tip_amount"],
+    storage_options={"anon": True},
+)
+```
+
+4. Groupby and mean
+```python
+result = ddf.groupby("passenger_count").tip_amount.mean().compute()
+result
+```
+:::
+
+## What is [Dask]("https://www.dask.org/")?
+
+:::{.callout-tip icon=false}
+## Many parts
+There are many parts to the "Dask" the project:
+
+* Collections/API also known as "core-library".
+* Distributed -- to create clusters
+* Integrations and broader ecosystem
+:::
+
+## Dask Collections {.font8}
+
+:::{.callout-warning icon=false}
+## Overview
+Dask provides **multi-core** and **distributed+parallel** execution on **larger-than-memory** datasets
+
+![](img/high_vs_low_level_coll_analogy.png){height=350}
+
+*  **High-level collections:**  Dask provides high-level Array, Bag, and DataFrame
+   collections that mimic NumPy, lists, and pandas but can operate in parallel on
+   datasets that don't fit into memory.
+* **Low-level collections:**  Dask also provides low-level Delayed and Futures
+   collections that give you finer control to build custom parallel and distributed computations.
+
+:::
+
+## Dask Cluster
+
+:::{.callout-important icon=false}
+## Cluster
+Most of the times when you are using Dask, you will be using a distributed scheduler, which exists in the context of a Dask cluster. The Dask cluster is structured as:
+:::
+![](img/distributed-overview.png)
+
+## Dask Ecosystem
+
+:::{.callout-tip icon=false}
+## Libraries
+In addition to the core Dask library and its distributed scheduler, the Dask ecosystem connects several additional initiatives, including:
+
+- Dask-ML (parallel scikit-learn-style API)
+- Dask-image
+- Dask-cuDF
+- Dask-sql
+- Dask-snowflake
+- Dask-mongo
+- Dask-bigquery
+:::
+
+## Dask Ecosystem {.font8}
+
+:::{.callout-tip icon=false}
+## Community ibraries
+Community libraries that have built-in dask integrations like:
+
+- Xarray
+- XGBoost
+- Prefect
+- Airflow
+
+Dask deployment libraries
+
+- Dask-kubernetes
+- Dask-YARN
+- Dask-gateway
+- Dask-cloudprovider
+- jobqueue
+:::
+
+## Dask Use Cases
+
+:::{.callout-tip icon=false}
+## Use cases
+Dask is used in multiple fields such as:
+
+* Geospatial
+* Finance
+* Astrophysics
+* Microbiology
+* Environmental science
+
+Check out the Dask [use cases](https://stories.dask.org/en/latest/) page that provides a number of sample workflows.
+:::
+
+# Dataframe
+
+## Dask DataFrame - parallelized pandas
+
+:::{.callout-tip icon=false}
+## Description
+
+Looks and feels like the pandas API, but for parallel and distributed workflows. 
+
+- At its core, the `dask.dataframe` module implements a "blocked parallel" `DataFrame` object that looks and feels like the pandas API, but for parallel and distributed workflows.
+
+- One Dask `DataFrame` is comprised of many in-memory pandas `DataFrame`s separated along the index.
+
+- One operation on a Dask `DataFrame` triggers many pandas operations on the constituent pandas `DataFrame`s in a way that is mindful of potential parallelism and memory constraints.
+:::
+
+## Dask DataFrame
+![](https://docs.dask.org/en/stable/_images/dask-dataframe.svg)
+
+## Dask DataFrame
+:::{.callout-important icon=false}
+## Related Documentation
+
+* [DataFrame documentation](https://docs.dask.org/en/latest/dataframe.html)
+* [DataFrame screencast](https://youtu.be/AT2XtFehFSQ)
+* [DataFrame API](https://docs.dask.org/en/latest/dataframe-api.html)
+* [DataFrame examples](https://examples.dask.org/dataframe.html)
+* [pandas documentation](https://pandas.pydata.org/pandas-docs/stable/)
+:::
+
+## DataFrame
+:::{.callout-note icon=false}
+## When to use `dask.dataframe`
+
+pandas is great for tabular datasets that fit in memory. A general rule of thumb for pandas is:
+
+> "Have 5 to 10 times as much RAM as the size of your dataset"
+
+> ~ Wes McKinney (2017) in [10 things I hate about pandas](https://wesmckinney.com/blog/apache-arrow-pandas-internals/)
+
+Here "size of dataset" means dataset size on _the disk_.
+
+Dask becomes useful when the datasets exceed the above rule.
+
+In this notebook, you will be working with the New York City Airline data. This dataset is only ~200MB, so that you can download it in a reasonable time, but `dask.dataframe` will scale to  datasets **much** larger than memory.
+:::
+
+## DataFrame
+:::{.callout-important icon=false}
+## Create datasets
+
+Create the datasets you will be using in this notebook:
+
+```python
+%run prep.py -d flights
+```
+:::
+
+:::{.callout-tip icon=false}
+## Set up your local cluster
+
+Create a local Dask cluster and connect it to the client. 
+
+```python
+from dask.distributed import Client
+
+client = Client(n_workers=4)
+client
+```
+:::
+
+
+## DataFrame
+:::{.callout-tip icon=false}
+## Dask Diagnostic Dashboard
+
+Dask Distributed provides a useful Dashboard to visualize the state of your cluster and computations.
+
+Click on the dashboard link displayed in the Client details above: <http://127.0.0.1:8787/status>. It will open a new browser tab with the Dashboard.
+:::
+
+## DataFrame
+:::{.callout-tip icon=false}
+## Reading and working with datasets
+
+Let's read an extract of flights in the USA across several years. This data is specific to flights out of the three airports in the New York City area.
+
+```python
+import os
+import dask
+```
+
+By convention, we import the module `dask.dataframe` as `dd`, and call the corresponding `DataFrame` object `ddf`.
+:::
+
+:::{.callout-note}
+The term "Dask DataFrame" is slightly overloaded. Depending on the context, it can refer to the module or the DataFrame object. To avoid confusion:
+
+- `dask.dataframe` (note the all lowercase) refers to the API, and
+- `DataFrame` (note the CamelCase) refers to the object.
+:::
+
+## DataFrame
+:::{.callout-tip icon=false}
+## Reading and working with datasets
+The following filename includes a glob pattern `*`, so all files in the path matching that pattern will be read into the same `DataFrame`.
+
+```python
+import dask.dataframe as dd
+
+ddf = dd.read_csv(
+    os.path.join("data", "nycflights", "*.csv"), parse_dates={"Date": [0, 1, 2]}
+)
+ddf
+```
+:::
+
+## DataFrame
+:::{.callout-tip icon=false}
+## What happened?
+
+Dask has not loaded the data yet, it has:
+
+- investigated the input path and found that there are ten matching files
+- intelligently created a set of jobs for each chunk -- one per original CSV file in this case
+:::
+
+:::{.callout-note}
+Notice that the representation of the `DataFrame` object contains no data - Dask has just done enough to read the start of the first file, and infer the column names and `dtype`s.
+:::
+
+## DataFrame
+:::{.callout-tip icon=false}
+## Lazy Evaluation
+
+Most Dask Collections, including Dask `DataFrame` are evaluated lazily, which means Dask constructs the logic (called task graph) of your computation immediately but "evaluates" them  only when necessary.
+
+You can view this task graph using `.visualize()`.
+
+
+```python
+ddf.visualize()
+```
+
+Note that we need to call `.compute()` to trigger actual computations.
+:::
+
+## DataFrame {.scrollable}
+:::{.callout-tip icon=false}
+## Lazy Evaluation
+
+Some functions like `len` and `head` also trigger a computation. Specifically, calling `len` will:
+
+- load actual data, (that is, load each file into a pandas DataFrame)
+- then apply the corresponding functions to each pandas DataFrame (also known as a partition)
+- combine the subtotals to give you the final grand total
+
+```python
+# load and count number of rows
+len(ddf)
+```
+:::
+
+## DataFrame {.scrollable}
+:::{.callout-tip icon=false}
+## Lazy Evaluation
+You can view the start and end of the data as you would in pandas:
+
+```python
+ddf.head()
+```
+
+```python
+ddf.tail()
+
+# ValueError: Mismatched dtypes found in `pd.read_csv`/`pd.read_table`.
+
+# +----------------+---------+----------+
+# | Column         | Found   | Expected |
+# +----------------+---------+----------+
+# | CRSElapsedTime | float64 | int64    |
+# | TailNum        | object  | float64  |
+# +----------------+---------+----------+
+
+# The following columns also raised exceptions on conversion:
+
+# - TailNum
+#   ValueError("could not convert string to float: 'N54711'")
+
+# Usually this is due to dask's dtype inference failing, and
+# *may* be fixed by specifying dtypes manually by adding:
+
+# dtype={'CRSElapsedTime': 'float64',
+#        'TailNum': 'object'}
+
+# to the call to `read_csv`/`read_table`.
+
+```
+:::
+
+## DataFrame {.scrollable}
+:::{.callout-tip icon=false}
+## Handling conflicting types
+
+Unlike `pandas.read_csv` which reads in the entire file before inferring datatypes, `dask.dataframe.read_csv` only reads in a sample from the beginning of the file (or first file if using a glob). These inferred datatypes are then enforced when reading all partitions.
+
+In this case, the datatypes inferred in the sample are incorrect. The first `n` rows have no value for `CRSElapsedTime` (which pandas infers as a `float`), and later on turn out to be strings (`object` dtype). When this happens you have a few options:
+
+- Specify dtypes directly using the `dtype` keyword. This is the recommended solution, as it's the least error prone (better to be explicit than implicit) and also the most performant.
+- Increase the size of the `sample` keyword (in bytes)
+- Use `assume_missing` to make `dask` assume that columns inferred to be `int` (which don't allow missing values) are actually `floats` (which do allow missing values). In our particular case this doesn't apply.
+:::
+
+## DataFrame
+:::{.callout-tip icon=false}
+## Handling conflicting types
+
+In our case we'll use the first option and directly specify the `dtypes` of the offending columns. 
+
+```python
+ddf = dd.read_csv(
+    os.path.join("data", "nycflights", "*.csv"),
+    parse_dates={"Date": [0, 1, 2]},
+    dtype={"TailNum": str, "CRSElapsedTime": float, "Cancelled": bool},
+)
+```
+
+```python
+ddf.tail()  # now works
+```
+:::
+
+## DataFrame
+:::{.callout-tip icon=false}
+## Reading from remote storage
+
+If you're thinking about distributed computing, your data is probably stored remotely on services (like Amazon's S3 or Google's cloud storage) and is in a friendlier format (like Parquet). Dask can read data in various formats directly from these remote locations **lazily** and **in parallel**.
+
+Here's how you can read the NYC taxi cab data from Amazon S3:
+
+```python
+ddf = dd.read_parquet(
+    "s3://nyc-tlc/trip data/yellow_tripdata_2012-*.parquet",
+)
+```
+
+You can also leverage Parquet-specific optimizations like column selection and metadata handling, learn more in [the Dask documentation on working with Parquet files](https://docs.dask.org/en/stable/dataframe-parquet.html).
+:::
+
+## DataFrame
+:::{.callout-tip icon=false}
+## Computations with `dask.dataframe`
+
+Let's compute the maximum of the flight delay.
+
+With just pandas, we would loop over each file to find the individual maximums, then find the final maximum over all the individual maximums.
+
+```python
+import pandas as pd
+
+files = os.listdir(os.path.join('data', 'nycflights'))
+
+maxes = []
+
+for file in files:
+    df = pd.read_csv(os.path.join('data', 'nycflights', file))
+    maxes.append(df.DepDelay.max())
+    
+final_max = max(maxes)
+```
+:::
+
+## DataFrame
+:::{.callout-tip icon=false}
+## Computations with `dask.dataframe`
+`dask.dataframe` lets us write pandas-like code, that operates on larger-than-memory datasets in parallel.
+
+```python
+%%time
+result = ddf.DepDelay.max()
+result.compute()
+```
+
+This creates the lazy computation for us and then runs it.  
+:::
+
+## DataFrame
+:::{.callout-note}
+## Computations with `dask.dataframe`
+
+Dask will delete intermediate results (like the full pandas DataFrame for each file) as soon as possible. This means you can handle datasets that are larger than memory but, repeated computations will have to load all of the data in each time. (Run the code above again, is it faster or slower than you would expect?)
+
+You can view the underlying task graph using `.visualize()`:
+
+```python
+# notice the parallelism
+result.visualize()
+```
+:::
+
+## DataFrame {.scrollable}
+:::{.callout-tip icon=false}
+## Exercises
+
+1. How many rows are in our dataset?
+
+```python
+# Your code here
+```
+
+<!-- ```python -->
+<!-- #| jupyter: {source_hidden: true} -->
+<!-- #| tags: [] -->
+<!-- len(ddf) -->
+<!-- ``` -->
+
+2. In total, how many non-canceled flights were taken?
+
+_Hint_: use [boolean indexing](https://pandas.pydata.org/pandas-docs/stable/indexing.html#boolean-indexing).
+
+```python
+# Your code here
+```
+
+<!-- ```python -->
+<!-- #| jupyter: {source_hidden: true} -->
+<!-- #| tags: [] -->
+<!-- len(ddf[~ddf.Cancelled]) -->
+<!-- ``` -->
+:::
+
+## DataFrame {.scrollable}
+:::{.callout-tip icon=false}
+## Exercises
+3. In total, how many non-canceled flights were taken from each airport?
+
+*Hint*: use [groupby](https://pandas.pydata.org/pandas-docs/stable/groupby.html).
+
+```python
+# Your code here
+```
+
+<!-- ```python -->
+<!-- #| jupyter: {source_hidden: true} -->
+<!-- #| tags: [] -->
+<!-- ddf[~ddf.Cancelled].groupby("Origin").Origin.count().compute() -->
+<!-- ``` -->
+
+4. What was the average departure delay from each airport?
+
+```python
+# Your code here
+```
+
+<!-- ```python -->
+<!-- #| jupyter: {source_hidden: true} -->
+<!-- #| tags: [] -->
+<!-- ddf.groupby("Origin").DepDelay.mean().compute() -->
+<!-- ``` -->
+:::
+
+## DataFrame {.scrollable}
+:::{.callout-tip icon=false}
+## Exercises
+
+5. What day of the week has the worst average departure delay?
+
+```python
+# Your code here
+```
+
+<!-- ```python -->
+<!-- #| jupyter: {source_hidden: true} -->
+<!-- #| tags: [] -->
+<!-- ddf.groupby("DayOfWeek").DepDelay.mean().idxmax().compute() -->
+<!-- ``` -->
+
+6. Let's say the distance column is erroneous and you need to add 1 to all values, how would you do this?
+
+```python
+# Your code here
+```
+
+<!-- ```python -->
+<!-- #| jupyter: {source_hidden: true} -->
+<!-- #| tags: [] -->
+<!-- ddf["Distance"].apply( -->
+<!--     lambda x: x + 1 -->
+<!-- ).compute()  # don't worry about the warning, we'll discuss in the next sections -->
+
+<!-- # OR -->
+
+<!-- (ddf["Distance"] + 1).compute() -->
+<!-- ``` -->
+:::
+
+## DataFrame {.scrollable}
+:::{.callout-tip icon=false}
+## Sharing Intermediate Results
+
+When computing all of the above, we sometimes did the same operation more than once. For most operations, `dask.dataframe` stores the arguments, allowing duplicate computations to be shared and only computed once.
+
+For example, let's compute the mean and standard deviation for departure delay of all non-canceled flights. 
+
+If you compute them with two calls to compute, there is no sharing of intermediate computations.
+
+```python
+non_canceled = ddf[~ddf.Cancelled]
+mean_delay = non_canceled.DepDelay.mean()
+std_delay = non_canceled.DepDelay.std()
+```
+
+```python
+#| tags: []
+%%time
+
+mean_delay_res = mean_delay.compute()
+std_delay_res = std_delay.compute()
+```
+:::
+
+## DataFrame
+:::{.callout-tip icon=false}
+## `dask.compute`
+
+But let's try by passing both to a single `compute` call.
+
+```python
+#| tags: []
+%%time
+
+mean_delay_res, std_delay_res = dask.compute(mean_delay, std_delay)
+```
+
+Using `dask.compute` takes roughly 1/2 the time. This is because the task graphs for both results are merged when calling `dask.compute`, allowing shared operations to only be done once instead of twice. In particular, using `dask.compute` only does the following once:
+
+- the calls to `read_csv`
+- the filter (`df[~df.Cancelled]`)
+- some of the necessary reductions (`sum`, `count`)
+:::
+
+## DataFrame
+:::{.callout-tip icon=false}
+## Visualization
+
+- To see what the merged task graphs between multiple results look like (and what's shared), you can use the `dask.visualize` function
+- you might want to use `filename='graph.pdf'` to save the graph to disk so that you can zoom in more easily
+
+```python
+dask.visualize(mean_delay, std_delay, engine="cytoscape")
+```
+:::
+
+## DataFrame
+:::{.callout-tip icon=false}
+## `.persist()`
+
+While using a distributed scheduler (you will learn more about schedulers in the upcoming notebooks), you can keep some _data that you want to use often_ in the _distributed memory_. 
+
+`persist` generates "Futures" (more on this later as well) and stores them in the same structure as your output. You can use `persist` with any data or computation that fits in memory.
+
+If you want to analyze data only for non-canceled flights departing from JFK airport, you can either have two compute calls like in the previous section:
+
+```python
+non_cancelled = ddf[~ddf.Cancelled]
+ddf_jfk = non_cancelled[non_cancelled.Origin == "JFK"]
+```
+
+```python
+%%time
+ddf_jfk.DepDelay.mean().compute()
+ddf_jfk.DepDelay.sum().compute()
+```
+:::
+
+## DataFrame
+:::{.callout-tip icon=false}
+## `.persist()`
+Or, consider persisting that subset of data in memory.
+
+See the "Graph" dashboard plot, the red squares indicate persisted data stored as Futures in memory. You will also notice an increase in Worker Memory (another dashboard plot) consumption.
+
+```python
+ddf_jfk = ddf_jfk.persist()  # returns back control immediately
+```
+
+```python
+%%time
+ddf_jfk.DepDelay.mean().compute()
+ddf_jfk.DepDelay.std().compute()
+```
+
+Analyses on this persisted data is faster because we are not repeating the loading and selecting (non-canceled, JFK departure) operations.
+:::
+
+## DataFrame
+:::{.callout-warning icon=false}
+## Custom code with Dask DataFrame
+
+`dask.dataframe` only covers a small but well-used portion of the pandas API.
+
+This limitation is for two reasons:
+
+1.  The Pandas API is *huge*
+2.  Some operations are genuinely hard to do in parallel, e.g, sorting.
+
+Additionally, some important operations like `set_index` work, but are slower than in pandas because they include substantial shuffling of data, and may write out to disk.
+:::
+
+## DataFrame
+:::{.callout-tip icon=false}
+## Solutions
+In case it's a custom function or tricky to implement, `dask.dataframe` provides a few methods to make applying custom functions to Dask DataFrames easier:
+
+- [`map_partitions`](https://docs.dask.org/en/latest/generated/dask.dataframe.DataFrame.map_partitions.html): to run a function on each partition (each pandas DataFrame) of the Dask DataFrame
+- [`map_overlap`](https://docs.dask.org/en/latest/generated/dask.dataframe.rolling.map_overlap.html): to run a function on each partition (each pandas DataFrame) of the Dask DataFrame, with some rows shared between neighboring partitions
+- [`reduction`](https://docs.dask.org/en/latest/generated/dask.dataframe.Series.reduction.html): for custom row-wise reduction operations.
+:::
+
+## DataFrame {.scrollable}
+:::{.callout-tip icon=false}
+## `map_partitions`
+Let's take a quick look at the `map_partitions()` function:
+
+```python
+#| tags: []
+help(ddf.map_partitions)
+```
+
+The "Distance" column in `ddf` is currently in miles. Let's say we want to convert the units to kilometers and we have a general helper function as shown below. In this case, we can use `map_partitions` to apply this function across each of the internal pandas `DataFrame`s in parallel. 
+
+```python
+def my_custom_converter(df, multiplier=1):
+    return df * multiplier
+
+
+meta = pd.Series(name="Distance", dtype="float64")
+
+distance_km = ddf.Distance.map_partitions(
+    my_custom_converter, multiplier=0.6, meta=meta
+)
+```
+
+```python
+distance_km.visualize()
+```
+
+```python
+distance_km.head()
+```
+:::
+
+## DataFrame
+:::{.callout-tip icon=false}
+## What is `meta`?
+
+Since Dask operates lazily, it doesn't always have enough information to infer the output structure (which includes datatypes) of certain operations.
+
+`meta` is a _suggestion_ to Dask about the output of your computation. Importantly, `meta` _never infers with the output structure_. Dask uses this `meta` until it can determine the actual output structure.
+
+Even though there are many ways to define `meta`, we suggest using a small pandas Series or DataFrame that matches the structure of your final output.
+:::
+
+## Close you local Dask Cluster
+
+:::{.callout-important}
+It's good practice to always close any Dask cluster you create:
+
+```python
+client.shutdown()
+```
+:::
+
+# Dask Arrays
+
+## Dask Arrays
+:::{.callout-note icon=false}
+## Dask Arrays - parallelized numpy
+Parallel, larger-than-memory, n-dimensional array using blocked algorithms. 
+
+*  **Parallel**: Uses all of the cores on your computer
+*  **Larger-than-memory**:  Lets you work on datasets that are larger than your available memory by breaking up your array into many small pieces, operating on those pieces in an order that minimizes the memory footprint of your computation, and effectively streaming data from disk.
+*  **Blocked Algorithms**:  Perform large computations by performing many smaller computations.
+:::
+
+## Dask Arrays
+:::{.callout-note icon=false}
+## Dask Arrays - parallelized numpy
+
+![](https://docs.dask.org/en/stable/_images/dask-array.svg)
+
+:::
+
+## Dask Arrays
+:::{.callout-note icon=false}
+## Related Documentation
+
+* [Array documentation](https://docs.dask.org/en/latest/array.html)
+* [Array screencast](https://youtu.be/9h_61hXCDuI)
+* [Array API](https://docs.dask.org/en/latest/array-api.html)
+* [Array examples](https://examples.dask.org/array.html)
+:::
+
+
+## Dask Arrays
+:::{.callout-note icon=false}
+## Create datasets
+
+Create the datasets you will be using in this notebook:
+
+```python
+%run prep.py -d random
+```
+:::
+
+## Dask Arrays
+:::{.callout-note icon=false}
+## Start the Client
+
+```python
+from dask.distributed import Client
+
+client = Client(n_workers=4)
+client
+```
+:::
+
+## Dask Arrays {.scrollable}
+:::{.callout-note icon=false}
+## Blocked Algorithms in a nutshell
+
+Let's do side by side the sum of the elements of an array using a NumPy array and a Dask array. 
+
+```python
+import numpy as np
+import dask.array as da
+```
+
+```python
+# NumPy array
+a_np = np.ones(10)
+a_np
+```
+:::
+
+## Dask Arrays {.scrollable}
+:::{.callout-note icon=false}
+## Blocked Algorithms in a nutshell
+We know that we can use `sum()` to compute the sum of the elements of our array, but to show what a blocksized operation would look like, let's do:
+
+```python
+a_np_sum = a_np[:5].sum() + a_np[5:].sum()
+a_np_sum
+```
+
+Now notice that each sum in the computation above is completely independent so they could be done in parallel. 
+To do this with Dask array, we need to define our "slices", we do this by defining the amount of elements we want per block using the variable `chunks`. 
+
+```python
+a_da = da.ones(10, chunks=5)
+a_da
+```
+:::
+
+## Dask Arrays
+:::{.callout-important}
+
+Note here that to get two blocks, we specify `chunks=5`, in other words, we have 5 elements per block. 
+
+```python
+a_da_sum = a_da.sum()
+a_da_sum
+```
+:::
+
+## Dask Arrays
+:::{.callout-note icon=false}
+## Task Graphs
+
+```python
+# visualize the low level Dask graph using cytoscape
+a_da_sum.visualize(engine="cytoscape")
+```
+
+And then compute:
+```python
+a_da_sum.compute()
+```
+:::
+
+## Dask Arrays
+:::{.callout-note icon=false}
+## Performance comparison
+
+Let's try a more interesting example. We will create a 20_000 x 20_000 array with normally distributed values, and take the mean along one of its axis.
+
+#### Numpy version 
+
+```python
+%%time
+xn = np.random.normal(10, 0.1, size=(30_000, 30_000))
+yn = xn.mean(axis=0)
+yn
+```
+
+#### Dask array version
+
+```python
+xd = da.random.normal(10, 0.1, size=(30_000, 30_000), chunks=(3000, 3000))
+xd
+```
+
+```python
+xd.nbytes / 1e9  # Gigabytes of the input processed lazily
+```
+
+```python
+yd = xd.mean(axis=0)
+yd
+```
+:::
+
+## Dask Arrays
+:::{.callout-note icon=false}
+## Performance comparison
+
+```python
+%%time
+xd = da.random.normal(10, 0.1, size=(30_000, 30_000), chunks=(3000, 3000))
+yd = xd.mean(axis=0)
+yd.compute()
+```
+:::
+
+## Dask Arrays
+:::{.callout-note icon=false}
+## Exercise
+
+* What happens if the Dask chunks=(10000,10000)?
+* What happens if the Dask chunks=(30,30)?
+* For Dask arrays, compute the mean along `axis=1` of the sum of the x array and its transpose. 
+
+```python
+# Your code here
+```
+
+<!-- **Solution** -->
+
+<!-- ```python -->
+<!-- #| jupyter: {source_hidden: true} -->
+<!-- #| tags: [] -->
+<!-- x_sum = xd + xd.T -->
+<!-- res = x_sum.mean(axis=1) -->
+<!-- res.compute() -->
+<!-- ``` -->
+:::
+
+## Dask Arrays
+:::{.callout-note icon=false}
+## Choosing good chunk sizes
+
+We can think of Dask arrays as a big structure composed by chunks of a smaller size, where these chunks are typically an a single `numpy` array, and they are all arranged to form a larger Dask array. 
+
+If you have a Dask array and want to know more information about chunks and their size, you can use the `chunksize` and `chunks` attributes to access this information. If you are in a jupyter notebook
+you can also visualize the Dask array via its HTML representation. 
+
+```python
+darr = da.random.random((1000, 1000, 1000))
+darr
+```
+:::
+
+## Dask Arrays {.scrollable}
+:::{.callout-note icon=false}
+## Choosing good chunk sizes
+Notice that when we created the Dask array, we did not specify the `chunks`. Dask has set by default `chunks='auto'` which accommodates ideal chunk  sizes. To learn more on how auto-chunking works you can go to this documentation [here](https://docs.dask.org/en/stable/array-chunks.html#automatic-chunking).
+
+- `darr.chunksize` shows the largest chunk size.
+- But if your array have irregular chunks, `darr.chunks` will show you the explicit sizes of all the chunks along all the dimensions of your dask array.
+
+```python
+darr.chunksize
+```
+
+```python
+darr.chunks
+```
+:::
+
+## Dask Arrays {.scrollable}
+:::{.callout-note icon=false}
+## Choosing good chunk sizes
+Let's modify our example to see explore chunking a bit more. We can rechunk our array:
+
+```python
+darr = darr.rechunk({0: -1, 1: 100, 2: "auto"})
+```
+
+```python
+darr
+```
+
+```python
+darr.chunksize
+```
+
+```python
+darr.chunks
+```
+:::
+
+## Dask Arrays
+:::{.callout-note icon=false}
+## Exercise
+
+- What does -1 do when specify as the chunk on a certain axis?
+:::
+
+## Dask Arrays
+:::{.callout-warning icon=false}
+## Too small is a problem
+
+- If your chunks are too small, the amount of actual work done by every task is very tiny, and the overhead of coordinating all these tasks results in a very inefficient process. 
+
+- In general, the dask scheduler takes approximately one millisecond to coordinate a single task. That means we want the computation time to be comparatively large, i.e in the order of seconds. 
+:::
+
+## Dask Arrays {.scrollable}
+:::{.callout-important icon=false}
+## Too big is a problem
+
+- If your chunks are too big, this is also a problem because you will likely run out of memory.
+- You will start seeing in the dashboard that data is being spill to disk and this will lead to performance decrements. 
+
+- If we load to much data into memory, Dask workers will start to spill data to disk to avoid crashing.
+- To watch out for this you can look at the worker memory plot on the dashboard.
+- Orange bars are a warning you are close to the limit, and gray means data is being spilled to disk. 
+
+:::
+
+## Dask Arrays {.scrollable}
+:::{.callout-note icon=false}
+## Rules of thumb
+
+- Users have reported that chunk sizes smaller than 1MB tend to be bad. In general, a chunk size between **100MB and 1GB is good**, while going over 1 or 2GB means you have a really big dataset and/or a lot of memory available per worker.
+- Upper bound: Avoid very large task graphs. More than 10,000 or 100,000 chunks may start to perform poorly.
+- Lower bound: To get the advantage of parallelization, you need the number of chunks to at least equal the number of worker cores available (or better, the number of worker cores times 2). Otherwise, some workers will stay idle.
+- The time taken to compute each task should be much larger than the time needed to schedule the task. The Dask scheduler takes roughly 1 millisecond to coordinate a single task, so a good task computation time would be in the order of seconds (not milliseconds).
+- Chunks should be aligned with array storage on disk. Modern NDArray storage formats (HDF5, NetCDF, TIFF, Zarr) allow arrays to be stored in chunks so that the blocks of data can be pulled efficiently. However, data stores often chunk more finely than is ideal for Dask array, so it is common to choose a chunking that is a multiple of your storage chunk size, otherwise you might incur high overhead. For example,  if you are loading data that is chunked in blocks of (100, 100), the  you might might choose a chunking strategy more like (1000, 2000) that is larger but still divisible by (100, 100). 
+
+For more more advice on chunking see https://docs.dask.org/en/stable/array-chunks.html
+:::
+
+## Dask Arrays
+:::{.callout-note icon=false}
+## Example of chunked data with Zarr
+
+Zarr is a format for the storage of chunked, compressed, N-dimensional arrays. Zarr provides classes and functions for working with N-dimensional arrays that behave like NumPy arrays (Dask array behave like Numpy arrays) but whose data is divided into chunks and each chunk is compressed. If you are already familiar with HDF5 then Zarr arrays provide similar functionality, but with some additional flexibility.
+
+For extra material check the [Zarr tutorial](https://zarr.readthedocs.io/en/stable/tutorial.html)
+
+**Let's read an array from zarr:**
+
+```python
+import zarr
+```
+
+```python
+a = da.from_zarr("data/random.zarr")
+```
+
+```python
+a
+```
+:::
+
+## Dask Arrays
+:::{.callout-note icon=false}
+## Example of chunked data with Zarr
+Notice that the array is already chunked, and we didn't specify anything when loading it. Now notice that the chunks have a nice chunk size, let's compute the mean and see how long it takes to run
+
+```python
+%%time
+a.mean().compute()
+```
+
+Let's load a separate example where the `chunksize` is much smaller, and see what happen
+
+```python
+b = da.from_zarr("data/random_sc.zarr")
+b
+```
+
+```python
+%%time
+b.mean().compute()
+```
+:::
+
+## Dask Arrays
+:::{.callout-note icon=false}
+## Exercise
+
+Provide a `chunksize` when reading `b` that will improve the time of computation of the mean. Try multiple `chunks` values and see what happens.
+
+```python
+# Your code here
+```
+
+<!-- ```python -->
+<!-- #| jupyter: {source_hidden: true} -->
+<!-- #| tags: [] -->
+<!-- # 1 possible Solution (imitate original). chunks will vary if you are in binder -->
+<!-- c = da.from_zarr("data/random_sc.zarr", chunks=(6250000,)) -->
+<!-- c -->
+<!-- ``` -->
+
+```python
+%%time
+c.mean().compute()
+```
+:::
+
+## Dask Arrays {.scrollable}
+:::{.callout-note icon=false}
+## Xarray  
+
+In some applications we have multidimensional data, and sometimes working with all this dimensions can be confusing. Xarray is an open source project and Python package that makes working with labeled multi-dimensional arrays easier. 
+
+Let's learn how to use xarray and Dask together:
+
+```python
+import xarray as xr
+```
+
+```python
+ds = xr.tutorial.open_dataset(
+    "air_temperature",
+    chunks={  # this tells xarray to open the dataset as a dask array
+        "lat": 25,
+        "lon": 25,
+        "time": -1,
+    },
+)
+ds
+```
+
+```python
+ds.air
+```
+
+```python
+ds.air.chunks
+```
+
+```python
+mean = ds.air.mean("time")  # no activity on dashboard
+mean  # contains a dask array
+```
+
+```python
+# we will see dashboard activity
+mean.load()
+```
+:::
+
+## Dask Arrays
+:::{.callout-note icon=false}
+## Standard Xarray Operations
+
+Let's grab the air variable and do some operations. Operations using xarray objects are identical, regardless if the underlying data is stored as a Dask array or a NumPy array.
+
+```python
+dair = ds.air
+```
+
+```python
+dair2 = dair.groupby("time.month").mean("time")
+dair_new = dair - dair2
+dair_new
+```
+
+Call `.compute()` or `.load()` when you want your result as a `xarray.DataArray` with data stored as NumPy arrays.
+
+```python
+# things happen in the dashboard
+dair_new.load()
+```
+:::
+
+## Dask Arrays
+:::{.callout-note icon=false}
+## Time Series Operations with xarray
+
+Because we have a datetime index time-series operations work efficiently, for example we can do a resample and then plot the result.
+
+```python
+dair_resample = dair.resample(time="1w").mean("time").std("time")
+```
+
+```python
+dair_resample.load().plot(figsize=(12, 8))
+```
+:::
+
+## Dask Arrays
+:::{.callout-note icon=false}
+## Learn More 
+
+Both xarray and zarr have their own tutorials that go into greater depth:
+
+* [Zarr tutorial](https://zarr.readthedocs.io/en/stable/tutorial.html)
+* [Xarray tutorial](https://tutorial.xarray.dev/intro.html)
+:::
+
+## Dask Arrays
+:::{.callout-note icon=false}
+## Close your cluster
+
+It's good practice to close any Dask cluster you create:
+
+```python
+client.shutdown()
+```
+:::
+
+## Useful Links {.font8}
+
+*  Reference
+    *  [Docs](https://dask.org/)
+    *  [Examples](https://examples.dask.org/)
+    *  [Code](https://github.com/dask/dask/)
+    *  [Blog](https://blog.dask.org/)
+*  Ask for help
+    *   [`dask`](http://stackoverflow.com/questions/tagged/dask) tag on Stack Overflow, for usage questions
+    *   [github issues](https://github.com/dask/dask/issues/new) for bug reports and feature requests
+    *   [discourse forum](https://dask.discourse.group/) for general, non-bug, questions and discussion
+    *   Attend a live tutorial
+
+
+
