@@ -31,8 +31,8 @@ format:
     theme: default
     multiplex:
       url: 'https://mplex.vitv.ly'
-      secret: '49f020dea9cd0dca93611d28da72916f'
-      id: 'b92a7ef9e8102277e4f3c48d65585c257f95ea49b2489043a8ac44361fe8459e'
+      secret: '2a01204f753aed73e42e2d0506747066'
+      id: 'e90053bf8fd1cc7a37d55d1d3b5223f5273b8e1c78f5d7d300b6c5c4d4f86033'
 ---
 
 # Container networking basics
@@ -51,6 +51,30 @@ At the end of this section, you will be able to:
 
 * Find a container's IP address.
 
+:::
+
+## Container networking basics {.font8 .scrollable}
+
+:::{.callout-tip icon=false}
+## Definitions
+
+|Keyword|Description|
+|----|------|
+|VM|A virtual machine (VM) is a software simulation of a physical computer that runs on a host computer. It provides a separate operating system and resources, allowing multiple operating systems to run on a single physical machine.|
+|Cluster|A cluster is a group of connected servers that work together as a single system to provide high availability, scalability, and increased performance for applications. The nodes in a cluster are connected through a network and share resources to provide a unified, highly available solution.|
+|Node|A cluster node is a single server within a cluster computing system. It provides computing resources and works together with other nodes to perform tasks as a unified system, providing high availability and scalability for applications.|
+:::
+
+## Container networking basics {.font8}
+
+:::{.callout-tip icon=false}
+## Definitions
+
+|Keyword|Description|
+|----|------|
+|Network|A network is a group of interconnected devices that can exchange data and information. Networks can be used to connect computers, servers, mobile devices, and other types of devices and allow them to communicate with each other and share resources, such as printers and storage. More specifically in our case, these are physical and software-defined communication paths between individual nodes of a cluster and programs running on those nodes.|
+|Port|A port is a communication endpoint in a network-attached device, such as a computer or server. It allows the device to receive and send data to other devices on the network through a specific network protocol, such as TCP or UDP. Each port has a unique number that is used to identify it, and different services and applications use specific ports to communicate.|
+|Service|A piece of software that implements a limited set of functionalities that are then used by other parts of the application.|
 :::
 
 ## Container networking basics
@@ -265,9 +289,12 @@ $ docker run -d -p 8080:80 -p 8888:80 nginx
 * The second one is exposed on port 8000.
 * The third one is exposed on ports 8080 and 8888.
 
-Note: the convention is `port-on-host:port-on-container`.
-
 :::
+
+:::{.callout-note}
+The convention is `port-on-host:port-on-container`.
+:::
+
 
 ## Container networking basics
 :::{.callout-tip icon=false}
@@ -275,13 +302,13 @@ Note: the convention is `port-on-host:port-on-container`.
 
 There are many ways to integrate containers in your network.
 
-* Start the container, letting Docker allocate a public port for it.
+* Start the container, letting [Docker allocate]{style="color:blue;"} a public port for it.
   <br/>Then retrieve that port number and feed it to your configuration.
 
-* Pick a fixed port number in advance, when you generate your configuration.
+* Pick a [fixed port]{style="color:blue;"} number in advance, when you generate your configuration.
   <br/>Then start your container by setting the port numbers manually.
 
-* Use an orchestrator like Kubernetes or Swarm.
+* Use an [orchestrator]{style="color:blue;"} like Kubernetes or Swarm.
   <br/>The orchestrator will provide its own networking facilities.
 
 Orchestrators typically provide mechanisms to enable direct container-to-container
@@ -378,7 +405,7 @@ The built-in drivers include:
 
 The network is selected with `docker run --net ...`.
 
-Each network is managed by a driver.
+Each network is managed by a [**driver**]{style="color:blue;"}.
 
 The different drivers are explained with more details on the following slides.
 
@@ -550,7 +577,7 @@ New networks can be created (with `docker network create`).
 :::
 
 ## The Container Network Model
-:::{.callout-tip icon=false}
+:::{.callout-warning icon=false}
 ## Network isolation
 
 - Networks are isolated
@@ -696,7 +723,7 @@ root@0ecccdfa45ef:/#
 
 Since Docker Engine 1.10, name resolution is implemented by a dynamic resolver.
 
-Archeological note: when CNM was intoduced (in Docker Engine 1.9, November 2015)
+Archeological note: when CNM was introduced (in Docker Engine 1.9, November 2015)
 name resolution was implemented with `/etc/hosts`, and it was updated each time
 CONTAINERs were added/removed. This could cause interesting race conditions
 since `/etc/hosts` was a bind-mount (and couldn't be updated atomically).
@@ -792,7 +819,7 @@ $ docker run --net dev --net-alias redis -d redis
 
 * If we connect to the application now, we should see that the app is working correctly:
 
-![Trainingwheels OK](images/trainingwheels-ok.png)
+![Trainingwheels OK](img/trainingwheels-ok.png)
 
 * When the app tries to resolve `redis`, instead of getting a DNS error, it gets the IP address of our Redis container.
 
@@ -840,17 +867,12 @@ Containers can contact each other only when they are on the same network (you ca
 :::{.callout-tip icon=false}
 ## Network aliases
 
-We would like to have another network, `prod`, with its own `es` container. But there can be only one container named `es`!
-
-We will use *network aliases*.
-
-A container can have multiple network aliases.
-
-Network aliases are *local* to a given network (only exist in this network).
-
-Multiple containers can have the same network alias (even on the same network).
-
-Since Docker Engine 1.11, resolving a network alias yields the IP addresses of all containers holding this alias.
+- We would like to have another network, `prod`, with its own `es` container. But there can be only one container named `es`!
+- We will use *network aliases*.
+- A container can have multiple network aliases.
+- Network aliases are *local* to a given network (only exist in this network).
+- Multiple containers can have the same network alias (even on the same network).
+- Since Docker Engine 1.11, resolving a network alias yields the IP addresses of all containers holding this alias.
 
 :::
 
@@ -893,15 +915,14 @@ Address 2: 172.23.0.2 prod-es-1.prod
 
 :::
 
-## Service discovery with containers
-:::{.callout-tip icon=false}
+## Service discovery with containers {.font8}
+:::{.callout-tip icon=false} 
 ## Connecting to aliased containers
 
 Each ElasticSearch instance has a name (generated when it is started). This name can be seen when we issue a simple HTTP request on the ElasticSearch API endpoint.
 
 Try the following command a few times:
 
-.small[
 ```bash
 $ docker run --rm --net dev centos curl -s es:9200
 {
@@ -909,11 +930,9 @@ $ docker run --rm --net dev centos curl -s es:9200
 ...
 }
 ```
-]
 
 Then try it a few times by replacing `--net dev` with `--net prod`:
 
-.small[
 ```bash
 $ docker run --rm --net prod centos curl -s es:9200
 {
@@ -921,7 +940,6 @@ $ docker run --rm --net prod centos curl -s es:9200
 ...
 }
 ```
-]
 
 :::
 
@@ -947,6 +965,7 @@ $ docker run --rm --net prod centos curl -s es:9200
 
 :::
 
+<!--
 ## Service discovery with containers
 :::{.callout-tip icon=false}
 ## A few words about round robin DNS
@@ -964,7 +983,7 @@ Many factors can affect DNS resolution, and you might see:
 It's OK to use DNS to discover available endpoints, but remember that you have to re-resolve every now and then to discover new endpoints.
 
 :::
-
+-->
 
 ## Service discovery with containers
 :::{.callout-tip icon=false}
@@ -999,13 +1018,13 @@ $ docker network create --subnet 10.66.0.0/16 pubnet
 $ docker run --net pubnet --ip 10.66.66.66 -d nginx
 b2887adeb5578a01fd9c55c435cad56bbbe802350711d2743691f95743680b09
 ```
-
-*Note: don't hard code container IP addresses in your code!*
-
-*I repeat: don't hard code container IP addresses in your code!*
-
 :::
 
+:::{.callout-important}
+Don't hard code container IP addresses in your code!
+:::
+
+<!--
 ## Service discovery with containers
 :::{.callout-tip icon=false}
 ## Network drivers
@@ -1079,6 +1098,7 @@ General idea:
 - you can then `docker network create --driver pluginname`
 
 :::
+-->
 
 ## Service discovery with containers
 :::{.callout-tip icon=false}
@@ -1133,7 +1153,7 @@ General idea:
 * Run the following command on the host:
 
   ```bash
-  $ docker network connect dev `<container_id>`
+  $ docker network connect dev <container_id>
   ```
 
 :::
@@ -1229,6 +1249,7 @@ As we can see, we can be connected to multiple networks at the same time.
 
 :::
 
+<!--
 ## Service discovery with containers
 :::{.callout-tip icon=false}
 ## Finding out about our networks and names
@@ -1261,7 +1282,7 @@ eth0      Link encap:Ethernet  HWaddr 02:42:AC:15:00:03
 ```
 
 :::
-
+-->
 
 ## Service discovery with containers
 :::{.callout-tip icon=false}
@@ -1278,4 +1299,511 @@ eth0      Link encap:Ethernet  HWaddr 02:42:AC:15:00:03
 
   (But try to use a multi-stage build instead, if possible!)
 
+:::
+
+# Working with volumes
+
+## Working with volumes
+:::{.callout-note icon=false}
+## Objectives
+
+At the end of this section, you will be able to:
+
+* Create containers holding volumes.
+
+* Share volumes across containers.
+
+* Share a host directory with one or many containers.
+
+:::
+
+## Working with volumes
+:::{.callout-note icon=false}
+## Working with volumes
+
+Docker volumes can be used to achieve many things, including:
+
+* Bypassing the copy-on-write system to obtain native disk I/O performance.
+
+* Bypassing copy-on-write to leave some files out of `docker commit`.
+
+* Sharing a directory between multiple containers.
+
+* Sharing a directory between the host and a container.
+
+* Sharing a *single file* between the host and a container.
+
+* Using remote storage and custom storage with *volume drivers*.
+
+:::
+
+## Working with volumes
+:::{.callout-note icon=false}
+## Volumes are special directories in a container
+
+Volumes can be declared in two different ways:
+
+* Within a `Dockerfile`, with a `VOLUME` instruction.
+
+```dockerfile
+VOLUME /uploads
+```
+
+* On the command-line, with the `-v` flag for `docker run`.
+
+```bash
+$ docker run -d -v /uploads myapp
+```
+
+In both cases, `/uploads` (inside the container) will be a volume.
+
+:::
+
+## Working with volumes
+:::{.callout-note icon=false}
+## Volumes bypass the copy-on-write system
+
+Volumes act as passthroughs to the host filesystem.
+
+* The I/O performance on a volume is exactly the same as I/O performance
+  on the Docker host.
+
+* When you `docker commit`, the content of volumes is not brought into
+  the resulting image.
+
+* If a `RUN` instruction in a `Dockerfile` changes the content of a
+  volume, those changes are not recorded neither.
+
+* If a container is started with the `--read-only` flag, the volume
+  will still be writable (unless the volume is a read-only volume).
+
+:::
+
+## Working with volumes
+:::{.callout-note icon=false}
+## Volumes can be shared across containers
+
+- You can start a container with *exactly the same volumes* as another one.
+- The new container will have the same volumes, in the same directories.
+- They will contain exactly the same thing, and remain in sync.
+- Under the hood, they are actually the same directories on the host anyway.
+- This is done using the `--volumes-from` flag for `docker run`.
+
+:::
+
+## Working with volumes
+:::{.callout-note icon=false}
+## Sharing app server logs with another container
+
+Let's start a Tomcat container:
+
+```bash
+$ docker run --name webapp -d -p 8080:8080 -v /usr/local/tomcat/logs tomcat
+```
+
+Now, start an `alpine` container accessing the same volume:
+
+```bash
+$ docker run --volumes-from webapp alpine sh -c "tail -f /usr/local/tomcat/logs/*"
+```
+
+Then, from another window, send requests to our Tomcat container:
+```bash
+$ curl localhost:8080
+```
+
+:::
+
+## Working with volumes
+:::{.callout-note icon=false}
+## Volumes exist independently of containers
+
+If a container is stopped or removed, its volumes still exist and are available.
+
+Volumes can be listed and manipulated with `docker volume` subcommands:
+
+```bash
+$ docker volume ls
+DRIVER              VOLUME NAME
+local               5b0b65e4316da67c2d471086640e6005ca2264f3...
+local               pgdata-prod
+local               pgdata-dev
+local               13b59c9936d78d109d094693446e174e5480d973...
+```
+
+Some of those volume names were explicit (pgdata-prod, pgdata-dev).
+
+The others (the hex IDs) were generated automatically by Docker.
+
+:::
+
+## Working with volumes
+:::{.callout-note icon=false}
+## Naming volumes
+
+* Volumes can be created without a container, then used in multiple containers.
+
+Let's create a couple of volumes directly.
+
+```bash
+$ docker volume create webapps
+webapps
+```
+
+```bash
+$ docker volume create logs
+logs
+```
+
+Volumes are not anchored to a specific path.
+
+:::
+
+## Working with volumes
+:::{.callout-note icon=false}
+## Populating volumes
+
+* When an empty volume is mounted on a non-empty directory, the directory is copied to the volume.
+
+* This makes it easy to "promote" a normal directory to a volume.
+
+* Non-empty volumes are always mounted as-is.
+
+Let's populate the webapps volume with the webapps.dist directory from the Tomcat image.
+
+```bash
+$ docker run -v webapps:/usr/local/tomcat/webapps.dist tomcat true
+```
+
+:::
+
+:::{.callout-note}
+Running `true` will cause the container to exit successfully once the `webapps.dist` directory has been copied to the `webapps` volume, instead of starting tomcat.
+:::
+
+## Working with volumes
+:::{.callout-note icon=false}
+## Using our named volumes
+
+* Volumes are used with the `-v` option.
+
+* When a host path does not contain a `/`, it is considered a volume name.
+
+Let's start a web server using the two previous volumes.
+
+```bash
+$ docker run -d -p 1234:8080 \
+         -v logs:/usr/local/tomcat/logs \
+         -v webapps:/usr/local/tomcat/webapps \
+         tomcat
+```
+
+Check that it's running correctly:
+
+```bash
+$ curl localhost:1234
+... (Tomcat tells us how happy it is to be up and running) ...
+```
+
+:::
+
+## Working with volumes
+:::{.callout-note icon=false}
+## Using a volume in another container
+
+* We will make changes to the volume from another container.
+
+* In this example, we will run a text editor in the other container.
+
+  (But this could be an FTP server, a WebDAV server, a Git receiver...)
+
+Let's start another container using the `webapps` volume.
+
+```bash
+$ docker run -v webapps:/webapps -w /webapps -ti alpine vi ROOT/index.jsp
+```
+
+Vandalize the page, save, exit.
+
+Then run `curl localhost:1234` again to see your changes.
+
+:::
+
+<!--
+## Working with volumes
+:::{.callout-note icon=false}
+## Using custom "bind-mounts"
+
+In some cases, you want a specific directory on the host to be mapped
+inside the container:
+
+* You want to manage storage and snapshots yourself.
+
+    (With LVM, or a SAN, or ZFS, or anything else!)
+
+* You have a separate disk with better performance (SSD) or resiliency (EBS)
+  than the system disk, and you want to put important data on that disk.
+
+* You want to share your source directory between your host (where the
+  source gets edited) and the container (where it is compiled or executed).
+
+Wait, we already met the last use-case in our example development workflow!
+Nice.
+
+```bash
+$ docker run -d -v /path/on/the/host:/path/in/container image ...
+```
+
+:::
+-->
+
+## Working with volumes
+:::{.callout-note icon=false}
+## Migrating data with `--volumes-from`
+
+The `--volumes-from` option tells Docker to re-use all the volumes
+of an existing container.
+
+* Scenario: migrating from Redis 2.8 to Redis 3.0.
+
+* We have a container (`myredis`) running Redis 2.8.
+
+* Stop the `myredis` container.
+
+* Start a new container, using the Redis 3.0 image, and the `--volumes-from` option.
+
+* The new container will inherit the data of the old one.
+
+* Newer containers can use `--volumes-from` too.
+
+* Doesn't work across servers, so not usable in clusters (Swarm, Kubernetes).
+
+:::
+
+## Working with volumes
+:::{.callout-note icon=false}
+## Data migration in practice
+
+Let's create a Redis container.
+
+```bash
+$ docker run -d --name redis28 redis:2.8
+```
+
+Connect to the Redis container and set some data.
+
+```bash
+$ docker run -ti --link redis28:redis busybox telnet redis 6379
+```
+
+Issue the following commands:
+
+```bash
+SET counter 42
+INFO server
+SAVE
+QUIT
+```
+
+:::
+
+## Working with volumes
+:::{.callout-note icon=false}
+## Upgrading Redis
+
+Stop the Redis container.
+
+```bash
+$ docker stop redis28
+```
+
+Start the new Redis container.
+
+```bash
+$ docker run -d --name redis30 --volumes-from redis28 redis:3.0
+```
+
+:::
+
+## Working with volumes
+:::{.callout-note icon=false}
+## Testing the new Redis
+
+Connect to the Redis container and see our data.
+
+```bash
+docker run -ti --link redis30:redis busybox telnet redis 6379
+```
+
+Issue a few commands.
+
+```bash
+GET counter
+INFO server
+QUIT
+```
+
+:::
+
+## Working with volumes
+:::{.callout-note icon=false}
+## Volumes lifecycle
+
+* When you remove a container, its volumes are kept around.
+
+* You can list them with `docker volume ls`.
+
+* You can access them by creating a container with `docker run -v`.
+
+* You can remove them with `docker volume rm` or `docker system prune`.
+
+Ultimately, _you_ are the one responsible for logging,
+monitoring, and backup of your volumes.
+
+:::
+
+## Working with volumes
+:::{.callout-note icon=false}
+## Checking volumes defined by an image
+
+Wondering if an image has volumes? Just use `docker inspect`:
+
+```bash
+$ # docker inspect training/datavol
+[{
+  "config": {
+    . . .
+    "Volumes": {
+        "/var/webapp": {}
+    },
+    . . .
+}]
+```
+
+:::
+
+## Working with volumes
+:::{.callout-note icon=false}
+## Checking volumes used by a container
+
+To look which paths are actually volumes, and to what they are bound,
+use `docker inspect` (again):
+
+```bash
+$ docker inspect <yourContainerID>
+[{
+  "ID": "<yourContainerID>",
+. . .
+  "Volumes": {
+     "/var/webapp": "/var/lib/docker/vfs/dir/f4280c5b6207ed531efd4cc673ff620cef2a7980f747dbbcca001db61de04468"
+  },
+  "VolumesRW": {
+     "/var/webapp": true
+  },
+}]
+```
+
+* We can see that our volume is present on the file system of the Docker host.
+
+:::
+
+## Working with volumes
+:::{.callout-note icon=false}
+## Sharing a single file
+
+The same `-v` flag can be used to share a single file (instead of a directory).
+
+One of the most interesting examples is to share the Docker control socket.
+
+```bash
+$ docker run -it -v /var/run/docker.sock:/var/run/docker.sock docker sh
+```
+
+From that container, you can now run `docker` commands communicating with
+the Docker Engine running on the host. Try `docker ps`!
+
+:::
+
+:::{.callout-warning}
+Since that container has access to the Docker socket, it
+has root-like access to the host.
+:::
+
+<!--
+## Working with volumes
+:::{.callout-note icon=false}
+## Volume plugins
+
+You can install plugins to manage volumes backed by particular storage systems,
+or providing extra features. For instance:
+
+* [REX-Ray](https://rexray.io/) - create and manage volumes backed by an enterprise storage system (e.g.
+  SAN or NAS), or by cloud block stores (e.g. EBS, EFS).
+
+* [Portworx](https://portworx.com/) - provides distributed block store for containers.
+
+* [Gluster](https://www.gluster.org/) - open source software-defined distributed storage that can scale
+  to several petabytes. It provides interfaces for object, block and file storage.
+
+* and much more at the [Docker Store](https://store.docker.com/search?category=volume&q=&type=plugin)!
+
+:::
+-->
+
+## Working with volumes
+:::{.callout-note icon=false}
+## Volumes vs. Mounts
+
+* Since Docker 17.06, a new options is available: `--mount`.
+
+* It offers a new, richer syntax to manipulate data in containers.
+
+* It makes an explicit difference between:
+
+  - volumes (identified with a unique name, managed by a storage plugin),
+
+  - bind mounts (identified with a host path, not managed).
+
+* The former `-v` / `--volume` option is still usable.
+
+:::
+
+## Working with volumes
+:::{.callout-note icon=false}
+## `--mount` syntax
+
+Binding a host path to a container path:
+
+```bash
+$ docker run \
+  --mount type=bind,source=/path/on/host,target=/path/in/container alpine
+```
+
+Mounting a volume to a container path:
+
+```bash
+$ docker run \
+  --mount source=myvolume,target=/path/in/container alpine
+```
+
+Mounting a tmpfs (in-memory, for temporary files):
+
+```bash
+$ docker run \
+  --mount type=tmpfs,destination=/path/in/container,tmpfs-size=1000000 alpine
+```
+
+:::
+
+## Working with volumes
+:::{.callout-note icon=false}
+## Section summary
+
+We've learned how to:
+
+* Create and manage volumes.
+
+* Share volumes across containers.
+
+* Share a host directory with one or many containers.
 :::
