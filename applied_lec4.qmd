@@ -1,0 +1,972 @@
+---
+title: "Docker Compose"
+author: 
+  - name: MSDE
+    affiliation: Lviv University
+code-fold: false
+execute:
+  enabled: false
+  cache: true
+diagram:
+  cache: true
+  cache-dir: ./cache
+  engine:
+    tikz:
+      execpath: lualatex
+      additional-packages: |
+        \usetikzlibrary{arrows.meta}
+        \usetikzlibrary{positioning}
+        \usetikzlibrary{decorations.pathreplacing}
+filters:
+  - diagram
+title-slide-attributes:
+  data-background-image: img/docker_ship.jpg
+  data-background-size: contain
+  data-background-opacity: "0.5"
+format: 
+  revealjs:
+    css: ./custom.css
+    preview-links: auto
+    slide-number: true
+    theme: default
+    multiplex:
+      url: 'https://mplex.vitv.ly'
+      secret: '829bbad1ba6c5caeed3ef18498df9eda'
+      id: 'b914cffbaf40815b7a62fe12d291afb1d543ca99a4740f67c5295fed14cb06a4'
+---
+
+# Gentle introduction to YAML
+
+## Gentle introduction to YAML
+:::{.callout-tip icon=false}
+## Gentle introduction to YAML
+
+- YAML Ain't Markup Language (according to [yaml.org][yaml])
+
+- *Almost* required when working with containers:
+
+  - Docker Compose files
+
+  - Kubernetes manifests
+
+  - Many CI pipelines (GitHub, GitLab...)
+
+- Might be a bit difficult to understand though
+
+[yaml]: https://yaml.org/
+:::
+
+## Gentle introduction to YAML
+:::{.callout-tip icon=false}
+## What is it?
+
+- Data representation language
+
+```yaml
+- country: France
+  capital: Paris
+  code: fr
+  population: 68042591
+- country: Germany
+  capital: Berlin
+  code: de
+  population: 84270625
+- country: Norway
+  capital: Oslo
+  code: no # It's a trap!
+  population: 5425270
+```
+
+- Even without knowing YAML, we probably can add a country to that file :)
+
+:::
+
+## Gentle introduction to YAML
+:::{.callout-tip icon=false}
+## Trying YAML
+
+- Method 1: in the browser
+
+  <https://onlineyamltools.com/convert-yaml-to-json>
+
+  <https://onlineyamltools.com/highlight-yaml>
+
+- Method 2: in a shell
+
+  ```bash
+  yq . foo.yaml
+  ```
+
+- Method 3: in Python
+
+```python
+import yaml;
+
+yaml.safe_load("""
+- country: France
+  capital: Paris
+""")
+```
+
+:::
+
+## Gentle introduction to YAML
+:::{.callout-tip icon=false}
+## Basic stuff
+
+- Strings, numbers, boolean values, `null`
+
+- Sequences (=arrays, lists)
+
+- Mappings (=objects)
+
+- Superset of JSON
+
+  (if you know JSON, you can just write JSON)
+
+- Comments start with `#`
+
+- A single *file* can have multiple *documents*
+
+  (separated by `---` on a single line)
+
+:::
+
+## Gentle introduction to YAML
+:::{.callout-tip icon=false}
+## Sequences
+
+- Example: sequence of strings
+  ```yaml
+  [ "france", "germany", "norway" ]
+  ```
+
+- Example: the same sequence, without the double-quotes
+  ```yaml
+  [ france, germany, norway ]
+  ```
+
+- Example: the same sequence, in "block collection style" (=multi-line)
+  ```yaml
+  - france
+  - germany
+  - norway
+  ```
+
+:::
+
+## Gentle introduction to YAML
+:::{.callout-tip icon=false}
+## Mappings
+
+- Example: mapping strings to numbers
+  ```yaml
+  { "france": 68042591, "germany": 84270625, "norway": 5425270 }
+  ```
+
+- Example: the same mapping, without the double-quotes
+  ```yaml
+  { france: 68042591, germany: 84270625, norway: 5425270 }
+  ```
+
+- Example: the same mapping, in "block collection style"
+  ```yaml
+  france: 68042591
+  germany: 84270625
+  norway: 5425270
+  ```
+
+:::
+
+## Gentle introduction to YAML
+:::{.callout-tip icon=false}
+## Combining types
+
+- In a sequence (or mapping) we can have different types
+
+  (including other sequences or mappings)
+
+- Example:
+  ```yaml
+  questions: [ name, quest, favorite color ]
+  answers: [ "Arthur, King of the Britons", Holy Grail, purple, 42 ]
+  ```
+
+- Note that we need to quote "Arthur" because of the comma
+
+- Note that we don't have the same number of elements in questions and answers
+
+:::
+
+## Gentle introduction to YAML
+:::{.callout-tip icon=false}
+## More combinations
+
+- Example:
+  ```yaml
+    - service: nginx
+      ports: [ 80, 443 ]
+    - service: bind
+      ports: [ 53/tcp, 53/udp ]
+    - service: ssh
+      ports: 22
+  ```
+
+- Note that `ports` doesn't always have the same type
+
+  (the code handling that data will probably have to be smart!)
+
+:::
+
+## Gentle introduction to YAML
+:::{.callout-tip icon=false}
+## ⚠️ Automatic booleans
+
+```yaml
+codes:
+  france: fr
+  germany: de
+  norway: no
+```
+
+```json
+{
+  "codes": {
+    "france": "fr",
+    "germany": "de",
+    "norway": false
+  }
+}
+```
+
+:::
+
+## Gentle introduction to YAML
+:::{.callout-tip icon=false}
+## ⚠️ Automatic booleans
+
+- `no` can become `false`
+
+  (it depends on the YAML parser used)
+
+- It should be quoted instead:
+
+  ```yaml
+    codes:
+      france: fr
+      germany: de
+      norway: "no"
+  ```
+
+:::
+
+## Gentle introduction to YAML
+:::{.callout-tip icon=false}
+## ⚠️ Automatic floats
+
+```yaml
+version:
+  libfoo: 1.10
+  fooctl: 1.0
+```
+
+```json
+{
+  "version": {
+    "libfoo": 1.1,
+    "fooctl": 1
+  }
+}
+```
+
+:::
+
+## Gentle introduction to YAML
+:::{.callout-tip icon=false}
+## ⚠️ Automatic floats
+
+- Trailing zeros disappear
+
+- These should also be quoted:
+
+  ```yaml
+    version:
+      libfoo: "1.10"
+      fooctl: "1.0"
+  ```
+
+:::
+
+## Gentle introduction to YAML
+:::{.callout-tip icon=false}
+## ⚠️ Automatic times
+
+```yaml
+portmap:
+- 80:80
+- 22:22
+```
+
+
+```json
+{
+  "portmap": [
+    "80:80",
+    1342
+  ]
+}
+```
+
+:::
+
+## Gentle introduction to YAML
+:::{.callout-tip icon=false}
+## ⚠️ Automatic times
+
+- `22:22` becomes `1342`
+
+- Thats 22 minutes and 22 seconds = 1342 seconds
+
+- Again, it should be quoted
+
+:::
+
+## Gentle introduction to YAML
+:::{.callout-tip icon=false}
+## Document separator
+
+- A single YAML *file* can have multiple *documents* separated by `---`:
+
+  ```yaml
+    This is a document consisting of a single string.
+    --- 💡
+    name: The second document
+    type: This one is a mapping (key→value)
+    --- 💡
+    - Third document
+    - This one is a sequence
+  ```
+
+- Some folks like to add an extra `---` at the beginning and/or at the end
+
+  (it's not mandatory but can help e.g. to `cat` multiple files together)
+
+:::
+
+## Gentle introduction to YAML
+:::{.callout-tip icon=false}
+## Multi-line strings
+
+Try the following block in a YAML parser:
+
+```yaml
+add line breaks: "in double quoted strings\n(like this)"
+preserve line break: |
+  by using
+  a pipe (|)
+  (this is great for embedding shell scripts, configuration files...)
+do not preserve line breaks: >
+  by using
+  a greater-than (>)
+  (this is great for embedding very long lines)
+```
+
+See <https://yaml-multiline.info/> for advanced multi-line tips!
+
+(E.g. to strip or keep extra `\n` characters at the end of the block.)
+
+:::
+
+## Gentle introduction to YAML
+:::{.callout-tip icon=false}
+## Advanced features
+
+Anchors let you "memorize" and re-use content:
+
+```yaml
+debian: &debian
+  packages: deb
+  latest-stable: bullseye
+
+also-debian: *debian
+
+ubuntu:
+  <<: *debian
+  latest-stable: jammy
+```
+
+:::
+
+
+## Gentle introduction to YAML
+:::{.callout-tip icon=false}
+## YAML, good or evil?
+
+- Natural progression from XML to JSON to YAML
+
+- There are other data languages out there
+
+  (e.g. TOML, HCL, domain-specific things crafted with Ruby, CUE...)
+
+- Compromises are made, for instance:
+
+  - more user-friendly → more "magic" with side effects
+
+  - more powerful → steeper learning curve
+
+- Love it or loathe it but it's a good idea to understand it!
+
+- Interesting tool if you appreciate YAML: <https://carvel.dev/ytt/>
+:::
+
+# Compose for development stacks
+
+## Compose for development stacks
+:::{.callout-note icon=false}
+## Compose for development stacks
+
+Dockerfile = great to build *one* container image.
+
+What if we have multiple containers?
+
+What if some of them require particular `docker run` parameters?
+
+How do we connect them all together?
+
+... Compose solves these use-cases (and a few more).
+
+:::
+
+## Compose for development stacks
+:::{.callout-note icon=false}
+## Life before Compose
+
+Before we had Compose, we would typically write custom scripts to:
+
+- build container images,
+
+- run containers using these images,
+
+- connect the containers together,
+
+- rebuild, restart, update these images and containers.
+
+:::
+
+## Compose for development stacks
+:::{.callout-note icon=false}
+## Life with Compose
+
+Compose enables a simple, powerful onboarding workflow:
+
+1. Checkout our code.
+
+2. Run `docker compose up`.
+
+3. Our app is up and running!
+
+:::
+
+## Compose for development stacks {.scrollable}
+
+![](img/composeup.gif)
+
+## Compose for development stacks
+:::{.callout-note icon=false}
+## Life after Compose
+
+(Or: when do we need something else?)
+
+- Compose is *not* an orchestrator
+
+- It isn't designed to need to run containers on multiple nodes
+
+  (it can, however, work with Docker Swarm Mode)
+
+- Compose isn't ideal if we want to run containers on Kubernetes
+
+  - it uses different concepts (Compose services ≠ Kubernetes services)
+
+  - it needs a Docker Engine (although containerd support might be coming)
+
+:::
+
+## Compose for development stacks
+:::{.callout-note icon=false}
+## Compose walkthrough
+
+1. Write Dockerfiles
+
+2. Describe our stack of containers in a YAML file (the "Compose file")
+
+3. `docker compose up` (or `docker compose up -d` to run in the background)
+
+4. Compose pulls and builds the required images, and starts the containers
+
+5. Compose shows the combined logs of all the containers
+
+   (if running in the background, use `docker compose logs`)
+
+6. Hit Ctrl-C to stop the whole stack
+
+   (if running in the background, use `docker compose stop`)
+
+:::
+
+## Compose for development stacks
+:::{.callout-note icon=false}
+## Iterating
+
+After making changes to our source code, we can:
+
+1. `docker compose build` to rebuild container images
+
+2. `docker compose up` to restart the stack with the new images
+
+We can also combine both with `docker compose up --build`
+
+Compose will be smart, and only recreate the containers that have changed.
+
+When working with interpreted languages:
+
+- don't rebuild each time
+
+- leverage a `volumes` section instead
+
+:::
+
+## Compose for development stacks
+:::{.callout-note icon=false}
+## Launching Our First Stack with Compose
+
+First step: clone the source code for the app we will be working on.
+
+```bash
+git clone https://github.com/jpetazzo/trainingwheels
+cd trainingwheels
+```
+
+Second step: start the app.
+
+```bash
+docker compose up
+```
+
+Watch Compose build and run the app.
+
+That Compose stack exposes a web server on port 8000; try connecting to it.
+
+:::
+
+## Compose for development stacks
+:::{.callout-note icon=false}
+## Launching Our First Stack with Compose
+
+We should see a web page like this:
+
+![](img/composeapp.png)
+
+Each time we reload, the counter should increase.
+
+:::
+
+## Compose for development stacks
+:::{.callout-note icon=false}
+## Stopping the app
+
+When we hit Ctrl-C, Compose tries to gracefully terminate all of the containers.
+
+After ten seconds (or if we press `^C` again) it will forcibly kill them.
+
+:::
+
+## Compose for development stacks
+:::{.callout-note icon=false}
+## The Compose file
+
+* Historically: docker-compose.yml or .yaml
+
+* Recently (kind of): can also be named compose.yml or .yaml
+
+(Since [version 1.28.6, March 2021](https://docs.docker.com/compose/releases/release-notes/#1286))
+
+:::
+
+## Compose for development stacks
+:::{.callout-note icon=false}
+## Example
+
+Here is the file used in the demo:
+
+```yaml
+version: "3"
+
+services:
+  www:
+    build: www
+    ports:
+      - ${PORT-8000}:5000
+    user: nobody
+    environment:
+      DEBUG: 1
+    command: python counter.py
+    volumes:
+      - ./www:/src
+
+  redis:
+    image: redis
+```
+
+:::
+
+## Compose for development stacks
+:::{.callout-note icon=false}
+## Compose file structure
+
+A Compose file has multiple sections:
+
+* `services` is mandatory. Each service corresponds to a container.
+
+* `version` is optional (it used to be mandatory). It can be ignored.
+
+* `networks` is optional and indicates to which networks containers should be connected.
+  <br/>(By default, containers will be connected on a private, per-compose-file network.)
+
+* `volumes` is optional and can define volumes to be used and/or shared by the containers.
+
+:::
+
+
+## Compose for development stacks
+:::{.callout-note icon=false}
+## Compose file versions
+
+* Version 1 is legacy and shouldn't be used.
+
+  (If you see a Compose file without a `services` block, it's a legacy v1 file.)
+
+* Version 2 added support for networks and volumes.
+
+* Version 3 added support for deployment options (scaling, rolling updates, etc).
+
+The [Docker documentation](https://docs.docker.com/compose/compose-file/)
+has excellent information about the Compose file format if you need to know more about versions.
+
+:::
+
+## Compose for development stacks
+:::{.callout-note icon=false}
+## Containers in Compose file
+
+Each service in the YAML file must contain either `build`, or `image`.
+
+* `build` indicates a path containing a Dockerfile.
+
+* `image` indicates an image name (local, or on a registry).
+
+* If both are specified, an image will be built from the `build` directory and named `image`.
+
+The other parameters are optional.
+
+They encode the parameters that you would typically add to `docker run`.
+
+Sometimes they have several minor improvements.
+
+:::
+
+## Compose for development stacks
+:::{.callout-note icon=false}
+## Container parameters
+
+* `command` indicates what to run (like `CMD` in a Dockerfile).
+
+* `ports` translates to one (or multiple) `-p` options to map ports.
+  <br/>You can specify local ports (i.e. `x:y` to expose public port `x`).
+
+* `volumes` translates to one (or multiple) `-v` options.
+  <br/>You can use relative paths here.
+
+For the full list, check: <https://docs.docker.com/compose/compose-file/>
+
+:::
+
+## Compose for development stacks
+:::{.callout-note icon=false}
+## Environment variables
+
+- We can use environment variables in Compose files
+
+  (like `$THIS` or `${THAT}`)
+
+- We can provide default values, e.g. `${PORT-8000}`
+
+- Compose will also automatically load the environment file `.env`
+
+  (it should contain `VAR=value`, one per line)
+
+- This is a great way to customize build and run parameters
+
+  (base image versions to use, build and run secrets, port numbers...)
+
+:::
+
+## Compose for development stacks
+:::{.callout-note icon=false}
+## Configuring a Compose stack
+
+- Follow [12-factor app configuration principles][12factorconfig]
+
+  (configure the app through environment variables)
+
+- Provide (in the repo) a default environment file suitable for development
+
+  (no secret or sensitive value)
+
+- Copy the default environment file to `.env` and tweak it
+
+  (or: provide a script to generate `.env` from a template)
+
+[12factorconfig]: https://12factor.net/config
+
+:::
+
+## Compose for development stacks
+:::{.callout-note icon=false}
+## Running multiple copies of a stack
+
+- Copy the stack in two different directories, e.g. `front` and `frontcopy`
+
+- Compose prefixes images and containers with the directory name:
+
+  `front_www`, `front_www_1`, `front_db_1`
+
+  `frontcopy_www`, `frontcopy_www_1`, `frontcopy_db_1`
+
+- Alternatively, use `docker compose -p frontcopy` 
+
+  (to set the `--project-name` of a stack, which default to the dir name)
+
+- Each copy is isolated from the others (runs on a different network)
+
+:::
+
+## Compose for development stacks
+:::{.callout-note icon=false}
+## Checking stack status
+
+We have `ps`, `docker ps`, and similarly, `docker compose ps`:
+
+```bash
+$ docker compose ps
+Name                      Command             State           Ports          
+----------------------------------------------------------------------------
+trainingwheels_redis_1   /entrypoint.sh red   Up      6379/tcp               
+trainingwheels_www_1     python counter.py    Up      0.0.0.0:8000->5000/tcp 
+```
+
+Shows the status of all the containers of our stack.
+
+Doesn't show the other containers.
+
+:::
+
+## Compose for development stacks
+:::{.callout-note icon=false}
+## Cleaning up (1)
+
+If you have started your application in the background with Compose and
+want to stop it easily, you can use the `kill` command:
+
+```bash
+$ docker compose kill
+```
+
+Likewise, `docker compose rm` will let you remove containers (after confirmation):
+
+```bash
+$ docker compose rm
+Going to remove trainingwheels_redis_1, trainingwheels_www_1
+Are you sure? [yN] y
+Removing trainingwheels_redis_1...
+Removing trainingwheels_www_1...
+```
+
+:::
+
+## Compose for development stacks
+:::{.callout-note icon=false}
+## Cleaning up (2)
+
+Alternatively, `docker compose down` will stop and remove containers.
+
+It will also remove other resources, like networks that were created for the application.
+
+```bash
+$ docker compose down
+Stopping trainingwheels_www_1 ... done
+Stopping trainingwheels_redis_1 ... done
+Removing trainingwheels_www_1 ... done
+Removing trainingwheels_redis_1 ... done
+```
+
+Use `docker compose down -v` to remove everything including volumes.
+
+:::
+
+## Compose for development stacks
+:::{.callout-note icon=false}
+## Special handling of volumes
+
+- When an image gets updated, Compose automatically creates a new container
+
+- The data in the old container is lost...
+
+- ...Except if the container is using a *volume*
+
+- Compose will then re-attach that volume to the new container
+
+  (and data is then retained across database upgrades)
+
+- All good database images use volumes
+
+  (e.g. all official images)
+
+:::
+
+## Compose for development stacks
+:::{.callout-note icon=false}
+## Gotchas with volumes
+
+- Unfortunately, Docker volumes don't have labels or metadata
+
+- Compose tracks volumes thanks to their associated container
+
+- If the container is deleted, the volume gets orphaned
+
+- Example: `docker compose down && docker compose up`
+
+  - the old volume still exists, detached from its container
+
+  - a new volume gets created
+
+- `docker compose down -v`/`--volumes` deletes volumes
+
+  (but **not** `docker compose down && docker compose down -v`!)
+ 
+:::
+
+## Compose for development stacks
+:::{.callout-note icon=false}
+## Managing volumes explicitly
+
+Option 1: *named volumes*
+
+```yaml
+services:
+  app:
+    volumes:
+    - data:/some/path
+volumes:
+  data:
+```
+
+- Volume will be named `<project>_data`
+
+- It won't be orphaned with `docker compose down`
+
+- It will correctly be removed with `docker compose down -v`
+
+:::
+
+## Compose for development stacks
+:::{.callout-note icon=false}
+## Managing volumes explicitly
+
+Option 2: *relative paths*
+
+```yaml
+services:
+  app:
+    volumes:
+    - ./data:/some/path
+```
+
+- Makes it easy to colocate the app and its data
+
+  (for migration, backups, disk usage accounting...)
+
+- Won't be removed by `docker compose down -v`
+
+:::
+
+## Compose for development stacks
+:::{.callout-note icon=false}
+## Managing complex stacks
+
+- Compose provides multiple features to manage complex stacks
+
+  (with many containers)
+
+- `-f`/`--file`/`$COMPOSE_FILE` can be a list of Compose files
+
+  (separated by `:` and merged together)
+
+- Services can be assigned to one or more *profiles*
+
+- `--profile`/`$COMPOSE_PROFILE` can be a list of comma-separated profiles
+
+  (see [Using service profiles][profiles] in the Compose documentation)
+
+- These variables can be set in `.env`
+
+[profiles]: https://docs.docker.com/compose/profiles/
+
+:::
+
+## Compose for development stacks
+:::{.callout-note icon=false}
+## Dependencies
+
+- A service can have a `depends_on` section
+
+  (listing one or more other services)
+
+- This is used when bringing up individual services
+
+  (e.g. `docker compose up blah` or `docker compose run foo`)
+
+⚠️ It doesn't make a service "wait" for another one to be up!
+
+:::
+
+
+## Compose for development stacks
+:::{.callout-note icon=false}
+## A bit of history and trivia
+
+- Compose was initially named "Fig"
+
+- Compose is one of the only components of Docker written in Python
+
+  (almost everything else is in Go)
+
+- In 2020, Docker introduced "Compose CLI":
+
+  - `docker compose` command to deploy Compose stacks to some clouds
+
+  - in Go instead of Python
+
+  - progressively getting feature parity with `docker compose`
+
+  - also provides numerous improvements (e.g. leverages BuildKit by default)
+
+:::
+
+## Compose for development stacks
+:::{.callout-note icon=false}
+## Exercise — writing a Compose file
+
+Let's write a Compose file for the wordsmith app!
+
+The code is at: https://github.com/jpetazzo/wordsmith
+:::
