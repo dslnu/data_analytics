@@ -1,0 +1,3195 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2" crossorigin="anonymous"></script><script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-html/tabby.min.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/light-border.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7b89279ff1a6dce999919e0e67d4d9ec.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.8.25">
+
+  <meta name="author" content="MSDE">
+  <title>Big Data analytics / Applied Data analytics – Big Data: Intro to GeoData Analysis</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="site_libs/revealjs/dist/reset.css">
+  <link rel="stylesheet" href="site_libs/revealjs/dist/reveal.css">
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+      vertical-align: middle;
+    }
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      { color: #003b4f; background-color: #f1f3f5; }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span { color: #003b4f; } /* Normal */
+    code span.al { color: #ad0000; } /* Alert */
+    code span.an { color: #5e5e5e; } /* Annotation */
+    code span.at { color: #657422; } /* Attribute */
+    code span.bn { color: #ad0000; } /* BaseN */
+    code span.bu { } /* BuiltIn */
+    code span.cf { color: #003b4f; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #20794d; } /* Char */
+    code span.cn { color: #8f5902; } /* Constant */
+    code span.co { color: #5e5e5e; } /* Comment */
+    code span.cv { color: #5e5e5e; font-style: italic; } /* CommentVar */
+    code span.do { color: #5e5e5e; font-style: italic; } /* Documentation */
+    code span.dt { color: #ad0000; } /* DataType */
+    code span.dv { color: #ad0000; } /* DecVal */
+    code span.er { color: #ad0000; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #ad0000; } /* Float */
+    code span.fu { color: #4758ab; } /* Function */
+    code span.im { color: #00769e; } /* Import */
+    code span.in { color: #5e5e5e; } /* Information */
+    code span.kw { color: #003b4f; font-weight: bold; } /* Keyword */
+    code span.op { color: #5e5e5e; } /* Operator */
+    code span.ot { color: #003b4f; } /* Other */
+    code span.pp { color: #ad0000; } /* Preprocessor */
+    code span.sc { color: #5e5e5e; } /* SpecialChar */
+    code span.ss { color: #20794d; } /* SpecialString */
+    code span.st { color: #20794d; } /* String */
+    code span.va { color: #111111; } /* Variable */
+    code span.vs { color: #20794d; } /* VerbatimString */
+    code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="site_libs/revealjs/dist/theme/quarto-534cd8e3a96973385dffff3f4709048d.css">
+  <link rel="stylesheet" href="custom.css">
+  <link href="site_libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
+  <link href="site_libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
+  <link href="site_libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
+  <link href="site_libs/revealjs/plugin/quarto-support/footer.css" rel="stylesheet">
+  <style type="text/css">
+    .reveal div.sourceCode {
+      margin: 0;
+      overflow: auto;
+    }
+    .reveal div.hanging-indent {
+      margin-left: 1em;
+      text-indent: -1em;
+    }
+    .reveal .slide:not(.center) {
+      height: 100%;
+    }
+    .reveal .slide.scrollable {
+      overflow-y: auto;
+    }
+    .reveal .footnotes {
+      height: 100%;
+      overflow-y: auto;
+    }
+    .reveal .slide .absolute {
+      position: absolute;
+      display: block;
+    }
+    .reveal .footnotes ol {
+      counter-reset: ol;
+      list-style-type: none; 
+      margin-left: 0;
+    }
+    .reveal .footnotes ol li:before {
+      counter-increment: ol;
+      content: counter(ol) ". "; 
+    }
+    .reveal .footnotes ol li > p:first-child {
+      display: inline-block;
+    }
+    .reveal .slide ul,
+    .reveal .slide ol {
+      margin-bottom: 0.5em;
+    }
+    .reveal .slide ul li,
+    .reveal .slide ol li {
+      margin-top: 0.4em;
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide ul[role="tablist"] li {
+      margin-bottom: 0;
+    }
+    .reveal .slide ul li > *:first-child,
+    .reveal .slide ol li > *:first-child {
+      margin-block-start: 0;
+    }
+    .reveal .slide ul li > *:last-child,
+    .reveal .slide ol li > *:last-child {
+      margin-block-end: 0;
+    }
+    .reveal .slide .columns:nth-child(3) {
+      margin-block-start: 0.8em;
+    }
+    .reveal blockquote {
+      box-shadow: none;
+    }
+    .reveal .tippy-content>* {
+      margin-top: 0.2em;
+      margin-bottom: 0.7em;
+    }
+    .reveal .tippy-content>*:last-child {
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide > img.stretch.quarto-figure-center,
+    .reveal .slide > img.r-stretch.quarto-figure-center {
+      display: block;
+      margin-left: auto;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-left,
+    .reveal .slide > img.r-stretch.quarto-figure-left  {
+      display: block;
+      margin-left: 0;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-right,
+    .reveal .slide > img.r-stretch.quarto-figure-right  {
+      display: block;
+      margin-left: auto;
+      margin-right: 0; 
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/requirejs@2.3.6/require.min.js" integrity="sha384-c9c+LnTbwQ3aujuU7ULEPVvgLs+Fn6fJUvIGTsuu1ZcCf11fiEubah0ttpca4ntM sha384-6V1/AdqZRWk1KAlWbKBlGhN7VG4iE/yAZcO6NZPMF8od0vukrvr0tg4qY6NSrItx" crossorigin="anonymous"></script>
+  
+  <script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+</head>
+<body class="quarto-light">
+  <div class="reveal">
+    <div class="slides">
+
+<section id="title-slide" class="quarto-title-block center">
+  <h1 class="title">Big Data: Intro to GeoData Analysis</h1>
+
+<div class="quarto-title-authors">
+<div class="quarto-title-author">
+<div class="quarto-title-author-name">
+MSDE 
+</div>
+        <p class="quarto-title-affiliation">
+            Lviv University
+          </p>
+    </div>
+</div>
+
+</section>
+<section id="why-to-use-python-for-geoscience" class="slide level2">
+<h2>Why to use Python for Geoscience?</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Why?</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>Python has an extensive ecosystem of libraries and tools for GIS</strong>: you can do almost anything with spatial data. In fact, there is an enormous geospatial industry that is heavily relying on open source Python libraries.</li>
+<li><strong>Python GIS libraries are easy to learn</strong>: there are tons of good and free resources available to learn doing GIS analysis with Python for free (the online version of this book is one example!).</li>
+<li><strong>Python is highly efficient</strong>: used for analysing big (and small) geospatial data.</li>
+<li><strong>Python is highly flexible</strong>: supports hundreds of spatial data formats (most likely many which you, or us, have never heard of).</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="why-to-use-python-for-geoscience-1" class="slide level2">
+<h2>Why to use Python for Geoscience?</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Why?</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>Python allows to mix and match various libraries</strong>: You can combine different libraries and methodological approaches together and create sophisticated analytical pipelines.</li>
+<li><strong>Everything is free</strong>: you don’t need to buy a license for using the tools.</li>
+<li><strong>You will learn and understand more deeply</strong> how different geoprocessing operations work.</li>
+<li>By using Python’s open source libraries and codes, <strong>you support open science</strong> by making it possible for everyone to reproduce your work, free-of-charge.</li>
+<li><strong>You can plug-in and chain different third-party software</strong> (not necessarily written in Python) which allow you to build e.g.&nbsp;fancy web-GIS applications (using e.g.&nbsp;KeplerGL, Dask or GeoDjango for developing the user interface and having PostGIS as a back-end database).</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="why-to-use-python-for-geoscience-2" class="slide level2">
+<h2>Why to use Python for Geoscience?</h2>
+<div class="callout callout-important callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Important</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>Python libraries are developing fast</strong>: an active open source community is continuously improving existing libraries, or creating new libraries for tasks that require new tools. However, it is good to be aware that fast development is not necessarily a guarantee of stability or quality. Hence, as for any open source library (with any programming language), it is good to investigate a bit before starting to use a new open source GIS library whether it has been actively maintained and if it seems to have an active developer community.</li>
+<li>One drawback of such a broad open source ecosystem compared to using a specific GIS software such as ArcGIS, is that open source tools and their documentation are spread under different Python modules and created by different developers.</li>
+</ul>
+</div>
+</div>
+</div>
+<!-- #region editable=true slideshow={"slide_type": ""} -->
+</section>
+<section id="core-libraries" class="slide level2">
+<h2>Core libraries</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Core libraries</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>Core vector libraries: <code>geopandas</code>, <code>pyproj</code>, <code>shapely</code></li>
+<li>Core raster libraries: <code>xarray</code>, <code>rioxarray</code>, <code>rasterio</code></li>
+</ul>
+</div>
+</div>
+</div>
+
+<aside><div>
+<p>More info: <a href="https://ecosystem.pythongis.org/" class="uri">https://ecosystem.pythongis.org/</a></p>
+</div></aside></section>
+<section id="python-ecosystem" class="slide level2 scrollable">
+<h2>Python ecosystem</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="img/geosci/python-gis-ecosystem.png" height="800"></p>
+<figcaption>Python ecosystem for GIS and Earth Observation</figcaption>
+</figure>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Objectives</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>How can we represent geographic features such as roads, buildings, lakes or mountains on a computer?</li>
+<li>How can we read an image taken with a satellite sensor and use that in our analyses?</li>
+<li>How can we create a spatial network that can be used for navigation and finding the fastest route from A to B?</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="ways-to-represent-spatial-data" class="slide level2">
+<h2>Ways to represent spatial data</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Data model</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>vector</strong></li>
+<li><strong>raster</strong></li>
+<li><strong>spatio-temporal</strong></li>
+<li><strong>topological</strong></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="data-models" class="slide level2">
+<h2>Data models</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Construction</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>vector</strong>: constructed from points in geographical space which are connected to each other forming lines and polygons.</li>
+<li><strong>raster</strong>: constructed from rectangular cells (also called as pixels) that form a uniform grid, i.e.&nbsp;a raster. The grid is associated to specific geographical location and each cell of the grid contains a value representing some information, such as elevation, temperature or presence/absence.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="data-models-1" class="slide level2">
+<h2>Data models</h2>
+
+<img data-src="img/geosci/vector_vs_raster.png" class="r-stretch"></section>
+<section id="data-models-2" class="slide level2">
+<h2>Data models</h2>
+<div class="callout callout-note callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Note</strong></p>
+</div>
+<div class="callout-content">
+<p>The roads on the top-left could be represented as a network, which is a vector-based data structure consisting of intersections (called <em>nodes</em>) that are represented as points, and streets connecting the nodes that are represented as lines (called <em>edges</em>).</p>
+<p>Because the vector and raster data models are very different, there are typically a different set of GIS tools and methodologies applied for raster and vector data. However, the vector and raster worlds are not totally isolated from each other, as in many cases it is useful to convert the data from one format to another for specific operations.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="vector-data" class="slide level2">
+<h2>Vector data</h2>
+<div class="callout callout-warning no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Geometry types</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>points</strong></li>
+<li><strong>lines</strong></li>
+<li><strong>areas</strong>.</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Specification</strong></p>
+</div>
+<div class="callout-content">
+<p>Defined in <em>Simple Features Access Specification</em>, which is a standard (ISO 19125-1) formalized by the <em>Open Geospatial Consortium</em> and <em>International Organization for Standardization</em>.</p>
+<p>Text representation follows a specification called <em>{term}<code>Well-known text</code> (WKT)</em>.</p>
+<p>The geometries can also be represented in binary format, which is called <em>{term}<code>Well-known binary</code> (WKB)</em>.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="vector-data-1" class="slide level2">
+<h2>Vector data</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Point</strong></p>
+</div>
+<div class="callout-content">
+<p><code>Point</code>-object represents a single point in geographic space and the location of the point in space is determined with coordinates.</p>
+<p>Points can be either two-dimensional. A single pair of coordinates forming a point is commonly called as a <em><code>coordinate</code></em> <em><code>tuple</code></em>.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>LineString</strong></p>
+</div>
+<div class="callout-content">
+<p><code>LineString</code>-object (i.e.&nbsp;a line) represents a sequence of points joined together to form a line. Hence, a line consist of a list of at least two coordinate tuples.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-warning no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Polygon</strong></p>
+</div>
+<div class="callout-content">
+<p><code>Polygon</code>-object represents a filled area that consists of a list of at least 3 coordinate tuples that forms the outerior ring (<code>LinearRing</code>) and a possible list of holes.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="vector-data-2" class="slide level2">
+<h2>Vector data</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Collections</strong></p>
+</div>
+<div class="callout-content">
+<p>It is also possible to have a collection of geometric objects (i.e.&nbsp;multiple points, lines or areas) represented as <code>MultiPoint</code>, <code>MultiLineString</code> and <code>MultiPolygon</code>.</p>
+<p>Geometry collections can be useful for example when you want to present multiple building polygons belonging to the same property as a single entity.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="vector-data-3" class="slide level2 scrollable">
+<h2>Vector data</h2>
+<p><img data-src="img/geosci/vector_data_model.png" height="600"></p>
+</section>
+<section id="attribute-data" class="slide level2">
+<h2>Attribute data</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Definition</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>information associated with geometry</li>
+<li>describe the given entity with various possible characteristics.</li>
+<li>building example:
+<ul>
+<li>number of floors</li>
+<li>height of the building</li>
+<li>how many people live there.</li>
+</ul></li>
+<li>always linked to the geometries via a unique feature identifier (<code>Shapefiles</code>) or structurally (<code>GeoJSON</code>)</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="vector-data-formats" class="slide level2">
+<h2>Vector data formats</h2>
+<div class="callout callout-warning no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Main options</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>file saved to disk</li>
+<li>spatially-aware database, such as PostGIS.</li>
+</ul>
+<p>Around 80 file formats are supported the <a href="https://gdal.org/">Geospatial Data Abstraction Library</a> (GDAL) [^GDAL].</p>
+</div>
+</div>
+</div>
+</section>
+<section id="vector-data-formats-1" class="slide level2">
+<h2>Vector data formats</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Data formats</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>Shapefile:</strong> Still a widely used data format for storing geospatial vector data, developed and introduced by ESRI in the early 1990s.
+<ul>
+<li><code>.shp</code>: feature geometries</li>
+<li><code>.shx</code> positional index for the feature geometries</li>
+<li><code>.dbf</code> attribute information.</li>
+<li><code>.prj</code> information about the coordinate reference system of the dataset.</li>
+</ul></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="vector-data-formats-2" class="slide level2 scrollable">
+<h2>Vector data formats</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Data formats</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>GeoJSON</strong>: GeoJSON [^geojson] is an open standard format for encoding a variety of geographic data structures along with their attribute data which can be stored into a simple text file. Variation: <code>TopoJSON</code></li>
+</ul>
+<pre><code>{"type": "FeatureCollection",
+  "features": [
+    {"type": "Feature", "properties": {"id": 75553155, "timestamp": 1494181812},
+      "geometry": {"type": "MultiLineString",
+        "coordinates": [[[26.938, 60.520], [26.938, 60.520]], [[26.937, 60.521],
+                         [26.937, 60.521]], [[26.937, 60.521], [26.936, 60.522]]]
+      }
+    }, 
+    {"type": "Feature", "properties": {"id": 424099695, "timestamp": 1465572910}, 
+      "geometry": {"type": "Polygon",
+        "coordinates": [[[26.935, 60.521], [26.935, 60.521], [26.935, 60.521],
+                         [26.935, 60.521], [26.935, 60.521]]]
+      }
+    }
+  ]
+}
+</code></pre>
+</div>
+</div>
+</div>
+</section>
+<section id="vector-data-formats-3" class="slide level2">
+<h2>Vector data formats</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Data formats</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p><strong>GeoPackage:</strong> GeoPackage uses a SQLite database container to store the data. Can be used for both vector and raster (limited support).</p></li>
+<li><p><strong>GeoParquet:</strong> <a href="https://github.com/opengeospatial/geoparquet">GeoParquet</a> is one of the newest file formats to store geographic data. In this format, the data is stored in <a href="https://parquet.apache.org/">Apache Parquet</a> which is a popular open source, column-oriented data file format designed for efficient data storage and retrieval.</p></li>
+<li><p><strong>GML</strong>: <a href="https://www.ogc.org/standards/gml">Geography Markup Language</a> (GML) is an XML based data format. GML serves as a modeling language for geographic systems as well as an open interchange format for geographic transactions on the Internet. Able to integrate all forms of geographic information, including not only conventional “vector” or discrete objects, but also coverages and sensor data.</p>
+<ul>
+<li><a href="https://www.ogc.org/standards/citygml">CityGML</a></li>
+<li><a href="https://www.ogc.org/standards/citygml">IndoorGML</a></li>
+</ul></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="raster-data-and-arrays" class="slide level2">
+<h2>Raster data and arrays</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Basics</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>the data is represented as arrays of cells, also called as pixels, to represent real-world objects or continuous phenomena.</li>
+<li>digital cameras typically capture the world using Red, Green and Blue (RGB) colors and stores this information in pixels as separate layers (as called as <em>{term}<code>band</code>s</em> or <code>channels</code>) for each color.</li>
+<li>In a similar manner, we can store other information to pixels, such as elevation or temperature data (which have only one layer or <code>band</code>), or more detailed spectral information that capture how the light reflects from objects on earth at different wave-lengths (which is what e.g.&nbsp;satellite sensors do).</li>
+<li>we might have tens or even hundreds of different bands (as with hyperspectral imaging)</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="raster-data-and-arrays-1" class="slide level2">
+<h2>Raster data and arrays</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Variety</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><em><code>spatial resolution</code></em>, i.e.&nbsp;the size of a single pixel</li>
+<li><em><code>temporal resolution</code></em>, i.e.&nbsp;how frequently the data is captured from the same area of the Earth</li>
+<li><em><code>spectral resolution</code></em>, i.e.&nbsp;the number and location of spectral bands in the electromagnetic spectrum</li>
+<li><em><code>radiometric resolution</code></em>, i.e.&nbsp;the range of available brightness values (bit depth), usually measured in bits (binary digits)</li>
+<li><em><code>spatial extent</code></em>, i.e.&nbsp;how large area of the world a single image represents</li>
+<li><em><code>coordinate reference system</code></em>, i.e.&nbsp;in what CRS the data is represented</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="raster-data-and-arrays-2" class="slide level2">
+<h2>Raster data and arrays</h2>
+
+<img data-src="img/geosci/raster_data_model.png" class="r-stretch"></section>
+<section id="raster-data-and-arrays-3" class="slide level2">
+<h2>Raster data and arrays</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Bit depth</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>One fundamental way to characterize a raster dataset is based on their <em><code>bit depth</code></em> (also called <em><code>pixel depth</code></em>) that provides information about the <em>{term}<code>radiometric resolution</code></em> of the data.</li>
+<li>The bit depth defines the range of distinct values that the raster can store. For example, a 1-bit raster can only store 2 distinct values: 0 and 1, whereas 8-bit raster can have 256 different values that range between 0 to 255.5.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="raster-data-and-arrays-4" class="slide level2">
+<h2>Raster data and arrays</h2>
+
+<img data-src="img/geosci/raster_bit_depths.png" class="r-stretch quarto-figure-center"><p class="caption">Examples of raster bit depths.</p></section>
+<section id="raster-data-formats" class="slide level2">
+<h2>Raster data formats</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Formats</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>GeoTIFF</strong>: GeoTIFF is a popular open, non-proprietary raster data format based on <code>TIFF format</code> originally developed at NASA in the early 90’s.</li>
+<li><strong>COG</strong>: A Cloud Optimized GeoTIFF (COG) is a file format based on GeoTIFF. COG files are typically hosted on HTTP file servers. The format can enable more efficient workflows with large data files by leveraging the ability of users to retrieve just the parts of the file that they need, instead of downloading the whole file every time. The file extension of COG is <code>.tif</code> (i.e.&nbsp;the same as with GeoTIFF).</li>
+<li><strong>NetCDF</strong>: Network Common Data Form (NetCDF) is a portable, self-describing and scalable file format for storing array-oriented multidimensional scientific data, commonly used for storing earth science data. Variables stored in NetCDF are often measured multiple times per day over large (e.g.&nbsp;continental) areas. The file extension of NetCDF is <code>.nc4</code>.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="raster-data-formats-1" class="slide level2">
+<h2>Raster data formats</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Formats</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>ASCII Grid</strong>: The ASCII Raster File format is a simple format that can be used to transfer raster data between various applications. The file format was originally developed by ESRI and it is also known as Arc/Info ASCII grid. The file extension of ASCII Raster File is <code>.asc</code>.</li>
+<li><strong>IMG</strong>: The ERDAS Imagine file format (IMG) is a proprietary file format that was originally created by an image processing software company called ERDAS. The file can be accompanied with an .xml file which stores metadata information about the raster layer. The file extension of Imagine file format is <code>.img</code>.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="representing-spatial-networks" class="slide level2">
+<h2>Representing spatial networks</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Networks</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>Study of networks is based on <code>graph theory</code></li>
+<li>a very useful data structure because it allows to define and construct neighborhood relationships that are central to geographic data science / GIScience.</li>
+</ul>
+<p>A network basically consists of couple of core elements:</p>
+<ol type="1">
+<li><strong>nodes</strong> (e.g.&nbsp;intersections on a street, or a person in social network), and</li>
+<li><strong>edges</strong> (a link that connects the nodes to each other)</li>
+</ol>
+</div>
+</div>
+</div>
+</section>
+<section id="representing-spatial-networks-1" class="slide level2">
+<h2>Representing spatial networks</h2>
+
+<img data-src="img/geosci/graph_elements.png" class="r-stretch"></section>
+<section id="representing-spatial-networks-2" class="slide level2">
+<h2>Representing spatial networks</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Network attribute data</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>node attributes</strong>: typically contain the geographical information associated with the graph, such as the coordinates of the intersections.</li>
+<li><strong>edge attributes</strong>: contain information about which nodes are connected to each other, and what is the <code>cost</code> to travel between the nodes measured e.g.&nbsp;as time or distance.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="representing-spatial-networks-3" class="slide level2">
+<h2>Representing spatial networks</h2>
+
+<img data-src="img/geosci/graph_weights.png" class="r-stretch"></section>
+<section id="representing-spatial-networks-4" class="slide level2">
+<h2>Representing spatial networks</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Directionality</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><code>directed</code></li>
+<li><code>undirected</code></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="representing-spatial-networks-5" class="slide level2">
+<h2>Representing spatial networks</h2>
+
+<img data-src="img/geosci/directed_graph.png" class="r-stretch"><table class="caption-top">
+<thead>
+<tr class="header">
+<th>edge_id</th>
+<th>from_node</th>
+<th>to_node</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>A</td>
+<td>C</td>
+<td><em>edge for direction 1</em></td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>C</td>
+<td>A</td>
+<td><em>edge for direction 2</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="representing-spatial-networks-6" class="slide level2">
+<h2>Representing spatial networks</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Commonly used network data formats</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>GML</strong>: Graph Modelling Language</li>
+<li><strong>GraphML</strong>: consists of a language core to describe the structural properties of a graph and extension mechanism to add application-specific data. The file extension of GraphML is <code>.graphml</code>.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section>
+<section id="coordinate-reference-systems" class="title-slide slide level1 center">
+<h1>Coordinate reference systems</h1>
+
+</section>
+<section id="crs" class="slide level2">
+<h2>CRS</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Georeferencing</strong></p>
+</div>
+<div class="callout-content">
+<p>Majority of all the information in the world can be traced to a specific location: This process of attaching information about a location to a piece of information is commonly referred as <code>georeferencing</code> or <code>geocoding</code>.</p>
+<p>Examples:</p>
+<ul>
+<li>place names (varying accuracy)</li>
+<li>postal codes (accuracy at areal level)</li>
+<li>postal addresses (accuracy at door/mailbox level)</li>
+<li>latitude and longitude coordinates (up to millimeter level accuracy).</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="crs-1" class="slide level2">
+<h2>CRS</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Definition</strong></p>
+</div>
+<div class="callout-content">
+<p>A CRS tells the GIS tools how the coordinates or geometries are related to the places on Earth. In principle, every geographic dataset should have specific CRS-related information attached to it (if not, it might be difficult or impossible to use the data in GIS). This kind of additional information is called <code>metadata</code>.</p>
+<p>A CRS can be either:</p>
+<ul>
+<li>geographic (based on latitude and longitude)</li>
+<li>or projected (based on a Cartesian coordinate system).</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="coordinate-reference-system-crs" class="slide level2">
+<h2>Coordinate reference system (CRS)</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Main components</strong></p>
+</div>
+<div class="callout-content">
+<ol type="1">
+<li><strong>Datum</strong>: A datum specification consists of a model for Earth’s size and shape, such as a reference ellipsoid or a geoid, which describes the average sea level surface of the Earth. One of the most commonly used datums is the World Geodetic System (WGS84). Datum also contains:</li>
+</ol>
+<ul>
+<li>information about the origin of the coordinate system, i.e.&nbsp;the reference point at which the ellipsoid/geoid is tied to a known location on Earth</li>
+<li>orientation parameters, which describe the orientation of the coordinate system with respect to the Earth’s surface. They contain information about the tilt of the axis and the position of the origin relative to the Earth’s surface.</li>
+</ul>
+<ol start="2" type="1">
+<li><strong>Map projection</strong>: The projection defines the mathematical transformation used to map the Earth’s surface onto a two-dimensional plane.</li>
+</ol>
+</div>
+</div>
+</div>
+</section>
+<section id="coordinate-reference-system-crs-1" class="slide level2">
+<h2>Coordinate reference system (CRS)</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Main components</strong></p>
+</div>
+<div class="callout-content">
+<ol start="3" type="1">
+<li><strong>Additional Parameters</strong>:</li>
+</ol>
+<ul>
+<li>the central meridian</li>
+<li>standard parallel</li>
+<li>scale factor</li>
+<li>origin and orientation of the coordinate system</li>
+<li>the conversion between the projected coordinates and the geographic coordinates.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="map-projection" class="slide level2">
+<h2>Map projection</h2>
+
+<img data-src="img/geosci/curved_surface_to_flat_plane.png" class="r-stretch"></section>
+<section id="map-projection-1" class="slide level2">
+<h2>Map projection</h2>
+
+<img data-src="img/geosci/orange_peel_analogy.png" class="r-stretch"></section>
+<section id="map-projection-2" class="slide level2">
+<h2>Map projection</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Distortions</strong></p>
+</div>
+<div class="callout-content">
+<p>We always make approximations and hence lose something.</p>
+<p>projection needs to be chosen according to the purpose of use, in order to preserve specific aspects of the map that are the most important to the user:</p>
+<ul>
+<li>shapes of objects</li>
+<li>their surface areas</li>
+<li>correct distances between locations</li>
+<li>the compass direction</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="map-projection-3" class="slide level2">
+<h2>Map projection</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Types</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>If we want to preserve angles and ratios of distances, we speak of a <strong>conformal</strong>, or angle-preserving projections (such as Mercator projection). These kind of projections has historically been important e.g.&nbsp;for ship navigation. With conformal map projection, both the distances and surface areas are distorted, except at some special points of the map.</li>
+<li>If we want to preserve correct area measure, we speak of an <strong>equivalent</strong> or equal-area projection (such as Mollweide or Albers equal area). Here, the angles and shapes are distorted, again with the exception of special points or lines.</li>
+<li>If we want to preserve correct distances, we speak of an <strong>equidistant</strong> projection (such as Azimuthal equidistant). A projection can be equidistant only for a certain point (i.e.&nbsp;it is centered to specific location) or along certain lines, never everywhere.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="map-projection-4" class="slide level2 scrollable">
+<h2>Map projection</h2>
+
+<!-- #region editable=true slideshow={"slide_type": ""} -->
+<img data-src="img/geosci/projections.png" width="1000" class="r-stretch"></section>
+<section id="crs-2" class="slide level2">
+<h2>CRS</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Storing CRS information</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>EPSG registry</strong> (Geodetic Parameter Dataset): This is a public registry maintained by the European Petroleum Survey Group (EPSG) that contains information on a wide range of coordinate reference systems, including geographic and projected CRSs, and datums. It is widely used in GIS software and is an open and freely accessible resource.</li>
+</ul>
+<p>EPSG codes are numbers that identify different CRS from each other. These numbers, such as 4326 for WGS84 coordinate system, are commonly used to determine a CRS for a specific dataset or when reprojecting the data, because these simple numbers are easy to remember and use.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="crs-3" class="slide level2">
+<h2>CRS</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Storing CRS information</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>PROJ system</strong>: PROJ is another system and open source library for storing and transforming CRS information from one system to another. The CRS information in this one is commonly stored as a <em>“proj-strings”</em>, which includes information about the coordinate system as a plain text following specific naming conventions for the parameters.</li>
+</ul>
+<p>As an example, PROJ4 text for the ETRS-TM35FIN coordinate system (EPSG:3067) commonly used in Finland, is described with following text:</p>
+<pre><code>+proj=utm +zone=35 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs</code></pre>
+</div>
+</div>
+</div>
+</section>
+<section id="crs-4" class="slide level2">
+<h2>CRS</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Storing CRS information</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>OGC WKT</strong>: Open Geospatial Consortium’s (OGC) well-known text (WKT) representation.</li>
+</ul>
+<p>The following shows how the ETRS-TM35FIN coordinate system (EPSG:3067) would be presented as OGW WKT:</p>
+<pre><code>PROJCS["ETRS89 / TM35FIN(E,N)",
+    GEOGCS["ETRS89",
+        DATUM["European_Terrestrial_Reference_System_1989",
+            SPHEROID["GRS 1980",6378137,298.257222101,
+                AUTHORITY["EPSG","7019"]],
+            TOWGS84[0,0,0,0,0,0,0],
+            AUTHORITY["EPSG","6258"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.0174532925199433,
+            AUTHORITY["EPSG","9122"]],
+        AUTHORITY["EPSG","4258"]],
+    PROJECTION["Transverse_Mercator"],
+    PARAMETER["latitude_of_origin",0],
+    PARAMETER["central_meridian",27],
+    PARAMETER["scale_factor",0.9996],
+    PARAMETER["false_easting",500000],
+    PARAMETER["false_northing",0],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]],
+    AXIS["Easting",EAST],
+    AXIS["Northing",NORTH],
+    AUTHORITY["EPSG","3067"]]</code></pre>
+</div>
+</div>
+</div>
+</section></section>
+<section>
+<section id="representing-geodata-in-vector-format" class="title-slide slide level1 center">
+<h1>Representing geodata in vector format</h1>
+
+</section>
+<section id="vector-format" class="slide level2">
+<h2>Vector format</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Shapely</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>Creating and representing vector-based geometric objects is most commonly done using the <code>shapely</code> library which is one of the fundamental libraries in Python GIS ecosystem when working with geographic data.</li>
+<li>Under the hood <code>shapely</code> uses a C++ library called <code>GEOS</code> to construct the geometries.</li>
+<li><code>GEOS</code> is one of the standard libraries behind various GIS software, such as PostGIS and QGIS.</li>
+<li>Objects and methods available in <code>shapely</code> adhere mainly to the Open Geospatial Consortium’s Simple Features Access Specification</li>
+</ul>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a></a><span class="ex">uv</span> add shapely</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</section>
+<section id="vector-format-1" class="slide level2">
+<h2>Vector format</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Creating Point geometries</strong></p>
+</div>
+<div class="callout-content">
+<p>Let’s start by creating a simple <code>Point</code> object.</p>
+<div id="913f02dc" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a></a><span class="im">from</span> shapely <span class="im">import</span> Point</span>
+<span id="cb5-2"><a></a></span>
+<span id="cb5-3"><a></a>point <span class="op">=</span> Point(<span class="fl">2.2</span>, <span class="fl">4.2</span>)</span>
+<span id="cb5-4"><a></a>point3D <span class="op">=</span> Point(<span class="fl">9.26</span>, <span class="op">-</span><span class="fl">2.456</span>, <span class="fl">0.57</span>)</span>
+<span id="cb5-5"><a></a>point</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="691">
+<div>
+<figure>
+<p><img data-src="bigdata_lec7_files/figure-revealjs/cell-2-output-1.svg"></p>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="vector-format-2" class="slide level2">
+<h2>Vector format</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Print</strong></p>
+</div>
+<div class="callout-content">
+<p>We can use the <code>print()</code> command to get the text representation of the point geometry as <a href="https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry">Well Known Text (WKT)</a>.</p>
+<p>In the output, the letter <code>Z</code> after the <code>POINT</code> indicates that the geometry contains coordinates in three dimensions (x, y, z): <!-- #endregion --></p>
+<div id="7ba88ee2" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a></a><span class="bu">print</span>(point)</span>
+<span id="cb6-2"><a></a><span class="bu">print</span>(point3D)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>POINT (2.2 4.2)
+POINT Z (9.26 -2.456 0.57)</code></pre>
+</div>
+</div>
+<p>It is also possible to access the WKT character string representation of the geometry using the <code>.wkt</code> attribute:</p>
+<div id="c7e920c8" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a></a>point.wkt</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="693">
+<pre><code>'POINT (2.2 4.2)'</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="vector-format-3" class="slide level2">
+<h2>Vector format</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Point Attributes</strong></p>
+</div>
+<div class="callout-content">
+<div id="b91f62e1" class="cell" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a></a><span class="bu">type</span>(point.coords)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="694">
+<pre><code>shapely.coords.CoordinateSequence</code></pre>
+</div>
+</div>
+<div id="0776f8e2" class="cell" data-execution_count="6">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a></a><span class="bu">list</span>(point.coords)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="695">
+<pre><code>[(2.2, 4.2)]</code></pre>
+</div>
+</div>
+<p>It is also possible to access the coordinates directly using the <code>x</code> and <code>y</code> properties of the <code>Point</code> object:</p>
+<div id="18e3e74b" class="cell" data-execution_count="7">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a></a><span class="bu">print</span>(point.x)</span>
+<span id="cb14-2"><a></a><span class="bu">print</span>(point.y)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>2.2
+4.2</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<aside><div>
+<p>For a full list of general attributes and methods for <code>shapely</code> objects, see <a href="https://shapely.readthedocs.io/en/stable/manual.html#general-attributes-and-methods">shapely documentation</a>.</p>
+</div></aside></section>
+<section id="vector-format-4" class="slide level2">
+<h2>Vector format</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Creating LineString geometries</strong></p>
+</div>
+<div class="callout-content">
+<div id="88082627" class="cell" data-execution_count="8">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a></a><span class="im">from</span> shapely <span class="im">import</span> Point, LineString</span>
+<span id="cb16-2"><a></a></span>
+<span id="cb16-3"><a></a>point1 <span class="op">=</span> Point(<span class="fl">2.2</span>, <span class="fl">4.2</span>)</span>
+<span id="cb16-4"><a></a>point2 <span class="op">=</span> Point(<span class="fl">7.2</span>, <span class="op">-</span><span class="fl">25.1</span>)</span>
+<span id="cb16-5"><a></a>point3 <span class="op">=</span> Point(<span class="fl">9.26</span>, <span class="op">-</span><span class="fl">2.456</span>)</span>
+<span id="cb16-6"><a></a></span>
+<span id="cb16-7"><a></a>line <span class="op">=</span> LineString([point1, point2, point3])</span>
+<span id="cb16-8"><a></a>line_from_tuples <span class="op">=</span> LineString([(<span class="fl">2.2</span>, <span class="fl">4.2</span>), (<span class="fl">7.2</span>, <span class="op">-</span><span class="fl">25.1</span>), (<span class="fl">9.26</span>, <span class="op">-</span><span class="fl">2.456</span>)])</span>
+<span id="cb16-9"><a></a>line</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="697">
+<div>
+<figure>
+<p><img data-src="bigdata_lec7_files/figure-revealjs/cell-8-output-1.svg"></p>
+</figure>
+</div>
+</div>
+</div>
+<div id="da419eff" class="cell" data-execution_count="9">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a></a>line.wkt</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="698">
+<pre><code>'LINESTRING (2.2 4.2, 7.2 -25.1, 9.26 -2.456)'</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="vector-format-5" class="slide level2">
+<h2>Vector format</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Line Attributes</strong></p>
+</div>
+<div class="callout-content">
+<div id="efe65bf9" class="cell" data-execution_count="10">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a></a><span class="bu">list</span>(line.coords)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="699">
+<pre><code>[(2.2, 4.2), (7.2, -25.1), (9.26, -2.456)]</code></pre>
+</div>
+</div>
+<p>As a result, we have a list of coordinate tuples (x,y) inside a list. If you need to access all <code>x</code> -coordinates or all <code>y</code> -coordinates of the line, you can do it directly using the <code>xy</code> attribute:</p>
+<div id="46d16102" class="cell" data-execution_count="11">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a></a>xcoords <span class="op">=</span> <span class="bu">list</span>(line.xy[<span class="dv">0</span>])</span>
+<span id="cb21-2"><a></a>ycoords <span class="op">=</span> <span class="bu">list</span>(line.xy[<span class="dv">1</span>])</span>
+<span id="cb21-3"><a></a></span>
+<span id="cb21-4"><a></a><span class="bu">print</span>(xcoords)</span>
+<span id="cb21-5"><a></a><span class="bu">print</span>(ycoords)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[2.2, 7.2, 9.26]
+[4.2, -25.1, -2.456]</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="vector-format-6" class="slide level2">
+<h2>Vector format</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Line Attributes</strong></p>
+</div>
+<div class="callout-content">
+<p>It is possible to retrieve specific attributes such as <code>length</code> of the line and the center of the line (<code>centroid</code>) straight from the <code>LineString</code> object itself:</p>
+<div id="382bc346" class="cell" data-execution_count="12">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a></a>length <span class="op">=</span> line.length</span>
+<span id="cb23-2"><a></a>centroid <span class="op">=</span> line.centroid</span>
+<span id="cb23-3"><a></a><span class="bu">print</span>(<span class="ss">f"Length of our line: </span><span class="sc">{</span>length<span class="sc">:.2f}</span><span class="ss"> units"</span>)</span>
+<span id="cb23-4"><a></a><span class="bu">print</span>(<span class="ss">f"Centroid: </span><span class="sc">{</span>centroid<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Length of our line: 52.46 units
+Centroid: POINT (6.229961354035622 -11.892411157572392)</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="vector-format-7" class="slide level2">
+<h2>Vector format</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Creating Polygon geometries</strong></p>
+</div>
+<div class="callout-content">
+<p><code>Polygon</code> needs at least three coordinate-tuples to form a surface.</p>
+<div id="9c41422a" class="cell" data-execution_count="13">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a></a><span class="im">from</span> shapely <span class="im">import</span> Polygon</span>
+<span id="cb25-2"><a></a></span>
+<span id="cb25-3"><a></a>poly <span class="op">=</span> Polygon([point1, point2, point3])</span>
+<span id="cb25-4"><a></a>poly</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="702">
+<div>
+<figure>
+<p><img data-src="bigdata_lec7_files/figure-revealjs/cell-13-output-1.svg"></p>
+</figure>
+</div>
+</div>
+</div>
+<div id="b0f3c914" class="cell" data-execution_count="14">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a></a>poly.wkt</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="703">
+<pre><code>'POLYGON ((2.2 4.2, 7.2 -25.1, 9.26 -2.456, 2.2 4.2))'</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="vector-format-8" class="slide level2 scrollable">
+<h2>Vector format</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Polygon info</strong></p>
+</div>
+<div class="callout-content">
+<p>You can get more information about the <code>Polygon</code> object by running <code>help(poly)</code> of from the <a href="https://shapely.readthedocs.io/en/stable/manual.html?highlight=Polygon#Polygon">shapely online documentation</a>. Here is a simplified extract from the output of <code>help(Polygon)</code>:</p>
+<pre><code>class Polygon(shapely.geometry.base.BaseGeometry)
+ |  Polygon(shell=None, holes=None)
+ |  
+ |  A two-dimensional figure bounded by a linear ring
+ |  
+ |  A polygon has a non-zero area. It may have one or more negative-space
+ |  "holes" which are also bounded by linear rings. If any rings cross each
+ |  other, the feature is invalid and operations on it may fail.
+ |  
+ |  Attributes
+ |  ----------
+ |  exterior : LinearRing
+ |      The ring which bounds the positive space of the polygon.
+ |  interiors : sequence
+ |      A sequence of rings which bound all existing holes.
+ |  
+ |  Parameters
+ |  ----------
+ |  shell : sequence
+ |     A sequence of (x, y [,z]) numeric coordinate pairs or triples.
+ |     Also can be a sequence of Point objects.
+ |  holes : sequence
+ |      A sequence of objects which satisfy the same requirements as the
+ |      shell parameters above</code></pre>
+</div>
+</div>
+</div>
+</section>
+<section id="vector-format-9" class="slide level2">
+<h2>Vector format</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Polygon holes</strong></p>
+</div>
+<div class="callout-content">
+<div id="2d0e7e72" class="cell" data-execution_count="15">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a></a><span class="co"># Define the exterior coordinates</span></span>
+<span id="cb29-2"><a></a>exterior <span class="op">=</span> [(<span class="op">-</span><span class="dv">180</span>, <span class="dv">90</span>), (<span class="op">-</span><span class="dv">180</span>, <span class="op">-</span><span class="dv">90</span>), (<span class="dv">180</span>, <span class="op">-</span><span class="dv">90</span>), (<span class="dv">180</span>, <span class="dv">90</span>)]</span>
+<span id="cb29-3"><a></a></span>
+<span id="cb29-4"><a></a><span class="co"># Define the hole coordinates (a single hole in this case)</span></span>
+<span id="cb29-5"><a></a>holes_coordinates <span class="op">=</span> [[(<span class="op">-</span><span class="dv">170</span>, <span class="dv">80</span>), (<span class="op">-</span><span class="dv">170</span>, <span class="op">-</span><span class="dv">80</span>), (<span class="dv">170</span>, <span class="op">-</span><span class="dv">80</span>), (<span class="dv">170</span>, <span class="dv">80</span>)]]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>With the four coordinate tuples of the <code>exterior</code>, we can first create a polygon without a hole:</p>
+<div id="75ad706f" class="cell" data-execution_count="16">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a></a>poly_without_hole <span class="op">=</span> Polygon(shell<span class="op">=</span>exterior)</span>
+<span id="cb30-2"><a></a>poly_without_hole</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="705">
+<div>
+<figure>
+<p><img data-src="bigdata_lec7_files/figure-revealjs/cell-16-output-1.svg"></p>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="vector-format-10" class="slide level2">
+<h2>Vector format</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Polygon holes</strong></p>
+</div>
+<div class="callout-content">
+<p>In a similar manner, we can make a <code>Polygon</code> with holes by passing the <code>holes_coordinates</code> variable into the parameter <code>holes</code>:</p>
+<div id="729026ab" class="cell" data-execution_count="17">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a></a>poly_with_hole <span class="op">=</span> Polygon(shell<span class="op">=</span>exterior, holes<span class="op">=</span>holes_coordinates)</span>
+<span id="cb31-2"><a></a>poly_with_hole</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="706">
+<div>
+<figure>
+<p><img data-src="bigdata_lec7_files/figure-revealjs/cell-17-output-1.svg"></p>
+</figure>
+</div>
+</div>
+</div>
+<p><code>poly_with_hole.wkt</code>:</p>
+<pre><code>POLYGON ((-180 90, -180 -90, 180 -90, 180 90, -180 90),
+         (-170 80, -170 -80, 170 -80, 170 80, -170 80))</code></pre>
+</div>
+</div>
+</div>
+</section>
+<section id="vector-format-11" class="slide level2">
+<h2>Vector format</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Polygon attributes</strong></p>
+</div>
+<div class="callout-content">
+<div id="058af306" class="cell" data-execution_count="18">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a></a><span class="bu">print</span>(<span class="st">"Polygon centroid: "</span>, poly.centroid)</span>
+<span id="cb33-2"><a></a><span class="bu">print</span>(<span class="st">"Polygon Area: "</span>, poly.area)</span>
+<span id="cb33-3"><a></a><span class="bu">print</span>(<span class="st">"Polygon Bounding Box: "</span>, poly.bounds)</span>
+<span id="cb33-4"><a></a><span class="bu">print</span>(<span class="st">"Polygon Exterior: "</span>, poly.exterior)</span>
+<span id="cb33-5"><a></a><span class="bu">print</span>(<span class="st">"Polygon Exterior Length: "</span>, poly.exterior.length)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Polygon centroid:  POINT (6.22 -7.785333333333334)
+Polygon Area:  86.789
+Polygon Bounding Box:  (2.2, -25.1, 9.26, 4.2)
+Polygon Exterior:  LINEARRING (2.2 4.2, 7.2 -25.1, 9.26 -2.456, 2.2 4.2)
+Polygon Exterior Length:  62.16395199996553</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="vector-format-12" class="slide level2">
+<h2>Vector format</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Box polygons</strong></p>
+</div>
+<div class="callout-content">
+<div id="2bcb6e12" class="cell" data-execution_count="19">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a></a><span class="im">from</span> shapely.geometry <span class="im">import</span> box</span>
+<span id="cb35-2"><a></a></span>
+<span id="cb35-3"><a></a>min_x, min_y <span class="op">=</span> <span class="op">-</span><span class="dv">180</span>, <span class="op">-</span><span class="dv">90</span></span>
+<span id="cb35-4"><a></a>max_x, max_y <span class="op">=</span> <span class="dv">180</span>, <span class="dv">90</span></span>
+<span id="cb35-5"><a></a>box_poly <span class="op">=</span> box(minx<span class="op">=</span>min_x, miny<span class="op">=</span>min_y, maxx<span class="op">=</span>max_x, maxy<span class="op">=</span>max_y)</span>
+<span id="cb35-6"><a></a>box_poly</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="708">
+<div>
+<figure>
+<p><img data-src="bigdata_lec7_files/figure-revealjs/cell-19-output-1.svg"></p>
+</figure>
+</div>
+</div>
+</div>
+<div id="f234b5fd" class="cell" data-execution_count="20">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a></a>box_poly.wkt</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="709">
+<pre><code>'POLYGON ((180 -90, 180 90, -180 90, -180 -90, 180 -90))'</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="vector-format-13" class="slide level2">
+<h2>Vector format</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Multi geometries</strong></p>
+</div>
+<div class="callout-content">
+<div id="8a3e3c6a" class="cell" data-execution_count="21">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a></a><span class="im">from</span> shapely <span class="im">import</span> MultiPoint, MultiLineString, MultiPolygon</span>
+<span id="cb38-2"><a></a></span>
+<span id="cb38-3"><a></a>multipoint <span class="op">=</span> MultiPoint([Point(<span class="dv">2</span>, <span class="dv">2</span>), Point(<span class="dv">3</span>, <span class="dv">3</span>)])</span>
+<span id="cb38-4"><a></a>multipoint</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="710">
+<div>
+<figure>
+<p><img data-src="bigdata_lec7_files/figure-revealjs/cell-21-output-1.svg"></p>
+</figure>
+</div>
+</div>
+</div>
+<div id="817978f0" class="cell" data-execution_count="22">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a></a>multiline <span class="op">=</span> MultiLineString(</span>
+<span id="cb39-2"><a></a>    [LineString([(<span class="dv">2</span>, <span class="dv">2</span>), (<span class="dv">3</span>, <span class="dv">3</span>)]), LineString([(<span class="dv">4</span>, <span class="dv">3</span>), (<span class="dv">6</span>, <span class="dv">4</span>)])]</span>
+<span id="cb39-3"><a></a>)</span>
+<span id="cb39-4"><a></a>multiline</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="711">
+<div>
+<figure>
+<p><img data-src="bigdata_lec7_files/figure-revealjs/cell-22-output-1.svg"></p>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="vector-format-14" class="slide level2">
+<h2>Vector format</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Multi geometries</strong></p>
+</div>
+<div class="callout-content">
+<div id="b9dba209" class="cell" data-execution_count="23">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a></a>multipoly <span class="op">=</span> MultiPolygon(</span>
+<span id="cb40-2"><a></a>    [Polygon([(<span class="dv">0</span>, <span class="dv">0</span>), (<span class="dv">0</span>, <span class="dv">4</span>), (<span class="dv">4</span>, <span class="dv">4</span>)]), Polygon([(<span class="dv">6</span>, <span class="dv">6</span>), (<span class="dv">6</span>, <span class="dv">12</span>), (<span class="dv">12</span>, <span class="dv">12</span>)])]</span>
+<span id="cb40-3"><a></a>)</span>
+<span id="cb40-4"><a></a>multipoly</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="712">
+<div>
+<figure>
+<p><img data-src="bigdata_lec7_files/figure-revealjs/cell-23-output-1.svg"></p>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="vector-format-15" class="slide level2">
+<h2>Vector format</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Exercise</strong></p>
+</div>
+<div class="callout-content">
+<p>Create examples of these shapes:</p>
+<ul>
+<li><strong>Triangle</strong><br>
+</li>
+<li><strong>Square</strong><br>
+</li>
+<li><strong>Circle</strong></li>
+</ul>
+</div>
+</div>
+</div>
+<!--
+```python editable=true slideshow={"slide_type": ""} tags=["remove_book_cell", "hide-cell"]
+# Solution
+
+# Triangle
+Polygon([(0, 0), (2, 4), (4, 0)])
+
+# Square
+Polygon([(0, 0), (0, 4), (4, 4), (4, 0)])
+
+# Circle (using a buffer around a point)
+point = Point((0, 0))
+point.buffer(1)
+```
+-->
+</section></section>
+<section>
+<section id="geopandas-intro" class="title-slide slide level1 center">
+<h1>GeoPandas Intro</h1>
+
+</section>
+<section id="geopandas-intro-1" class="slide level2">
+<h2>GeoPandas Intro</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Description</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><code>geopandas</code> library extends the data structures and data analysis tools available in the <code>pandas</code> library to allow geospatial operations and the handling of coordinate reference systems.</li>
+<li><code>geopandas</code> provides a high-level, easy-to-use interface for vector data (like points, lines, and polygons) that integrates with the existing <code>pandas</code> data analysis framework, as well as the extensive Python GIS ecosystem .</li>
+</ul>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb41"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb41-1"><a></a><span class="ex">uv</span> add geopandas</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</section>
+<section id="geopandas-intro-2" class="slide level2">
+<h2>GeoPandas Intro</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>What is a GeoDataFrame?</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>The main data structures in <code>geopandas</code> are <code>GeoSeries</code> and <code>GeoDataFrame</code>.</li>
+<li><code>GeoDataFrame</code> is basically like a <code>pandas</code> <code>DataFrame</code> that contains at least one dedicated column for storing geometries.</li>
+<li>The geometry column is a <code>GeoSeries</code> which contains the geometries as <code>shapely</code> objects (points, lines, polygons, multipolygons etc.).</li>
+</ul>
+</div>
+</div>
+</div>
+
+<img data-src="img/geosci/geodataframe.png" class="r-stretch"></section>
+<section id="geopandas-intro-3" class="slide level2">
+<h2>GeoPandas Intro</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Reading a file</strong></p>
+</div>
+<div class="callout-content">
+<!-- #endregion -->
+<div id="ccc3da1b" class="cell" data-execution_count="24">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb42-2"><a></a></span>
+<span id="cb42-3"><a></a>data_folder <span class="op">=</span> Path(<span class="st">"_data"</span>, <span class="st">"Austin"</span>)</span>
+<span id="cb42-4"><a></a>fp <span class="op">=</span> data_folder <span class="op">/</span> <span class="st">"austin_pop_2019.gpkg"</span></span>
+<span id="cb42-5"><a></a><span class="bu">print</span>(fp)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>_data/Austin/austin_pop_2019.gpkg</code></pre>
+</div>
+</div>
+<p>Similar to importing <code>pandas</code>, we will first import <code>geopandas</code> as <code>gpd</code> which allows us to start using the library. Then we will read the file by passing the filepath to <code>.read_file()</code> function of <code>geopandas</code>: <!-- #endregion --></p>
+<div id="39144c1c" class="cell" data-execution_count="25">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a></a><span class="im">import</span> geopandas <span class="im">as</span> gpd</span>
+<span id="cb44-2"><a></a></span>
+<span id="cb44-3"><a></a>data <span class="op">=</span> gpd.read_file(fp)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Let’s take a look at the data type of our <code>data</code> variable:</p>
+<div id="b0b03ac8" class="cell" data-execution_count="26">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb45"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a></a><span class="bu">type</span>(data)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="715">
+<pre><code>geopandas.geodataframe.GeoDataFrame</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="geopandas-intro-4" class="slide level2">
+<h2>GeoPandas Intro</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Exploration</strong></p>
+</div>
+<div class="callout-content">
+<p>Let’s have a closer look at the first rows of the data:</p>
+<div id="e6bb0b70" class="cell" data-execution_count="27">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a></a>data.head()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="716">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+
+<table class="dataframe caption-top" data-border="1">
+<thead>
+<tr class="header" style="text-align: right;">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">pop2019</th>
+<th data-quarto-table-cell-role="th">tract</th>
+<th data-quarto-table-cell-role="th">geometry</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>6070.0</td>
+<td>002422</td>
+<td>POLYGON ((615643.487 3338728.496, 615645.477 3...</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>2203.0</td>
+<td>001751</td>
+<td>POLYGON ((618576.586 3359381.053, 618614.33 33...</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>7419.0</td>
+<td>002411</td>
+<td>POLYGON ((619200.163 3341784.654, 619270.849 3...</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>4229.0</td>
+<td>000401</td>
+<td>POLYGON ((621623.757 3350508.165, 621656.294 3...</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
+<td>4589.0</td>
+<td>002313</td>
+<td>POLYGON ((621630.247 3345130.744, 621717.926 3...</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<p>The columns <code>pop2019</code> and <code>tract</code> represent attribute information in our data, namely the number of people living on a given census tract and a unique id-number for the tract, wherease the column <code>geometry</code> contains the geographic data (polygons) for each census tract.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="geopandas-intro-5" class="slide level2">
+<h2>GeoPandas Intro</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Exploration</strong></p>
+</div>
+<div class="callout-content">
+<p>It is always a good idea to explore your geographic data on a map.</p>
+<div id="c3fa889b" class="cell" data-execution_count="28">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb48"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a></a>data.plot()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure>
+<p><img data-src="bigdata_lec7_files/figure-revealjs/cell-28-output-1.png" width="329" height="425"></p>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="geopandas-intro-6" class="slide level2">
+<h2>GeoPandas Intro</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Exercise</strong></p>
+</div>
+<div class="callout-content">
+<p>Figure out the following information from input data:</p>
+<ul>
+<li>Number of rows?</li>
+<li>Number of census tracts (based on column <code>tract</code>)?</li>
+<li>Total population (based on column <code>pop2019</code>)?</li>
+</ul>
+</div>
+</div>
+</div>
+<!-- ```python editable=true slideshow={"slide_type": ""} tags=["remove_book_cell", "hide-cell"]
+# Solution
+
+print("Number of rows", len(data))
+print("Number of census tracts", data["tract"].nunique())
+print("Total population", data["pop2019"].sum())
+```
+-->
+</section>
+<section id="geopandas-intro-7" class="slide level2">
+<h2>GeoPandas Intro</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Geometries in geopandas</strong></p>
+</div>
+<div class="callout-content">
+<p>A geodataframe can have multiple columns containing geometries, and you can change which column should be considered as the “active geometry”. Let’s have a closer look at the <code>.geometry</code> attribute of our data:</p>
+<div id="1f8fad8d" class="cell" data-execution_count="29">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb49"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a></a>data.geometry.head()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="718">
+<pre><code>0    POLYGON ((615643.487 3338728.496, 615645.477 3...
+1    POLYGON ((618576.586 3359381.053, 618614.33 33...
+2    POLYGON ((619200.163 3341784.654, 619270.849 3...
+3    POLYGON ((621623.757 3350508.165, 621656.294 3...
+4    POLYGON ((621630.247 3345130.744, 621717.926 3...
+Name: geometry, dtype: geometry</code></pre>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb51"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb51-1"><a></a><span class="bu">type</span>(data.geometry)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</section>
+<section id="geopandas-intro-8" class="slide level2">
+<h2>GeoPandas Intro</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Geometries in geopandas</strong></p>
+</div>
+<div class="callout-content">
+<div id="9ec9f2f4" class="cell" data-execution_count="30">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb52"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb52-1"><a></a>data.geometry.area</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="719">
+<pre><code>0      4.029772e+06
+1      1.532030e+06
+2      3.960344e+06
+3      2.181762e+06
+4      2.431208e+06
+           ...     
+125    2.321182e+06
+126    4.388407e+06
+127    1.702764e+06
+128    3.540893e+06
+129    2.054702e+06
+Length: 130, dtype: float64</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="geopandas-intro-9" class="slide level2 scrollable">
+<h2>GeoPandas Intro</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Geometries in geopandas</strong></p>
+</div>
+<div class="callout-content">
+<p>The same result can be achieved by using the syntax <code>data.area</code>. Let’s convert the area values from square meters to square kilometers and store them into a new column called <code>area_km2</code>:</p>
+<div id="3aac8a8e" class="cell" data-execution_count="31">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb54"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb54-1"><a></a>data[<span class="st">"area_km2"</span>] <span class="op">=</span> data.area <span class="op">/</span> <span class="dv">1000000</span></span>
+<span id="cb54-2"><a></a>data.head()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="720">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+
+<table class="dataframe caption-top" data-border="1">
+<thead>
+<tr class="header" style="text-align: right;">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">pop2019</th>
+<th data-quarto-table-cell-role="th">tract</th>
+<th data-quarto-table-cell-role="th">geometry</th>
+<th data-quarto-table-cell-role="th">area_km2</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>6070.0</td>
+<td>002422</td>
+<td>POLYGON ((615643.487 3338728.496, 615645.477 3...</td>
+<td>4.029772</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>2203.0</td>
+<td>001751</td>
+<td>POLYGON ((618576.586 3359381.053, 618614.33 33...</td>
+<td>1.532030</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>7419.0</td>
+<td>002411</td>
+<td>POLYGON ((619200.163 3341784.654, 619270.849 3...</td>
+<td>3.960344</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>4229.0</td>
+<td>000401</td>
+<td>POLYGON ((621623.757 3350508.165, 621656.294 3...</td>
+<td>2.181762</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
+<td>4589.0</td>
+<td>002313</td>
+<td>POLYGON ((621630.247 3345130.744, 621717.926 3...</td>
+<td>2.431208</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="geopandas-intro-10" class="slide level2">
+<h2>GeoPandas Intro</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Geometries in geopandas</strong></p>
+</div>
+<div class="callout-content">
+<p>Visualize a choropleth map:</p>
+<div id="8ce5d94d" class="cell" data-execution_count="32">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb55"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb55-1"><a></a>data.plot(column<span class="op">=</span><span class="st">"area_km2"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure>
+<p><img data-src="bigdata_lec7_files/figure-revealjs/cell-32-output-1.png" width="329" height="425"></p>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="geopandas-intro-11" class="slide level2">
+<h2>GeoPandas Intro</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Exercise</strong></p>
+</div>
+<div class="callout-content">
+<p>Create a new column <code>pop_density_km2</code> and populate it with population density values (population / km2) calculated based on columns <code>pop2019</code> and <code>area_km2</code>. Print out answers to the following questions:</p>
+<ul>
+<li>What was the average population density in 2019?</li>
+<li>What was the maximum population density per census tract?</li>
+</ul>
+</div>
+</div>
+</div>
+<!--
+```python editable=true slideshow={"slide_type": ""} tags=["remove_book_cell", "hide-cell"]
+# Solution
+
+# Calculate population density
+data["pop_density_km2"] = data["pop2019"] / data["area_km2"]
+
+# Print out average and maximum values
+print("Average:", round(data["pop_density_km2"].mean()), "pop/km2")
+
+print("Maximum:", round(data["pop_density_km2"].max()), "pop/km2")
+```
+-->
+</section>
+<section id="geopandas-intro-12" class="slide level2">
+<h2>GeoPandas Intro</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Writing data into a file</strong></p>
+</div>
+<div class="callout-content">
+<p>It is possible to export the <code>GeoDataFrame</code> into various data formats using the <code>.to_file()</code> method. Let’s start by learning how we can write data into a <code>GeoPackage</code>. Before proceeding, let’s see how the data looks like at this point: <!-- #endregion --></p>
+<div id="d7efe5e2" class="cell" data-execution_count="33">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb56"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb56-1"><a></a>data.head()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="722">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+
+<table class="dataframe caption-top" data-border="1">
+<thead>
+<tr class="header" style="text-align: right;">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">pop2019</th>
+<th data-quarto-table-cell-role="th">tract</th>
+<th data-quarto-table-cell-role="th">geometry</th>
+<th data-quarto-table-cell-role="th">area_km2</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>6070.0</td>
+<td>002422</td>
+<td>POLYGON ((615643.487 3338728.496, 615645.477 3...</td>
+<td>4.029772</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>2203.0</td>
+<td>001751</td>
+<td>POLYGON ((618576.586 3359381.053, 618614.33 33...</td>
+<td>1.532030</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>7419.0</td>
+<td>002411</td>
+<td>POLYGON ((619200.163 3341784.654, 619270.849 3...</td>
+<td>3.960344</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>4229.0</td>
+<td>000401</td>
+<td>POLYGON ((621623.757 3350508.165, 621656.294 3...</td>
+<td>2.181762</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
+<td>4589.0</td>
+<td>002313</td>
+<td>POLYGON ((621630.247 3345130.744, 621717.926 3...</td>
+<td>2.431208</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="geopandas-intro-13" class="slide level2">
+<h2>GeoPandas Intro</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Writing data into a file</strong></p>
+</div>
+<div class="callout-content">
+<div id="9926065f" class="cell" data-execution_count="34">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb57"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb57-1"><a></a><span class="co"># Create a output path for the data</span></span>
+<span id="cb57-2"><a></a>output_fp <span class="op">=</span> <span class="st">"_data/Temp/austin_pop_density_2019.gpkg"</span></span>
+<span id="cb57-3"><a></a></span>
+<span id="cb57-4"><a></a><span class="co"># Write the file</span></span>
+<span id="cb57-5"><a></a>data.to_file(output_fp)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>To be more explicit, you can use the <code>driver</code> parameter to specify the output file format for the data allowing you to write the data into numerous data formats (some lesser-known ones as well) supported by a software called <code>GDAL</code> which is used by <code>geopandas</code> under the hood for reading and writing data.</p>
+</div>
+</div>
+</div>
+<div id="ece3a777" class="cell" data-execution_count="35">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb58"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb58-1"><a></a>output_fp <span class="op">=</span> <span class="st">"_data/Temp/austin_pop_density_2019.fgb"</span></span>
+<span id="cb58-2"><a></a></span>
+<span id="cb58-3"><a></a><span class="co"># Write the file</span></span>
+<span id="cb58-4"><a></a>data.to_file(output_fp, driver<span class="op">=</span><span class="st">"FlatGeobuf"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="geopandas-intro-14" class="slide level2">
+<h2>GeoPandas Intro</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Exercise</strong></p>
+</div>
+<div class="callout-content">
+<p>Read the output file using <code>geopandas</code> and check that the data looks ok. <!--
+```python editable=true slideshow={"slide_type": ""} tags=["remove_book_cell", "hide-cell"]
+# Solution
+
+temp = gpd.read_file(output_fp)
+
+# Check first rows
+temp.head()
+
+# You can also plot the data for a visual check by uncommenting the following
+# temp.plot()
+```
+--></p>
+</div>
+</div>
+</div>
+</section>
+<section id="geopandas-intro-15" class="slide level2 scrollable">
+<h2>GeoPandas Intro</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Reading vector data</strong></p>
+</div>
+<div class="callout-content">
+<p>When we use the <code>.read_file()</code> function for reading data in various formats, <code>geopandas</code> actually uses a Python library called <code>pyogrio</code> under the hood to read the data (which again depends on <code>GDAL</code>). It is easy to find out all the data formats that are supported by default by calling <code>pyogrio.list_drivers()</code>: <!-- #endregion --></p>
+<div id="ca927ae3" class="cell" data-execution_count="36">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb59"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb59-1"><a></a><span class="im">import</span> geopandas <span class="im">as</span> gpd</span>
+<span id="cb59-2"><a></a><span class="im">import</span> pyogrio</span>
+<span id="cb59-3"><a></a></span>
+<span id="cb59-4"><a></a>available_drivers <span class="op">=</span> pyogrio.list_drivers()</span>
+<span id="cb59-5"><a></a></span>
+<span id="cb59-6"><a></a><span class="bu">print</span>(available_drivers)</span>
+<span id="cb59-7"><a></a><span class="bu">len</span>(available_drivers)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>{'PCIDSK': 'rw', 'PDS4': 'rw', 'VICAR': 'rw', 'PDF': 'rw', 'MBTiles': 'rw', 'EEDA': 'r', 'OGCAPI': 'r', 'ESRI Shapefile': 'rw', 'MapInfo File': 'rw', 'UK .NTF': 'r', 'LVBAG': 'r', 'OGR_SDTS': 'r', 'S57': 'rw', 'DGN': 'rw', 'OGR_VRT': 'r', 'Memory': 'rw', 'CSV': 'rw', 'GML': 'rw', 'GPX': 'rw', 'KML': 'rw', 'GeoJSON': 'rw', 'GeoJSONSeq': 'rw', 'ESRIJSON': 'r', 'TopoJSON': 'r', 'OGR_GMT': 'rw', 'GPKG': 'rw', 'SQLite': 'rw', 'WAsP': 'rw', 'OpenFileGDB': 'rw', 'DXF': 'rw', 'FlatGeobuf': 'rw', 'Geoconcept': 'rw', 'GeoRSS': 'rw', 'VFK': 'r', 'PGDUMP': 'rw', 'OSM': 'r', 'GPSBabel': 'rw', 'OGR_PDS': 'r', 'WFS': 'r', 'OAPIF': 'r', 'EDIGEO': 'r', 'SVG': 'r', 'Idrisi': 'r', 'ODS': 'rw', 'XLSX': 'rw', 'Elasticsearch': 'rw', 'Carto': 'rw', 'AmigoCloud': 'rw', 'SXF': 'r', 'Selafin': 'rw', 'JML': 'rw', 'PLSCENES': 'r', 'CSW': 'r', 'VDV': 'rw', 'MVT': 'rw', 'NGW': 'rw', 'MapML': 'rw', 'GTFS': 'r', 'PMTiles': 'rw', 'JSONFG': 'rw', 'MiraMonVector': 'rw', 'TIGER': 'r', 'AVCBin': 'r', 'AVCE00': 'r', 'HTTP': 'r'}</code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="725">
+<pre><code>65</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="geopandas-intro-16" class="slide level2">
+<h2>GeoPandas Intro</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Reading vector data</strong></p>
+</div>
+<div class="callout-content">
+<div id="811d203e" class="cell" data-execution_count="37">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb62"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb62-1"><a></a><span class="co"># Read Esri Shapefile</span></span>
+<span id="cb62-2"><a></a>fp <span class="op">=</span> data_folder <span class="op">/</span> <span class="st">"austin_pop_2019.shp"</span></span>
+<span id="cb62-3"><a></a>data <span class="op">=</span> gpd.read_file(fp)</span>
+<span id="cb62-4"><a></a>data.head()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="726">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+
+<table class="dataframe caption-top" data-border="1">
+<thead>
+<tr class="header" style="text-align: right;">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">fid</th>
+<th data-quarto-table-cell-role="th">pop2019</th>
+<th data-quarto-table-cell-role="th">tract</th>
+<th data-quarto-table-cell-role="th">geometry</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>1.0</td>
+<td>6070.0</td>
+<td>002422</td>
+<td>POLYGON ((615643.487 3338728.496, 615645.477 3...</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>2.0</td>
+<td>2203.0</td>
+<td>001751</td>
+<td>POLYGON ((618576.586 3359381.053, 618614.33 33...</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>3.0</td>
+<td>7419.0</td>
+<td>002411</td>
+<td>POLYGON ((619200.163 3341784.654, 619270.849 3...</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>4.0</td>
+<td>4229.0</td>
+<td>000401</td>
+<td>POLYGON ((621623.757 3350508.165, 621656.294 3...</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
+<td>5.0</td>
+<td>4589.0</td>
+<td>002313</td>
+<td>POLYGON ((621630.247 3345130.744, 621717.926 3...</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="geopandas-intro-17" class="slide level2 scrollable">
+<h2>GeoPandas Intro</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Another format</strong></p>
+</div>
+<div class="callout-content">
+<!-- #region editable=true slideshow={"slide_type": ""} -->
+<p>As you can see, nothing except the file extension at the end of the filename changed, from <code>.gpkg</code> into <code>.shp</code>. The same syntax works for other common vector data formats, such as GeoJSON or MapInfo TAB format: <!-- #endregion --></p>
+<div id="087f1c1a" class="cell" data-execution_count="38">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb63"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb63-1"><a></a><span class="co"># Read file from Geopackage</span></span>
+<span id="cb63-2"><a></a>fp <span class="op">=</span> data_folder <span class="op">/</span> <span class="st">"austin_pop_2019.gpkg"</span></span>
+<span id="cb63-3"><a></a>data <span class="op">=</span> gpd.read_file(fp)</span>
+<span id="cb63-4"><a></a></span>
+<span id="cb63-5"><a></a><span class="co"># Read file from GeoJSON</span></span>
+<span id="cb63-6"><a></a>fp <span class="op">=</span> data_folder <span class="op">/</span> <span class="st">"austin_pop_2019.geojson"</span></span>
+<span id="cb63-7"><a></a>data <span class="op">=</span> gpd.read_file(fp)</span>
+<span id="cb63-8"><a></a></span>
+<span id="cb63-9"><a></a><span class="co"># Read file from Geodatabase</span></span>
+<span id="cb63-10"><a></a>fp <span class="op">=</span> data_folder <span class="op">/</span> <span class="st">"austin_pop_2019.gdb"</span></span>
+<span id="cb63-11"><a></a>data <span class="op">=</span> gpd.read_file(fp)</span>
+<span id="cb63-12"><a></a></span>
+<span id="cb63-13"><a></a><span class="co"># Read file from KML</span></span>
+<span id="cb63-14"><a></a>fp <span class="op">=</span> <span class="st">"_data/Austin/austin_pop_2019.kml"</span></span>
+<span id="cb63-15"><a></a>data_kml <span class="op">=</span> gpd.read_file(fp)</span>
+<span id="cb63-16"><a></a></span>
+<span id="cb63-17"><a></a><span class="co"># Read file from MapInfo TAB</span></span>
+<span id="cb63-18"><a></a>fp <span class="op">=</span> data_folder <span class="op">/</span> <span class="st">"austin_pop_2019.tab"</span></span>
+<span id="cb63-19"><a></a>data <span class="op">=</span> gpd.read_file(fp)</span>
+<span id="cb63-20"><a></a></span>
+<span id="cb63-21"><a></a>data.head()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="727">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+
+<table class="dataframe caption-top" data-border="1">
+<thead>
+<tr class="header" style="text-align: right;">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">fid</th>
+<th data-quarto-table-cell-role="th">pop2019</th>
+<th data-quarto-table-cell-role="th">tract</th>
+<th data-quarto-table-cell-role="th">geometry</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>1.0</td>
+<td>6070.0</td>
+<td>002422</td>
+<td>POLYGON ((615643.49 3338728.49, 615645.48 3338...</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>2.0</td>
+<td>2203.0</td>
+<td>001751</td>
+<td>POLYGON ((618576.59 3359381.06, 618614.33 3359...</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>3.0</td>
+<td>7419.0</td>
+<td>002411</td>
+<td>POLYGON ((619200.16 3341784.65, 619270.85 3341...</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>4.0</td>
+<td>4229.0</td>
+<td>000401</td>
+<td>POLYGON ((621623.75 3350508.16, 621656.29 3350...</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
+<td>5.0</td>
+<td>4589.0</td>
+<td>002313</td>
+<td>POLYGON ((621630.24 3345130.75, 621717.92 3345...</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="geopandas-intro-18" class="slide level2 scrollable">
+<h2>GeoPandas Intro</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Multiple layers</strong></p>
+</div>
+<div class="callout-content">
+<p>Some file formats such as GeoPackage may contain multiple layers with different names which can be speficied using the <code>layer</code> -parameter.</p>
+<div id="9fd66835" class="cell" data-execution_count="39">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb64"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb64-1"><a></a><span class="co"># Read spesific layer from Geopackage</span></span>
+<span id="cb64-2"><a></a>fp <span class="op">=</span> data_folder <span class="op">/</span> <span class="st">"austin_pop_2019.gpkg"</span></span>
+<span id="cb64-3"><a></a>data <span class="op">=</span> gpd.read_file(fp, layer<span class="op">=</span><span class="st">"austin_pop_2019"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Note that the <code>KML</code> file format is a bit of a special case as it is designed for Google Earth rendering in 3D, so there may be additional data columns read into the geodataframe:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb65"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb65-1"><a></a><span class="co">#| echo: true</span></span>
+<span id="cb65-2"><a></a>data_kml.head()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>However, it easy to filter the extra columns and only keep the ones that we are interested in:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb66"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb66-1"><a></a><span class="co">#| echo: true</span></span>
+<span id="cb66-2"><a></a>data <span class="op">=</span> data_kml[[<span class="st">"pop2019"</span>, <span class="st">"tract"</span>, <span class="st">"geometry"</span>]].copy()</span>
+<span id="cb66-3"><a></a>data.head(<span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</section>
+<section id="geopandas-intro-19" class="slide level2">
+<h2>GeoPandas Intro</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Reading from a ZIP file</strong></p>
+</div>
+<div class="callout-content">
+<div id="183a92d5" class="cell" data-execution_count="40">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb67"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb67-1"><a></a><span class="im">from</span> zipfile <span class="im">import</span> ZipFile</span>
+<span id="cb67-2"><a></a></span>
+<span id="cb67-3"><a></a>fp <span class="op">=</span> <span class="st">"_data/Helsinki/building_points_helsinki.zip"</span></span>
+<span id="cb67-4"><a></a></span>
+<span id="cb67-5"><a></a><span class="cf">with</span> ZipFile(fp) <span class="im">as</span> z:</span>
+<span id="cb67-6"><a></a>    <span class="bu">print</span>(z.namelist())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>['building_points_helsinki.gpkg']</code></pre>
+</div>
+</div>
+<div id="0c9b3fa0" class="cell" data-execution_count="41">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb69"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb69-1"><a></a>buildings <span class="op">=</span> gpd.read_file(fp)</span>
+<span id="cb69-2"><a></a>buildings.head(<span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="730">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+
+<table class="dataframe caption-top" data-border="1">
+<thead>
+<tr class="header" style="text-align: right;">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">name</th>
+<th data-quarto-table-cell-role="th">geometry</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>None</td>
+<td>POINT (24.85584 60.20727)</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>Uimastadion</td>
+<td>POINT (24.93045 60.18882)</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="geopandas-intro-20" class="slide level2 scrollable">
+<h2>GeoPandas Intro</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Reading from a ZIP file</strong></p>
+</div>
+<div class="callout-content">
+<p>However, sometimes you might have multiple files and folders stored inside a ZIP archive as in the example below:</p>
+<div id="bfa3b0e1" class="cell" data-execution_count="42">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb70"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb70-1"><a></a>fp <span class="op">=</span> <span class="st">"_data/Helsinki/Kamppi_layers.zip"</span></span>
+<span id="cb70-2"><a></a></span>
+<span id="cb70-3"><a></a><span class="cf">with</span> ZipFile(fp) <span class="im">as</span> z:</span>
+<span id="cb70-4"><a></a>    <span class="bu">print</span>(z.namelist())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>['natural/', 'natural/Kamppi_parks.gpkg', 'built_environment/', 'built_environment/Kamppi_buildings.gpkg', 'built_environment/Kamppi_roads.gpkg']</code></pre>
+</div>
+</div>
+<p>We need a special filepath:</p>
+<div id="8b5902f2" class="cell" data-execution_count="43">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb72"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb72-1"><a></a>parks_fp <span class="op">=</span> <span class="st">"_data/Helsinki/Kamppi_layers.zip!natural/Kamppi_parks.gpkg"</span></span>
+<span id="cb72-2"><a></a></span>
+<span id="cb72-3"><a></a>parks <span class="op">=</span> gpd.read_file(parks_fp)</span>
+<span id="cb72-4"><a></a>parks.head(<span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="732">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+
+<table class="dataframe caption-top" data-border="1">
+<thead>
+<tr class="header" style="text-align: right;">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">osmid</th>
+<th data-quarto-table-cell-role="th">leisure</th>
+<th data-quarto-table-cell-role="th">name</th>
+<th data-quarto-table-cell-role="th">geometry</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>8042256</td>
+<td>park</td>
+<td>Pikkuparlamentin puisto</td>
+<td>POLYGON ((385464.223 6672281.159, 385464.274 6...</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>8042613</td>
+<td>park</td>
+<td>Simonpuistikko</td>
+<td>POLYGON ((385532.543 6672073.355, 385490.887 6...</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="geopandas-intro-21" class="slide level2 scrollable">
+<h2>GeoPandas Intro</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Writing to different vector data formats</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb73"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb73-1"><a></a><span class="co"># Write to Shapefile</span></span>
+<span id="cb73-2"><a></a>outfp <span class="op">=</span> <span class="st">"data/Temp/austin_pop_2019.shp"</span></span>
+<span id="cb73-3"><a></a>data.to_file(outfp, driver<span class="op">=</span><span class="st">"ESRI Shapefile"</span>)</span>
+<span id="cb73-4"><a></a></span>
+<span id="cb73-5"><a></a><span class="co"># Write to MapInfo Tab</span></span>
+<span id="cb73-6"><a></a>outfp <span class="op">=</span> <span class="st">"data/Temp/austin_pop_2019.tab"</span></span>
+<span id="cb73-7"><a></a>data.to_file(outfp, driver<span class="op">=</span><span class="st">"MapInfo File"</span>)</span>
+<span id="cb73-8"><a></a></span>
+<span id="cb73-9"><a></a><span class="co"># Write to Geopackage</span></span>
+<span id="cb73-10"><a></a>outfp <span class="op">=</span> <span class="st">"data/Temp/austin_pop_2019.gpkg"</span></span>
+<span id="cb73-11"><a></a>data.to_file(outfp, driver<span class="op">=</span><span class="st">"GPKG"</span>)</span>
+<span id="cb73-12"><a></a></span>
+<span id="cb73-13"><a></a><span class="co"># Write to GeoJSON</span></span>
+<span id="cb73-14"><a></a>outfp <span class="op">=</span> <span class="st">"data/Temp/austin_pop_2019.geojson"</span></span>
+<span id="cb73-15"><a></a>data.to_file(outfp, driver<span class="op">=</span><span class="st">"GeoJSON"</span>)</span>
+<span id="cb73-16"><a></a></span>
+<span id="cb73-17"><a></a><span class="co"># Write to KML</span></span>
+<span id="cb73-18"><a></a>outfp <span class="op">=</span> <span class="st">"data/Temp/austin_pop_2019.kml"</span></span>
+<span id="cb73-19"><a></a>data.to_file(outfp, driver<span class="op">=</span><span class="st">"LIBKML"</span>)</span>
+<span id="cb73-20"><a></a></span>
+<span id="cb73-21"><a></a><span class="co"># Write to File Geodatabase</span></span>
+<span id="cb73-22"><a></a>outfp <span class="op">=</span> <span class="st">"data/Temp/austin_pop_2019.gdb"</span></span>
+<span id="cb73-23"><a></a>data.to_file(outfp, driver<span class="op">=</span><span class="st">"OpenFileGDB"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</section>
+<section id="geopandas-intro-22" class="slide level2">
+<h2>GeoPandas Intro</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Creating a GeoDataFrame from scratch</strong></p>
+</div>
+<div class="callout-content">
+<div id="da7c8f70" class="cell" data-execution_count="44">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb74"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb74-1"><a></a><span class="im">from</span> shapely.geometry <span class="im">import</span> Polygon</span>
+<span id="cb74-2"><a></a></span>
+<span id="cb74-3"><a></a>coordinates <span class="op">=</span> [</span>
+<span id="cb74-4"><a></a>    (<span class="fl">24.950899</span>, <span class="fl">60.169158</span>),</span>
+<span id="cb74-5"><a></a>    (<span class="fl">24.953492</span>, <span class="fl">60.169158</span>),</span>
+<span id="cb74-6"><a></a>    (<span class="fl">24.953510</span>, <span class="fl">60.170104</span>),</span>
+<span id="cb74-7"><a></a>    (<span class="fl">24.950958</span>, <span class="fl">60.169990</span>),</span>
+<span id="cb74-8"><a></a>]</span>
+<span id="cb74-9"><a></a></span>
+<span id="cb74-10"><a></a>poly <span class="op">=</span> Polygon(coordinates)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="geopandas-intro-23" class="slide level2 scrollable">
+<h2>GeoPandas Intro</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Creating a GeoDataFrame from scratch</strong></p>
+</div>
+<div class="callout-content">
+<p>Now we can use this polygon and create a <code>GeoDataFrame</code> from scratch with geopandas.</p>
+<div id="e87b3a82" class="cell" data-execution_count="45">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb75"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb75-1"><a></a>newdata <span class="op">=</span> gpd.GeoDataFrame(geometry<span class="op">=</span>[poly])</span>
+<span id="cb75-2"><a></a>newdata</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="734">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+
+<table class="dataframe caption-top" data-border="1">
+<thead>
+<tr class="header" style="text-align: right;">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">geometry</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>POLYGON ((24.9509 60.16916, 24.95349 60.16916,...</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<div id="20d52179" class="cell" data-execution_count="46">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb76"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb76-1"><a></a>newdata.plot()<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure>
+<p><img data-src="bigdata_lec7_files/figure-revealjs/cell-46-output-1.png" width="830" height="342"></p>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="geopandas-intro-24" class="slide level2">
+<h2>GeoPandas Intro</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Creating a GeoDataFrame from scratch</strong></p>
+</div>
+<div class="callout-content">
+<p>We can create a <code>GeoDataFrame</code> from scratch with multiple attributes by passing a Python <code>dictionary</code> into the <code>GeoDataFrame</code> object as follows:</p>
+<div id="5add8b19" class="cell" data-execution_count="47">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb77"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb77-1"><a></a>gdf_data <span class="op">=</span> {</span>
+<span id="cb77-2"><a></a>    <span class="st">"geometry"</span>: [poly],</span>
+<span id="cb77-3"><a></a>    <span class="st">"name"</span>: <span class="st">"Senate Square"</span>,</span>
+<span id="cb77-4"><a></a>    <span class="st">"city"</span>: <span class="st">"Helsinki"</span>,</span>
+<span id="cb77-5"><a></a>    <span class="st">"year"</span>: <span class="dv">2023</span>,</span>
+<span id="cb77-6"><a></a>}</span>
+<span id="cb77-7"><a></a>new_data_extended <span class="op">=</span> gpd.GeoDataFrame(gdf_data)</span>
+<span id="cb77-8"><a></a>new_data_extended</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="736">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+
+<table class="dataframe caption-top" data-border="1">
+<thead>
+<tr class="header" style="text-align: right;">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">geometry</th>
+<th data-quarto-table-cell-role="th">name</th>
+<th data-quarto-table-cell-role="th">city</th>
+<th data-quarto-table-cell-role="th">year</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>POLYGON ((24.9509 60.16916, 24.95349 60.16916,...</td>
+<td>Senate Square</td>
+<td>Helsinki</td>
+<td>2023</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="geopandas-intro-25" class="slide level2 scrollable">
+<h2>GeoPandas Intro</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Creating a GeoDataFrame from a text file</strong></p>
+</div>
+<div class="callout-content">
+<p>To demonstrate this, we have some example data below that contains point coordinates of airports derived from <a href="https://openflights.org/data.html">openflights.org</a>. The operation of turning this data into a <code>GeoDataFrame</code> begins with reading the data with pandas into a <code>DataFrame</code>.</p>
+<div id="c48cff81" class="cell" data-execution_count="48">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb78"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb78-1"><a></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb78-2"><a></a></span>
+<span id="cb78-3"><a></a>airports <span class="op">=</span> pd.read_csv(</span>
+<span id="cb78-4"><a></a>    <span class="st">"_data/Airports/airports.txt"</span>,</span>
+<span id="cb78-5"><a></a>    usecols<span class="op">=</span>[<span class="st">"Airport ID"</span>, <span class="st">"Name"</span>, <span class="st">"City"</span>, <span class="st">"Country"</span>, <span class="st">"Latitude"</span>, <span class="st">"Longitude"</span>],</span>
+<span id="cb78-6"><a></a>)</span>
+<span id="cb78-7"><a></a>airports.head()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="737">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+
+<table class="dataframe caption-top" data-border="1">
+<thead>
+<tr class="header" style="text-align: right;">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">Airport ID</th>
+<th data-quarto-table-cell-role="th">Name</th>
+<th data-quarto-table-cell-role="th">City</th>
+<th data-quarto-table-cell-role="th">Country</th>
+<th data-quarto-table-cell-role="th">Latitude</th>
+<th data-quarto-table-cell-role="th">Longitude</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>1</td>
+<td>Goroka Airport</td>
+<td>Goroka</td>
+<td>Papua New Guinea</td>
+<td>-6.081690</td>
+<td>145.391998</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>2</td>
+<td>Madang Airport</td>
+<td>Madang</td>
+<td>Papua New Guinea</td>
+<td>-5.207080</td>
+<td>145.789001</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>3</td>
+<td>Mount Hagen Kagamuga Airport</td>
+<td>Mount Hagen</td>
+<td>Papua New Guinea</td>
+<td>-5.826790</td>
+<td>144.296005</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>4</td>
+<td>Nadzab Airport</td>
+<td>Nadzab</td>
+<td>Papua New Guinea</td>
+<td>-6.569803</td>
+<td>146.725977</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
+<td>5</td>
+<td>Port Moresby Jacksons International Airport</td>
+<td>Port Moresby</td>
+<td>Papua New Guinea</td>
+<td>-9.443380</td>
+<td>147.220001</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<div id="776ee4c0" class="cell" data-execution_count="49">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb79"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb79-1"><a></a><span class="bu">type</span>(airports)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="738">
+<pre><code>pandas.core.frame.DataFrame</code></pre>
+</div>
+</div>
+<div id="76dc3193" class="cell" data-execution_count="50">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb81"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb81-1"><a></a><span class="bu">len</span>(airports)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="739">
+<pre><code>7698</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="geopandas-intro-26" class="slide level2 scrollable">
+<h2>GeoPandas Intro</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Creating a GeoDataFrame from a text file</strong></p>
+</div>
+<div class="callout-content">
+<p>We can use this coordinate information for turning this data into a <code>GeoDataFrame</code> and ultimately visualizing the data on a map. There is a handy function in geopandas called <code>.points_from_xy()</code> for generating an array of <code>Point</code> objects based on <code>x</code> and <code>y</code> coordinates.</p>
+<div id="802cdc1b" class="cell" data-execution_count="51">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb83"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb83-1"><a></a>airports[<span class="st">"geometry"</span>] <span class="op">=</span> gpd.points_from_xy(</span>
+<span id="cb83-2"><a></a>    x<span class="op">=</span>airports[<span class="st">"Longitude"</span>], y<span class="op">=</span>airports[<span class="st">"Latitude"</span>]</span>
+<span id="cb83-3"><a></a>)</span>
+<span id="cb83-4"><a></a></span>
+<span id="cb83-5"><a></a>airports <span class="op">=</span> gpd.GeoDataFrame(airports)</span>
+<span id="cb83-6"><a></a>airports.head()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="740">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+
+<table class="dataframe caption-top" data-border="1">
+<thead>
+<tr class="header" style="text-align: right;">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">Airport ID</th>
+<th data-quarto-table-cell-role="th">Name</th>
+<th data-quarto-table-cell-role="th">City</th>
+<th data-quarto-table-cell-role="th">Country</th>
+<th data-quarto-table-cell-role="th">Latitude</th>
+<th data-quarto-table-cell-role="th">Longitude</th>
+<th data-quarto-table-cell-role="th">geometry</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>1</td>
+<td>Goroka Airport</td>
+<td>Goroka</td>
+<td>Papua New Guinea</td>
+<td>-6.081690</td>
+<td>145.391998</td>
+<td>POINT (145.392 -6.08169)</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>2</td>
+<td>Madang Airport</td>
+<td>Madang</td>
+<td>Papua New Guinea</td>
+<td>-5.207080</td>
+<td>145.789001</td>
+<td>POINT (145.789 -5.20708)</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>3</td>
+<td>Mount Hagen Kagamuga Airport</td>
+<td>Mount Hagen</td>
+<td>Papua New Guinea</td>
+<td>-5.826790</td>
+<td>144.296005</td>
+<td>POINT (144.29601 -5.82679)</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>4</td>
+<td>Nadzab Airport</td>
+<td>Nadzab</td>
+<td>Papua New Guinea</td>
+<td>-6.569803</td>
+<td>146.725977</td>
+<td>POINT (146.72598 -6.5698)</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
+<td>5</td>
+<td>Port Moresby Jacksons International Airport</td>
+<td>Port Moresby</td>
+<td>Papua New Guinea</td>
+<td>-9.443380</td>
+<td>147.220001</td>
+<td>POINT (147.22 -9.44338)</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<div id="075e767e" class="cell" data-execution_count="52">
+<div class="cell-output cell-output-display" data-execution_count="741">
+<pre><code>geopandas.geodataframe.GeoDataFrame</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="geopandas-intro-27" class="slide level2 scrollable">
+<h2>GeoPandas Intro</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Creating a GeoDataFrame from a text file</strong></p>
+</div>
+<div class="callout-content">
+<p>The <code>GeoDataFrame</code> was created with a couple of steps.</p>
+<ol type="1">
+<li>We created a new column called <code>geometry</code> into the <code>DataFrame</code> and used the <code>.points_from_xy()</code> function to turn the coordinates into <code>shapely</code> <code>Point</code> objects. At this stage, the data is still in a <code>DataFrame</code> format.</li>
+<li>The second command in the code snippet converts the pandas <code>DataFrame</code> into a <code>GeoDataFrame</code> which then has all the capabilities and tools bundled with geopandas. After these two steps, we have succesfully turned the data into geospatial format and we can for example plot the data on a map:</li>
+</ol>
+<div id="450e0ac0" class="cell" data-execution_count="53">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb85"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb85-1"><a></a>airports.plot(markersize<span class="op">=</span><span class="fl">0.1</span>)<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure>
+<p><img data-src="bigdata_lec7_files/figure-revealjs/cell-53-output-1.png" width="798" height="411"></p>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+
+</section></section>
+    </div>
+  <div class="quarto-auto-generated-content" style="display: none;">
+<div class="footer footer-default">
+
+</div>
+</div></div>
+
+  <script>window.backupDefine = window.define; window.define = undefined;</script>
+  <script src="site_libs/revealjs/dist/reveal.js"></script>
+  <!-- reveal.js plugins -->
+  <script src="site_libs/revealjs/plugin/quarto-line-highlight/line-highlight.js"></script>
+  <script src="site_libs/revealjs/plugin/pdf-export/pdfexport.js"></script>
+  <script src="site_libs/revealjs/plugin/reveal-menu/menu.js"></script>
+  <script src="site_libs/revealjs/plugin/reveal-menu/quarto-menu.js"></script>
+  <script src="site_libs/revealjs/plugin/multiplex/socket.io.js"></script>
+  <script src="site_libs/revealjs/plugin/multiplex/multiplex.js"></script>
+  <script src="site_libs/revealjs/plugin/quarto-support/support.js"></script>
+  
+
+  <script src="site_libs/revealjs/plugin/notes/notes.js"></script>
+  <script src="site_libs/revealjs/plugin/search/search.js"></script>
+  <script src="site_libs/revealjs/plugin/zoom/zoom.js"></script>
+  <script src="site_libs/revealjs/plugin/math/math.js"></script>
+  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script>
+
+  <script>
+
+      // Full list of configuration options available at:
+      // https://revealjs.com/config/
+      Reveal.initialize({
+'controlsAuto': true,
+'previewLinksAuto': true,
+'pdfSeparateFragments': false,
+'autoAnimateEasing': "ease",
+'autoAnimateDuration': 1,
+'autoAnimateUnmatched': true,
+'jumpToSlide': true,
+'menu': {"side":"left","useTextContentForMissingTitles":true,"markers":false,"loadIcons":false,"custom":[{"title":"Tools","icon":"<i class=\"fas fa-gear\"></i>","content":"<ul class=\"slide-menu-items\">\n<li class=\"slide-tool-item active\" data-item=\"0\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.fullscreen(event)\"><kbd>f</kbd> Fullscreen</a></li>\n<li class=\"slide-tool-item\" data-item=\"1\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.speakerMode(event)\"><kbd>s</kbd> Speaker View</a></li>\n<li class=\"slide-tool-item\" data-item=\"2\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.overview(event)\"><kbd>o</kbd> Slide Overview</a></li>\n<li class=\"slide-tool-item\" data-item=\"3\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.togglePdfExport(event)\"><kbd>e</kbd> PDF Export Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"4\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.toggleScrollView(event)\"><kbd>r</kbd> Scroll View Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"5\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.keyboardHelp(event)\"><kbd>?</kbd> Keyboard Help</a></li>\n</ul>"}],"openButton":true},
+'multiplex': {"url":"https://mplex.vitv.ly","secret":"a8ec82984651e86fa95bf7dc4a1b8de2","id":"8c59ccb7e4dfa2211ed14fa17fb72b1b76d07c2cab789dac3e2fe06135105e8a"},
+'smaller': false,
+ 
+        // Display controls in the bottom right corner
+        controls: false,
+
+        // Help the user learn the controls by providing hints, for example by
+        // bouncing the down arrow when they first encounter a vertical slide
+        controlsTutorial: false,
+
+        // Determines where controls appear, "edges" or "bottom-right"
+        controlsLayout: 'edges',
+
+        // Visibility rule for backwards navigation arrows; "faded", "hidden"
+        // or "visible"
+        controlsBackArrows: 'faded',
+
+        // Display a presentation progress bar
+        progress: true,
+
+        // Display the page number of the current slide
+        slideNumber: 'c/t',
+
+        // 'all', 'print', or 'speaker'
+        showSlideNumber: 'all',
+
+        // Add the current slide number to the URL hash so that reloading the
+        // page/copying the URL will return you to the same slide
+        hash: true,
+
+        // Start with 1 for the hash rather than 0
+        hashOneBasedIndex: false,
+
+        // Flags if we should monitor the hash and change slides accordingly
+        respondToHashChanges: true,
+
+        // Push each slide change to the browser history
+        history: true,
+
+        // Enable keyboard shortcuts for navigation
+        keyboard: true,
+
+        // Enable the slide overview mode
+        overview: true,
+
+        // Disables the default reveal.js slide layout (scaling and centering)
+        // so that you can use custom CSS layout
+        disableLayout: false,
+
+        // Vertical centering of slides
+        center: false,
+
+        // Enables touch navigation on devices with touch input
+        touch: true,
+
+        // Loop the presentation
+        loop: false,
+
+        // Change the presentation direction to be RTL
+        rtl: false,
+
+        // see https://revealjs.com/vertical-slides/#navigation-mode
+        navigationMode: 'linear',
+
+        // Randomizes the order of slides each time the presentation loads
+        shuffle: false,
+
+        // Turns fragments on and off globally
+        fragments: true,
+
+        // Flags whether to include the current fragment in the URL,
+        // so that reloading brings you to the same fragment position
+        fragmentInURL: false,
+
+        // Flags if the presentation is running in an embedded mode,
+        // i.e. contained within a limited portion of the screen
+        embedded: false,
+
+        // Flags if we should show a help overlay when the questionmark
+        // key is pressed
+        help: true,
+
+        // Flags if it should be possible to pause the presentation (blackout)
+        pause: true,
+
+        // Flags if speaker notes should be visible to all viewers
+        showNotes: false,
+
+        // Global override for autoplaying embedded media (null/true/false)
+        autoPlayMedia: null,
+
+        // Global override for preloading lazy-loaded iframes (null/true/false)
+        preloadIframes: null,
+
+        // Number of milliseconds between automatically proceeding to the
+        // next slide, disabled when set to 0, this value can be overwritten
+        // by using a data-autoslide attribute on your slides
+        autoSlide: 0,
+
+        // Stop auto-sliding after user input
+        autoSlideStoppable: true,
+
+        // Use this method for navigation when auto-sliding
+        autoSlideMethod: null,
+
+        // Specify the average time in seconds that you think you will spend
+        // presenting each slide. This is used to show a pacing timer in the
+        // speaker view
+        defaultTiming: null,
+
+        // Enable slide navigation via mouse wheel
+        mouseWheel: false,
+
+        // The display mode that will be used to show slides
+        display: 'block',
+
+        // Hide cursor if inactive
+        hideInactiveCursor: true,
+
+        // Time before the cursor is hidden (in ms)
+        hideCursorTime: 5000,
+
+        // Opens links in an iframe preview overlay
+        previewLinks: false,
+
+        // Transition style (none/fade/slide/convex/concave/zoom)
+        transition: 'none',
+
+        // Transition speed (default/fast/slow)
+        transitionSpeed: 'default',
+
+        // Transition style for full page slide backgrounds
+        // (none/fade/slide/convex/concave/zoom)
+        backgroundTransition: 'none',
+
+        // Number of slides away from the current that are visible
+        viewDistance: 3,
+
+        // Number of slides away from the current that are visible on mobile
+        // devices. It is advisable to set this to a lower number than
+        // viewDistance in order to save resources.
+        mobileViewDistance: 2,
+
+        // The "normal" size of the presentation, aspect ratio will be preserved
+        // when the presentation is scaled to fit different resolutions. Can be
+        // specified using percentage units.
+        width: 1050,
+
+        height: 700,
+
+        // Factor of the display size that should remain empty around the content
+        margin: 0.1,
+
+        math: {
+          mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@2.7.9/MathJax.js',
+          config: 'TeX-AMS_HTML-full',
+          tex2jax: {
+            inlineMath: [['\\(','\\)']],
+            displayMath: [['\\[','\\]']],
+            balanceBraces: true,
+            processEscapes: false,
+            processRefs: true,
+            processEnvironments: true,
+            preview: 'TeX',
+            skipTags: ['script','noscript','style','textarea','pre','code'],
+            ignoreClass: 'tex2jax_ignore',
+            processClass: 'tex2jax_process'
+          },
+        },
+
+        // reveal.js plugins
+        plugins: [QuartoLineHighlight, PdfExport, RevealMenu, QuartoSupport,
+
+          RevealMath,
+          RevealNotes,
+          RevealSearch,
+          RevealZoom
+        ]
+      });
+    </script>
+    <script id="quarto-html-after-body" type="application/javascript">
+      window.document.addEventListener("DOMContentLoaded", function (event) {
+        const tabsets =  window.document.querySelectorAll(".panel-tabset-tabby")
+        tabsets.forEach(function(tabset) {
+          const tabby = new Tabby('#' + tabset.id);
+        });
+        const isCodeAnnotation = (el) => {
+          for (const clz of el.classList) {
+            if (clz.startsWith('code-annotation-')) {                     
+              return true;
+            }
+          }
+          return false;
+        }
+        const onCopySuccess = function(e) {
+          // button target
+          const button = e.trigger;
+          // don't keep focus
+          button.blur();
+          // flash "checked"
+          button.classList.add('code-copy-button-checked');
+          var currentTitle = button.getAttribute("title");
+          button.setAttribute("title", "Copied!");
+          let tooltip;
+          if (window.bootstrap) {
+            button.setAttribute("data-bs-toggle", "tooltip");
+            button.setAttribute("data-bs-placement", "left");
+            button.setAttribute("data-bs-title", "Copied!");
+            tooltip = new bootstrap.Tooltip(button, 
+              { trigger: "manual", 
+                customClass: "code-copy-button-tooltip",
+                offset: [0, -8]});
+            tooltip.show();    
+          }
+          setTimeout(function() {
+            if (tooltip) {
+              tooltip.hide();
+              button.removeAttribute("data-bs-title");
+              button.removeAttribute("data-bs-toggle");
+              button.removeAttribute("data-bs-placement");
+            }
+            button.setAttribute("title", currentTitle);
+            button.classList.remove('code-copy-button-checked');
+          }, 1000);
+          // clear code selection
+          e.clearSelection();
+        }
+        const getTextToCopy = function(trigger) {
+          const outerScaffold = trigger.parentElement.cloneNode(true);
+          const codeEl = outerScaffold.querySelector('code');
+          for (const childEl of codeEl.children) {
+            if (isCodeAnnotation(childEl)) {
+              childEl.remove();
+            }
+          }
+          return codeEl.innerText;
+        }
+        const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+          text: getTextToCopy
+        });
+        clipboard.on('success', onCopySuccess);
+        if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+          const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+            text: getTextToCopy,
+            container: window.document.getElementById('quarto-embedded-source-code-modal')
+          });
+          clipboardModal.on('success', onCopySuccess);
+        }
+          var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+          var mailtoRegex = new RegExp(/^mailto:/);
+            var filterRegex = new RegExp("https:\/\/dslnu\.github\.io\/data_analytics\/");
+          var isInternal = (href) => {
+              return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+          }
+          // Inspect non-navigation links and adorn them if external
+         var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+          for (var i=0; i<links.length; i++) {
+            const link = links[i];
+            if (!isInternal(link.href)) {
+              // undo the damage that might have been done by quarto-nav.js in the case of
+              // links that we want to consider external
+              if (link.dataset.originalHref !== undefined) {
+                link.href = link.dataset.originalHref;
+              }
+            }
+          }
+        function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+          const config = {
+            allowHTML: true,
+            maxWidth: 500,
+            delay: 100,
+            arrow: false,
+            appendTo: function(el) {
+                return el.closest('section.slide') || el.parentElement;
+            },
+            interactive: true,
+            interactiveBorder: 10,
+            theme: 'light-border',
+            placement: 'bottom-start',
+          };
+          if (contentFn) {
+            config.content = contentFn;
+          }
+          if (onTriggerFn) {
+            config.onTrigger = onTriggerFn;
+          }
+          if (onUntriggerFn) {
+            config.onUntrigger = onUntriggerFn;
+          }
+            config['offset'] = [0,0];
+            config['maxWidth'] = 700;
+          window.tippy(el, config); 
+        }
+        const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+        for (var i=0; i<noterefs.length; i++) {
+          const ref = noterefs[i];
+          tippyHover(ref, function() {
+            // use id or data attribute instead here
+            let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+            try { href = new URL(href).hash; } catch {}
+            const id = href.replace(/^#\/?/, "");
+            const note = window.document.getElementById(id);
+            if (note) {
+              return note.innerHTML;
+            } else {
+              return "";
+            }
+          });
+        }
+        const findCites = (el) => {
+          const parentEl = el.parentElement;
+          if (parentEl) {
+            const cites = parentEl.dataset.cites;
+            if (cites) {
+              return {
+                el,
+                cites: cites.split(' ')
+              };
+            } else {
+              return findCites(el.parentElement)
+            }
+          } else {
+            return undefined;
+          }
+        };
+        var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+        for (var i=0; i<bibliorefs.length; i++) {
+          const ref = bibliorefs[i];
+          const citeInfo = findCites(ref);
+          if (citeInfo) {
+            tippyHover(citeInfo.el, function() {
+              var popup = window.document.createElement('div');
+              citeInfo.cites.forEach(function(cite) {
+                var citeDiv = window.document.createElement('div');
+                citeDiv.classList.add('hanging-indent');
+                citeDiv.classList.add('csl-entry');
+                var biblioDiv = window.document.getElementById('ref-' + cite);
+                if (biblioDiv) {
+                  citeDiv.innerHTML = biblioDiv.innerHTML;
+                }
+                popup.appendChild(citeDiv);
+              });
+              return popup.innerHTML;
+            });
+          }
+        }
+      });
+      </script>
+    
+
+</body></html>
