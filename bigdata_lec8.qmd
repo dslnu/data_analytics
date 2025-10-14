@@ -1,0 +1,1052 @@
+---
+title: "Big Data: GeoScience part 2"
+author: 
+  - name: MSDE
+    affiliation: Lviv University
+code-fold: false
+execute:
+  enabled: true
+  cache: true
+diagram:
+  cache: true
+  cache-dir: ./cache
+  engine:
+    tikz:
+      execpath: lualatex
+      additional-packages: |
+        \usetikzlibrary{arrows.meta}
+        \usetikzlibrary{positioning}
+        \usetikzlibrary{decorations.pathreplacing}
+filters:
+  - diagram
+format: 
+  revealjs:
+    css: custom.css
+    preview-links: auto
+    slide-number: true
+    theme: default
+    multiplex:
+      url: 'https://mplex.vitv.ly'
+      secret: 'a8ec82984651e86fa95bf7dc4a1b8de2'
+      id: '8c59ccb7e4dfa2211ed14fa17fb72b1b76d07c2cab789dac3e2fe06135105e8a'
+---
+
+
+# Common geometric operations
+## Common geometric operations
+:::{.callout-tip icon=false}
+## Description
+Geometric operations refer to a set of methods that can be used to process and analyze geometric features, like points, lines and polygons. 
+
+Answer the question about how two or more geographic objects relate to each other:
+
+- intersect
+- touch
+- overlap
+- adjacent to one another?
+- distance between them
+
+```{python}
+#| echo: true
+import geopandas as gpd
+from pathlib import Path
+
+# Define path do the data
+data_folder = Path("_data/Austin")
+fp = data_folder / "austin_pop_density_2019.gpkg"
+
+# Read in the data and check the contents
+data = gpd.read_file(fp)
+data.head()
+```
+:::
+
+## Common geometric operations
+:::{.callout-tip icon=false}
+## Check and plot
+```{python}
+#| echo: true
+data["geometry"].head()
+```
+
+```{python}
+#| echo: true
+# Check data type of the geometry column
+type(data["geometry"])
+```
+
+```{python}
+#| echo: true
+# Check data type of a value in the geometry column
+type(data["geometry"].values[0])
+```
+
+<!-- #region editable=true slideshow={"slide_type": ""} -->
+Let's first plot the original geometries. We can use the built-in `.plot()` function in `geopandas` to plot the geometries, and `matplotlib.pyplot` to turn off axis lines and labels:
+<!-- #endregion -->
+
+```{python}
+#| echo: true
+import matplotlib.pyplot as plt
+
+data.plot(facecolor="none", linewidth=0.2)
+
+plt.axis("off")
+plt.show()
+```
+:::
+
+## Common geometric operations
+:::{.callout-tip icon=false}
+## Centroid
+
+- The centroid of a geometry is the geometric center of a given geometry (line, polygon or a geometry collection).
+- Geometric centroids can, for example, be used for locating text labels in visualizations. 
+- The data should be in a projected coordinate reference system when calculating the centroids. 
+
+```{python}
+#| echo: true
+data.crs.name
+```
+
+```{python}
+#| echo: true
+data["geometry"].centroid.head()
+```
+
+We can also apply the method directly to the `GeoDataFrame` to achieve the same result using the syntax `data.centroid`. At the same time, we can also  plot the centroids for a visual check:
+
+```{python}
+#| echo: true
+data.centroid.plot(markersize=1)
+
+plt.axis("off")
+plt.show()
+```
+:::
+
+## Common geometric operations
+:::{.callout-tip icon=false}
+## Unary union
+
+A unary union operation combines multiple geometric objects into a single, unified geometric shape.
+
+There are 2 methods: `.union_all()` and `.dissolve()`.
+
+Both the `.union_all()` and the `.dissolve()` support two different kind of algorithms to form the merged geometry:
+
+- `"unary"` (the default)
+- `"coverage"` which is optimized for non-overlapping polygons and can be significantly faster to compute. 
+:::
+
+## Common geometric operations
+:::{.callout-tip icon=false}
+## Unary union
+
+1. The `.union_all()` returns a single geometry object, which is automatically visualized when running the code in a Jupyter Notebook:
+
+```{python}
+#| echo: true
+data.union_all()
+```
+The `.union_all()` method returns a `shapely` polygon object out of the results.
+:::
+
+## Common geometric operations
+:::{.callout-tip icon=false}
+## Unary union
+
+It is also possible to merge geometries using a method called `.dissolve()` that returns a `GeoDataFrame` as an output (with aggregated attribute information).
+
+As our data here, does not have any overlapping polygons, we can test how merging the geometries work with the `"coverage"` algorithm:
+
+```{python}
+#| echo: true
+# Merge geometries using coverage algorithm
+dissolved = data.dissolve(method="coverage")
+dissolved.head()
+```
+
+```python
+# Get the shapely geometry
+dissolved.geometry[0]
+```
+:::
+
+<!--As a result, the `dissolved` variable now contains the merged geometry as well as the attribute information associated with it. When looking at the returned geometry, we can see that it is identical to the one returned by `.union_all()` method. Notice that by default the `.dissolve()` simply stores the first row of data as an attribute information. It is, however, possible to control how the attribute information should be aggregated/summarized, e.g. by summing the values. Read more information about this later from the section where we introduce more thoroughly the functionality of `.dissolve()`. -->
+
+
+## Common geometric operations
+:::{.callout-tip icon=false}
+## Bounding polygon
+
+A bounding polygon, often referred to as a bounding box or envelope, is the smallest rectangular polygon that encloses a given geometry or a set of geometries.
+
+- used for preliminary filtering, because it provides a computationally simple way to test for possible intersections or proximities between geometries
+- multiple methods: axis-aligned *envelope*, *minimum rotated rectangle*, and *minimum bounding circle*
+
+In a `GeoDataFrame`, we can easily return the minimum axis-aligned bounding rectangle of geometries by using the `.envelope` attribute which returns the bounding rectangle for each geometry:
+<!-- #endregion -->
+
+```{python}
+#| echo: true
+data.envelope.head()
+```
+
+In order to get the bounding rectangle for the whole layer, we  first create an union of all geometries using the `.union_all()` method, and then extract the bounding rectangle for that polygon using the `.envelope`:
+
+```{python}
+#| echo: true
+data.union_all().envelope
+```
+:::
+
+## Common geometric operations
+:::{.callout-tip icon=false}
+## Bounding polygon
+
+Corner coordinates of the bounding box for a `GeoDataFrame` can be fetched via the `total_bounds` attribute: 
+
+```{python}
+#| echo: true
+data.total_bounds
+```
+
+The `bounds` attribute returns the bounding coordinates of each feature:
+
+```{python}
+#| echo: true
+data.bounds.head()
+```
+:::
+
+
+## Common geometric operations
+:::{.callout-tip icon=false}
+## Bounding polygon
+Similarly, it is possible to get the *minimum rotated rectangle* and *minimum bounding circle*  with `geopandas` by using the `.minimum_rotated_rectangle()` and `.minimum_bounding_circle()` methods respectively. 
+
+```{python}
+#| echo: true
+data.dissolve().minimum_rotated_rectangle().geometry[0]
+```
+
+```{python}
+#| echo: true
+data.dissolve().minimum_bounding_circle().geometry[0]
+```
+:::
+
+## Common geometric operations
+:::{.callout-tip icon=false}
+## Convex hull
+
+A bit more detailed delineation of the data extent can be extracted using a convex hull which represents the smalles possible polygon that contains all points in an object.
+
+In geocomputation, the convex hull is used for various tasks as it can be used to easily provide a simplified representation of a set of points or a more complex geometry. 
+
+```{python}
+#| echo: true
+data.convex_hull.head()
+```
+
+In order to create a convex hull for the whole extent, we need to first create an union of all polygons. 
+
+```{python}
+#| echo: true
+data.union_all().convex_hull
+```
+:::
+
+
+## Common geometric operations
+:::{.callout-tip icon=false}
+## Concave hull
+
+A concave hull is a polygon that encloses a set of points but, unlike the convex hull, is allowed to have concavities. 
+
+In `geopandas`, the hull is constructed by removing border triangles of a process called Delaunay Triangulation of the points based on specific criteria. 
+```{python}
+#| echo: true
+data.concave_hull().head()
+```
+:::
+
+## Common geometric operations
+:::{.callout-tip icon=false}
+## Concave hull
+If we want to return the concave hull for all geometries, we need to do a couple of tricks because this functionality does not come directly from shapely but is implemented only on geopandas
+
+```{python}
+#| echo: true
+concave_hull = data.dissolve().concave_hull()
+concave_hull.plot();
+```
+
+Looks weird. There are parameters we can tinker with:
+
+- `ratio`: value between 0.0 - 1.0. The higher the number, the fewer the number of vertices will be kept in the output. 
+- `allow_holes`
+:::
+
+## Common geometric operations
+:::{.callout-tip icon=false}
+## Concave hull
+
+```{python}
+#| echo: true
+# Create GeoDataFrame of the union
+gdf_union = data.dissolve()
+
+# Ratio 0.05
+concave_hull_a = gdf_union.concave_hull(ratio=0.05)
+
+# Ratio 0.2
+concave_hull_b = gdf_union.concave_hull(ratio=0.2)
+
+# Ratio 0.4
+concave_hull_c = gdf_union.concave_hull(ratio=0.4)
+```
+
+<!-- #region editable=true slideshow={"slide_type": ""} -->
+Now, let's plot these geometries side by side, so it is easy to compare them:
+
+```{python}
+#| echo: true
+import matplotlib.pyplot as plt
+
+# Create subplots
+fig, (ax1, ax2, ax3) = plt.subplots(ncols=3)
+
+# Plot side by side
+concave_hull_a.plot(ax=ax1)
+concave_hull_b.plot(ax=ax2)
+concave_hull_c.plot(ax=ax3)
+
+# Remove axis texts
+ax1.axis("off")
+ax2.axis("off")
+ax3.axis("off")
+
+# Add titles
+ax1.set_title("Ratio 0.05")
+ax2.set_title("Ratio 0.2")
+ax3.set_title("Ratio 0.4");
+```
+:::
+
+## Common geometric operations
+:::{.callout-tip icon=false}
+## Simplifying geometries
+
+An function in `geopandas` called `.simplify()` can also be used to simplify geometries.
+
+- In comparison to the concave hull, this function also works with `LineString` geometries in addition to polygons.
+- The `tolerance` parameter can be used to control the level of simplification. The units for this parameter follow the input coordinates (meters/degrees depending on coordinates).
+
+Uses a Douglas-Peucker algorithm:
+
+- recursively split the original line into smaller parts
+- connect these parts’ endpoints by a straight line
+- remove all points whose distance to the straight line is smaller than the tolerance.
+- does not move any points and it always preserves endpoints of the original line or polygon. 
+:::
+
+## Common geometric operations
+:::{.callout-tip icon=false}
+## Simplifying geometries
+```{python}
+#| echo: true
+data.simplify(tolerance=1000).head()
+```
+
+In a similar manner as before, we can easily apply `.simplify()` to the extent of all geometries by first getting the unary union of the input geometries:
+
+```{python}
+#| echo: true
+data.union_all().simplify(tolerance=1000)
+```
+:::
+
+## Common geometric operations
+:::{.callout-tip icon=false}
+## Buffer
+
+A buffer refers to a geometric operation that creates a zone around a given geometry (or geometries), usually representing a certain distance from the shape.
+
+- Distance can be both positive and negative.
+- Example: in transport network analyses, it is good to fetch the transport network also from outside the study area in order to capture routes that go beyond the study area border. 
+- Buffer can be used with different geometry types, also with `Point` and `LineString` objects. 
+
+```{python}
+#| echo: true
+# 1000 m buffer for each polygon
+data.buffer(1000).plot(edgecolor="white")
+
+plt.axis("off")
+plt.show()
+```
+
+If we want only one buffer for the whole area, we first need to combine the geometries into one object before the buffer analysis: 
+
+```{python}
+#| echo: true
+# 1000 m buffer for each polygon
+data.union_all().buffer(1000)
+```
+:::
+
+## Common geometric operations
+:::{.callout-tip icon=false}
+## Dissolving and merging geometries
+More details on GeoPandas's `.dissolve()`:
+
+- Spatial data aggregation refers to combining geometries into coarser spatial units based on some attributes
+- The process may also include the calculation of summary statistics.
+- Similar to `pandas`'s `.groupby()` method. 
+
+```{python}
+#| echo: true
+# Create a new column and add a constant value
+data["dense"] = 0
+
+# Filter rows with above average pop density and update the column dense
+data.loc[data["pop_density_km2"] > data["pop_density_km2"].mean(), "dense"] = 1
+```
+
+We can easily check how many densily populated census tracts we got by using the `.value_counts()` method from pandas:
+
+```{python}
+#| echo: true
+data.dense.value_counts()
+```
+:::
+
+
+## Common geometric operations
+:::{.callout-tip icon=false}
+## Dissolving and merging geometries
+
+- we can use this `dense` column to dissolve the data into two groups using the `.dissolve()` function
+- and sum up the values in `pop2019` and the `area_km2` columns by using the `aggfunc` parameter. 
+
+```{python}
+#| echo: true
+# Conduct the aggregation
+dissolved = data[["pop2019", "area_km2", "dense", "geometry"]].dissolve(
+    by="dense", aggfunc="sum"
+)
+dissolved
+```
+
+Visualize:
+
+```{python}
+#| echo: true
+dissolved = dissolved.reset_index()
+```
+
+```{python}
+#| echo: true
+dissolved.plot(column="dense")
+
+plt.axis("off")
+plt.show()
+```
+:::
+
+## Common geometric operations
+:::{.callout-tip icon=false}
+## Exercise
+
+Create a 500m buffer zone around the dense areas in Austin and plot a simple map of this zone.
+
+<!--
+```python editable=true slideshow={"slide_type": ""} tags=["remove_book_cell", "hide-cell"]
+# Solution
+
+# Plot the admin borders as background
+ax1 = data.plot(color="grey")
+
+# Plot the buffer zone of dense areas on top
+dissolved.loc[dissolved["dense"] == 1].buffer(500).plot(
+    ax=ax1, alpha=0.5, color="yellow"
+)
+```
+-->
+:::
+
+## Common geometric operations
+:::{.callout-tip icon=false}
+## Changing the active geometry in a GeoDataFrame
+
+
+- how do we store the results of the geometric operations into `GeoDataFrame`?
+- how can we change/update the active geometry of the `GeoDataFrame` for representing the geometries in your data?
+
+Approaches:
+
+1. Overwrite the existing geometries in the `geometry` column by storing the new (manipulated) geometries into it.
+2. Create a new column (e.g. `centroid`) and store the new geometries into this one. Then activate/set this column as the "active geometry" for your `GeoDataFrame`. 
+:::
+
+:::{.callout-warning}
+## Note
+When saving the geographic data into disk, you can in most cases only include one column with geometries. An exception to this is `GeoParquet` file format which supports saving multiple geometry columns. 
+:::
+
+
+## Common geometric operations
+:::{.callout-tip icon=false}
+## Changing the active geometry in a GeoDataFrame
+
+1. Overwriting
+
+```{python}
+#| echo: true
+# Make a copy
+option_1 = data.copy()
+option_1["geometry"].head(2)
+```
+
+```{python}
+#| echo: true
+# Update the geometry column with centroids
+option_1["geometry"] = option_1.centroid
+print(option_1.head(2))
+```
+:::
+
+
+## Common geometric operations
+:::{.callout-tip icon=false}
+## Changing the active geometry in a GeoDataFrame
+2. Create a new column for storing the centroids.
+
+```{python}
+#| echo: true
+# Make a copy and Create a column with centroids
+option_2 = data.copy()
+option_2["centroid"] = data.centroid
+option_2.head(2)
+```
+
+By default, `geopandas` always uses the `geometry` column. However, we can easily change the active geometry with `.set_geometry()`:
+
+```{python}
+#| echo: true
+# Use centroids as the GeoDataFrame geometries
+option2 = option_2.set_geometry("centroid")
+option2.head(2)
+```
+
+```{python}
+#| echo: true
+option2.geometry.name
+```
+
+Check everything is ok:
+
+```{python}
+#| echo: true
+option2.plot();
+```
+:::
+
+
+# Working with map projections
+
+## Working with map projections
+:::{.callout-note icon=false}
+## CRS
+
+We will use [PROJ library](https://proj.org/) [^proj] which can be used through the [pyproj](https://pyproj4.github.io/pyproj/stable/) [^pyproj] Python library.
+
+We will reproject the dataset from the original WGS84 coordinate system into a Lambert Azimuthal Equal Area projection which is the projection that European Union [recommends for Europe](http://mapref.org/LinkedDocuments/MapProjectionsForEurope-EUR-20120.pdf).
+
+Let's start by reading the data from the `eu_countries_2022.gpkg` file. When reading the data into `GeoDataFrame` with `geopandas`, the CRS information is automatically read from the datafile and stored into the `.crs` attribute:
+
+```{python}
+#| echo: true
+import geopandas as gpd
+
+# Read the file
+fp = "_data/EU_countries/eu_countries_2022.gpkg"
+data = gpd.read_file(fp)
+
+# What is the type?
+print(type(data.crs))
+
+# Check the coordinate reference system information
+data.crs
+```
+
+What `geopandas` returns here is in fact a `CRS` object from the `pyproj` library. The EPSG code of our data is `4326` which refers to the WGS84 coordinate system. You will encounter this EPSG-code frequently in the geospatial world as it is perhaps the most commonly used coordinate reference system in the world. As we learned earlier, the EPSG number is an identification code that tells which is the coordinate system of a given dataset. In this case, we could also guess the probable CRS by looking at the coordinates values in the `geometry` column which are longitude and latitudes decimal degrees:
+
+```{python}
+#| echo: true
+data["geometry"].head()
+```
+As we can see, the coordinate values of the MultiPolygons here vary between 6-50 (approximately). Hence, our geometries very much look like {term}`decimal degrees` because all the coordinate values (such as `13.68400 46.43750`) are within the range of -180 to +180 (longitude) and -90 to +90 (latitude). WGS84 is one of the most typical CRS to use with datasets that cover data from different parts of the world. However, WGS84 is not really a good coordinate system for representing European borders on a map because the areas get distorted, especially towards the North pole. Hence, it is a good idea to convert these geometries into [Lambert Azimuthal Equal Area projection](http://spatialreference.org/ref/epsg/etrs89-etrs-laea/) [^LAEA] (EPSG:3035) which is a good option for creating maps with country-level data in Europe.
+
+:::
+
+## Working with map projections
+:::{.callout-note icon=false}
+## Reprojecting a GeoDataFrame
+
+In `geopandas`, the `.to_crs()` -method of a `GeoDataFrame` will perform coordinate transformations with given parameters. The method has two alternative parameters:
+
+1) `crs` which accepts CRS information from various formats, such as proj-strings or OGS WKT text;
+2) `epgs` that accepts the EPSG-code of a given coordinate system as a number. 
+
+```{python}
+#| echo: true
+# Let's make a backup copy of our data
+data_wgs84 = data.copy()
+
+# Reproject the data
+data = data.to_crs(epsg=3035)
+
+# Check the new geometry values
+data["geometry"].head()
+```
+
+```{python}
+#| echo: true
+# Check the new EPSG code
+data.crs.to_epsg()
+```
+:::
+
+## Working with map projections
+:::{.callout-note icon=false}
+## Reprojecting a GeoDataFrame
+Let's plot the original and reprojected data side-to-side. 
+
+```{python}
+#| echo: true
+import matplotlib.pyplot as plt
+
+# Make subplots that are next to each other
+fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(12, 12))
+
+# Plot the data in WGS84 CRS
+data_wgs84.plot(ax=ax1, facecolor="gray")
+
+# Plot the one with ETRS-LAEA projection
+data.plot(ax=ax2, facecolor="blue", edgecolor="white", lw=0.5)
+
+# Add titles
+ax1.set_title("WGS84")
+ax2.set_title("ETRS Lambert Azimuthal Equal Area projection")
+
+# Set aspect ratio as 1
+ax1.set_aspect(aspect=1)
+ax2.set_aspect(aspect=1)
+
+# Remove empty white space around the plot
+plt.tight_layout()
+```
+:::
+
+## Working with map projections
+:::{.callout-note icon=false}
+## Reprojecting a GeoDataFrame
+Let's save our projected layer into a Shapefile so that we can use it later.
+
+```{python}
+#| echo: true
+# Ouput filepath
+outfp = "_data/EU_countries/Europe_borders_epsg3035.shp"
+
+# Save to disk
+data.to_file(outfp)
+```
+:::
+
+## Working with map projections
+:::{.callout-note icon=false}
+## Exercise
+
+One of the recommended coordinate reference systems for Finland is [ETRS89 / TM35FIN (EPSG:3067)](https://spatialreference.org/ref/epsg/3067/).
+
+First, select Finland from our dataset of EU countries. Then, plot two maps of Finland where you compare the WGS84 (EPSG:4326) representation and ETRS89 / TM35FIN (EPSG:3067). You can achieve this by modifying the previous example for the whole EU. 
+
+<!--
+```python editable=true slideshow={"slide_type": ""} tags=["remove_book_cell", "hide-cell"]
+# Solution
+
+# Select Finland and reproject
+finland_wgs84 = data_wgs84.loc[data_wgs84["NAME_ENGL"] == "Finland"].copy()
+finland_etrs89 = finland_wgs84.to_crs(epsg=3067)
+
+# Make subplots that are next to each other
+fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(5, 5))
+
+# Plot the data in WGS84 CRS
+finland_wgs84.plot(ax=ax1, facecolor="gray")
+
+# Plot the one with ETRS-LAEA projection
+finland_etrs89.plot(ax=ax2, facecolor="blue", edgecolor="white", lw=0.5)
+
+# Add titles
+ax1.set_title("WGS84")
+ax2.set_title("ETRS89 / TM35FIN")
+
+# Set aspect ratio as 1
+ax1.set_aspect(aspect=1)
+ax2.set_aspect(aspect=1)
+
+# Remove empty white space around the plot
+plt.tight_layout()
+```
+-->
+:::
+
+## Working with map projections
+:::{.callout-note icon=false}
+## Parsing Coordinate Reference System characteristics
+
+```{python}
+#| echo: true
+from pyproj import CRS
+
+crs_object = CRS.from_epsg(3035)
+```
+
+The resulting CRS object (here stored in variable `crs_object`) contains:
+- `Name` of the CRS (ETRS89/LAEA Europe)
+- `Axis Info` of the coordinate system (ellipsoidal or cartesian)
+- `Area of Use` where the given CRS is in use (Europe with bounds `(-35.58, 24.6, 44.83, 84.73)`)
+- `Datum` (European Terrestrial Reference System 1989).
+
+```{python}
+#| echo: true
+print("Name:", crs_object.name)
+print("Coordinate system:", crs_object.coordinate_system)
+print("Bounds:", crs_object.area_of_use.bounds)
+print("Datum:", crs_object.datum)
+```
+:::
+
+## Working with map projections {.scrollable}
+:::{.callout-note icon=false}
+## Export
+
+```{python}
+#| echo: true
+crs_wkt = crs_object.to_wkt()
+```
+
+The `WKT` format contains a *lot* of information. If we were to run `print(crs_wkt)` we would see output like that below (truncated to save space):
+```
+PROJCRS["ETRS89-extended / LAEA Europe",BASEGEOGCRS["ETRS89",ENSEMBLE["European
+Terrestrial Reference System 1989 ensemble",MEMBER["European Terrestrial Referen
+ce Frame 1989"],MEMBER["European Terrestrial Reference Frame 1990"],MEMBER["Euro
+pean Terrestrial Reference Frame 1991"],MEMBER["European Terrestrial Reference F
+rame 1992"],MEMBER["European Terrestrial Reference Frame 1993"],MEMBER["European
+ Terrestrial Reference Frame 1994"],MEMBER["European Terrestrial Reference Frame
+ 1996"],MEMBER["European Terrestrial Reference Frame 1997"],MEMBER["European Ter
+restrial Reference Frame 2000"],MEMBER["European Terrestrial Reference Frame 200
+5"],MEMBER["European Terrestrial Reference Frame 2014"],ELLIPSOID["GRS 1980",637
+...
+```
+Typically, e.g. the `.prj` file of a Shapefile contains the information in this format. Let's see how it is possible to extract `EPSG` code from this. For doing it, we first re-initialize the CRS object from the `WKT` text presentation, and then parse the EPSG code from the CRS:   
+
+```{python}
+#| echo: true
+# Retrieve EPSG code from WKT text
+epsg = CRS(crs_wkt).to_epsg()
+print(epsg)
+```
+
+Sometimes `.to_epsg()` isn't able to recognize the EPSG code from the WKT representation. This can happen if the WKT information is missing some details. Luckily, we can easily adjust the minimum level of confidence for matching the CRS info and the EPSG code. We can do this by adjusting a parameter `min_confidence` when calling the function. By default, the confidence level is 70 %, but it is also possible to set a lower confidence threshold, e.g. by specifying `min_confidence=25`:
+
+```{python}
+#| echo: true
+CRS(crs_wkt).to_epsg(min_confidence=25)
+```
+:::
+
+## Working with map projections
+:::{.callout-note icon=false}
+## Defining CRS for a GeoDataFrame
+
+
+```{python}
+#| echo: true
+from shapely.geometry import Point
+
+# Create GeoDataFrame with one point
+gdf = gpd.GeoDataFrame({"geometry": Point(24.950899, 60.169158)}, index=[0])
+print(gdf.crs)
+```
+
+The coordinates for our point are represented in decimal degrees, hence the CRS of our `GeoDataFrame` should be WGS84. 
+
+```{python}
+#| echo: true
+from pyproj import CRS
+
+gdf = gdf.set_crs(CRS.from_epsg(4326))
+gdf.crs
+```
+
+Alternatively:
+
+```{python}
+#| echo: true
+gdf = gdf.set_crs(epsg=4326)
+print(gdf.crs)
+```
+:::
+
+## Working with map projections
+:::{.callout-note icon=false}
+## Defining CRS for a GeoDataFrame
+
+You can provide the CRS information with the `crs` parameter when creating the dataset as follows:
+
+```{python}
+#| echo: true
+# Create GeoDataFrame with one point and define the CRS
+gdf = gpd.GeoDataFrame(geometry=[Point(24.950899, 60.169158)], crs="EPSG:4326")
+gdf.crs
+```
+:::
+
+
+## Working with map projections {.scrollable}
+:::{.callout-note icon=false}
+## Defining different map projections
+
+Let's use a global country border dataset obtained from Natural Earth [^natural_earth]:
+
+```{python}
+#| echo: true
+import geopandas
+
+fp = "_data/Natural_Earth/ne_110m_admin_0_countries.zip"
+admin = gpd.read_file(fp)
+admin.crs
+```
+
+```{python}
+#| echo: true
+# Plot in original crs
+admin.plot(figsize=(12, 6))
+plt.title("WGS84");
+```
+:::
+
+## Working with map projections {.scrollable}
+:::{.callout-note icon=false}
+## Defining different map projections
+
+Reproject into Web Mercator:
+```bash
+# Required module
+uv add branca
+uv add folium
+uv add mapclassify
+```
+
+```{python}
+#| echo: true
+admin.to_crs(epsg=3857).explore()
+```
+:::
+
+## Working with map projections {.scrollable}
+:::{.callout-note icon=false}
+## Defining different map projections
+Reproject into Eckert IV:
+
+```{python}
+#| echo: true
+admin.to_crs(crs="ESRI:54012").plot(figsize=(12, 12))
+plt.title("Eckert IV")
+plt.axis("off");
+```
+:::
+
+## Working with map projections {.scrollable}
+:::{.callout-note icon=false}
+## Defining different map projections
+We can also define an Orthographic projection for our map which can be centered to specific point in the world. For doing this, we can specify the CRS using a proj-string and specify the center point with a few of CRS parameters: `+lat`, `+lon` (see [PROJ documentation](https://proj.org/operations/projections/ortho.html) for details).    
+
+```{python}
+#| echo: true
+proj_string = "+proj=ortho +lat_0=60.00 +lon_0=24.0000"
+admin.to_crs(crs=proj_string).plot()
+plt.axis("off")
+plt.title("Orthographic");
+```
+:::
+
+## Working with map projections
+:::{.callout-note icon=false}
+## Exercise
+Reproject the map around the place you were born in.
+:::
+
+
+<!-- #region editable=true slideshow={"slide_type": ""} -->
+# Geocoding
+
+## Geocoding
+:::{.callout-warning icon=false}
+## Geocoding addresses
+Geocoding is the process of transforming place names or addresses into coordinates (and vice versa). 
+
+We will use `Geopy` with `Nominatim` geocoder.
+
+- The Nominatim API is not meant for super heavy use
+- Nominatim doesn't require the use of an API key, but the usage of the Nominatim service is rate-limited to 1 request per second (3600 / hour)
+- Users also need to provide an identifier for their application, and give appropriate attribution to using OpenStreetMap data
+- When using Nominatim via `geopandas` and `geopy`, we can specify a custom `user_agent` parameter to idenfy our application, and we can add a `timeout`.  
+
+```bash
+uv add geopy
+```
+:::
+
+## Geocoding
+:::{.callout-warning icon=false}
+## Geocoding addresses
+We will geocode addresses stored in a text file called `addresses.txt`. These addresses are located in the Helsinki Region in Southern Finland. The first rows of the data look like this:
+
+```
+id;addr
+1000;Itämerenkatu 14, 00101 Helsinki, Finland
+1001;Kampinkuja 1, 00100 Helsinki, Finland
+1002;Kaivokatu 8, 00101 Helsinki, Finland
+1003;Hermannin rantatie 1, 00580 Helsinki, Finland
+```
+
+As we can see, we have an `id` for each row and an address on a column `addr`. Let's first read the data into a pandas DataFrame using the `read_csv()` -function:
+
+```{python}
+#| echo: true
+# Import necessary modules
+import pandas as pd
+import geopandas as gpd
+
+# Filepath
+fp = "_data/Helsinki/addresses.txt"
+
+# Read the data
+data = pd.read_csv(fp, sep=";")
+data.head()
+```
+:::
+
+## Geocoding
+:::{.callout-warning icon=false}
+## Geocoding addresses
+
+```{python}
+#| echo: true
+from geopandas.tools import geocode
+
+geo = geocode(
+    data["addr"], provider="nominatim", user_agent="quarto_lnu", timeout=10
+)
+geo.head()
+```
+:::
+
+## Geocoding {.scrollable}
+:::{.callout-warning icon=false}
+## Geocoding addresses
+We can join the data from the original text file to the geocoded result to get the address ids and original addresses along. We do this because the original data frame and the geocoded output have an identical index and an identical number of rows:
+<!-- #endregion -->
+```{python}
+#| echo: true
+join = geo.join(data)
+join.head()
+```
+:::
+
+## Geocoding {.scrollable}
+:::{.callout-warning icon=false}
+## Geocoding addresses
+
+Finally, we can have a look how the points look on a map and save the geocoded addresses to a file:
+
+```{python}
+#| echo: true
+join.explore(color="red", marker_kwds={"radius": 5})
+```
+
+```{python}
+#| echo: true
+# Output file path
+outfp = "_data/Helsinki/addresses.gpkg"
+
+# Save to Shapefile
+join.to_file(outfp)
+```
+:::
+
+## Geocoding
+:::{.callout-warning icon=false}
+## Exercise
+
+Do another round of geocoding with your own list of addresses from anywhere in the world. Are you happy with the result?
+
+In the above example we passed the address column to the geocoding function. [The geopandas documentation of geopandas.tools.geocode](https://geopandas.org/en/stable/docs/reference/api/geopandas.tools.geocode.html#geopandas-tools-geocode)  confirms that we should also be able to pass a list of strings to the geocoding tool. So, you should be able to answer this question by defining a list of addresses and using this list as input strings.
+<!-- #endregion -->
+
+```python
+# Use this cell to enter your solution.
+address_list = [...]
+```
+<!--
+```python editable=true slideshow={"slide_type": ""} tags=["remove_book_cell", "hide-cell"]
+# Solution
+
+# Example list of addresses
+address_list = [
+    "Pietari Kalmin katu 5, Helsinki, Finland",
+    "Konetekniikka 1, Espoo, Finland",
+]
+
+# Do the geocoding
+geo2 = geocode(
+    address_list, provider="nominatim", user_agent="pythongis_book", timeout=10
+)
+
+# Check if the result looks correct on a map
+geo2.explore(
+    color="red", max_zoom=12, marker_kwds=dict(radius=8), tiles="CartoDB Positron"
+)
+```
+-->
+:::
+
+## Geocoding {.scrollable}
+:::{.callout-warning icon=false}
+## Reverse geocoding
+
+```{python}
+#| echo: true
+points = geo[["geometry"]].copy()
+points.head()
+```
+
+To do the reverse geocoding, i.e. finding addresses to these points, we can use the `reverse_geocode()` function of `geopandas`.
+
+The `reverse_geocode()` works similarly as the `geocode()` function that we saw earlier, but in this case the function accepts as an input either a `GeoSeries`, or a list of `shapely` `Point` objects. 
+
+```{python}
+#| echo: true
+from geopandas.tools import reverse_geocode
+
+reverse_geocoded = reverse_geocode(
+    points.geometry, provider="nominatim", user_agent="quarto_lnu", timeout=10
+)
+reverse_geocoded.head()
+```
+:::
