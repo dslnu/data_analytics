@@ -1,0 +1,88 @@
+---
+title: "Big Data Analytics: Lab 6"
+execute:
+  enabled: true
+  echo: true
+  cache: true
+format:
+  html:
+    code-fold: false
+jupyter: python3
+diagram:
+  cache: true
+  cache-dir: ./cache
+  engine:
+    tikz:
+      execpath: lualatex
+filters:
+  - diagram
+---
+
+# Working with shapes
+Download GADM data for the country of your choice (https://gadm.org/download_country.html).
+
+Data should be in Shapefile format.
+
+Below example is for Ukraine.
+
+First, parse GADM files.
+
+```{python}
+#| echo: true
+import os
+import geopandas as gpd
+
+gadm_files = [os.path.join(root, file)
+              for root, dirs, files in os.walk("_data/gadm/")
+              for file in files if file.startswith("gadm")]
+
+print(gadm_files)
+
+# Select regional level 2 files
+gadm_files_level2 = [file for file in gadm_files if "2.shp" in file]
+#print(gadm_files_level2)
+
+# Load the shapefiles
+shps = [gpd.read_file(shp) for shp in gadm_files_level2]
+#print(shps)
+```
+
+Concatenated:
+```{python}
+#| echo: true
+import pandas as pd
+
+ukr_shp = gpd.GeoDataFrame(pd.concat(shps, ignore_index=True))
+ukr_shp.plot()
+```
+Or another version:
+
+```{python}
+#| echo: true
+import matplotlib.pyplot as plt
+
+# Plot all shapefiles
+fig, ax = plt.subplots(figsize=(10, 10))
+
+ukr_shp.plot(ax=ax, edgecolor='k', facecolor='none', linewidth=1)  # No fill color
+
+
+# Set plot title and labels
+ax.set_title('Regional Level 2 Shapefiles')
+ax.set_xlabel('Longitude')
+ax.set_ylabel('Latitude')
+
+# Show plot
+plt.show()
+```
+Outline:
+```{python}
+#| echo: true
+ukr_shp.head()
+```
+
+# Exercises
+
+1. Merge regions based on historic provinces (e.g. Галичина, Буковина, etc.) or other criteria.
+2. Geocode centroids for each region and the whole country.
+3. Plot a color map based on average GRDP of the region. E.g., for Ukraine, this data can be fetched from <https://www.ukrstat.gov.ua/operativ/operativ2021/vvp/kvartal_new/vrp/arh_vrp_u.html>.
