@@ -1,0 +1,682 @@
+---
+title: "Big Data: GeoScience part 2"
+author: 
+  - name: MSDE
+    affiliation: Lviv University
+code-fold: false
+execute:
+  enabled: true
+  cache: true
+diagram:
+  cache: true
+  cache-dir: ./cache
+  engine:
+    tikz:
+      execpath: lualatex
+      additional-packages: |
+        \usetikzlibrary{arrows.meta}
+        \usetikzlibrary{positioning}
+        \usetikzlibrary{decorations.pathreplacing}
+filters:
+  - diagram
+format: 
+  revealjs:
+    css: custom.css
+    preview-links: auto
+    slide-number: true
+    theme: default
+    multiplex:
+      url: 'https://mplex.vitv.ly'
+      secret: 'a8ec82984651e86fa95bf7dc4a1b8de2'
+      id: '8c59ccb7e4dfa2211ed14fa17fb72b1b76d07c2cab789dac3e2fe06135105e8a'
+---
+
+## Spatial relationships
+:::{.callout-tip icon=false}
+## Overview
+
+Question: how the data layers are located in relation to each other?
+
+- finding out if a certain point is located inside an area
+- or whether a line intersects with another line or a polygon
+:::
+
+:::{.callout-note icon=false}
+
+- These kind of queries are commonly called as *`spatial queries`*.
+- Spatial queries are conducted based on the *`topological spatial relations`* 
+  - *contains*
+  - *touches*
+  - *intersects* 
+:::
+
+## Topological spatial relations
+:::{.callout-tip icon=false}
+## DE-9IM
+
+- There are different ways to compute these queries
+- Most GIS software rely on *`Dimensionally Extended 9-Intersection Model`* ([DE-9IM](https://en.wikipedia.org/wiki/DE-9IM)).
+- DE-9IM defines the topological relations based on the **interior**, **boundary**, and **exterior** of two geometric shapes and how they intersect with each other.
+- DE-9IM also considers the dimensionality of the objects. 
+  - The `Point` objects are 0-dimensional
+  - `LineString` and `LinearRing` are 1-dimensional
+  - `Polygon` objects are 2-dimensional.   
+:::
+
+## Topological spatial relations
+![_Interior, boundary and exterior for different geometric data types. The data types can be either 0, 1 or 2-dimensional._](img/DE-9IM_topology_interior_boundary_exterior.png)
+
+
+## Topological spatial relations
+:::{.callout-tip icon=false}
+## Spatial predicates
+When testing how two geometries relate to each other, the DE-9IM model gives a result which is called *`spatial predicate`* (also called as *`binary predicate`)*. 
+
+- intersects,
+- within,
+- contains,
+- overlaps
+- touches
+
+There are plenty of topological relations: altogether 512 with 2D data.
+:::
+
+## Topological spatial relations
+![_Eight common spatial predicates formed based on spatial relations between two geometries. Modified after Egenhofer et al. (1992)_.](img/spatial-relations.png)
+
+## Topological spatial relations
+:::{.callout-tip icon=false}
+## Types
+- When the geometries have at least one point in common, the geometries are said to be *intersecting* with each other.
+- When two geometries *touch* each other, they have at least one point in common (at the border in this case), but their interiors do not intersect with each other.
+- When the interiors of the geometries A and B are partially on top of each other and partially outside of each other, the geometries are *overlapping* with each other.
+- The spatial predicate for *covers* is when the interior of geometry B is almost totally within A, but they share at least one common coordinate at the border.
+- Similarly, if geometry A is almost totally contained by the geometry B (except at least one common coordinate at the border) the spatial predicate is called *covered by*. 
+:::
+
+## Topological spatial relations
+:::{.callout-tip icon=false}
+## Making spatial queries in Python
+
+In Python, all the basic spatial predicates are available from `shapely` library, including:
+ 
+ - `.intersects()`
+ - `.within()`
+ - `.contains()`
+ - `.overlaps()`
+ - `.touches()`
+ - `.covers()`
+ - `.covered_by()`
+ - `.equals()`
+ - `.disjoint()`
+ - `.crosses()`
+:::
+
+## Topological spatial relations
+:::{.callout-tip icon=false}
+## Making spatial queries in Python: `within()`
+
+Create a couple of `Point` objects and one `Polygon` object which we can use to test how they relate to each other: 
+
+```{python}
+#| echo: true
+from shapely import Point, Polygon
+
+# Create Point objects
+point1 = Point(24.952242, 60.1696017)
+point2 = Point(24.976567, 60.1612500)
+
+# Create a Polygon
+coordinates = [
+    (24.950899, 60.169158),
+    (24.953492, 60.169158),
+    (24.953510, 60.170104),
+    (24.950958, 60.169990),
+]
+polygon = Polygon(coordinates)
+```
+:::
+
+## Topological spatial relations
+:::{.callout-tip icon=false}
+## Making spatial queries in Python
+We can check the contents of the new variables by printing them to the screen, for example, in which case we would see
+
+```{python}
+#| echo: true
+print(point1)
+print(point2)
+print(polygon)
+```
+
+If you want to test whether these `Point` geometries stored in `point1` and `point2` are within the `polygon`, you can call the `.within()` method as follows:
+
+```{python}
+#| echo: true
+point1.within(polygon)
+```
+
+```{python}
+#| echo: true
+point2.within(polygon)
+```
+:::
+
+## Topological spatial relations {.scrollable}
+:::{.callout-tip icon=false}
+## Making spatial queries in Python
+
+One of the most common spatial queries is to see if a geometry intersects or touches another one. Again, there are binary operations in `shapely` for checking these spatial relationships:
+
+- `.intersects()` - Two objects intersect if the boundary or interior of one object intersect in any way with the boundary or interior of the other object.
+- `.touches()` - Two objects touch if the objects have at least one point in common and their interiors do not intersect with any part of the other object.
+:::   
+
+## Topological spatial relations {.scrollable}
+:::{.callout-tip icon=false}
+## Making spatial queries in Python
+Let's try these by creating two `LineString` geometries and test whether they intersect and touch each other:
+
+```{python}
+#| echo: true
+from shapely import LineString, MultiLineString
+
+# Create two lines
+line_a = LineString([(0, 0), (1, 1)])
+line_b = LineString([(1, 1), (0, 2)])
+```
+
+```{python}
+#| echo: true
+line_a.intersects(line_b)
+```
+
+```{python}
+#| echo: true
+line_a.touches(line_b)
+```
+:::
+
+## Topological spatial relations {.scrollable}
+:::{.callout-tip icon=false}
+## Making spatial queries in Python
+
+As we can see, it seems that our two `LineString` objects are both intersecting and touching each other. We can confirm this by plotting the features together as a `MultiLineString`:
+
+```{python}
+#| echo: true
+# Create a MultiLineString from line_a and line_b
+multi_line = MultiLineString([line_a, line_b])
+multi_line
+```
+:::
+
+## Topological spatial relations {.scrollable}
+:::{.callout-warning icon=false}
+## Making spatial queries in Python
+If the lines are fully overlapping with each other they don't touch due to the spatial relationship rule in the DE-9IM. We can confirm this by checking if `line_a` touches itself:
+
+```{python}
+#| echo: true
+line_a.touches(line_a)
+```
+
+No it doesn't. However, `.intersects()` and `.equals()` should produce `True` for a case when we compare the `line_a` with itself:
+
+```{python}
+#| echo: true
+print("Intersects?", line_a.intersects(line_a))
+print("Equals?", line_a.equals(line_a))
+```
+:::
+<!--
+## Topological spatial relations
+:::{.callout-tip icon=false}
+## Exercise
+
+Use python to prove that `line_a` and `line_b` are not identical.
+
+```python
+# Solution
+
+print("Line a is equal to line b: ", line_a.equals(line_b))
+```
+:::
+-->
+
+## Topological spatial relations {.scrollable}
+:::{.callout-tip icon=false}
+## Making spatial queries in Python
+The following prints results for all predicates between the `point1` and the `polygon` which we created earlier: 
+
+```{python}
+#| echo: true
+print("Intersects?", point1.intersects(polygon))
+print("Within?", point1.within(polygon))
+print("Contains?", point1.contains(polygon))
+print("Overlaps?", point1.overlaps(polygon))
+print("Touches?", point1.touches(polygon))
+print("Covers?", point1.covers(polygon))
+print("Covered by?", point1.covered_by(polygon))
+print("Equals?", point1.equals(polygon))
+print("Disjoint?", point1.disjoint(polygon))
+print("Crosses?", point1.crosses(polygon))
+```
+:::
+
+## Topological spatial relations {.scrollable}
+:::{.callout-note}
+## `within` vs `contains`
+
+-  if you have many points and just one polygon and you try to find out which one of them is inside the polygon: You might need to check the separately for each point to see which one is `.within()` the polygon.
+-  if you have many polygons and just one point and you want to find out which polygon contains the point: You might need to check separately for each polygon to see which one(s) `.contains()` the point.
+:::
+
+## Spatial relations {.scrollable}
+:::{.callout-tip icon=false}
+## Spatial queries using geopandas
+Let's check which points are located within specific areas of Helsinki:
+
+```{python}
+#| echo: true
+import geopandas as gpd
+
+points = gpd.read_file("_data/Helsinki/addresses.shp")
+districts = gpd.read_file("_data/Helsinki/Major_districts.gpkg")
+```
+
+```{python}
+#| echo: true
+print("Shape:", points.shape)
+print(points.head())
+```
+
+```{python}
+#| echo: true
+print("Shape:", districts.shape)
+print(districts.tail(5))
+```
+
+The data contains 34 address points and 23 district polygons.
+:::
+
+## Spatial relations {.scrollable}
+:::{.callout-tip icon=false}
+## Spatial queries using geopandas
+
+Let's find all points that are within two areas in Helsinki region, namely `Itäinen` and `Eteläinen` (*'Eastern'* and *'Southern'* in English). 
+
+```{python}
+#| echo: true
+selection = districts.loc[districts["Name"].isin(["Itäinen", "Eteläinen"])]
+print(selection.head())
+```
+:::
+
+## Spatial relations {.scrollable}
+:::{.callout-tip icon=false}
+## Spatial queries using geopandas
+
+Let's now plot the layers on top of each other. The areas with [red]{style="color:red"} color represent the districts that we want to use for testing the spatial relationships against the point layer (shown with [blue]{style="color:blue"} color):
+
+```{python}
+#| echo: true
+base = districts.plot(facecolor="gray")
+selection.plot(ax=base, facecolor="red")
+points.plot(ax=base, color="blue", markersize=5)
+```
+:::
+
+## Spatial relations {.scrollable}
+:::{.callout-tip icon=false}
+## Spatial queries using geopandas
+
+We should check which Points in the `points` GeoDataFrame are *within* the selected polygons stored in the `selection` geodataframe.
+
+We will use a *`spatial join`* as an efficient way to conduct spatial queries in `geopandas`. 
+
+```{python}
+#| echo: true
+selected_points = points.sjoin(selection.geometry.to_frame(), predicate="within")
+```
+
+```{python}
+#| echo: true
+ax = districts.plot(facecolor="gray")
+ax = selection.plot(ax=ax, facecolor="red")
+ax = selected_points.plot(ax=ax, color="gold", markersize=2)
+```
+:::
+
+## Spatial relations {.scrollable}
+:::{.callout-tip icon=false}
+## `to_frame()`
+
+Using `to_frame()` allows us to avoid attaching any extra attributes from the `selection` geodataframe to our data, which is what `.sjoin()` method would normally do (and which it is actually designed for). 
+`.geometry.to_frame()` will:
+
+- first select the geometry column from the `selection` layer
+- and then convert it into a `GeoDataFrame` (which would otherwise be a GeoSeries).
+
+An alternative approach for doing the same thing is to use `selection[[selection.active_geometry_name]]`, which also returns a `GeoDataFrame` containing only a column with the geodataframe's active geometry.
+:::
+
+## Spatial relations {.scrollable}
+:::{.callout-tip icon=false}
+## `sjoin()` examples
+By default, the `.sjoin()` uses `"intersects"` as a spatial predicate, but it is easy to change this. For example, we can investigate which of the districts *contain* at least one point. 
+
+```{python}
+#| echo: true
+districts_with_points = districts.sjoin(
+    points.geometry.to_frame(), predicate="contains"
+)
+```
+
+```{python}
+#| echo: true
+ax = districts.plot(facecolor="gray")
+ax = districts_with_points.plot(ax=ax, edgecolor="gray")
+ax = points.plot(ax=ax, color="red", markersize=2)
+```
+:::
+
+## Spatial relations {.scrollable}
+:::{.callout-tip icon=false}
+## `sjoin()` examples
+To find all possible spatial predicates for a given GeoDataFrame you can call:
+
+```{python}
+#| echo: true
+districts.sindex.valid_query_predicates
+```
+
+What is `.sindex`?
+
+```{python}
+#| echo: true
+districts.sindex
+```
+:::
+
+## Spatial relations {.scrollable}
+:::{.callout-tip icon=false}
+## `sindex`
+`SpatialIndex` object contains the *`spatial index`* for our data.
+
+- A spatial index is a special data structure that allows for efficient querying of spatial data.
+- `geopandas` uses a spatial index called R-tree which is a hierarchical, tree-like structure that divides the space into nested, overlapping rectangles and indexes the bounding boxes of each geometry.
+- Hence, when selecting data based on topological relations, we recommend using `.sjoin()` instead of directly calling `.within()`, `.contains()` that come with the `shapely` geometries (as shown previously). 
+:::
+
+## Spatial relations
+:::{.callout-tip icon=false}
+## Exercise
+
+How many addresses are located in each district? You can find out the answer by grouping the spatial join result based on the district name. 
+
+<!--
+```python editable=true slideshow={"slide_type": ""} tags=["remove_book_cell", "hide-cell"]
+# Solution
+
+# Check column names in the spatial join result
+print(districts_with_points.columns.values)
+
+# Group by district name
+grouped = districts_with_points.groupby("Name")
+
+# Count the number of rows (adress locations) in each district
+grouped.index_right.count()
+```
+-->
+
+:::
+
+
+## Spatial join {.scrollable}
+:::{.callout-note icon=false}
+## Description
+Spatial join retrieves table attributes from one layer and transfers them into another layer based on their spatial relationship. For example, one can join the attributes of a polygon layer into a point layer where each point would get the attributes of a polygon that `intersects` with the point. 
+
+It is good to remember that spatial join is always conducted between two layers at a time. 
+:::
+
+## Spatial join {.scrollable}
+![Spatial join allows you to combine attribute information from multiple layers based on spatial relationship.](img/spatial-join-basic-idea.png)
+
+## Spatial join {.scrollable}
+:::{.callout-note icon=false}
+## sjoin details
+In spatial join, there are two set of options that you can control, which ultimately influence how the data is transferred between the layers: 
+
+1) How the spatial relationship between geometries should be checked (i.e. spatial predicates), and
+2) What type of table join you want to conduct (inner, left, or right outer join)
+:::
+
+:::{.callout-important icon=false}
+## Spatial predicates
+
+- The spatial predicates control how the spatial relationship between the geometries in the two data layers is checked.
+- Only those cases where the spatial predicate returns `True` will be kept in the result. 
+:::
+
+## Spatial join {.scrollable}
+![](img/spatial-join-alternatives.png)
+
+## Spatial join {.scrollable}
+:::{.callout-note icon=false}
+## sjoin type
+The other parameter that you can use to control how the spatial join is conducted is the spatial join type. There are three different join types that influence the outcome of the spatial join:
+
+1. `inner join`
+2. `left outer join`
+3. `right outer join`
+:::
+
+## Spatial join {.scrollable}
+:::{.callout-note icon=false}
+## Spatial join with Python
+
+Spatial join can be done easily with `geopandas` using the `.sjoin()` method. Next, we will learn how to use this method to perform a spatial join between two layers:
+
+1) `addresses` which are the locations that we geocoded previously;
+2) `population grid` which is a 250m x 250m grid polygon layer that contains population information from the Helsinki Region (source: Helsinki Region Environmental Services Authority).
+:::
+
+## Spatial join {.scrollable}
+:::{.callout-note icon=false}
+## Spatial join with Python
+Let's start by reading the data:
+
+```{python}
+#| echo: true
+import geopandas as gpd
+
+addr_fp = "_data/Helsinki/addresses.shp"
+addresses = gpd.read_file(addr_fp)
+addresses.head(2)
+```
+
+As we can see, the `addresses` variable contains address Points which represent a selection of public transport stations in the Helsinki Region.
+:::
+
+## Spatial join {.scrollable}
+:::{.callout-note icon=false}
+## Spatial join with Python
+```{python}
+#| echo: true
+pop_grid_fp = "_data/Helsinki/Population_grid_2021_HSY.gpkg"
+pop_grid = gpd.read_file(pop_grid_fp)
+pop_grid.head(2)
+```
+
+The `pop_grid` dataset contains few columns, namely a unique `id`, the number of `inhabitants` per grid cell, and the `occupancy_rate` as percentage. 
+:::
+
+## Spatial join {.scrollable}
+:::{.callout-note icon=false}
+## Preparations for spatial join
+
+The basic requirement for a successful spatial join is that the layers should overlap with each other in space. If the geometries between the layers do not share the same CRS, it is very likely that the spatial join will fail and produces an empty `GeoDataFrame`. 
+
+```{python}
+#| echo: true
+print("Address points CRS:", addresses.crs)
+print("Population grid CRS:", pop_grid.crs.name)
+```
+
+To fix this issue, let's reproject the geometries in the `addresses` `GeoDataFrame` to the same CRS as `pop_grid` using the `.to_crs()` method.
+
+```{python}
+#| echo: true
+# Reproject
+addresses = addresses.set_crs(epsg=4326)
+addresses = addresses.to_crs(crs=pop_grid.crs)
+
+# Validate match
+addresses.crs == pop_grid.crs
+```
+
+```{python}
+#| echo: true
+addresses.head(2)
+```
+:::
+
+## Spatial join {.scrollable}
+:::{.callout-note icon=false}
+## Preparations for spatial join
+As a last preparatory step, let's visualize both datasets on top of each other to see how the inhabitants are distributed over the region, and how the address points are located in relation to the grid:
+
+```{python}
+# Plot the population data classified into 5 classes
+ax = pop_grid.plot(
+    column="inhabitants",
+    cmap="Greens",
+    scheme="naturalbreaks",
+    k=5,
+    legend=True,
+    legend_kwds={"loc": "lower right"},
+    figsize=(10, 8),
+)
+
+# Add address points on top using blue "Diamond" markers
+ax = addresses.plot(ax=ax, color="blue", markersize=7, marker="D")
+```
+:::
+
+
+## Spatial join {.scrollable}
+:::{.callout-note icon=false}
+## Join the layers based on spatial relationship
+
+The aim here is to get information about
+
+*How many people live in a given polygon that contains an individual address-point*?
+
+Thus, we want to join the attribute information from the `pop_grid` layer into the `addresses` Point layer using the `.sjoin()` method. 
+
+```{python}
+#| echo: true
+join = addresses.sjoin(pop_grid, predicate="within", how="inner")
+join
+```
+:::
+
+
+## Spatial join {.scrollable}
+:::{.callout-note icon=false}
+## Join the layers based on spatial relationship
+
+- We received information about `inhabitants` and `occupancy_rate`
+- We got columns `index_right` and `id_right` which tell the index and id of the matching polygon in the right-side member of the spatial join
+- The `id` column in the left-side member of the spatial join was renamed as `id_left`.
+- The suffices `_left` and `_right` are appended to the column names to differentiate the columns in cases where there are identical column names present in both `GeoDataFrames`. 
+:::
+
+## Spatial join {.scrollable}
+:::{.callout-note icon=false}
+## Join the layers based on spatial relationship
+Let's also visualize the joined output. In the following, we plot the points using the `inhabitants` column to indicate the color:
+<!-- #endregion -->
+
+```{python}
+#| echo: true
+ax = join.plot(
+    column="inhabitants",
+    cmap="Reds",
+    markersize=15,
+    scheme="quantiles",
+    legend=True,
+    figsize=(10, 6),
+)
+ax.set_title("Amount of inhabitants living close to the point");
+```
+:::
+
+## Spatial join {.scrollable}
+:::{.callout-note icon=false}
+## Join the layers based on spatial relationship
+It is useful to investigate if we lost any data while doing the spatial join. Let's check this by comparing the number of rows in our result to how many addresses we had originally:
+
+```{python}
+#| echo: true
+len(addresses) - len(join)
+```
+
+We can investigate where the points outside of polygons are located:
+
+```{python}
+#| echo: true
+m = pop_grid.explore(color="blue", style_kwds=dict(color="blue", stroke=False))
+addresses.explore(m=m, color="red")
+```
+:::
+
+## Spatial join {.scrollable}
+:::{.callout-note icon=false}
+## Join the layers based on spatial relationship
+
+We might want to keep the information for the points that did not get a match based on the spatial relationship. 
+
+```{python}
+#| echo: true
+left_join = addresses.sjoin(pop_grid, predicate="within", how="left")
+left_join
+```
+:::
+
+## Spatial join {.scrollable}
+:::{.callout-note icon=false}
+## Join the layers based on spatial relationship
+Let's investigate a bit more to see which rows did not have a matching polygon in the population grid. 
+
+```{python}
+#| echo: true
+left_join.loc[left_join["inhabitants"].isnull()]
+```
+:::
+
+## Spatial join {.scrollable}
+:::{.callout-note icon=false}
+## Exercise
+
+Do the spatial join another way around, i.e. make a spatial join where you join information from the address points into the population grid. How does the result differ from the version where we joined information from the grids to the points? What would be the benefit of doing the join this way around?
+<!--
+```{python}
+#| echo: true
+# Solution
+
+# Join information from address points to the grid
+result = pop_grid.sjoin(addresses)
+
+# Check the structure
+print(result.head(2))
+
+# Visualize the result
+result.explore()
+
+# see reflection about this solution in the back matter
+```
+-->
+:::
