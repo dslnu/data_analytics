@@ -1,5 +1,5 @@
 ---
-title: "Big Data: GeoScience part 2"
+title: "Big Data: GeoScience part 3"
 author: 
   - name: MSDE
     affiliation: Lviv University
@@ -27,8 +27,8 @@ format:
     theme: default
     multiplex:
       url: 'https://mplex.vitv.ly'
-      secret: 'a8ec82984651e86fa95bf7dc4a1b8de2'
-      id: '8c59ccb7e4dfa2211ed14fa17fb72b1b76d07c2cab789dac3e2fe06135105e8a'
+      secret: '7dae1eaf1e537ed1aa461ae42f1b421f'
+      id: 'd759e3c287def5d6ef4495dc64b38160462bd85ff37c46c064d0cbf3f6008bf7'
 ---
 
 ## Spatial relationships
@@ -680,3 +680,353 @@ result.explore()
 ```
 -->
 :::
+
+
+## Nearest neighbour analysis
+:::{.callout-note icon=false}
+## Description
+
+- a fundamental concept in geographic data analysis and modelling.
+- many of these techniques rely on the idea that proximity in geographic space typically indicates also similarity in attribute space.
+:::
+
+:::{.callout-important}
+## First Law of Geography
+Everything is related to everything, but near things are more related than distant things.
+:::
+
+## Nearest neighbour analysis
+
+![The basic idea of finding a nearest neighbour based on geographic distance.](img/nearest-neighbour.png)
+
+## Nearest neighbour analysis
+:::{.callout-note icon=false}
+## Why limit?
+
+- computational limitations
+- we have specific reasoning that makes it sensible to limit the search area. 
+:::
+
+## Nearest neighbour analysis in Python
+:::{.callout-tip icon=false}
+## Overview
+
+Typical tasks:
+
+- find the nearest neighbors for all Point geometries in a given `GeoDataFrame` based on `Point`objects from another `GeoDataFrame`
+- find nearest neighbor between two Polygon datasets
+- use `scipy` library to find K-Nearest Neighbors (KNN) with Point data.
+:::
+
+## Nearest neighbour analysis in Python {.scrollable}
+:::{.callout-tip icon=false}
+## Practical example
+Where is the closest public transport stop from my place of residence?
+
+- Our aim is to search for each building point in the Helsinki Region the closest public transport stop.
+- In `geopandas`, we can find nearest neighbors for all geometries in a given `GeoDataFrame` using the `.sjoin_nearest()` method. 
+
+```{python}
+#| echo: true
+import geopandas as gpd
+import matplotlib.pyplot as plt
+
+stops = gpd.read_file("_data/Helsinki/pt_stops_helsinki.gpkg")
+building_points = gpd.read_file("_data/Helsinki/building_points_helsinki.zip")
+
+print("Number of stops:", len(stops))
+stops.head(2)
+```
+
+```{python}
+#| echo: true
+print("Number of buildings:", len(building_points))
+building_points.head(2)
+```
+:::
+
+## Nearest neighbour analysis in Python {.scrollable}
+:::{.callout-tip icon=false}
+## Practical example: visualize
+
+```{python}
+#| echo: true
+fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(15, 10))
+
+# Plot buildings
+building_points.plot(ax=ax1, markersize=0.2, alpha=0.5)
+ax1.set_title("Buildings")
+
+# Plot stops
+stops.plot(ax=ax2, markersize=0.2, alpha=0.5, color="red")
+ax2.set_title("Stops");
+```
+:::
+
+## Nearest neighbour analysis in Python
+:::{.callout-tip icon=false}
+## sjoin_nearest
+
+- merges in a similar way to `.sjoin()` method
+- however, in this case the method is actually searching for the closest geometries instead of relying on spatial predicates, such as *within*
+- the method uses a *`spatial index`* called `STRTree`  which is an efficient implementation of the *`R-tree`* dynamic index structure for spatial searching.
+:::
+
+## Nearest neighbour analysis in Python
+:::{.callout-tip icon=false}
+## Reproject
+Let's start by reprojecting our latitude and longitude values into a metric system using the national EUREF-FIN coordinate reference system (EPSG code 3067) for Finland:
+
+```{python}
+#| echo: true
+stops = stops.to_crs(epsg=3067)
+building_points = building_points.to_crs(epsg=3067)
+
+stops.head(2)
+```
+:::
+
+
+## Nearest neighbour analysis in Python {.scrollable}
+:::{.callout-tip icon=false}
+## Use sjoin_nearest
+Because we are interested to find the closest stop geometry for each building, the `buildings` `GeoDataFrame` is on the left hand side of the command.
+
+Note that we give a name for a column which is used to store information about the distance between a given building and the closest stop (this is optional):
+
+```{python}
+#| echo: true
+%time
+closest = building_points.sjoin_nearest(stops, distance_col="distance")
+closest
+```
+:::
+
+## Nearest neighbour analysis in Python
+:::{.callout-tip icon=false}
+## sjoin_nearest 
+
+- The last column in the table shows the distance in meters between a given building and the closest stop.
+- The distance is only returned upon request as we did by specifying `distance_col="distance"`.
+- The column `index_right` provides information about the index number of the closest stop in the `stops` `GeoDataFrame`.
+- number of rows in our result has actually increased, because for some geometries in the `buildings` `GeoDataFrame`, the distance between the building and two (or more) stops have been exactly the same (i.e. they are equidistant).
+- In such cases, the `sjoin_nearest()` will store both records into the results by duplicating the building information and attaching information from the stops into separate rows accordingly. 
+:::
+
+## Nearest neighbour analysis in Python {.scrollable}
+:::{.callout-tip icon=false}
+## sjoin_nearest 
+We can make computations faster by specifying a `max_distance` parameter that specifies the maximum search distance:
+
+```{python}
+#| echo: true
+%time
+closest_limited = building_points.sjoin_nearest(
+    stops, max_distance=100, distance_col="distance"
+)
+closest_limited
+```
+:::
+
+
+## Nearest neighbour analysis in Python {.scrollable}
+:::{.callout-tip icon=false}
+## Connect with a line
+
+- we need to merge also the Point geometries from the other layer into our results, which can then be used to create a LineString connecting the points to each other.
+- for merging the closest stop geometries into our results, we can take advantage of the `index_right` column in our table and conduct a normal table join using the `.merge()` method
+- we only keep the `geometry` columns from the `stops` `GeoDataFrame` because all the other attributes already exist in our results: 
+
+```{python}
+#| echo: true
+closest = closest.merge(
+    stops[[stops.active_geometry_name]], left_on="index_right", right_index=True
+)
+closest.head()
+```
+:::
+
+
+## Nearest neighbour analysis in Python {.scrollable}
+:::{.callout-tip icon=false}
+## Connect with a line
+
+- In order to create a connecting `LineString` between the buildings and the closest stops, we can use the `linestrings()` function of the `shapely` library
+- To extract the point coordinates from the `Point` objects stored in the `geometry_x` and `geometry_y` columns, we use the `.get_coordinates()` method of `geopandas` that returns the `x` and `y` coordinates as `Series` objects/columns.
+- Then we convert these into `numpy` arrays using the `to_numpy()` method which we pass to the `linestrings()` function.
+- Finally, we store the resulting `LineStrings` into a column `geometry` which we set as the active geometry of the `GeoDataFrame`:    
+
+```{python}
+#| echo: true
+from shapely import linestrings
+
+closest["geometry"] = linestrings(
+    closest.geometry_x.get_coordinates().to_numpy(),
+    closest.geometry_y.get_coordinates().to_numpy(),
+)
+
+closest = closest.set_geometry("geometry")
+closest.head()
+```
+:::
+
+## Nearest neighbour analysis in Python {.scrollable}
+:::{.callout-tip icon=false}
+## Connect with a line
+Let's create a map that visualizes the buildings, stops and the connecting lines between the buildings and the closest stops in a single figure: 
+
+```{python}
+#| echo: true
+ax = closest.plot(lw=0.5, color="blue", figsize=(10, 10))
+ax = building_points.plot(ax=ax, color="red", markersize=2)
+ax = stops.plot(ax=ax, color="black", markersize=8.5, marker="s")
+# Zoom to specific area
+ax.set_xlim(382000, 384100)
+ax.set_ylim(6676000, 6678000);
+```
+:::
+
+## Nearest neighbour analysis in Python
+:::{.callout-tip icon=false}
+## Connect with a line
+It is easy to do some descriptive analysis based on this data providing information about levels of access to public transport in the region: 
+
+```{python}
+#| echo: true
+closest["distance"].describe()
+```
+:::
+
+## Nearest neighbour analysis in Python {.scrollable}
+:::{.callout-tip icon=false}
+## Nearest neighbors with Polygon and LineString data
+
+Let's find the closest urban park to building polygons in a neighborhood called Kamppi, which is located in Helsinki, Finland. Then, we'll find the closest drivable road (LineString) to each building.
+
+```{python}
+#| echo: true
+import geopandas as gpd
+
+buildings = gpd.read_file("_data/Helsinki/Kamppi_buildings.gpkg")
+parks = gpd.read_file("_data/Helsinki/Kamppi_parks.gpkg")
+roads = gpd.read_file("_data/Helsinki/Kamppi_roads.gpkg")
+buildings
+```
+:::
+
+## Nearest neighbour analysis in Python {.scrollable}
+:::{.callout-tip icon=false}
+## Nearest neighbors with Polygon and LineString data
+
+```{python}
+#| echo: true
+# Plot buildings, parks and roads
+ax = buildings.plot(color="gray", figsize=(10, 10))
+ax = parks.plot(ax=ax, color="green")
+ax = roads.plot(ax=ax, color="red")
+```
+:::
+
+## Nearest neighbour analysis in Python {.scrollable}
+:::{.callout-tip icon=false}
+## Nearest neighbors with Polygon and LineString data
+We find the nearest park for each building Polygon and store the distance into the column `distance`:
+
+```{python}
+#| echo: true
+nearest_parks = buildings.sjoin_nearest(parks, distance_col="distance")
+nearest_parks
+```
+
+```{python}
+#| echo: true
+print("Maximum distance:", nearest_parks["distance"].max().round(0))
+print("Average distance:", nearest_parks["distance"].mean().round(0))
+```
+:::
+
+## Nearest neighbour analysis in Python {.scrollable .font8}
+:::{.callout-tip icon=false}
+## Nearest neighbors with Polygon and LineString data
+In a similar manner, we can also find the nearest road from each building as follows:
+
+```{python}
+#| echo: true
+nearest_roads = buildings.sjoin_nearest(roads, distance_col="distance")
+nearest_roads
+```
+:::
+
+## Nearest neighbour analysis in Python {.scrollable .font8}
+:::{.callout-tip icon=false}
+## Nearest neighbors with Polygon and LineString data
+To better understand how the spatial join between the buildings and roads have been conducted, we can again visualize the nearest neighbors with a straight line. To do this, we first bring the geometries from the `roads` `GeoDataFrame` into the same table with the buildings: 
+
+```{python}
+#| echo: true
+nearest_roads = nearest_roads.merge(
+    roads[["geometry"]], left_on="index_right", right_index=True
+)
+nearest_roads.head(3)
+```
+:::
+
+## Nearest neighbour analysis in Python {.scrollable .font8}
+:::{.callout-tip icon=false}
+## Nearest neighbors with Polygon and LineString data
+We can use `shortest_line()` from the `shapely` library that returns a LineString object between the input geometries showing the shortest distance between them. 
+
+```{python}
+#| echo: true
+from shapely import shortest_line
+
+
+# Generate LineString between nearest points of two geometries
+connectors = nearest_roads.apply(
+    lambda row: shortest_line(row["geometry_x"], row["geometry_y"]), axis=1
+)
+
+# Create a new GeoDataFrame out of these geometries
+connectors = gpd.GeoDataFrame({"geometry": connectors}, crs=roads.crs)
+connectors["distance"] = connectors.length
+connectors.head()
+```
+:::
+
+
+## Nearest neighbour analysis in Python {.scrollable .font8}
+:::{.callout-tip icon=false}
+## Nearest neighbors with Polygon and LineString data
+We can visualize the buildings, roads and these connectors to better understand the exact points where the distance between a given building and the closest road is shortest:
+
+```{python}
+#| echo: true
+m = buildings.explore(color="gray", tiles="CartoDB Positron")
+m = roads.explore(m=m, color="red")
+m = connectors.explore(m=m, color="green")
+m
+```
+:::
+
+## Nearest neighbour analysis in Python
+:::{.callout-tip icon=false}
+## Exercise
+
+- What is the closest road to each park?
+- Use the `parks` and `roads` `GeoDataFrames` and follow the approaches presented above to find the closest road to each park.
+- What is the highest (maximum) distance between parks and roads present in our datasets?
+:::
+<!--
+```{python}
+#| echo: true
+# Solution
+
+# Find the nearest road
+nearest_park_roads = parks.sjoin_nearest(roads, distance_col="distance")
+
+# What is the maximum distance?
+max_dist = nearest_park_roads["distance"].max()
+print(f"Maximum distance is {max_dist:.2f} meters.")
+```
+
+-->
