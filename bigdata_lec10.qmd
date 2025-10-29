@@ -1,0 +1,454 @@
+---
+title: "Big Data: GeoScience part 4"
+author: 
+  - name: MSDE
+    affiliation: Lviv University
+code-fold: false
+execute:
+  enabled: true
+  cache: true
+diagram:
+  cache: true
+  cache-dir: ./cache
+  engine:
+    tikz:
+      execpath: lualatex
+      additional-packages: |
+        \usetikzlibrary{arrows.meta}
+        \usetikzlibrary{positioning}
+        \usetikzlibrary{decorations.pathreplacing}
+filters:
+  - diagram
+format: 
+  revealjs:
+    css: custom.css
+    preview-links: auto
+    slide-number: true
+    theme: default
+    multiplex:
+      url: 'https://mplex.vitv.ly'
+      secret: '7dae1eaf1e537ed1aa461ae42f1b421f'
+      id: 'd759e3c287def5d6ef4495dc64b38160462bd85ff37c46c064d0cbf3f6008bf7'
+---
+
+
+## K-Nearest Neighbor search
+:::{.callout-tip icon=false}
+## Objectives
+
+- we will learn how to find *k* number of closest neighbors based on two `GeoDataFrames`.
+- we will first aim to find the three nearest public transport stops for each building in the Helsinki Region
+- then we will see how to make a *`radius query`* to find all neighbors within specific distance apart from a given location.
+:::
+
+## K-Nearest Neighbor search
+:::{.callout-tip icon=false}
+## Details
+
+- K-Nearest Neighbor search techniques are also typically built on top of *`spatial indices`* to make the queries more efficient.
+- We need to use another tree structure called *`KD-Tree`* (K-dimensional tree) that can provide us information about K-nearest neighbors (i.e. not only the closest).
+- KD-tree is similar to R-tree, but the data is ordered and sorted in a bit different manner (see Appendices for further details). 
+:::
+
+## K-Nearest Neighbor search
+:::{.callout-note icon=false}
+## KNN search in Python
+
+- we will use `scipy` library
+- before we can do the actual query, we need to build the `KD-Tree` spatial index.
+- in scipy, we can use the `KDTree` to build the spatial index which is available from the `scipy.spatial` submodule.
+:::
+
+## K-Nearest Neighbor search {.scrollable}
+:::{.callout-tip icon=false}
+## KNN search in Python
+In the following, we use the `building_points` and `stops` `GeoDataFrames` that we already used earlier to find three closest public transport stops for each building.
+
+Let's start by reading the data and reproject the data into a metric coordinate reference system (EPSG:3067) so that the distances will be presented as meters:
+
+```{python}
+#| echo: true
+import geopandas as gpd
+
+# Read the files and reproject to EPSG:3067
+stops = gpd.read_file("_data/Helsinki/pt_stops_helsinki.gpkg").to_crs(epsg=3067)
+building_points = gpd.read_file("_data/Helsinki/building_points_helsinki.zip").to_crs(
+    epsg=3067
+)
+
+building_points.head(2)
+```
+:::
+
+## K-Nearest Neighbor search {.scrollable}
+:::{.callout-tip icon=false}
+## KNN search in Python
+```{python}
+#| echo: true
+stops.head(2)
+```
+
+```{python}
+#| echo: true
+stops.shape
+```
+:::
+
+## K-Nearest Neighbor search {.scrollable}
+:::{.callout-tip icon=false}
+## KNN search in Python
+
+- As a first step, we need to build a `KDTRee` index structure based on the Point coordinates.
+- The `KDTree` class expects the Point coordinates to be in `array` format, i.e. not as shapely `Point` objects which we have stored in the `geometry` column.
+- Luckily, it is very easy to convert the shapely geometries into `numpy.array` format by chaining a method `.get_coordinates()` with the `.to_numpy()` method as follows: 
+
+```{python}
+#| echo: true
+building_coords = building_points.get_coordinates().to_numpy()
+stop_coords = stops.geometry.get_coordinates().to_numpy()
+
+stop_coords
+```
+:::
+
+## K-Nearest Neighbor search
+:::{.callout-tip icon=false}
+## KNN search in Python
+We can now create a KD-Tree index structure as follows: 
+
+```{python}
+#| echo: true
+from scipy.spatial import KDTree
+
+stop_kdt = KDTree(stop_coords)
+stop_kdt
+```
+
+Now we have initialized a `KDTree` index structure by populating it with stop coordinates.
+:::
+
+## K-Nearest Neighbor search {.scrollable}
+:::{.callout-tip icon=false}
+## KNN search in Python
+We can now use the `.query()` method which goes through all the input coordinates (i.e. buildings) and very quickly calculates which of them is the closest, 2nd closest etc.
+
+The method returns the distances to the K-number of nearest neighbors as well as the index of the closest `stop` to the given building.
+
+By passing an argument `k=3`, we can specify that we want to find three closest neighbors for each building: 
+
+```{python}
+#| echo: true
+# Find the three nearest neighbors from stop KD-Tree for each building
+k_nearest_dist, k_nearest_ix = stop_kdt.query(building_coords, k=3)
+
+len(k_nearest_dist)
+```
+:::
+
+## K-Nearest Neighbor search {.scrollable}
+:::{.callout-note icon=false}
+## KNN search in Python
+```{python}
+#| echo: true
+# Distances to 3 nearest stops
+k_nearest_dist
+```
+
+```{python}
+#| echo: true
+# Index values of the 3 nearest stops
+k_nearest_ix
+```
+:::
+
+
+## K-Nearest Neighbor search {.scrollable}
+:::{.callout-tip icon=false}
+## KNN search in Python
+
+- Next, we will attach this information back to our `GeoDataFrame` so that it is easier to do further analyses with the data and create some nice maps out of the data.
+- The data which is returned by the `stop_kdt.query()` command comes out as an array of lists, where each item (list) contains three values that show the distances between three nearest stops and the given building.
+- To be able to easily merge this data with the original `GeoDataFrame` containing the building data, we need to transpose our arrays.
+- After the transpose, the data will be restructured in a way that there will be three arrays and each of these arrays contains the distances/stop-ids for all the buildings in a single list. 
+:::
+
+## K-Nearest Neighbor search {.scrollable}
+:::{.callout-tip icon=false}
+## KNN search in Python
+```{python}
+#| echo: true
+# Make a copy
+k_nearest = building_points.copy()
+
+# Add indices of nearest stops
+k_nearest["1st_nearest_idx"] = k_nearest_ix.T[0]
+k_nearest["2nd_nearest_idx"] = k_nearest_ix.T[1]
+k_nearest["3rd_nearest_idx"] = k_nearest_ix.T[2]
+
+# Add distances
+k_nearest["1st_nearest_dist"] = k_nearest_dist.T[0]
+k_nearest["2nd_nearest_dist"] = k_nearest_dist.T[1]
+k_nearest["3rd_nearest_dist"] = k_nearest_dist.T[2]
+```
+
+```{python}
+#| echo: true
+k_nearest.head()
+```
+:::
+
+## K-Nearest Neighbor search {.scrollable}
+:::{.callout-tip icon=false}
+## KNN search in Python
+
+- In the following, we create three separate `GeoDataFrames` that correspond to the nearest, second nearest and third nearest stops from the buildings.
+- We start by storing the `stop_index` as a column which allows us to easily merge the data between `stops` and `k_nearest` (buildings) GeoDataFrames.
+- For making the table join, we can use the pandas `.merge()` function in which we use the `1st_nearest_idx`,  `2nd_nearest_idx` and `3rd_nearest_idx` as the key on the left `GeoDataFrame`, while the `stop_index` is the key on the right `GeoDataFrame`.
+- We also pass the `suffixes=('', '_knearest)` argument to the `.merge()` method 
+
+```{python}
+#| echo: true
+# Store the stop index for making the table join
+stops["stop_index"] = stops.index
+```
+
+```{python}
+#| echo: true
+# Merge the geometries of the nearest stops to the GeoDataFrame
+k_nearest_1 = k_nearest.merge(
+    stops[["stop_index", "geometry"]],
+    left_on="1st_nearest_idx",
+    right_on="stop_index",
+    suffixes=("", "_knearest"),
+)
+k_nearest_1.head(2)
+```
+:::
+
+## K-Nearest Neighbor search {.scrollable}
+:::{.callout-tip icon=false}
+## KNN search in Python
+```{python}
+#| echo: true
+# Merge the geometries of the 2nd nearest stops to the GeoDataFrame
+k_nearest_2 = k_nearest.merge(
+    stops[["stop_index", "geometry"]],
+    left_on="2nd_nearest_idx",
+    right_on="stop_index",
+    suffixes=("", "_knearest"),
+)
+k_nearest_2.head(2)
+```
+:::
+
+## K-Nearest Neighbor search {.scrollable}
+:::{.callout-tip icon=false}
+## KNN search in Python
+```{python}
+#| echo: true
+# Merge the geometries of the 3rd nearest stops to the GeoDataFrame
+k_nearest_3 = k_nearest.merge(
+    stops[["stop_index", "geometry"]],
+    left_on="3rd_nearest_idx",
+    right_on="stop_index",
+    suffixes=("", "_knearest"),
+)
+k_nearest_3.head(2)
+```
+:::
+
+## K-Nearest Neighbor search {.scrollable}
+:::{.callout-tip icon=false}
+## KNN search in Python
+Now we can create `LineString` geometries connecting these `Point` objects to each other:
+
+```{python}
+#| echo: true
+from shapely import LineString
+
+# Generate LineStrings connecting the building point and K-nearest neighbor
+k_nearest_1["geometry"] = k_nearest_1.apply(
+    lambda row: LineString([row["geometry"], row["geometry_knearest"]]), axis=1
+)
+k_nearest_2["geometry"] = k_nearest_2.apply(
+    lambda row: LineString([row["geometry"], row["geometry_knearest"]]), axis=1
+)
+k_nearest_3["geometry"] = k_nearest_3.apply(
+    lambda row: LineString([row["geometry"], row["geometry_knearest"]]), axis=1
+)
+
+k_nearest_1.head(2)
+```
+:::
+
+## K-Nearest Neighbor search {.scrollable}
+:::{.callout-tip icon=false}
+## KNN search in Python
+In the following, we select a specific building and the closest stops from that building. The `name` column contains information about the names of the buildings which we can use to choose a building of our interest for visualization:
+
+```{python}
+#| echo: true
+# Find unique building names
+k_nearest.name.unique()
+```
+:::
+
+## K-Nearest Neighbor search {.scrollable}
+:::{.callout-note icon=false}
+## KNN search in Python
+
+Thus, let's filter the data for `Hartwall Arena` and create an interactive map out of the results, showing the three closest stops indicated with different colors:
+
+```{python}
+#| echo: true
+# Visualize 3 nearest stops to
+selected_name = "Hartwall Arena"
+
+m = k_nearest_1.loc[k_nearest_1["name"] == selected_name].explore(
+    color="red", tiles="CartoDB Positron", max_zoom=16
+)
+m = k_nearest_2.loc[k_nearest_2["name"] == selected_name].explore(m=m, color="orange")
+m = k_nearest_3.loc[k_nearest_3["name"] == selected_name].explore(m=m, color="blue")
+m = stops.explore(m=m, color="green")
+m
+```
+:::
+
+## K-Nearest Neighbor search
+:::{.callout-tip icon=false}
+## Nearest neighbors within radius
+
+- We aim to find and calculate the number of buildings that are within 200 meters from a given public transport stop.
+- Finding all neighbors within a specific search radius can also be done using the KD-Tree spatial index.
+- However, in this case we actually build the `KDTree` index for both datasets (buildings and stops) and then use a `.query_ball_tree()` method to find all neighbors within the radius `r`: 
+
+```{python}
+#| echo: true
+from scipy.spatial import KDTree
+
+# Build KDTree indices
+stop_kdt = KDTree(stop_coords)
+building_kdt = KDTree(building_coords)
+
+# Find the three nearest neighbors from stop KD-Tree for each building
+k_nearest_ix = stop_kdt.query_ball_tree(building_kdt, r=200)
+```
+
+```{python}
+len(k_nearest_ix)
+```
+:::
+## K-Nearest Neighbor search
+:::{.callout-tip icon=false}
+## Nearest neighbors within radius
+Now we have found all the building points within 200 meters from the stops (n=8377).
+
+The following shows all the indices for the first stop at index 0:
+
+```python
+k_nearest_ix[0]
+```
+
+```
+[1129,
+ 1130,
+ 1155,
+ 2054,
+ 2055,
+ 2056,
+... (output truncated)
+```
+:::
+
+## K-Nearest Neighbor search {.scrollable}
+:::{.callout-tip icon=false}
+## Nearest neighbors within radius
+
+Now we can easily store the building indices as a new column to the `stops` `GeoDataFrame`:
+
+```{python}
+#| echo: true
+stops["building_ids_within_range"] = k_nearest_ix
+stops.head()
+```
+:::
+
+## K-Nearest Neighbor search {.scrollable}
+:::{.callout-tip icon=false}
+## Nearest neighbors within radius
+With this information, we can for example calculate the number of buildings within 200 meters from each stop. To do this, we can create a simple `lambda` function that checks the length of the id-list and store the result into column `building_cnt`:
+
+```{python}
+#| echo: true
+stops["building_cnt"] = stops["building_ids_within_range"].apply(
+    lambda id_list: len(id_list)
+)
+stops.head()
+```
+:::
+
+## K-Nearest Neighbor search {.scrollable}
+:::{.callout-tip icon=false}
+## Nearest neighbors within radius
+```{python}
+#| echo: true
+print("Max number of buildings:", stops["building_cnt"].max())
+print("Average number of buildings:", stops["building_cnt"].mean().round(1))
+```
+:::
+
+## K-Nearest Neighbor search {.scrollable}
+:::{.callout-tip icon=false}
+## Nearest neighbors within radius
+By calculating simple statistics from the `building_cnt` column, we can see that on average there are 32.2 buildings within 200 meters from the public transport stops and the maximum number of buildings within this distance is whopping 181 buildings.
+
+- This indicates very dense neighborhood having numerous buildings in a small area.
+- To better understand, where this kind of neighborhood is located and what does it look like, we can make a map by selecting the rows with highest number of buildings and then plotting the stop and building points within radius:
+
+```{python}
+#| echo: true
+filtered = stops["building_cnt"] == stops["building_cnt"].max()
+building_ids = stops.loc[filtered].building_ids_within_range.values[0]
+
+m = stops.loc[filtered].explore(
+    tiles="CartoDB Positron", color="red", marker_kwds={"radius": 5}, max_zoom=16
+)
+building_points.loc[building_ids].explore(m=m)
+```
+:::
+
+## K-Nearest Neighbor search
+:::{.callout-warning icon=false}
+## Exercise
+There is also an alternative approach for making a radius query by calculating a buffer around the stop points and then making a spatial join between these Polygon geometries and the buildings. This approach also allows to make queries between other type of geometries than Points.
+
+- Test and try to find all buildings within 200 meters from the transit stops by creating a 200 meter buffer around the stops and then making a spatial join between the buffers and building points.
+- Calculate the number of buildings per `stop_id.`
+- Did it take longer to find the nearest buildings using this approach?
+:::
+<!--
+```python editable=true slideshow={"slide_type": ""} tags=["remove_book_cell", "hide-cell"]
+# Solution
+
+# Create a 200 meter buffer
+stop_buffer = stops.copy()
+stop_buffer["geometry"] = stops.buffer(200)
+
+# Find all the building points intersecting with the buffer
+buffer_buildings = stop_buffer.sjoin(building_points, predicate="intersects")
+
+# Calculate the number of buildings per stop by grouping
+building_count = (
+    buffer_buildings.groupby("stop_id").stop_name.count().to_frame().reset_index()
+)
+
+# Now the "stop_name" column contains information about building count, rename
+building_count = building_count.rename(columns={"stop_name": "building_cnt_buffer"})
+
+# Join the information into the stops
+stop_buffer = stop_buffer.merge(building_count, on="stop_id")
+
+# As a result, we should have identical number of buildings identified per stop (see the last two columns)
+stop_buffer.head()
+```
+-->
