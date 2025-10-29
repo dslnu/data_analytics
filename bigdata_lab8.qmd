@@ -1,0 +1,42 @@
+---
+title: "Big Data Analytics: Lab 8"
+execute:
+  enabled: true
+  echo: true
+  cache: true
+format:
+  html:
+    code-fold: false
+jupyter: python3
+diagram:
+  cache: true
+  cache-dir: ./cache
+  engine:
+    tikz:
+      execpath: lualatex
+filters:
+  - diagram
+---
+
+# Analyzing night lights data
+
+## Data preparation
+
+1. **Vector data**: pick a country and download its shapefile data from https://gadm.org/download_country.html
+2. **Raster data**: download average radiance data for 2 different months from https://eogdata.mines.edu/products/vnl/#monthly
+   - "avg_rade9h" in the filename
+   - pick non-tiled version
+   - use stray-light-corrected data (`vcmsl`)
+
+## Data analysis
+
+1. Open vector data with GeoDataFrame and plot it.
+2. Open raster data with rioxarray and plot it. See if it works and doesn't crash.
+3. Try reducing the size of raster data by factor of 10. How would you do it?
+4. Clip/mask raster data so that it fits the vector geometry of your country's vector data. Plot it.
+5. Compute average luminosity for each level 2 region.
+6. Create a resulting GeoDataFrame with additional column showing the difference in average luminosity between `start_month` and `end_month`, and save it to a file. Ah, and don't forget to plot it.
+
+**Note**: use Dask for optimizations:
+  - https://corteva.github.io/rioxarray/stable/examples/dask_read_write.html
+  - https://docs.xarray.dev/en/stable/user-guide/dask.html
