@@ -1,0 +1,1692 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-html/tabby.min.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/light-border.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7b89279ff1a6dce999919e0e67d4d9ec.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.8.25">
+
+  <meta name="author" content="MSDE">
+  <title>Big Data analytics / Applied Data analytics – Databases: History, Models and Queries</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="site_libs/revealjs/dist/reset.css">
+  <link rel="stylesheet" href="site_libs/revealjs/dist/reveal.css">
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+      vertical-align: middle;
+    }
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      { color: #003b4f; background-color: #f1f3f5; }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span { color: #003b4f; } /* Normal */
+    code span.al { color: #ad0000; } /* Alert */
+    code span.an { color: #5e5e5e; } /* Annotation */
+    code span.at { color: #657422; } /* Attribute */
+    code span.bn { color: #ad0000; } /* BaseN */
+    code span.bu { } /* BuiltIn */
+    code span.cf { color: #003b4f; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #20794d; } /* Char */
+    code span.cn { color: #8f5902; } /* Constant */
+    code span.co { color: #5e5e5e; } /* Comment */
+    code span.cv { color: #5e5e5e; font-style: italic; } /* CommentVar */
+    code span.do { color: #5e5e5e; font-style: italic; } /* Documentation */
+    code span.dt { color: #ad0000; } /* DataType */
+    code span.dv { color: #ad0000; } /* DecVal */
+    code span.er { color: #ad0000; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #ad0000; } /* Float */
+    code span.fu { color: #4758ab; } /* Function */
+    code span.im { color: #00769e; } /* Import */
+    code span.in { color: #5e5e5e; } /* Information */
+    code span.kw { color: #003b4f; font-weight: bold; } /* Keyword */
+    code span.op { color: #5e5e5e; } /* Operator */
+    code span.ot { color: #003b4f; } /* Other */
+    code span.pp { color: #ad0000; } /* Preprocessor */
+    code span.sc { color: #5e5e5e; } /* SpecialChar */
+    code span.ss { color: #20794d; } /* SpecialString */
+    code span.st { color: #20794d; } /* String */
+    code span.va { color: #111111; } /* Variable */
+    code span.vs { color: #20794d; } /* VerbatimString */
+    code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="site_libs/revealjs/dist/theme/quarto-534cd8e3a96973385dffff3f4709048d.css">
+  <link rel="stylesheet" href="custom.css">
+  <link href="site_libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
+  <link href="site_libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
+  <link href="site_libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
+  <link href="site_libs/revealjs/plugin/quarto-support/footer.css" rel="stylesheet">
+  <style type="text/css">
+    .reveal div.sourceCode {
+      margin: 0;
+      overflow: auto;
+    }
+    .reveal div.hanging-indent {
+      margin-left: 1em;
+      text-indent: -1em;
+    }
+    .reveal .slide:not(.center) {
+      height: 100%;
+    }
+    .reveal .slide.scrollable {
+      overflow-y: auto;
+    }
+    .reveal .footnotes {
+      height: 100%;
+      overflow-y: auto;
+    }
+    .reveal .slide .absolute {
+      position: absolute;
+      display: block;
+    }
+    .reveal .footnotes ol {
+      counter-reset: ol;
+      list-style-type: none; 
+      margin-left: 0;
+    }
+    .reveal .footnotes ol li:before {
+      counter-increment: ol;
+      content: counter(ol) ". "; 
+    }
+    .reveal .footnotes ol li > p:first-child {
+      display: inline-block;
+    }
+    .reveal .slide ul,
+    .reveal .slide ol {
+      margin-bottom: 0.5em;
+    }
+    .reveal .slide ul li,
+    .reveal .slide ol li {
+      margin-top: 0.4em;
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide ul[role="tablist"] li {
+      margin-bottom: 0;
+    }
+    .reveal .slide ul li > *:first-child,
+    .reveal .slide ol li > *:first-child {
+      margin-block-start: 0;
+    }
+    .reveal .slide ul li > *:last-child,
+    .reveal .slide ol li > *:last-child {
+      margin-block-end: 0;
+    }
+    .reveal .slide .columns:nth-child(3) {
+      margin-block-start: 0.8em;
+    }
+    .reveal blockquote {
+      box-shadow: none;
+    }
+    .reveal .tippy-content>* {
+      margin-top: 0.2em;
+      margin-bottom: 0.7em;
+    }
+    .reveal .tippy-content>*:last-child {
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide > img.stretch.quarto-figure-center,
+    .reveal .slide > img.r-stretch.quarto-figure-center {
+      display: block;
+      margin-left: auto;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-left,
+    .reveal .slide > img.r-stretch.quarto-figure-left  {
+      display: block;
+      margin-left: 0;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-right,
+    .reveal .slide > img.r-stretch.quarto-figure-right  {
+      display: block;
+      margin-left: auto;
+      margin-right: 0; 
+    }
+  </style>
+</head>
+<body class="quarto-light">
+  <div class="reveal">
+    <div class="slides">
+
+<section id="title-slide" class="quarto-title-block center">
+  <h1 class="title">Databases: History, Models and Queries</h1>
+
+<div class="quarto-title-authors">
+<div class="quarto-title-author">
+<div class="quarto-title-author-name">
+MSDE 
+</div>
+        <p class="quarto-title-affiliation">
+            Lviv University
+          </p>
+    </div>
+</div>
+
+</section>
+<section id="history" class="slide level2">
+<h2>History</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Plimpton 322 tablet (1800 BC)</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/Plimpton_322.jpg" height="500"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="overview-tech-stack" class="slide level2">
+<h2>Overview: tech stack</h2>
+
+<img data-src="img/db_tech_stack.png" class="r-stretch"></section>
+<section id="overview-data-shapes" class="slide level2">
+<h2>Overview: data shapes</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Data shapes</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>trees</li>
+<li>cubes</li>
+<li>graphs</li>
+<li>unstructured</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="data-models" class="slide level2">
+<h2>Data models</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Origins of databases</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>Business data processing</strong> performed on mainframe computers in the 1960s and ’70s:</p>
+<ul>
+<li>transaction processing (entering sales or banking transactions, airline reservations, stock-keeping in warehouses)</li>
+<li>batch processing (customer invoicing, payroll, reporting).</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-warning no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>History outline</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>1970-1980s: network and hierarchical models</li>
+<li>1980-1990s: object databases</li>
+<li>1970s-present: relational model</li>
+<li>1990s-present: document model</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="hierarchical-model" class="slide level2">
+<h2>Hierarchical model</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Information Management System (IBM)</strong></p>
+</div>
+<div class="callout-content">
+<p>Originally released in 1968, developed for stock keeping of the Apollo space program.</p>
+<p>Represented all data as a tree of records nested within records.</p>
+<ul>
+<li>works well for one-to-many relationships</li>
+<li>not so well for many-to-many relationships</li>
+<li>does not support joins</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="hierarchical-model-1" class="slide level2">
+<h2>Hierarchical model</h2>
+
+<img data-src="img/hierarchical_model.png" class="r-stretch"></section>
+<section id="network-model" class="slide level2">
+<h2>Network model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Conference on Data Systems Languages (CODASYL, 1969)</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>child record can have many parents</li>
+<li>allows modeling of many-to-one and many-to-many relationships</li>
+<li>uses <strong>access paths</strong>: sequences of links between records</li>
+<li>queries are constructed by following access paths</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="network-model-1" class="slide level2">
+<h2>Network model</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Bachman diagram</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/bachman_diagram.jpg"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Edgar Codd. A Relational Model of Data for Large Shared Data Banks (1970)</strong></p>
+</div>
+<div class="callout-content">
+<blockquote>
+<p>A usable database management system should hide all the physical complexity from the user and expose instead a simple, clean model. This model should be based on tables, which gave birth to the relational model and the relational algebra.</p>
+</blockquote>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Data independence</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>Data independence</strong> - the independence of application programs and terminal activities from growth in data types and changes in data representation.</p>
+<p>Logical view on the data is cleanly separated, decoupled, from its physical storage.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-1" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Logical model</strong></p>
+</div>
+<div class="callout-content">
+<p>A relational database management system (RDBMS) exposes this logical model, together with logical building blocks for manipulating it, on top of a physical layer.</p>
+<p>Thus, 2 layers:</p>
+<ul>
+<li><strong>Logical</strong></li>
+<li><strong>Physical</strong></li>
+</ul>
+<p>In relational model, logical view is a <strong>table</strong>.</p>
+</div>
+</div>
+</div>
+
+<aside><div>
+<p>Note: query optimizer handles the construction of access paths (compare with manual effort required in the network model)</p>
+</div></aside></section>
+<section id="relational-model-2" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>RDBMS as a stack</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>A logical query language with which the user can query data;</li>
+<li>A logical model for the data;</li>
+<li>A physical compute layer that processes the query on an instance of the model;</li>
+<li>A physical storage layer where the data is physically stored.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-3" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Definitions</strong></p>
+</div>
+<div class="callout-content">
+<p>A <strong>relation</strong> <span class="math inline">\(R\)</span> on a family of sets <span class="math inline">\((A_i)_{i=1,n}\)</span> is a subset of their Cartesian product: <span class="math inline">\(R \subseteq A_1 \times \ldots \times A_n\)</span>.</p>
+<p>A <strong>partial function</strong> between two sets <span class="math inline">\(A\)</span> and <span class="math inline">\(B\)</span> is a relation that associates to each element of <span class="math inline">\(A\)</span> at most one element of <span class="math inline">\(B\)</span>: <span class="math display">\[
+\forall (x_A, x_B), (y_A, y_B) \ in p: x_A = y_A \Rightarrow x_B = y_B
+\]</span></p>
+<p>The set of all partial functions from <span class="math inline">\(A\)</span> to <span class="math inline">\(B\)</span> is denoted as <span class="math inline">\(A \mapsto B\)</span>.</p>
+<p>The subset of <span class="math inline">\(A\)</span> with the elements that do get associated to an element of <span class="math inline">\(B\)</span> is denoted <span class="math inline">\(support(p)\)</span>: <span class="math display">\[
+support(p) = \left\{a \in A: \exists b \in B, p(a)=b\right\} = p^{-1}(B).
+\]</span></p>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-4" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Set definitions</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p><span class="math inline">\(\mathbb{S}\)</span> is a set of all strings.</p></li>
+<li><p><span class="math inline">\(\mathbb{V}\)</span> is a set of all possible values. Contains anything that can be stored on persistent storage or in memory as a sequence of 0s and 1s and according to a convention to interpret these bits.</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-5" class="slide level2 font8">
+<h2>Relational model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Set definitions</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p><span class="math inline">\(\mathbb{A} \subset \mathbb{V}\)</span> – the set that contains all atomic values. Atomic values are values that are not structured, i.e., this excludes:</p>
+<ul>
+<li>objects,</li>
+<li>arrays,</li>
+<li>lists,</li>
+<li>sets,</li>
+<li>trees,</li>
+<li>bags,</li>
+<li>etc.</li>
+</ul>
+<p>but only includes:</p>
+<ul>
+<li>strings,</li>
+<li>integers,</li>
+<li>Booleans,</li>
+<li>dates</li>
+</ul>
+<p>and so on.</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-6" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Set definitions</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>The <strong>table</strong> itself, which can be seen as a collection of <strong>records</strong>. A synonym is a <strong>collection</strong>.</p></li>
+<li><p>The <strong>attribute</strong>, which is a property that records can have.</p></li>
+<li><p>The <strong>row</strong>, which is a record in a collection. A row associates properties with the values applicable for the record it represents. Synonyms of row are:</p>
+<ul>
+<li>record,</li>
+<li>entity,</li>
+<li>document,</li>
+<li>item.</li>
+</ul></li>
+<li><p>The <strong>primary key</strong>, which is a particular attribute or set of attributes that uniquely identify a record in its table.</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-7" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Table definition</strong></p>
+</div>
+<div class="callout-content">
+<p>Expressed formally, given a family of attributes <span class="math inline">\((A_i)_{1\leq i \leq n}\)</span> and their associated domains <span class="math display">\[
+(Domain(A_i))_{1\leq i \leq n}
+\]</span> a table <span class="math inline">\(T\)</span> is a relation over these domains, i.e. <span class="math display">\[
+T \subseteq Domain(A_1) \times Domain(A_2) \times \ldots \times Domain(A_n)
+\]</span></p>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-8" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Table definition</strong></p>
+</div>
+<div class="callout-content">
+<p>A collection of records is a set of partial functions from <span class="math inline">\(\mathbb{S}\)</span> to <span class="math inline">\(\mathbb{V}\)</span>. We denote the set of collections as <span class="math inline">\(\mathcal{C}\)</span>: <span class="math display">\[
+\mathcal{C} = \mathcal{P}(\mathbb{S} \mapsto \mathbb{V})
+\]</span> Each record is thus modelled as a partial function mapping strings to values. <img data-src="img/relational_s_to_v.png"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-9" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Table definition</strong></p>
+</div>
+<div class="callout-content">
+<p>A table is a collection with three constraints:</p>
+<ul>
+<li>Relational integrity</li>
+<li>Domain integrity</li>
+<li>Atomic integrity</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-10" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Relational integrity</strong></p>
+</div>
+<div class="callout-content">
+<p>A collection T fulfils relational integrity if all its records have identical support: <span class="math display">\[
+\forall t, u \in T : support(u) = support(t)
+\]</span> Common support is a property of the table and contains the attributes of the table <span class="math inline">\(T\)</span>: <span class="math inline">\(Attributes_T\)</span>.</p>
+<p>The extension of the table, sometimes denoted <span class="math inline">\(Extension_T\)</span> is its actual content, which is <span class="math inline">\(T\)</span> itself.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-11" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>No relational integrity</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/relational_integrity1.png"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-12" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>With relational integrity</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/relational_integrity2.png" height="500"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-13" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Domain integrity</strong></p>
+</div>
+<div class="callout-content">
+<p>A collection <span class="math inline">\(T\)</span> fulfils domain integrity if the values associated with each attribute are restricted to a domain.</p>
+<p>We define these domains with a function <span class="math inline">\(D\)</span> mapping strings (the attributes) to domains (unused attributes are just associated with empty domains, i.e.&nbsp;this does not need to be a partial function): <span class="math display">\[
+D \in \mathcal{P}(\mathbb{V})^\mathbb{S}
+\]</span></p>
+<p>A collection <span class="math inline">\(T\)</span> fulfils the domain integrity constraint specified by <span class="math inline">\(D\)</span> if, for each row, the values are in the specified domains: <span class="math display">\[
+\forall t \in T, \forall a \in support(t): t.a \in D(a)
+\]</span></p>
+<p><strong>Note:</strong> domain integrity still allows <strong>missing</strong> values.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-14" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Schema</strong></p>
+</div>
+<div class="callout-content">
+<p>Domain mapping <span class="math inline">\(D\)</span> is called a <strong>schema</strong>.</p>
+<p>Schema contains:</p>
+<ul>
+<li><strong>names</strong> of the columns</li>
+<li>the <strong>domain</strong> or <strong>type</strong> of each column (string, integer, date, boolean, and so on).</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-15" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>No domain integrity</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/domain_integrity1.png"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-16" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>With domain integrity</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/domain_integrity2.png"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-17" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Atomic integrity</strong></p>
+</div>
+<div class="callout-content">
+<p>A collection <span class="math inline">\(T\)</span> fulfils the atomic integrity constraint if the values used in it are only atomic values, i.e. <span class="math display">\[
+T \subseteq \mathbb{S} \mapsto \mathbb{A}
+\]</span></p>
+<p>This means that the collection does not contain any nested collections or sets or lists or anything that has a structure of its own: it is <strong>flat</strong>.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-18" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>No atomic integrity</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/atomic_integrity1.png"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-19" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>With atomic integrity</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/atomic_integrity2.png"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-20" class="slide level2">
+<h2>Relational model</h2>
+
+<img data-src="img/integrity_nosql.png" class="r-stretch"></section>
+<section id="relational-model-21" class="slide level2">
+<h2>Relational model</h2>
+
+<img data-src="img/relational_operators.png" class="r-stretch quarto-figure-center"><p class="caption"><strong>Relational algebra:</strong> a framework for manipulating relational tables</p></section>
+<section id="relational-model-22" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Queries</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>Set queries</strong> act on relational tables as sets (as previously described): one can take the union or the intersection of two sets, or subtract a set from another. <!-- %These operators directly and naturally translate to relational tables. --></li>
+<li><strong>Filter queries</strong> take a portion of a table: some or all columns, some or all rows, etc. They are known as <strong>projection</strong> and <strong>selection</strong>. <!-- %There also exists a fancy operator called the “extended projection” that can be used to add more computed columns. --></li>
+<li><strong>Renaming queries</strong> can rename columns.</li>
+<li><strong>Joining queries</strong> can take the Cartesian product of two tables, potentially filtering to match values from both sides. The latter is called a <strong>join</strong>.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-23" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Selection</strong></p>
+</div>
+<div class="callout-content">
+<p>A selection takes a subset of the records belonging to the table, taking a parameter, which is a predicate on the attributes.</p>
+<p>The notation used is the <span class="math inline">\(\sigma\)</span> letter. <span class="math display">\[
+S = \sigma_{B \leq 2}(R)
+\]</span> <img data-src="img/relational_selection.png" height="350"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-24" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Projection</strong></p>
+</div>
+<div class="callout-content">
+<p>A projection keeps all records, but removes columns specified in the parameter list.</p>
+<p>The notation used is the <span class="math inline">\(\pi\)</span> letter: <span class="math display">\[
+S = \pi_{A,C}(R)
+\]</span> <img data-src="img/relational_projection.png" height="350"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-25" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Grouping</strong></p>
+</div>
+<div class="callout-content">
+<p>A grouping, also called aggregation, merges records by grouping on some attributes, and aggregating on all others.</p>
+<p>The notation used is the <span class="math inline">\(\gamma\)</span> letter: <span class="math display">\[
+S = \gamma_{G,SUM(A) \rightarrow A}(R)
+\]</span> This groups by <span class="math inline">\(G\)</span> and aggregate the values in column <span class="math inline">\(A\)</span> (within the same group) with a sum</p>
+<p><strong>Note:</strong> there are grouping and non-grouping attributes.</p>
+<p><strong>Examples:</strong> COUNT, SUM, MAX, MIN, AVERAGE.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-26" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Relational grouping</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/relational_grouping.png"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-27" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Renaming</strong></p>
+</div>
+<div class="callout-content">
+<p>Rename a column from <span class="math inline">\(A\)</span> to <span class="math inline">\(D\)</span>: <span class="math display">\[
+S = \rho_{A \rightarrow D}(R)
+\]</span></p>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-28" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Joins</strong></p>
+</div>
+<div class="callout-content">
+<p>A <strong>natural</strong> join is a filtered Cartesian product in which we only combine directly related tuples and omit all other non-matching pairs. The notation used is the <span class="math inline">\(\bowtie\)</span> symbol: <span class="math display">\[
+T= R \bowtie S
+\]</span> joins <span class="math inline">\(R\)</span> and <span class="math inline">\(S\)</span> but only keeps records that coincide on the attributes common to both sides.</p>
+<p>Joins are computationally <strong>more expensive</strong> than projections or selections.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-29" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Relational join</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/relational_join.png"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-30" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Other joins</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>Theta joins</strong> explicitly specify the joining criterion instead of matching the common attributes, e.g.&nbsp;<span class="math inline">\(T= R \bowtie_{A=D} S\)</span>. Common attributes should be renamed, e.g.&nbsp;<span class="math inline">\(T= R \bowtie_{B=E \rho_{B \rightarrow E}} S\)</span>.</li>
+<li><strong>Outer joins</strong> keep records with no match on the other side, keeping the other attributes absent. Note that this breaks relational integrity in its strictest sense</li>
+<li><strong>Semi-outer joins</strong> are like (full) outer joins but only keep unmatched records on the left, or only on the right.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-31" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Normal forms</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>Atomic integrity</li>
+<li>Each column in a record contains information on the entire record</li>
+<li>No functional dependencies on anything else than the primary key</li>
+</ul>
+<p>Normal forms help to address inconsistencies:</p>
+<ul>
+<li><strong>deletion anomalies:</strong> deleting a record makes the database inconsistent</li>
+<li><strong>insertion anomalies:</strong> inserting a new record makes the database inconsistent</li>
+<li><strong>update anomalies:</strong> updating a record makes the database inconsistent</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-32" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Key idea behind of normalization</strong></p>
+</div>
+<div class="callout-content">
+<p>Removal of <strong>duplication.</strong></p>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Downsides</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>Requires joins</li>
+<li>Loss of locality (also called <strong>shredding</strong>)</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-33" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Transactions</strong></p>
+</div>
+<div class="callout-content">
+<p>ACID guarantees:</p>
+<ul>
+<li><strong>Atomicity</strong>: either an update (called a transaction if it consists of several updates) is applied to the database completely, or not at all;</li>
+<li><strong>Consistency</strong>: before and after the transactions, the data is in a consistent state (e.g., some values sum to another value, another value is positive, etc);</li>
+<li><strong>Isolation:</strong> the system “feels like” the user is the only one using the system, where in fact maybe thousands of people are using it as well concurrently;</li>
+<li><strong>Durability:</strong> any data written to the database is durably stored and will not be lost (e.g., if there is an electricity shortage or a disk crash).</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-34" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Limitations</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>lots of <strong>rows</strong>: beyond a million records, a system on one machine can start showing signs of weakness; even though more recent systems manage to push it a bit higher on a single machine (e.g., close to a billion)</li>
+<li>lots of <strong>columns</strong>: beyond 255 columns, a system on one machine can start showing signs of weakness or even not support it at all</li>
+<li>lots of <strong>nesting</strong>: many systems do not support nested data or, if they do, do so only in a limited fashion and it becomes quickly cumbersome</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-35" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Alternatives</strong></p>
+</div>
+<div class="callout-content">
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>Issue</th>
+<th>Solution</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Lots of rows</td>
+<td>Object storage</td>
+</tr>
+<tr class="even">
+<td>Lots of rows</td>
+<td>Distributed File Systems</td>
+</tr>
+<tr class="odd">
+<td>Lots of nesting</td>
+<td>Syntax</td>
+</tr>
+<tr class="even">
+<td>Lots of rows/columns</td>
+<td>Column storage</td>
+</tr>
+<tr class="odd">
+<td>Lots of nesting</td>
+<td>Data models</td>
+</tr>
+<tr class="even">
+<td>Lots of rows</td>
+<td>Massive Parallel Processing</td>
+</tr>
+<tr class="odd">
+<td>Lots of nesting</td>
+<td>Document Stores</td>
+</tr>
+<tr class="even">
+<td>Lots of nesting</td>
+<td>Querying</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-36" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Drivers for change</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>A need for greater <strong>scalability</strong> than relational databases can easily achieve, including very large datasets or very high write throughput</li>
+<li>A widespread preference for <strong>free and open source</strong> software over commercial database products</li>
+<li><strong>Specialized query operations</strong> that are not well supported by the relational model</li>
+<li>Frustration with the <strong>restrictiveness</strong> of relational schemas, and a desire for a more dynamic and expressive data model</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-37" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Modern systems</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>key-value stores</li>
+<li>wide column stores</li>
+<li>document stores</li>
+<li>graph databases</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-38" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Challenges</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>integrity may not hold (nested/heterogeneous data)</li>
+<li>ACID guarantees may not hold</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="cap" class="slide level2">
+<h2>CAP</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Definition</strong></p>
+</div>
+<div class="callout-content">
+<p>CAP: presented as a conjecture by Eric Brewer at the 2000 Symposium on Principles of Distributed Computing and formalized and proven by Gilbert and Lynch in 2002.</p>
+<ul>
+<li><strong>Consistent:</strong> All replicas of the same data will be the same value across a distributed system.</li>
+<li><strong>Available:</strong> All live nodes in a distributed system can process operations and respond to queries.</li>
+<li><strong>Partition Tolerant:</strong> The system is designed to operate in the face of connectivity loss between replicas.</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>CAP (Brewer’s) theorem</strong></p>
+</div>
+<div class="callout-content">
+<p>You can have only two of the above.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="document-model" class="slide level2">
+<h2>Document model</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Comparison</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>vs hierarchical:</strong> child data is stored together with a parent record</li>
+<li><strong>vs relational:</strong> use document references instead of foreign keys</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="document-model-1" class="slide level2">
+<h2>Document model</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Example</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode numberSource json number-lines code-with-copy"><code class="sourceCode json"><span id="cb1-1"><a></a><span class="fu">{</span><span class="dt">"user_id"</span><span class="fu">:</span> <span class="dv">251</span><span class="fu">,</span></span>
+<span id="cb1-2"><a></a>  <span class="dt">"first_name"</span><span class="fu">:</span> <span class="st">"Bill"</span><span class="fu">,</span></span>
+<span id="cb1-3"><a></a>  <span class="dt">"last_name"</span><span class="fu">:</span> <span class="st">"Gates"</span><span class="fu">,</span></span>
+<span id="cb1-4"><a></a>  <span class="dt">"summary"</span><span class="fu">:</span> <span class="st">"Co-chair of the Bill and Melinda Gates... Active blogger."</span><span class="fu">,</span></span>
+<span id="cb1-5"><a></a>  <span class="dt">"education"</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb1-6"><a></a>    <span class="fu">{</span><span class="dt">"school_name"</span><span class="fu">:</span> <span class="st">"Harvard University"</span><span class="fu">,</span> <span class="dt">"start"</span><span class="fu">:</span> <span class="dv">1973</span><span class="fu">,</span> <span class="dt">"end"</span><span class="fu">:</span> <span class="dv">1975</span><span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb1-7"><a></a>    <span class="fu">{</span><span class="dt">"school_name"</span><span class="fu">:</span> <span class="st">"Lakeside School, Seattle"</span><span class="fu">,</span> <span class="dt">"start"</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span> <span class="dt">"end"</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">}</span></span>
+<span id="cb1-8"><a></a>  <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb1-9"><a></a>  <span class="dt">"contact_info"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1-10"><a></a>    <span class="dt">"blog"</span><span class="fu">:</span> <span class="st">"http://thegatesnotes.com"</span><span class="fu">,</span></span>
+<span id="cb1-11"><a></a>    <span class="dt">"twitter"</span><span class="fu">:</span> <span class="st">"http://twitter.com/BillGates"</span></span>
+<span id="cb1-12"><a></a>  <span class="fu">}</span></span>
+<span id="cb1-13"><a></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</section>
+<section id="document-model-2" class="slide level2">
+<h2>Document model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Pros</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>schema flexibility</li>
+<li>data locality (performance implications!)</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Cons</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>no joins</li>
+<li>many-to-one and many-to-many relationships</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="document-model-3" class="slide level2">
+<h2>Document model</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Schemas</strong></p>
+</div>
+<div class="callout-content">
+<p>Document DBs are not <strong>schemaless</strong>. They are <strong>schema-on-read</strong>.</p>
+<p>Relational DBs are <strong>schema-on-write</strong>.</p>
+<p><img data-src="img/schema_on_read_write.png" height="350"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="document-model-4" class="slide level2">
+<h2>Document model</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Hybrids: JSON support in RDBMS</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>PostgreSQL 9.3 (2013)</li>
+<li>MySQL 5.7 (2013)</li>
+<li>IBM DB2 10.5 (2013)</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Hybrids: joins support in document DBs</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>RethinkDB: relational-like joins</li>
+<li>MongoDB: client-side joins</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="graph-model" class="slide level2">
+<h2>Graph model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Features</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>Good for many-to-many relationships</li>
+<li>suitable for homogeneous and heterogeneous data</li>
+<li>several data structuring and querying approaches</li>
+<li>flexible data modeling</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="graph-model-1" class="slide level2">
+<h2>Graph model</h2>
+
+<img data-src="img/graph_data_example.png" class="r-stretch"></section>
+<section id="graph-model-2" class="slide level2">
+<h2>Graph model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Property graphs (Neo4J, Titan, InfiniteGraph)</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>Vertices</strong>:</p>
+<ul>
+<li>A unique identifier</li>
+<li>A set of outgoing edges</li>
+<li>A set of incoming edges</li>
+<li>A collection of properties (key-value pairs)</li>
+</ul>
+<p><strong>Edges:</strong></p>
+<ul>
+<li>A unique identifier</li>
+<li>The vertex at which the edge starts (the tail vertex)</li>
+<li>The vertex at which the edge ends (the head vertex)</li>
+<li>An edge label</li>
+<li>A collection of properties (key-value pairs)</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="graph-model-3" class="slide level2">
+<h2>Graph model</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Property graph as a pair of relational tables</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode numberSource sql number-lines code-with-copy"><code class="sourceCode sql"><span id="cb2-1"><a></a><span class="kw">CREATE</span> <span class="kw">TABLE</span> vertices (</span>
+<span id="cb2-2"><a></a>  vertex_id <span class="dt">integer</span> <span class="kw">PRIMARY</span> <span class="kw">KEY</span>,</span>
+<span id="cb2-3"><a></a>  properties json</span>
+<span id="cb2-4"><a></a>);</span>
+<span id="cb2-5"><a></a><span class="kw">CREATE</span> <span class="kw">TABLE</span> edges (</span>
+<span id="cb2-6"><a></a>  edge_id <span class="dt">integer</span> <span class="kw">PRIMARY</span> <span class="kw">KEY</span>,</span>
+<span id="cb2-7"><a></a>  tail_vertex <span class="dt">integer</span> <span class="kw">REFERENCES</span> vertices (vertex_id),</span>
+<span id="cb2-8"><a></a>  head_vertex <span class="dt">integer</span> <span class="kw">REFERENCES</span> vertices (vertex_id),</span>
+<span id="cb2-9"><a></a>  <span class="kw">label</span> text,</span>
+<span id="cb2-10"><a></a>  properties json</span>
+<span id="cb2-11"><a></a>);</span>
+<span id="cb2-12"><a></a><span class="kw">CREATE</span> <span class="kw">INDEX</span> edges_tails <span class="kw">ON</span> edges (tail_vertex);</span>
+<span id="cb2-13"><a></a><span class="kw">CREATE</span> <span class="kw">INDEX</span> edges_heads <span class="kw">ON</span> edges (head_vertex);</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</section>
+<section id="graph-model-4" class="slide level2">
+<h2>Graph model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Triple stores (Datomic, AllegroGraph)</strong></p>
+</div>
+<div class="callout-content">
+<p>All information is stored in the form of very simple three-part statements: <strong>(subject, predicate, object)</strong>:</p>
+<ul>
+<li><strong>subject:</strong> equivalent to a vertex in a graph</li>
+<li><strong>object:</strong> either a primitive datatype or a vertex</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="graph-model-5" class="slide level2">
+<h2>Graph model</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Turtle triple format</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode numberSource json number-lines code-with-copy"><code class="sourceCode json"><span id="cb3-1"><a></a><span class="er">_:lucy</span> <span class="er">a</span> <span class="er">:Person;</span> <span class="er">:name</span> <span class="er">"Lucy";</span> <span class="er">:bornIn</span> <span class="er">_:idaho.</span></span>
+<span id="cb3-2"><a></a><span class="er">_:idaho</span> <span class="er">a</span> <span class="er">:Location;</span> <span class="er">:name</span> <span class="er">"Idaho";</span> <span class="er">:type</span> <span class="er">"state";</span> <span class="er">:within</span> <span class="er">_:usa.</span></span>
+<span id="cb3-3"><a></a><span class="er">_:usa</span> <span class="er">a</span> <span class="er">:Location;</span> <span class="er">:name</span> <span class="er">"United</span> <span class="er">States";</span> <span class="er">:type</span> <span class="er">"country";</span> <span class="er">:within</span> <span class="er">_:namerica.</span></span>
+<span id="cb3-4"><a></a><span class="er">_:namerica</span> <span class="er">a</span> <span class="er">:Location;</span> <span class="er">:name</span> <span class="er">"North</span> <span class="er">America";</span> <span class="er">:type</span> <span class="er">"continent".</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</section>
+<section id="graph-model-6" class="slide level2">
+<h2>Graph model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Datalog</strong></p>
+</div>
+<div class="callout-content">
+<p>This is a generalized version of triple-store model: <strong>predicate(subject, object)</strong></p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource datalog number-lines code-with-copy"><code class="sourceCode"><span id="cb4-1"><a></a>name(namerica, 'North America').</span>
+<span id="cb4-2"><a></a>type(namerica, continent).</span>
+<span id="cb4-3"><a></a>name(usa, 'United States').</span>
+<span id="cb4-4"><a></a>type(usa, country).</span>
+<span id="cb4-5"><a></a>within(usa, namerica).</span>
+<span id="cb4-6"><a></a>name(idaho, 'Idaho').</span>
+<span id="cb4-7"><a></a>type(idaho, state).</span>
+<span id="cb4-8"><a></a>within(idaho, usa).</span>
+<span id="cb4-9"><a></a>name(lucy, 'Lucy').</span>
+<span id="cb4-10"><a></a>born_in(lucy, idaho).</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+
+
+</section>
+    </div>
+  <div class="quarto-auto-generated-content" style="display: none;">
+<div class="footer footer-default">
+
+</div>
+</div></div>
+
+  <script>window.backupDefine = window.define; window.define = undefined;</script>
+  <script src="site_libs/revealjs/dist/reveal.js"></script>
+  <!-- reveal.js plugins -->
+  <script src="site_libs/revealjs/plugin/quarto-line-highlight/line-highlight.js"></script>
+  <script src="site_libs/revealjs/plugin/pdf-export/pdfexport.js"></script>
+  <script src="site_libs/revealjs/plugin/reveal-menu/menu.js"></script>
+  <script src="site_libs/revealjs/plugin/reveal-menu/quarto-menu.js"></script>
+  <script src="site_libs/revealjs/plugin/multiplex/socket.io.js"></script>
+  <script src="site_libs/revealjs/plugin/multiplex/multiplex.js"></script>
+  <script src="site_libs/revealjs/plugin/quarto-support/support.js"></script>
+  
+
+  <script src="site_libs/revealjs/plugin/notes/notes.js"></script>
+  <script src="site_libs/revealjs/plugin/search/search.js"></script>
+  <script src="site_libs/revealjs/plugin/zoom/zoom.js"></script>
+  <script src="site_libs/revealjs/plugin/math/math.js"></script>
+  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script>
+
+  <script>
+
+      // Full list of configuration options available at:
+      // https://revealjs.com/config/
+      Reveal.initialize({
+'controlsAuto': true,
+'previewLinksAuto': true,
+'pdfSeparateFragments': false,
+'autoAnimateEasing': "ease",
+'autoAnimateDuration': 1,
+'autoAnimateUnmatched': true,
+'jumpToSlide': true,
+'menu': {"side":"left","useTextContentForMissingTitles":true,"markers":false,"loadIcons":false,"custom":[{"title":"Tools","icon":"<i class=\"fas fa-gear\"></i>","content":"<ul class=\"slide-menu-items\">\n<li class=\"slide-tool-item active\" data-item=\"0\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.fullscreen(event)\"><kbd>f</kbd> Fullscreen</a></li>\n<li class=\"slide-tool-item\" data-item=\"1\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.speakerMode(event)\"><kbd>s</kbd> Speaker View</a></li>\n<li class=\"slide-tool-item\" data-item=\"2\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.overview(event)\"><kbd>o</kbd> Slide Overview</a></li>\n<li class=\"slide-tool-item\" data-item=\"3\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.togglePdfExport(event)\"><kbd>e</kbd> PDF Export Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"4\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.toggleScrollView(event)\"><kbd>r</kbd> Scroll View Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"5\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.keyboardHelp(event)\"><kbd>?</kbd> Keyboard Help</a></li>\n</ul>"}],"openButton":true},
+'multiplex': {"url":"https://mplex.vitv.ly","secret":null,"id":"f383d86d234a2b6e614ad0237677d2ea99a3db408e766a57906400c1e456ee63"},
+'smaller': false,
+ 
+        // Display controls in the bottom right corner
+        controls: false,
+
+        // Help the user learn the controls by providing hints, for example by
+        // bouncing the down arrow when they first encounter a vertical slide
+        controlsTutorial: false,
+
+        // Determines where controls appear, "edges" or "bottom-right"
+        controlsLayout: 'edges',
+
+        // Visibility rule for backwards navigation arrows; "faded", "hidden"
+        // or "visible"
+        controlsBackArrows: 'faded',
+
+        // Display a presentation progress bar
+        progress: true,
+
+        // Display the page number of the current slide
+        slideNumber: 'c/t',
+
+        // 'all', 'print', or 'speaker'
+        showSlideNumber: 'all',
+
+        // Add the current slide number to the URL hash so that reloading the
+        // page/copying the URL will return you to the same slide
+        hash: true,
+
+        // Start with 1 for the hash rather than 0
+        hashOneBasedIndex: false,
+
+        // Flags if we should monitor the hash and change slides accordingly
+        respondToHashChanges: true,
+
+        // Push each slide change to the browser history
+        history: true,
+
+        // Enable keyboard shortcuts for navigation
+        keyboard: true,
+
+        // Enable the slide overview mode
+        overview: true,
+
+        // Disables the default reveal.js slide layout (scaling and centering)
+        // so that you can use custom CSS layout
+        disableLayout: false,
+
+        // Vertical centering of slides
+        center: false,
+
+        // Enables touch navigation on devices with touch input
+        touch: true,
+
+        // Loop the presentation
+        loop: false,
+
+        // Change the presentation direction to be RTL
+        rtl: false,
+
+        // see https://revealjs.com/vertical-slides/#navigation-mode
+        navigationMode: 'linear',
+
+        // Randomizes the order of slides each time the presentation loads
+        shuffle: false,
+
+        // Turns fragments on and off globally
+        fragments: true,
+
+        // Flags whether to include the current fragment in the URL,
+        // so that reloading brings you to the same fragment position
+        fragmentInURL: false,
+
+        // Flags if the presentation is running in an embedded mode,
+        // i.e. contained within a limited portion of the screen
+        embedded: false,
+
+        // Flags if we should show a help overlay when the questionmark
+        // key is pressed
+        help: true,
+
+        // Flags if it should be possible to pause the presentation (blackout)
+        pause: true,
+
+        // Flags if speaker notes should be visible to all viewers
+        showNotes: false,
+
+        // Global override for autoplaying embedded media (null/true/false)
+        autoPlayMedia: null,
+
+        // Global override for preloading lazy-loaded iframes (null/true/false)
+        preloadIframes: null,
+
+        // Number of milliseconds between automatically proceeding to the
+        // next slide, disabled when set to 0, this value can be overwritten
+        // by using a data-autoslide attribute on your slides
+        autoSlide: 0,
+
+        // Stop auto-sliding after user input
+        autoSlideStoppable: true,
+
+        // Use this method for navigation when auto-sliding
+        autoSlideMethod: null,
+
+        // Specify the average time in seconds that you think you will spend
+        // presenting each slide. This is used to show a pacing timer in the
+        // speaker view
+        defaultTiming: null,
+
+        // Enable slide navigation via mouse wheel
+        mouseWheel: false,
+
+        // The display mode that will be used to show slides
+        display: 'block',
+
+        // Hide cursor if inactive
+        hideInactiveCursor: true,
+
+        // Time before the cursor is hidden (in ms)
+        hideCursorTime: 5000,
+
+        // Opens links in an iframe preview overlay
+        previewLinks: false,
+
+        // Transition style (none/fade/slide/convex/concave/zoom)
+        transition: 'none',
+
+        // Transition speed (default/fast/slow)
+        transitionSpeed: 'default',
+
+        // Transition style for full page slide backgrounds
+        // (none/fade/slide/convex/concave/zoom)
+        backgroundTransition: 'none',
+
+        // Number of slides away from the current that are visible
+        viewDistance: 3,
+
+        // Number of slides away from the current that are visible on mobile
+        // devices. It is advisable to set this to a lower number than
+        // viewDistance in order to save resources.
+        mobileViewDistance: 2,
+
+        // The "normal" size of the presentation, aspect ratio will be preserved
+        // when the presentation is scaled to fit different resolutions. Can be
+        // specified using percentage units.
+        width: 1050,
+
+        height: 700,
+
+        // Factor of the display size that should remain empty around the content
+        margin: 0.1,
+
+        math: {
+          mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js',
+          config: 'TeX-AMS_HTML-full',
+          tex2jax: {
+            inlineMath: [['\\(','\\)']],
+            displayMath: [['\\[','\\]']],
+            balanceBraces: true,
+            processEscapes: false,
+            processRefs: true,
+            processEnvironments: true,
+            preview: 'TeX',
+            skipTags: ['script','noscript','style','textarea','pre','code'],
+            ignoreClass: 'tex2jax_ignore',
+            processClass: 'tex2jax_process'
+          },
+        },
+
+        // reveal.js plugins
+        plugins: [QuartoLineHighlight, PdfExport, RevealMenu, QuartoSupport,
+
+          RevealMath,
+          
+          RevealSearch,
+          RevealZoom
+        ]
+      });
+    </script>
+    <script id="quarto-html-after-body" type="application/javascript">
+      window.document.addEventListener("DOMContentLoaded", function (event) {
+        const tabsets =  window.document.querySelectorAll(".panel-tabset-tabby")
+        tabsets.forEach(function(tabset) {
+          const tabby = new Tabby('#' + tabset.id);
+        });
+        const isCodeAnnotation = (el) => {
+          for (const clz of el.classList) {
+            if (clz.startsWith('code-annotation-')) {                     
+              return true;
+            }
+          }
+          return false;
+        }
+        const onCopySuccess = function(e) {
+          // button target
+          const button = e.trigger;
+          // don't keep focus
+          button.blur();
+          // flash "checked"
+          button.classList.add('code-copy-button-checked');
+          var currentTitle = button.getAttribute("title");
+          button.setAttribute("title", "Copied!");
+          let tooltip;
+          if (window.bootstrap) {
+            button.setAttribute("data-bs-toggle", "tooltip");
+            button.setAttribute("data-bs-placement", "left");
+            button.setAttribute("data-bs-title", "Copied!");
+            tooltip = new bootstrap.Tooltip(button, 
+              { trigger: "manual", 
+                customClass: "code-copy-button-tooltip",
+                offset: [0, -8]});
+            tooltip.show();    
+          }
+          setTimeout(function() {
+            if (tooltip) {
+              tooltip.hide();
+              button.removeAttribute("data-bs-title");
+              button.removeAttribute("data-bs-toggle");
+              button.removeAttribute("data-bs-placement");
+            }
+            button.setAttribute("title", currentTitle);
+            button.classList.remove('code-copy-button-checked');
+          }, 1000);
+          // clear code selection
+          e.clearSelection();
+        }
+        const getTextToCopy = function(trigger) {
+          const outerScaffold = trigger.parentElement.cloneNode(true);
+          const codeEl = outerScaffold.querySelector('code');
+          for (const childEl of codeEl.children) {
+            if (isCodeAnnotation(childEl)) {
+              childEl.remove();
+            }
+          }
+          return codeEl.innerText;
+        }
+        const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+          text: getTextToCopy
+        });
+        clipboard.on('success', onCopySuccess);
+        if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+          const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+            text: getTextToCopy,
+            container: window.document.getElementById('quarto-embedded-source-code-modal')
+          });
+          clipboardModal.on('success', onCopySuccess);
+        }
+          var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+          var mailtoRegex = new RegExp(/^mailto:/);
+            var filterRegex = new RegExp("https:\/\/dslnu\.github\.io\/data_analytics\/");
+          var isInternal = (href) => {
+              return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+          }
+          // Inspect non-navigation links and adorn them if external
+         var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+          for (var i=0; i<links.length; i++) {
+            const link = links[i];
+            if (!isInternal(link.href)) {
+              // undo the damage that might have been done by quarto-nav.js in the case of
+              // links that we want to consider external
+              if (link.dataset.originalHref !== undefined) {
+                link.href = link.dataset.originalHref;
+              }
+            }
+          }
+        function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+          const config = {
+            allowHTML: true,
+            maxWidth: 500,
+            delay: 100,
+            arrow: false,
+            appendTo: function(el) {
+                return el.closest('section.slide') || el.parentElement;
+            },
+            interactive: true,
+            interactiveBorder: 10,
+            theme: 'light-border',
+            placement: 'bottom-start',
+          };
+          if (contentFn) {
+            config.content = contentFn;
+          }
+          if (onTriggerFn) {
+            config.onTrigger = onTriggerFn;
+          }
+          if (onUntriggerFn) {
+            config.onUntrigger = onUntriggerFn;
+          }
+            config['offset'] = [0,0];
+            config['maxWidth'] = 700;
+          window.tippy(el, config); 
+        }
+        const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+        for (var i=0; i<noterefs.length; i++) {
+          const ref = noterefs[i];
+          tippyHover(ref, function() {
+            // use id or data attribute instead here
+            let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+            try { href = new URL(href).hash; } catch {}
+            const id = href.replace(/^#\/?/, "");
+            const note = window.document.getElementById(id);
+            if (note) {
+              return note.innerHTML;
+            } else {
+              return "";
+            }
+          });
+        }
+        const findCites = (el) => {
+          const parentEl = el.parentElement;
+          if (parentEl) {
+            const cites = parentEl.dataset.cites;
+            if (cites) {
+              return {
+                el,
+                cites: cites.split(' ')
+              };
+            } else {
+              return findCites(el.parentElement)
+            }
+          } else {
+            return undefined;
+          }
+        };
+        var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+        for (var i=0; i<bibliorefs.length; i++) {
+          const ref = bibliorefs[i];
+          const citeInfo = findCites(ref);
+          if (citeInfo) {
+            tippyHover(citeInfo.el, function() {
+              var popup = window.document.createElement('div');
+              citeInfo.cites.forEach(function(cite) {
+                var citeDiv = window.document.createElement('div');
+                citeDiv.classList.add('hanging-indent');
+                citeDiv.classList.add('csl-entry');
+                var biblioDiv = window.document.getElementById('ref-' + cite);
+                if (biblioDiv) {
+                  citeDiv.innerHTML = biblioDiv.innerHTML;
+                }
+                popup.appendChild(citeDiv);
+              });
+              return popup.innerHTML;
+            });
+          }
+        }
+      });
+      </script>
+    
+
+</body></html>
