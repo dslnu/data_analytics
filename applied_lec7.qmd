@@ -35,6 +35,251 @@ format:
       id: '3a2e2f1bcc09bfaea40b07ec7ef9e0d0f772edbf8a1dc2af2c107e1cb2b4fb10'
 ---
 
+## Distributed intro {.font8 .scrollable}
+
+:::{.callout-tip icon=false}
+## Definitions
+
+|Keyword|Description|
+|----|------|
+|VM|A virtual machine (VM) is a software simulation of a physical computer that runs on a host computer. It provides a separate operating system and resources, allowing multiple operating systems to run on a single physical machine.|
+|Cluster|A cluster is a group of connected servers that work together as a single system to provide high availability, scalability, and increased performance for applications. The nodes in a cluster are connected through a network and share resources to provide a unified, highly available solution.|
+|Node|A cluster node is a single server within a cluster computing system. It provides computing resources and works together with other nodes to perform tasks as a unified system, providing high availability and scalability for applications.|
+:::
+
+## Distributed intro {.font8 .scrollable}
+
+:::{.callout-tip icon=false}
+## Definitions
+
+|Keyword|Description|
+|----|------|
+|Network|A network is a group of interconnected devices that can exchange data and information. Networks can be used to connect computers, servers, mobile devices, and other types of devices and allow them to communicate with each other and share resources, such as printers and storage. More specifically in our case, these are physical and software-defined communication paths between individual nodes of a cluster and programs running on those nodes.|
+|Port|A port is a communication endpoint in a network-attached device, such as a computer or server. It allows the device to receive and send data to other devices on the network through a specific network protocol, such as TCP or UDP. Each port has a unique number that is used to identify it, and different services and applications use specific ports to communicate.|
+|Service|A piece of software that implements a limited set of functionalities that are then used by other parts of the application.|
+:::
+
+## Distributed intro
+:::{.callout-note icon=false}
+## Monolithic vs distributed
+**Monolithic**: single (or a couple of) tightly coupled programs running on a single server. 
+
+**Distributed**: programs collected into **services** running on multiple servers, communicating with each other.
+:::
+
+![](img/monolith_vs_microservices.png)
+
+
+## Distributed intro
+:::{.callout-note icon=false}
+## Problems
+
+- much more complex
+- need rethinking
+- components have to be separated
+- and loosely coupled
+- meaning: components have well-defined interfaces
+:::
+
+## Distributed intro
+:::{.callout-note icon=false}
+## Stateful vs stateless
+
+**Stateful**: create or modify **persistent** data.
+
+- Much harder to reason about.
+- Should be pushed to the boundaries of the system.
+
+**Stateless**: don't create or modify **persistent** data.
+
+- Much easier to reason about.
+- Should form core of the system.
+
+:::
+
+
+## Distributed intro
+:::{.callout-note icon=false}
+## Discovery
+Individual components should be able to find each other in a cluster.
+:::
+
+:::{.callout-important icon=false}
+## Option 1
+Some configuration file.
+
+![](img/discovery_config.png)
+:::
+
+
+## Distributed intro
+:::{.callout-note icon=false}
+## Option 2 - DNS
+An external authority that knows where to find services - Domain Name Service.
+
+![](img/discovery_dns.png)
+:::
+
+## Distributed intro
+:::{.callout-note icon=false}
+## Load balancing
+**Service A** needs to talk to **Service B**, but the latter runs on many instances.
+
+Load balancer:
+
+- distributes tasks using some algorithm
+- checks health
+
+![](img/load_balancing.png)
+
+:::
+
+## Distributed intro
+:::{.callout-warning}
+## Reliability matters
+
+- retries
+- logs
+- proper error handling
+- redundancy
+- health checks
+- monitoring
+- rate limiting
+:::
+
+## Distributed intro
+:::{.callout-note icon=false}
+## Application updates
+
+- code changes
+- data updates
+:::
+
+![](img/blue_green_deployment_fowler.png)
+
+
+## Intro to orchestration
+:::{.callout-note icon=false}
+## What is it?
+
+A standard way to manage distributed systems built on top of containers (e.g. Docker)
+:::
+
+![](img/orchestration.png)
+
+
+
+## Intro to orchestration
+:::{.callout-note icon=false}
+## Declarative vs imperative
+
+- Our container orchestrator puts a very strong emphasis on being *declarative*
+
+- Declarative:
+
+  *I would like a cup of tea.*
+
+- Imperative:
+
+  *Boil some water. Pour it in a teapot. Add tea leaves. Steep for a while. Serve in a cup.*
+
+- Declarative seems simpler at first ... 
+
+- ... As long as you know how to brew tea
+
+:::
+
+## Intro to orchestration
+:::{.callout-note icon=false}
+## Declarative vs imperative
+
+- What declarative would really be:
+
+  *I want a cup of tea, obtained by pouring an infusion¹ of tea leaves in a cup.*
+
+  *¹An infusion is obtained by letting the object steep a few minutes in hot² water.*
+
+  *²Hot liquid is obtained by pouring it in an appropriate container³ and setting it on a stove.*
+
+  *³Ah, finally, containers! Something we know about. Let's get to work, shall we?*
+
+:::
+
+
+## Intro to orchestration
+:::{.callout-note icon=false}
+## Declarative vs imperative
+- Imperative systems:
+
+  - simpler
+
+  - if a task is interrupted, we have to restart from scratch
+
+- Declarative systems:
+
+  - if a task is interrupted (or if we show up to the party half-way through),
+    we can figure out what's missing and do only what's necessary
+
+  - we need to be able to *observe* the system
+
+  - ... and compute a "diff" between *what we have* and *what we want*
+
+:::
+
+
+## Intro to orchestration
+:::{.callout-note icon=false}
+## Objectives
+
+- keeping desired state (or **reconciling**, described in a **declarative** fashion)
+- making sure **global** services run on all **workers**
+- and **replicated** services run a on a specified number of **workers**
+- service discovery
+- routing
+- load-balancing
+- scaling
+- health checks/fixes
+- data persistence
+- node affinity
+- security/secrets management
+- introspection
+:::
+
+## Intro to orchestration
+:::{.callout-important icon=false}
+## Declarative vs imperative in Kubernetes
+
+- With Kubernetes, we cannot say: "run this container"
+
+- All we can do is write a *spec* and push it to the API server
+
+  (by creating a resource like e.g. a Pod or a Deployment)
+
+- The API server will validate that spec (and reject it if it's invalid)
+
+- Then it will store it in etcd
+
+- A *controller* will "notice" that spec and act upon it
+:::
+
+## Intro to orchestration
+:::{.callout-note icon=false}
+## Reconciling state
+
+- Watch for the `spec` fields in the YAML files later!
+
+- The *spec* describes *how we want the thing to be*
+
+- Kubernetes will *reconcile* the current state with the spec
+  <br/>(technically, this is done by a number of *controllers*)
+
+- When we want to change some resource, we update the *spec*
+
+- Kubernetes will then *converge* that resource
+:::
+
+
+
 ## Kubernetes concepts
 :::{.callout-tip icon=false}
 ## Kubernetes concepts
@@ -45,6 +290,28 @@ format:
 
 - What does that really mean?
 
+:::
+
+## Kubernetes concepts
+:::{.callout-note icon=false}
+## History
+
+- Originally designed by Google (2014)
+- Ancient Greek κυβερνήτης for "pilot"
+- Evolution of Google's proprietary Borg system
+- Based on Promise theory
+:::
+
+## Kubernetes concepts
+:::{.callout-note icon=false}
+## Architecture
+
+- a Kubernetes cluster consists of a set of servers (VMs/bare metal)
+- each server is either a **master** or a *worker.**
+- small and odd number of masters
+- no limit on worker nodes
+- worker nodes run **pods**
+- pods in turn run containers (one or more)
 :::
 
 ## Kubernetes concepts
@@ -125,6 +392,9 @@ format:
 <!-- ] -->
 
 :::
+
+## Kubernetes concepts
+![Blue-green deployment](img/blue_green_deployment.png)
 
 ## Kubernetes concepts
 ![Canary cage](img/canary-cage.jpg)
