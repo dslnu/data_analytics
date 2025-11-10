@@ -1,0 +1,2723 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-html/tabby.min.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/light-border.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7b89279ff1a6dce999919e0e67d4d9ec.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.8.25">
+
+  <meta name="author" content="MSDE">
+  <title>Big Data analytics / Applied Data analytics – Kubernetes part 1</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="site_libs/revealjs/dist/reset.css">
+  <link rel="stylesheet" href="site_libs/revealjs/dist/reveal.css">
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+      vertical-align: middle;
+    }
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      { color: #003b4f; background-color: #f1f3f5; }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span { color: #003b4f; } /* Normal */
+    code span.al { color: #ad0000; } /* Alert */
+    code span.an { color: #5e5e5e; } /* Annotation */
+    code span.at { color: #657422; } /* Attribute */
+    code span.bn { color: #ad0000; } /* BaseN */
+    code span.bu { } /* BuiltIn */
+    code span.cf { color: #003b4f; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #20794d; } /* Char */
+    code span.cn { color: #8f5902; } /* Constant */
+    code span.co { color: #5e5e5e; } /* Comment */
+    code span.cv { color: #5e5e5e; font-style: italic; } /* CommentVar */
+    code span.do { color: #5e5e5e; font-style: italic; } /* Documentation */
+    code span.dt { color: #ad0000; } /* DataType */
+    code span.dv { color: #ad0000; } /* DecVal */
+    code span.er { color: #ad0000; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #ad0000; } /* Float */
+    code span.fu { color: #4758ab; } /* Function */
+    code span.im { color: #00769e; } /* Import */
+    code span.in { color: #5e5e5e; } /* Information */
+    code span.kw { color: #003b4f; font-weight: bold; } /* Keyword */
+    code span.op { color: #5e5e5e; } /* Operator */
+    code span.ot { color: #003b4f; } /* Other */
+    code span.pp { color: #ad0000; } /* Preprocessor */
+    code span.sc { color: #5e5e5e; } /* SpecialChar */
+    code span.ss { color: #20794d; } /* SpecialString */
+    code span.st { color: #20794d; } /* String */
+    code span.va { color: #111111; } /* Variable */
+    code span.vs { color: #20794d; } /* VerbatimString */
+    code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="site_libs/revealjs/dist/theme/quarto-534cd8e3a96973385dffff3f4709048d.css">
+  <link rel="stylesheet" href="./custom.css">
+  <link href="site_libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
+  <link href="site_libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
+  <link href="site_libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
+  <link href="site_libs/revealjs/plugin/quarto-support/footer.css" rel="stylesheet">
+  <style type="text/css">
+    .reveal div.sourceCode {
+      margin: 0;
+      overflow: auto;
+    }
+    .reveal div.hanging-indent {
+      margin-left: 1em;
+      text-indent: -1em;
+    }
+    .reveal .slide:not(.center) {
+      height: 100%;
+    }
+    .reveal .slide.scrollable {
+      overflow-y: auto;
+    }
+    .reveal .footnotes {
+      height: 100%;
+      overflow-y: auto;
+    }
+    .reveal .slide .absolute {
+      position: absolute;
+      display: block;
+    }
+    .reveal .footnotes ol {
+      counter-reset: ol;
+      list-style-type: none; 
+      margin-left: 0;
+    }
+    .reveal .footnotes ol li:before {
+      counter-increment: ol;
+      content: counter(ol) ". "; 
+    }
+    .reveal .footnotes ol li > p:first-child {
+      display: inline-block;
+    }
+    .reveal .slide ul,
+    .reveal .slide ol {
+      margin-bottom: 0.5em;
+    }
+    .reveal .slide ul li,
+    .reveal .slide ol li {
+      margin-top: 0.4em;
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide ul[role="tablist"] li {
+      margin-bottom: 0;
+    }
+    .reveal .slide ul li > *:first-child,
+    .reveal .slide ol li > *:first-child {
+      margin-block-start: 0;
+    }
+    .reveal .slide ul li > *:last-child,
+    .reveal .slide ol li > *:last-child {
+      margin-block-end: 0;
+    }
+    .reveal .slide .columns:nth-child(3) {
+      margin-block-start: 0.8em;
+    }
+    .reveal blockquote {
+      box-shadow: none;
+    }
+    .reveal .tippy-content>* {
+      margin-top: 0.2em;
+      margin-bottom: 0.7em;
+    }
+    .reveal .tippy-content>*:last-child {
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide > img.stretch.quarto-figure-center,
+    .reveal .slide > img.r-stretch.quarto-figure-center {
+      display: block;
+      margin-left: auto;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-left,
+    .reveal .slide > img.r-stretch.quarto-figure-left  {
+      display: block;
+      margin-left: 0;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-right,
+    .reveal .slide > img.r-stretch.quarto-figure-right  {
+      display: block;
+      margin-left: auto;
+      margin-right: 0; 
+    }
+  </style>
+</head>
+<body class="quarto-light">
+  <div class="reveal">
+    <div class="slides">
+
+<section id="title-slide" data-background-image="img/k8s_logo.svg" data-background-opacity="0.3" data-background-size="contain" class="quarto-title-block center">
+  <h1 class="title">Kubernetes part 1</h1>
+
+<div class="quarto-title-authors">
+<div class="quarto-title-author">
+<div class="quarto-title-author-name">
+MSDE 
+</div>
+        <p class="quarto-title-affiliation">
+            Lviv University
+          </p>
+    </div>
+</div>
+
+</section>
+<section id="distributed-intro" class="slide level2 font8 scrollable">
+<h2>Distributed intro</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Definitions</strong></p>
+</div>
+<div class="callout-content">
+<table class="caption-top">
+<colgroup>
+<col style="width: 40%">
+<col style="width: 60%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Keyword</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>VM</td>
+<td>A virtual machine (VM) is a software simulation of a physical computer that runs on a host computer. It provides a separate operating system and resources, allowing multiple operating systems to run on a single physical machine.</td>
+</tr>
+<tr class="even">
+<td>Cluster</td>
+<td>A cluster is a group of connected servers that work together as a single system to provide high availability, scalability, and increased performance for applications. The nodes in a cluster are connected through a network and share resources to provide a unified, highly available solution.</td>
+</tr>
+<tr class="odd">
+<td>Node</td>
+<td>A cluster node is a single server within a cluster computing system. It provides computing resources and works together with other nodes to perform tasks as a unified system, providing high availability and scalability for applications.</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</section>
+<section id="distributed-intro-1" class="slide level2 font8 scrollable">
+<h2>Distributed intro</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Definitions</strong></p>
+</div>
+<div class="callout-content">
+<table class="caption-top">
+<colgroup>
+<col style="width: 40%">
+<col style="width: 60%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Keyword</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Network</td>
+<td>A network is a group of interconnected devices that can exchange data and information. Networks can be used to connect computers, servers, mobile devices, and other types of devices and allow them to communicate with each other and share resources, such as printers and storage. More specifically in our case, these are physical and software-defined communication paths between individual nodes of a cluster and programs running on those nodes.</td>
+</tr>
+<tr class="even">
+<td>Port</td>
+<td>A port is a communication endpoint in a network-attached device, such as a computer or server. It allows the device to receive and send data to other devices on the network through a specific network protocol, such as TCP or UDP. Each port has a unique number that is used to identify it, and different services and applications use specific ports to communicate.</td>
+</tr>
+<tr class="odd">
+<td>Service</td>
+<td>A piece of software that implements a limited set of functionalities that are then used by other parts of the application.</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</section>
+<section id="distributed-intro-2" class="slide level2">
+<h2>Distributed intro</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Monolithic vs distributed</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>Monolithic</strong>: single (or a couple of) tightly coupled programs running on a single server.</p>
+<p><strong>Distributed</strong>: programs collected into <strong>services</strong> running on multiple servers, communicating with each other.</p>
+</div>
+</div>
+</div>
+
+<img data-src="img/monolith_vs_microservices.png" class="r-stretch"></section>
+<section id="distributed-intro-3" class="slide level2">
+<h2>Distributed intro</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Problems</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>much more complex</li>
+<li>need rethinking</li>
+<li>components have to be separated</li>
+<li>and loosely coupled</li>
+<li>meaning: components have well-defined interfaces</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="distributed-intro-4" class="slide level2">
+<h2>Distributed intro</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Stateful vs stateless</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>Stateful</strong>: create or modify <strong>persistent</strong> data.</p>
+<ul>
+<li>Much harder to reason about.</li>
+<li>Should be pushed to the boundaries of the system.</li>
+</ul>
+<p><strong>Stateless</strong>: don’t create or modify <strong>persistent</strong> data.</p>
+<ul>
+<li>Much easier to reason about.</li>
+<li>Should form core of the system.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="distributed-intro-5" class="slide level2">
+<h2>Distributed intro</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Discovery</strong></p>
+</div>
+<div class="callout-content">
+<p>Individual components should be able to find each other in a cluster.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Option 1: some configuration file.</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/discovery_config.png" height="400"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="distributed-intro-6" class="slide level2">
+<h2>Distributed intro</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Option 2 - DNS</strong></p>
+</div>
+<div class="callout-content">
+<p>An external authority that knows where to find services - Domain Name Service.</p>
+<p><img data-src="img/discovery_dns.png" height="400"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="distributed-intro-7" class="slide level2">
+<h2>Distributed intro</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Load balancing</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>Service A</strong> needs to talk to <strong>Service B</strong>, but the latter runs on many instances.</p>
+<p>Load balancer:</p>
+<ul>
+<li>distributes tasks using some algorithm</li>
+<li>checks health</li>
+</ul>
+<p><img data-src="img/load_balancing.png" height="300"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="distributed-intro-8" class="slide level2">
+<h2>Distributed intro</h2>
+<div class="callout callout-warning callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Reliability matters</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>retries</li>
+<li>logs</li>
+<li>proper error handling</li>
+<li>redundancy</li>
+<li>health checks</li>
+<li>monitoring</li>
+<li>rate limiting</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="distributed-intro-9" class="slide level2">
+<h2>Distributed intro</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Application updates</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>code changes</li>
+<li>data updates</li>
+</ul>
+</div>
+</div>
+</div>
+
+<img data-src="img/blue_green_deployment_fowler.png" class="r-stretch"></section>
+<section id="intro-to-orchestration" class="slide level2">
+<h2>Intro to orchestration</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>What is it?</strong></p>
+</div>
+<div class="callout-content">
+<p>A standard way to manage distributed systems built on top of containers (e.g.&nbsp;Docker)</p>
+</div>
+</div>
+</div>
+
+<img data-src="img/orchestration.png" class="r-stretch"></section>
+<section id="intro-to-orchestration-1" class="slide level2">
+<h2>Intro to orchestration</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Declarative vs imperative</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>Our container orchestrator puts a very strong emphasis on being <em>declarative</em></p></li>
+<li><p>Declarative:</p>
+<p><em>I would like a cup of tea.</em></p></li>
+<li><p>Imperative:</p>
+<p><em>Boil some water. Pour it in a teapot. Add tea leaves. Steep for a while. Serve in a cup.</em></p></li>
+<li><p>Declarative seems simpler at first …</p></li>
+<li><p>… As long as you know how to brew tea</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="intro-to-orchestration-2" class="slide level2">
+<h2>Intro to orchestration</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Declarative vs imperative</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>What declarative would really be:</p>
+<p><em>I want a cup of tea, obtained by pouring an infusion¹ of tea leaves in a cup.</em></p>
+<p><em>¹An infusion is obtained by letting the object steep a few minutes in hot² water.</em></p>
+<p><em>²Hot liquid is obtained by pouring it in an appropriate container³ and setting it on a stove.</em></p>
+<p><em>³Ah, finally, containers! Something we know about. Let’s get to work, shall we?</em></p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="intro-to-orchestration-3" class="slide level2">
+<h2>Intro to orchestration</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Declarative vs imperative</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>Imperative systems:</p>
+<ul>
+<li><p>simpler</p></li>
+<li><p>if a task is interrupted, we have to restart from scratch</p></li>
+</ul></li>
+<li><p>Declarative systems:</p>
+<ul>
+<li><p>if a task is interrupted (or if we show up to the party half-way through), we can figure out what’s missing and do only what’s necessary</p></li>
+<li><p>we need to be able to <em>observe</em> the system</p></li>
+<li><p>… and compute a “diff” between <em>what we have</em> and <em>what we want</em></p></li>
+</ul></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="intro-to-orchestration-4" class="slide level2">
+<h2>Intro to orchestration</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Objectives</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>keeping desired state (or <strong>reconciling</strong>, described in a <strong>declarative</strong> fashion)</li>
+<li>making sure <strong>global</strong> services run on all <strong>workers</strong></li>
+<li>and <strong>replicated</strong> services run a on a specified number of <strong>workers</strong></li>
+<li>service discovery</li>
+<li>routing</li>
+<li>load-balancing</li>
+<li>scaling</li>
+<li>health checks/fixes</li>
+<li>data persistence</li>
+<li>node affinity</li>
+<li>security/secrets management</li>
+<li>introspection</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="intro-to-orchestration-5" class="slide level2">
+<h2>Intro to orchestration</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Declarative vs imperative in Kubernetes</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>With Kubernetes, we cannot say: “run this container”</p></li>
+<li><p>All we can do is write a <em>spec</em> and push it to the API server</p>
+<p>(by creating a resource like e.g.&nbsp;a Pod or a Deployment)</p></li>
+<li><p>The API server will validate that spec (and reject it if it’s invalid)</p></li>
+<li><p>Then it will store it in etcd</p></li>
+<li><p>A <em>controller</em> will “notice” that spec and act upon it</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="intro-to-orchestration-6" class="slide level2">
+<h2>Intro to orchestration</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Reconciling state</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>Watch for the <code>spec</code> fields in the YAML files later!</p></li>
+<li><p>The <em>spec</em> describes <em>how we want the thing to be</em></p></li>
+<li><p>Kubernetes will <em>reconcile</em> the current state with the spec <br>(technically, this is done by a number of <em>controllers</em>)</p></li>
+<li><p>When we want to change some resource, we update the <em>spec</em></p></li>
+<li><p>Kubernetes will then <em>converge</em> that resource</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="kubernetes-concepts" class="slide level2">
+<h2>Kubernetes concepts</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Kubernetes concepts</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>Kubernetes is a container management system</p></li>
+<li><p>It runs and manages containerized applications on a cluster</p></li>
+<li><p>What does that really mean?</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="kubernetes-concepts-2" class="slide level2">
+<h2>Kubernetes concepts</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>History</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>Originally designed by Google (2014)</li>
+<li>Ancient Greek κυβερνήτης for “pilot”</li>
+<li>Evolution of Google’s proprietary Borg system</li>
+<li>Based on Promise theory</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="kubernetes-concepts-3" class="slide level2">
+<h2>Kubernetes concepts</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>What can we do with Kubernetes?</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>Let’s imagine that we have a 3-tier e-commerce app:</p>
+<ul>
+<li><p>web frontend</p></li>
+<li><p>API backend</p></li>
+<li><p>database</p></li>
+</ul></li>
+<li><p>We have built images for our frontend and backend components</p>
+<p>(e.g.&nbsp;with Dockerfiles and <code>docker build</code>)</p></li>
+<li><p>We are running them successfully with a local environment</p>
+<p>(e.g.&nbsp;with Docker Compose)</p></li>
+<li><p>Let’s see how we would deploy our app on Kubernetes!</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="kubernetes-concepts-4" class="slide level2">
+<h2>Kubernetes concepts</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Kubernetes, level 1</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>Leave our database outside of Kubernetes (because database be scary🥺)</p></li>
+<li><p>Deploy a managed Kubernetes cluster (cloud or <a href="https://enix.io/en/kubernetes-expert/">professional services</a>)</p></li>
+<li><p>Start 5 containers using image <code>atseashop/api:v1.3</code></p></li>
+<li><p>Place an internal load balancer in front of these containers</p></li>
+<li><p>Start 10 containers using image <code>atseashop/webfront:v1.3</code></p></li>
+<li><p>Place a public load balancer in front of these containers</p></li>
+<li><p>It’s Black Friday (or Christmas), traffic spikes, grow our cluster and add containers</p></li>
+<li><p>New release! Replace my containers with the new image <code>atseashop/webfront:v1.4</code></p></li>
+<li><p>Keep processing requests during the upgrade; update my containers one at a time</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="kubernetes-concepts-5" class="slide level2">
+<h2>Kubernetes concepts</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Kubernetes, level 2</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>Deploy a pre-production environment</p>
+<p>(still using our external database, for now)</p></li>
+<li><p>Resource management and scheduling</p>
+<p>(reserve CPU/RAM for containers; placement constraints; priorities)</p></li>
+<li><p>Autoscaling</p>
+<p>(straightforward on CPU; more complex on other metrics)</p></li>
+<li><p>Advanced rollout patterns</p>
+<p>(blue/green deployment, canary deployment)</p></li>
+</ul>
+<!-- .footnote[ -->
+<!-- On the next page: canary cage with an oxygen bottle, designed to keep the canary alive. -->
+<!-- <br/> -->
+<!-- (See https://post.lurk.org/@zilog/109632335293371919 for details.) -->
+<!-- ] -->
+</div>
+</div>
+</div>
+</section>
+<section id="kubernetes-concepts-6" class="slide level2">
+<h2>Kubernetes concepts</h2>
+
+<img data-src="img/blue_green_deployment.png" class="r-stretch quarto-figure-center"><p class="caption">Blue-green deployment</p></section>
+<section id="kubernetes-concepts-7" class="slide level2">
+<h2>Kubernetes concepts</h2>
+
+<img data-src="img/canary-cage.jpg" class="r-stretch quarto-figure-center"><p class="caption">Canary cage</p></section>
+<section id="kubernetes-concepts-8" class="slide level2">
+<h2>Kubernetes concepts</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Kubernetes, level 3</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>Run staging databases on the cluster</p>
+<p>(no replication, no backups, no scaling)</p></li>
+<li><p>Automatic or semi-automatic deployment of feature branches</p>
+<p>(each with its own database)</p></li>
+<li><p>Fine-grained access control</p>
+<p>(defining <em>what</em> can be done by <em>whom</em> on <em>which</em> resources)</p></li>
+<li><p>Batch jobs</p>
+<p>(one-off; parallel; also cron-style periodic execution)</p></li>
+<li><p>Package applications with e.g.&nbsp;Helm charts</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="kubernetes-concepts-9" class="slide level2">
+<h2>Kubernetes concepts</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Kubernetes, level 4</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>Stateful services with persistence, replication, backups</p>
+<p>(databases, message queues, etc.)</p></li>
+<li><p>Automate complex tasks with <em>operators</em></p>
+<p>(e.g.&nbsp;database replication, failover, etc.)</p></li>
+<li><p>Combine the two previous points with database operators like <a href="https://cloudnative-pg.io/">CloudNativePG</a></p>
+<p>(learn more about database operators: <a href="https://www.youtube.com/watch?v=d_ka7PlWo1I">FR</a>, <a href="https://www.youtube.com/watch?v=ojUdBjbiKWk&amp;t=5s">EN</a>)</p></li>
+<li><p>Leverage advanced storage with e.g.&nbsp;local ZFS volumes</p>
+<p>(learn more about ZFS and databases on k8s: <a href="https://www.youtube.com/watch?v=XN9YL93f8tI">FR</a>, <a href="https://www.youtube.com/watch?v=3sJIYiDnod4">EN</a>)</p></li>
+<li><p>Deploy and manage clusters in-house</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="kubernetes-concepts-10" class="slide level2">
+<h2>Kubernetes concepts</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Kubernetes, level 5</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>Deploying and managing clusters at scale</p>
+<p>(hundreds of clusters, thousands of nodes…)</p></li>
+<li><p>Writing custom operators</p></li>
+<li><p>Hybrid deployments</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="kubernetes-concepts-11" class="slide level2">
+<h2>Kubernetes concepts</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Disclaimer</strong></p>
+</div>
+<div class="callout-content">
+<p>The levels mentioned in the previous slides are not necessarily linear.</p>
+<p>They aren’t exhaustive either (we didn’t mention e.g.&nbsp;observability and alerting).</p>
+</div>
+</div>
+</div>
+</section>
+<section id="kubernetes-concepts-12" class="slide level2 scrollable">
+<h2>Kubernetes concepts</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Kubernetes architecture</strong></p>
+</div>
+<div class="callout-content">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="img/k8s-arch1.png"></p>
+<figcaption>haha only kidding</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="kubernetes-concepts-13" class="slide level2">
+<h2>Kubernetes concepts</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Kubernetes architecture</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>Ha ha ha ha</p></li>
+<li><p>OK, I was trying to scare you, it’s much simpler than that ❤️</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="kubernetes-concepts-14" class="slide level2">
+<h2>Kubernetes concepts</h2>
+
+<img data-src="img/k8s-arch2.png" class="r-stretch quarto-figure-center"><p class="caption">that one is more like the real thing</p></section>
+<section id="kubernetes-concepts-15" class="slide level2">
+<h2>Kubernetes concepts</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Credits</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>The first schema is a Kubernetes cluster with storage backed by multi-path iSCSI</p>
+<p>(Courtesy of <a href="https://www.yongbok.net/blog/">Yongbok Kim</a>)</p></li>
+<li><p>The second one is a simplified representation of a Kubernetes cluster</p>
+<p>(Courtesy of <a href="https://medium.com/containermind/a-reference-architecture-for-deploying-wso2-middleware-on-kubernetes-d4dee7601e8e">Imesh Gunaratne</a>)</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="kubernetes-concepts-16" class="slide level2">
+<h2>Kubernetes concepts</h2>
+
+<img data-src="img/k8s_arch.png" class="r-stretch quarto-figure-center"><p class="caption">Another version</p></section>
+<section id="kubernetes-concepts-17" class="slide level2">
+<h2>Kubernetes concepts</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Architecture</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>a Kubernetes cluster consists of a set of servers (VMs/bare metal)</li>
+<li>each server is either a <strong>master</strong> or a *worker.**</li>
+<li>small and odd number of masters</li>
+<li>no limit on worker nodes</li>
+<li>worker nodes run <strong>pods</strong></li>
+<li>pods in turn run containers (one or more)</li>
+<li>ReplicaSets are collection of identical pods</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="kubernetes-concepts-18" class="slide level2">
+<h2>Kubernetes concepts</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Pods</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/k8s_pods.png"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="kubernetes-concepts-19" class="slide level2">
+<h2>Kubernetes concepts</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Kubernetes architecture: the nodes</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>The nodes executing our containers run a collection of services:</p>
+<ul>
+<li><p>a container Engine (typically Docker)</p></li>
+<li><p>kubelet (the “node agent”)</p></li>
+<li><p>kube-proxy (a necessary but not sufficient network component)</p></li>
+</ul></li>
+<li><p>Nodes were formerly called “minions”</p>
+<p>(You might see that word in older articles or documentation)</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="kubernetes-concepts-20" class="slide level2">
+<h2>Kubernetes concepts</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Kubernetes architecture: the control plane</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>The Kubernetes logic (its “brains”) is a collection of services:</p>
+<ul>
+<li><p>the API server (our point of entry to everything!)</p></li>
+<li><p>core services like the scheduler and controller manager</p></li>
+<li><p><code>etcd</code> (a highly available key/value store; the “database” of Kubernetes)</p></li>
+</ul></li>
+<li><p>Together, these services form the control plane of our cluster</p></li>
+<li><p>The control plane is also called the “master”</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="kubernetes-concepts-21" class="slide level2">
+<h2>Kubernetes concepts</h2>
+
+<img data-src="img/k8s-arch4-thanks-luxas.png" class="r-stretch quarto-figure-center"><p class="caption">One of the best Kubernetes architecture diagrams available</p></section>
+<section id="kubernetes-concepts-22" class="slide level2">
+<h2>Kubernetes concepts</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Running the control plane on special nodes</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>It is common to reserve a dedicated node for the control plane</p>
+<p>(Except for single-node development clusters, like when using minikube)</p></li>
+<li><p>This node is then called a “master”</p>
+<p>(Yes, this is ambiguous: is the “master” a node, or the whole control plane?)</p></li>
+<li><p>Normal applications are restricted from running on this node</p>
+<p>(By using a mechanism called <a href="https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/">“taints”</a>)</p></li>
+<li><p>When high availability is required, each service of the control plane must be resilient</p></li>
+<li><p>The control plane is then replicated on multiple nodes</p>
+<p>(This is sometimes called a “multi-master” setup)</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="kubernetes-concepts-23" class="slide level2">
+<h2>Kubernetes concepts</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Running the control plane outside containers</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>The services of the control plane can run in or out of containers</p></li>
+<li><p>For instance: since <code>etcd</code> is a critical service, some people deploy it directly on a dedicated cluster (without containers)</p>
+<p>(This is illustrated on the first “super complicated” schema)</p></li>
+<li><p>In some hosted Kubernetes offerings (e.g.&nbsp;AKS, GKE, EKS), the control plane is invisible</p>
+<p>(We only “see” a Kubernetes API endpoint)</p></li>
+<li><p>In that case, there is no “master node”</p></li>
+</ul>
+<p><em>For this reason, it is more accurate to say “control plane” rather than “master.”</em></p>
+</div>
+</div>
+</div>
+</section>
+<section id="kubernetes-concepts-24" class="slide level2">
+<h2>Kubernetes concepts</h2>
+
+<img data-src="img/control-planes/single-node-dev.svg" class="r-stretch"></section>
+<section id="kubernetes-concepts-25" class="slide level2">
+<h2>Kubernetes concepts</h2>
+
+<img data-src="img/control-planes/managed-kubernetes.svg" class="r-stretch"></section>
+<section id="kubernetes-concepts-26" class="slide level2">
+<h2>Kubernetes concepts</h2>
+
+<img data-src="img/control-planes/single-control-and-workers.svg" class="r-stretch"></section>
+<section id="kubernetes-concepts-27" class="slide level2">
+<h2>Kubernetes concepts</h2>
+
+<img data-src="img/control-planes/stacked-control-plane.svg" class="r-stretch"></section>
+<section id="kubernetes-concepts-28" class="slide level2">
+<h2>Kubernetes concepts</h2>
+
+<img data-src="img/control-planes/non-dedicated-stacked-nodes.svg" class="r-stretch"></section>
+<section id="kubernetes-concepts-29" class="slide level2">
+<h2>Kubernetes concepts</h2>
+
+<img data-src="img/control-planes/advanced-control-plane.svg" class="r-stretch"></section>
+<section id="kubernetes-concepts-30" class="slide level2">
+<h2>Kubernetes concepts</h2>
+
+<img data-src="img/control-planes/advanced-control-plane-split-events.svg" class="r-stretch"></section>
+<section id="kubernetes-concepts-31" class="slide level2">
+<h2>Kubernetes concepts</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>How many nodes should a cluster have?</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>There is no particular constraint</p>
+<p>(no need to have an odd number of nodes for quorum)</p></li>
+<li><p>A cluster can have zero nodes</p>
+<p>(but then it won’t be able to start any pods)</p></li>
+<li><p>For testing and development, having a single node is fine</p></li>
+<li><p>For production, make sure that you have extra capacity</p>
+<p>(so that your workload still fits if you lose a node or a group of nodes)</p></li>
+<li><p>Kubernetes is tested with <a href="https://kubernetes.io/docs/setup/best-practices/cluster-large/">up to 5000 nodes</a></p>
+<p>(however, running a cluster of that size requires a lot of tuning)</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="kubernetes-concepts-32" class="slide level2">
+<h2>Kubernetes concepts</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Do we need to run Docker at all?</strong></p>
+</div>
+<div class="callout-content">
+<p>No!</p>
+<ul>
+<li><p>The Docker Engine used to be the default option to run containers with Kubernetes</p></li>
+<li><p>Support for Docker (specifically: dockershim) was removed in Kubernetes 1.24</p></li>
+<li><p>We can leverage other pluggable runtimes through the <em>Container Runtime Interface</em></p></li>
+<li><del>
+<p>We could also use <code>rkt</code> (“Rocket”) from CoreOS</p>
+</del>
+<p>(deprecated)</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="kubernetes-concepts-33" class="slide level2">
+<h2>Kubernetes concepts</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Some runtimes available through CRI</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p><a href="https://github.com/containerd/containerd/blob/master/README.md">containerd</a></p>
+<ul>
+<li>maintained by Docker, IBM, and community</li>
+<li>used by Docker Engine, microk8s, k3s, GKE; also standalone</li>
+<li>comes with its own CLI, <code>ctr</code></li>
+</ul></li>
+<li><p><a href="https://github.com/cri-o/cri-o/blob/master/README.md">CRI-O</a>:</p>
+<ul>
+<li>maintained by Red Hat, SUSE, and community</li>
+<li>used by OpenShift and Kubic</li>
+<li>designed specifically as a minimal runtime for Kubernetes</li>
+</ul></li>
+<li><p><a href="https://kubernetes.io/docs/setup/production-environment/container-runtimes/">And more</a></p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="kubernetes-concepts-34" class="slide level2">
+<h2>Kubernetes concepts</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Do we need to run Docker at all?</strong></p>
+</div>
+<div class="callout-content">
+<p>Yes!</p>
+<!-- - In this workshop, we run our app on a single node first -->
+<ul>
+<li><p>We will need to build images and ship them around</p></li>
+<li><p>We can do these things without Docker <br> (but with some languages/frameworks, it might be much harder)</p></li>
+<li><p>Docker is still the most stable container engine today <br> (but other options are maturing very quickly)</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="kubernetes-concepts-35" class="slide level2">
+<h2>Kubernetes concepts</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Do we need to run Docker at all?</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>On our Kubernetes clusters:</p>
+<p><em>Not anymore</em></p></li>
+<li><p>On our development environments, CI pipelines … :</p>
+<p><em>Yes, almost certainly</em></p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="kubernetes-concepts-36" class="slide level2">
+<h2>Kubernetes concepts</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Interacting with Kubernetes</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>We will interact with our Kubernetes cluster through the Kubernetes API</p></li>
+<li><p>The Kubernetes API is (mostly) RESTful</p></li>
+<li><p>It allows us to create, read, update, delete <em>resources</em></p></li>
+<li><p>A few common resource types are:</p>
+<ul>
+<li><p>node (a machine — physical or virtual — in our cluster)</p></li>
+<li><p>pod (group of containers running together on a node)</p></li>
+<li><p>service (stable network endpoint to connect to one or multiple containers)</p></li>
+</ul></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="kubernetes-concepts-37" class="slide level2">
+<h2>Kubernetes concepts</h2>
+
+<img data-src="img/k8s-arch3-thanks-weave.png" class="r-stretch quarto-figure-center"><p class="caption">Node, pod, container</p></section>
+<section id="kubernetes-concepts-38" class="slide level2">
+<h2>Kubernetes concepts</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Scaling</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>How would we scale the pod shown on the previous slide?</p></li>
+<li><p><strong>Do</strong> create additional pods</p>
+<ul>
+<li><p>each pod can be on a different node</p></li>
+<li><p>each pod will have its own IP address</p></li>
+</ul></li>
+<li><p><strong>Do not</strong> add more NGINX containers in the pod</p>
+<ul>
+<li><p>all the NGINX containers would be on the same node</p></li>
+<li><p>they would all have the same IP address <br>(resulting in <code>Address already in use</code> errors)</p></li>
+</ul></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="kubernetes-concepts-39" class="slide level2">
+<h2>Kubernetes concepts</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Together or separate</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>Should we put e.g.&nbsp;a web application server and a cache together? <br> (“cache” being something like e.g.&nbsp;Memcached or Redis)</p></li>
+<li><p>Putting them <strong>in the same pod</strong> means:</p>
+<ul>
+<li><p>they have to be scaled together</p></li>
+<li><p>they can communicate very efficiently over <code>localhost</code></p></li>
+</ul></li>
+<li><p>Putting them <strong>in different pods</strong> means:</p>
+<ul>
+<li><p>they can be scaled separately</p></li>
+<li><p>they must communicate over remote IP addresses <br>(incurring more latency, lower performance)</p></li>
+</ul></li>
+<li><p>Both scenarios can make sense, depending on our goals</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="kubernetes-concepts-40" class="slide level2">
+<h2>Kubernetes concepts</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Credits</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>The first diagram is courtesy of Lucas Käldström, in <a href="https://speakerdeck.com/luxas/kubeadm-cluster-creation-internals-from-self-hosting-to-upgradability-and-ha">this presentation</a></p>
+<ul>
+<li>it’s one of the best Kubernetes architecture diagrams available!</li>
+</ul></li>
+<li><p>The second diagram is courtesy of Weave Works</p>
+<ul>
+<li><p>a <em>pod</em> can have multiple containers working together</p></li>
+<li><p>IP addresses are associated with <em>pods</em>, not with individual containers</p></li>
+</ul></li>
+</ul>
+<p>Both diagrams used with permission.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="intro-to-kubectl" class="slide level2">
+<h2>Intro to <code>kubectl</code></h2>
+<div class="callout callout-note callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Installation</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>login to your EC2 instance</li>
+<li>install <a href="https://docs.docker.com/engine/install/ubuntu/">Docker</a></li>
+<li>install <a href="https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/#install-using-native-package-management">kubectl</a></li>
+<li>install <a href="https://minikube.sigs.k8s.io/docs/start/?arch=%2Flinux%2Fx86-64%2Fstable%2Fbinary+download">minikube</a></li>
+<li>install <a href="https://kompose.io/installation/">Kompose</a></li>
+<li>we’ll use <a href="https://github.com/docker/awesome-compose/tree/master/flask-redis">Sample compose app</a> as an example</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="intro-to-kubectl-1" class="slide level2">
+<h2>Intro to <code>kubectl</code></h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Intro to <code>kubectl</code></strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p><code>kubectl</code> is (almost) the only tool we’ll need to talk to Kubernetes</p></li>
+<li><p>It is a rich CLI tool around the Kubernetes API</p>
+<p>(Everything you can do with <code>kubectl</code>, you can do directly with the API)</p></li>
+<li><p>On our machines, there is a <code>~/.kube/config</code> file with:</p>
+<ul>
+<li><p>the Kubernetes API address</p></li>
+<li><p>the path to our TLS certificates used to authenticate</p></li>
+</ul></li>
+<li><p>You can also use the <code>--kubeconfig</code> flag to pass a config file</p></li>
+<li><p>Or directly <code>--server</code>, <code>--user</code>, etc.</p></li>
+<li><p><code>kubectl</code> can be pronounced “Cube C T L”, “Cube cuttle”, “Cube cuddle”…</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="intro-to-kubectl-3" class="slide level2">
+<h2>Intro to <code>kubectl</code></h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong><code>kubectl</code> is the new SSH</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>We often start managing servers with SSH</p>
+<p>(installing packages, troubleshooting …)</p></li>
+<li><p>At scale, it becomes tedious, repetitive, error-prone</p></li>
+<li><p>Instead, we use config management, central logging, etc.</p></li>
+<li><p>In many cases, we still need SSH:</p>
+<ul>
+<li><p>as the underlying access method (e.g.&nbsp;Ansible)</p></li>
+<li><p>to debug tricky scenarios</p></li>
+<li><p>to inspect and poke at things</p></li>
+</ul></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="intro-to-kubectl-4" class="slide level2">
+<h2>Intro to <code>kubectl</code></h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The parallel with <code>kubectl</code></strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>We often start managing Kubernetes clusters with <code>kubectl</code></p>
+<p>(deploying applications, troubleshooting …)</p></li>
+<li><p>At scale (with many applications or clusters), it becomes tedious, repetitive, error-prone</p></li>
+<li><p>Instead, we use automated pipelines, observability tooling, etc.</p></li>
+<li><p>In many cases, we still need <code>kubectl</code>:</p>
+<ul>
+<li><p>to debug tricky scenarios</p></li>
+<li><p>to inspect and poke at things</p></li>
+</ul></li>
+<li><p>The Kubernetes API is always the underlying access method</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="intro-to-kubectl-5" class="slide level2">
+<h2>Intro to <code>kubectl</code></h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong><code>kubectl get</code></strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>Let’s look at our <code>Node</code> resources with <code>kubectl get</code>!</p></li>
+<li><p>Look at the composition of our cluster:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a></a><span class="ex">kubectl</span> get node</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<li><p>These commands are equivalent:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a></a><span class="ex">kubectl</span> get no</span>
+<span id="cb2-2"><a></a><span class="ex">kubectl</span> get node</span>
+<span id="cb2-3"><a></a><span class="ex">kubectl</span> get nodes</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="intro-to-kubectl-6" class="slide level2">
+<h2>Intro to <code>kubectl</code></h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Obtaining machine-readable output</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p><code>kubectl get</code> can output JSON, YAML, or be directly formatted</p></li>
+<li><p>Give us more info about the nodes:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a></a><span class="ex">kubectl</span> get nodes <span class="at">-o</span> wide</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<li><p>Let’s have some YAML:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a></a><span class="ex">kubectl</span> get no <span class="at">-o</span> yaml</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>See that <code>kind: List</code> at the end? It’s the type of our result!</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="intro-to-kubectl-7" class="slide level2">
+<h2>Intro to <code>kubectl</code></h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>(Ab)using <code>kubectl</code> and <code>jq</code></strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>It’s super easy to build custom reports</p></li>
+<li><p>Show the capacity of all our nodes as a stream of JSON objects:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a></a>  <span class="ex">kubectl</span> get nodes <span class="at">-o</span> json <span class="kw">|</span></span>
+<span id="cb5-2"><a></a>          <span class="ex">jq</span> <span class="st">".items[] | {name:.metadata.name} + .status.capacity"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="intro-to-kubectl-8" class="slide level2">
+<h2>Intro to <code>kubectl</code></h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Exploring types and definitions</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>We can list all available resource types by running <code>kubectl api-resources</code> <br> (In Kubernetes 1.10 and prior, this command used to be <code>kubectl get</code>)</p></li>
+<li><p>We can view the definition for a resource type with:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb6-1"><a></a><span class="ex">kubectl</span> explain type</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<li><p>We can view the definition of a field in a resource, for instance:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a></a><span class="ex">kubectl</span> explain node.spec</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<li><p>Or get the full definition of all fields and sub-fields:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a></a><span class="ex">kubectl</span> explain node <span class="at">--recursive</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="intro-to-kubectl-9" class="slide level2">
+<h2>Intro to <code>kubectl</code></h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Introspection vs.&nbsp;documentation</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>We can access the same information by reading the <a href="https://kubernetes.io/docs/reference/#api-reference">API documentation</a></p></li>
+<li><p>The API documentation is usually easier to read, but:</p>
+<ul>
+<li><p>it won’t show custom types (like Custom Resource Definitions)</p></li>
+<li><p>we need to make sure that we look at the correct version</p></li>
+</ul></li>
+<li><p><code>kubectl api-resources</code> and <code>kubectl explain</code> perform <em>introspection</em></p>
+<p>(they communicate with the API server and obtain the exact type definitions)</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="intro-to-kubectl-10" class="slide level2">
+<h2>Intro to <code>kubectl</code></h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Type names</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>The most common resource names have three forms:</p>
+<ul>
+<li><p>singular (e.g.&nbsp;<code>node</code>, <code>service</code>, <code>deployment</code>)</p></li>
+<li><p>plural (e.g.&nbsp;<code>nodes</code>, <code>services</code>, <code>deployments</code>)</p></li>
+<li><p>short (e.g.&nbsp;<code>no</code>, <code>svc</code>, <code>deploy</code>)</p></li>
+</ul></li>
+<li><p>Some resources do not have a short name</p></li>
+<li><p><code>Endpoints</code> only have a plural form</p>
+<p>(because even a single <code>Endpoints</code> resource is actually a list of endpoints)</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="intro-to-kubectl-11" class="slide level2">
+<h2>Intro to <code>kubectl</code></h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Viewing details</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>We can use <code>kubectl get -o yaml</code> to see all available details</p></li>
+<li><p>However, YAML output is often simultaneously too much and not enough</p></li>
+<li><p>For instance, <code>kubectl get node node1 -o yaml</code> is:</p>
+<ul>
+<li><p>too much information (e.g.: list of images available on this node)</p></li>
+<li><p>not enough information (e.g.: doesn’t show pods running on this node)</p></li>
+<li><p>difficult to read for a human operator</p></li>
+</ul></li>
+<li><p>For a comprehensive overview, we can use <code>kubectl describe</code> instead</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="intro-to-kubectl-12" class="slide level2">
+<h2>Intro to <code>kubectl</code></h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong><code>kubectl describe</code></strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p><code>kubectl describe</code> needs a resource type and (optionally) a resource name</p></li>
+<li><p>It is possible to provide a resource name <em>prefix</em></p>
+<p>(all matching objects will be displayed)</p></li>
+<li><p><code>kubectl describe</code> will retrieve some extra information about the resource</p></li>
+<li><p>Look at the information available for <code>node1</code> with one of the following commands:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb9-1"><a></a><span class="ex">kubectl</span> describe node/node1</span>
+<span id="cb9-2"><a></a><span class="ex">kubectl</span> describe node node1</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+</ul>
+<p>(We should notice a bunch of control plane pods.)</p>
+</div>
+</div>
+</div>
+</section>
+<section id="intro-to-kubectl-13" class="slide level2">
+<h2>Intro to <code>kubectl</code></h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Listing running containers</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>Containers are manipulated through <em>pods</em></p></li>
+<li><p>A pod is a group of containers:</p></li>
+<li><p>running together (on the same node)</p></li>
+<li><p>sharing resources (RAM, CPU; but also network, volumes)</p></li>
+<li><p>List pods on our cluster:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb10-1"><a></a><span class="ex">kubectl</span> get pods</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Where are the pods that we saw just a moment earlier?!?</em></p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="intro-to-kubectl-14" class="slide level2">
+<h2>Intro to <code>kubectl</code></h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Namespaces</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>Namespaces allow us to segregate resources</p></li>
+<li><p>List the namespaces on our cluster with one of these commands:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb11-1"><a></a><span class="ex">kubectl</span> get namespaces</span>
+<span id="cb11-2"><a></a><span class="ex">kubectl</span> get namespace</span>
+<span id="cb11-3"><a></a><span class="ex">kubectl</span> get ns</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>You know what … This <code>kube-system</code> thing looks suspicious.</em></p></li>
+</ul>
+<p><em>In fact, I’m pretty sure it showed up earlier, when we did:</em></p>
+<p><code>kubectl describe node node1</code></p>
+</div>
+</div>
+</div>
+</section>
+<section id="intro-to-kubectl-15" class="slide level2">
+<h2>Intro to <code>kubectl</code></h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Accessing namespaces</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>By default, <code>kubectl</code> uses the <code>default</code> namespace</p></li>
+<li><p>We can see resources in all namespaces with <code>--all-namespaces</code></p></li>
+<li><p>List the pods in all namespaces:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb12-1"><a></a><span class="ex">kubectl</span> get pods <span class="at">--all-namespaces</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<li><p>Since Kubernetes 1.14, we can also use <code>-A</code> as a shorter version:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb13-1"><a></a><span class="ex">kubectl</span> get pods <span class="at">-A</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+</ul>
+<p><em>Here are our system pods!</em></p>
+</div>
+</div>
+</div>
+</section>
+<section id="intro-to-kubectl-16" class="slide level2">
+<h2>Intro to <code>kubectl</code></h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>What are all these control plane pods?</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p><code>etcd</code> is our etcd server</p></li>
+<li><p><code>kube-apiserver</code> is the API server</p></li>
+<li><p><code>kube-controller-manager</code> and <code>kube-scheduler</code> are other control plane components</p></li>
+<li><p><code>coredns</code> provides DNS-based service discovery (<a href="https://kubernetes.io/blog/2018/07/10/coredns-ga-for-kubernetes-cluster-dns/">replacing kube-dns as of 1.11</a>)</p></li>
+<li><p><code>kube-proxy</code> is the (per-node) component managing port mappings and such</p></li>
+<li><p><code>weave</code> is the (per-node) component managing the network overlay</p></li>
+<li><p>the <code>READY</code> column indicates the number of containers in each pod</p>
+<p>(1 for most pods, but <code>weave</code> has 2, for instance)</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="intro-to-kubectl-17" class="slide level2">
+<h2>Intro to <code>kubectl</code></h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Scoping another namespace</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>We can also look at a different namespace (other than <code>default</code>)</p></li>
+<li><p>List only the pods in the <code>kube-system</code> namespace:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb14-1"><a></a><span class="ex">kubectl</span> get pods <span class="at">--namespace</span><span class="op">=</span>kube-system</span>
+<span id="cb14-2"><a></a><span class="ex">kubectl</span> get pods <span class="at">-n</span> kube-system</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="intro-to-kubectl-18" class="slide level2">
+<h2>Intro to <code>kubectl</code></h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Namespaces and other <code>kubectl</code> commands</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>We can use <code>-n</code>/<code>--namespace</code> with almost every <code>kubectl</code> command</p></li>
+<li><p>Example:</p>
+<ul>
+<li><code>kubectl create --namespace=X</code> to create something in namespace X</li>
+</ul></li>
+<li><p>We can use <code>-A</code>/<code>--all-namespaces</code> with most commands that manipulate multiple objects</p></li>
+<li><p>Examples:</p>
+<ul>
+<li><p><code>kubectl delete</code> can delete resources across multiple namespaces</p></li>
+<li><p><code>kubectl label</code> can add/remove/update labels across multiple namespaces</p></li>
+</ul></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="intro-to-kubectl-19" class="slide level2">
+<h2>Intro to <code>kubectl</code></h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>What about <code>kube-public</code>?</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>List the pods in the <code>kube-public</code> namespace:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb15-1"><a></a><span class="ex">kubectl</span> <span class="at">-n</span> kube-public get pods</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+</ul>
+<p>Nothing!</p>
+<p><code>kube-public</code> is created by kubeadm &amp; <a href="https://kubernetes.io/blog/2017/01/stronger-foundation-for-creating-and-managing-kubernetes-clusters">used for security bootstrapping</a>.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="intro-to-kubectl-20" class="slide level2">
+<h2>Intro to <code>kubectl</code></h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Exploring <code>kube-public</code></strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>The only interesting object in <code>kube-public</code> is a ConfigMap named <code>cluster-info</code></p></li>
+<li><p>List ConfigMap objects:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb16-1"><a></a><span class="ex">kubectl</span> <span class="at">-n</span> kube-public get configmaps</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<li><p>Inspect <code>cluster-info</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb17-1"><a></a><span class="ex">kubectl</span> <span class="at">-n</span> kube-public get configmap cluster-info <span class="at">-o</span> yaml</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+</ul>
+<p>Note the <code>selfLink</code> URI: <code>/api/v1/namespaces/kube-public/configmaps/cluster-info</code></p>
+<p>We can use that!</p>
+</div>
+</div>
+</div>
+</section>
+<section id="intro-to-kubectl-21" class="slide level2">
+<h2>Intro to <code>kubectl</code></h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Accessing <code>cluster-info</code></strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>Earlier, when trying to access the API server, we got a <code>Forbidden</code> message</p></li>
+<li><p>But <code>cluster-info</code> is readable by everyone (even without authentication)</p></li>
+<li><p>Retrieve <code>cluster-info</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb18-1"><a></a><span class="ex">curl</span> <span class="at">-k</span> https://10.96.0.1/api/v1/namespaces/kube-public/configmaps/cluster-info</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<li><p>We were able to access <code>cluster-info</code> (without auth)</p></li>
+<li><p>It contains a <code>kubeconfig</code> file</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="intro-to-kubectl-22" class="slide level2">
+<h2>Intro to <code>kubectl</code></h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Retrieving <code>kubeconfig</code></strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>We can easily extract the <code>kubeconfig</code> file from this ConfigMap</p></li>
+<li><p>Display the content of <code>kubeconfig</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb19-1"><a></a>  <span class="ex">curl</span> <span class="at">-sk</span> https://10.96.0.1/api/v1/namespaces/kube-public/configmaps/cluster-info <span class="dt">\</span></span>
+<span id="cb19-2"><a></a>       <span class="kw">|</span> <span class="ex">jq</span> <span class="at">-r</span> .data.kubeconfig</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<li><p>This file holds the canonical address of the API server, and the public key of the CA</p></li>
+<li><p>This file <em>does not</em> hold client keys or tokens</p></li>
+<li><p>This is not sensitive information, but allows us to establish trust</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="intro-to-kubectl-23" class="slide level2">
+<h2>Intro to <code>kubectl</code></h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>What about <code>kube-node-lease</code>?</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>Starting with Kubernetes 1.14, there is a <code>kube-node-lease</code> namespace</p>
+<p>(or in Kubernetes 1.13 if the NodeLease feature gate is enabled)</p></li>
+<li><p>That namespace contains one Lease object per node</p></li>
+<li><p><em>Node leases</em> are a new way to implement node heartbeats</p>
+<p>(i.e.&nbsp;node regularly pinging the control plane to say “I’m alive!”)</p></li>
+<li><p>For more details, see <a href="https://github.com/kubernetes/enhancements/blob/master/keps/sig-node/589-efficient-node-heartbeats/README.md">Efficient Node Heartbeats KEP</a> or the <a href="https://kubernetes.io/docs/concepts/architecture/nodes/#node-controller">node controller documentation</a></p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="intro-to-kubectl-24" class="slide level2">
+<h2>Intro to <code>kubectl</code></h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Services</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>A <em>service</em> is a stable endpoint to connect to “something”</p>
+<p>(In the initial proposal, they were called “portals”)</p></li>
+<li><p>List the services on our cluster with one of these commands:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb20-1"><a></a><span class="ex">kubectl</span> get services</span>
+<span id="cb20-2"><a></a><span class="ex">kubectl</span> get svc</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>There is already one service on our cluster: the Kubernetes API itself.</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="intro-to-kubectl-25" class="slide level2">
+<h2>Intro to <code>kubectl</code></h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>ClusterIP services</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>A <code>ClusterIP</code> service is internal, available from the cluster only</p></li>
+<li><p>This is useful for introspection from within containers</p></li>
+<li><p>Try to connect to the API:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb21-1"><a></a><span class="ex">curl</span> <span class="at">-k</span> https://<span class="kw">`</span><span class="ex">10.96.0.1</span><span class="kw">`</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li><p><code>-k</code> is used to skip certificate verification</p></li>
+<li><p>Make sure to replace 10.96.0.1 with the CLUSTER-IP shown by <code>kubectl get svc</code></p></li>
+</ul></li>
+</ul>
+<p>The command above should either time out, or show an authentication error. Why?</p>
+</div>
+</div>
+</div>
+</section>
+<section id="intro-to-kubectl-26" class="slide level2">
+<h2>Intro to <code>kubectl</code></h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Time out</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>Connections to ClusterIP services only work <em>from within the cluster</em></p></li>
+<li><p>If we are outside the cluster, the <code>curl</code> command will probably time out</p>
+<p>(Because the IP address, e.g.&nbsp;10.96.0.1, isn’t routed properly outside the cluster)</p></li>
+<li><p>This is the case with most “real” Kubernetes clusters</p></li>
+<li><p>To try the connection from within the cluster, we can use <a href="https://github.com/jpetazzo/shpod">shpod</a></p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="intro-to-kubectl-27" class="slide level2">
+<h2>Intro to <code>kubectl</code></h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Authentication error</strong></p>
+</div>
+<div class="callout-content">
+<p>This is what we should see when connecting from within the cluster:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode numberSource json number-lines code-with-copy"><code class="sourceCode json"><span id="cb22-1"><a></a><span class="er">$</span> <span class="er">curl</span> <span class="er">-k</span> <span class="er">https://10.96.0.1</span></span>
+<span id="cb22-2"><a></a><span class="fu">{</span></span>
+<span id="cb22-3"><a></a>  <span class="dt">"kind"</span><span class="fu">:</span> <span class="st">"Status"</span><span class="fu">,</span></span>
+<span id="cb22-4"><a></a>  <span class="dt">"apiVersion"</span><span class="fu">:</span> <span class="st">"v1"</span><span class="fu">,</span></span>
+<span id="cb22-5"><a></a>  <span class="dt">"metadata"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb22-6"><a></a></span>
+<span id="cb22-7"><a></a>  <span class="fu">},</span></span>
+<span id="cb22-8"><a></a>  <span class="dt">"status"</span><span class="fu">:</span> <span class="st">"Failure"</span><span class="fu">,</span></span>
+<span id="cb22-9"><a></a>  <span class="dt">"message"</span><span class="fu">:</span> <span class="st">"forbidden: User </span><span class="ch">\"</span><span class="st">system:anonymous</span><span class="ch">\"</span><span class="st"> cannot get path </span><span class="ch">\"</span><span class="st">/</span><span class="ch">\"</span><span class="st">"</span><span class="fu">,</span></span>
+<span id="cb22-10"><a></a>  <span class="dt">"reason"</span><span class="fu">:</span> <span class="st">"Forbidden"</span><span class="fu">,</span></span>
+<span id="cb22-11"><a></a>  <span class="dt">"details"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb22-12"><a></a></span>
+<span id="cb22-13"><a></a>  <span class="fu">},</span></span>
+<span id="cb22-14"><a></a>  <span class="dt">"code"</span><span class="fu">:</span> <span class="dv">403</span></span>
+<span id="cb22-15"><a></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</section>
+<section id="intro-to-kubectl-28" class="slide level2">
+<h2>Intro to <code>kubectl</code></h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Explanations</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>We can see <code>kind</code>, <code>apiVersion</code>, <code>metadata</code></p></li>
+<li><p>These are typical of a Kubernetes API reply</p></li>
+<li><p>Because we <em>are</em> talking to the Kubernetes API</p></li>
+<li><p>The Kubernetes API tells us “Forbidden”</p>
+<p>(because it requires authentication)</p></li>
+<li><p>The Kubernetes API is reachable from within the cluster</p>
+<p>(many apps integrating with Kubernetes will use this)</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="intro-to-kubectl-29" class="slide level2">
+<h2>Intro to <code>kubectl</code></h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>DNS integration</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>Each service also gets a DNS record</p></li>
+<li><p>The Kubernetes DNS resolver is available <em>from within pods</em></p>
+<p>(and sometimes, from within nodes, depending on configuration)</p></li>
+<li><p>Code running in pods can connect to services using their name</p>
+<p>(e.g.&nbsp;https://kubernetes/…)</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="running-containers-on-k8s" class="slide level2">
+<h2>Running containers on K8s</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Running containers on K8s</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>First things first: we cannot run a container</p></li>
+<li><p>We are going to run a pod, and in that pod there will be a single container</p></li>
+<li><p>In that container in the pod, we are going to run a simple <code>ping</code> command</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="running-containers-on-k8s-2" class="slide level2">
+<h2>Running containers on K8s</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Starting a simple pod with <code>kubectl run</code></strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p><code>kubectl run</code> is convenient to start a single pod</p></li>
+<li><p>We need to specify at least a <em>name</em> and the image we want to use</p></li>
+<li><p>Optionally, we can specify the command to run in the pod</p></li>
+<li><p>Let’s ping the address of <code>localhost</code>, the loopback interface:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb23-1"><a></a><span class="ex">kubectl</span> run pingpong <span class="at">--image</span> alpine ping 127.0.0.1</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+</ul>
+<!-- ```hide kubectl wait pod --selector=run=pingpong --for condition=ready``` -->
+<p>The output tells us that a Pod was created:</p>
+<pre><code>pod/pingpong created</code></pre>
+</div>
+</div>
+</div>
+</section>
+<section id="running-containers-on-k8s-3" class="slide level2">
+<h2>Running containers on K8s</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Viewing container output</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>Let’s use the <code>kubectl logs</code> command</p></li>
+<li><p>It takes a Pod name as argument</p></li>
+<li><p>Unless specified otherwise, it will only show logs of the first container in the pod</p>
+<p>(Good thing there’s only one in ours!)</p></li>
+<li><p>View the result of our <code>ping</code> command:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb25-1"><a></a><span class="ex">kubectl</span> logs pingpong</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="running-containers-on-k8s-4" class="slide level2">
+<h2>Running containers on K8s</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Streaming logs in real time</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>Just like <code>docker logs</code>, <code>kubectl logs</code> supports convenient options:</p>
+<ul>
+<li><p><code>-f</code>/<code>--follow</code> to stream logs in real time (à la <code>tail -f</code>)</p></li>
+<li><p><code>--tail</code> to indicate how many lines you want to see (from the end)</p></li>
+<li><p><code>--since</code> to get logs only after a given timestamp</p></li>
+</ul></li>
+<li><p>View the latest logs of our <code>ping</code> command:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb26-1"><a></a><span class="ex">kubectl</span> logs pingpong <span class="at">--tail</span> 1 <span class="at">--follow</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<li><p>Stop it with Ctrl-C</p></li>
+</ul>
+<!--
+```wait seq=3```
+```keys ^C```
+-->
+</div>
+</div>
+</div>
+</section>
+<section id="running-containers-on-k8s-5" class="slide level2">
+<h2>Running containers on K8s</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Scaling our application</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p><code>kubectl</code> gives us a simple command to scale a workload:</p>
+<p><code>kubectl scale TYPE NAME --replicas=HOWMANY</code></p></li>
+<li><p>Let’s try it on our Pod, so that we have more Pods!</p></li>
+<li><p>Try to scale the Pod:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb27-1"><a></a><span class="ex">kubectl</span> scale pod pingpong <span class="at">--replicas</span><span class="op">=</span>3</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+</ul>
+<p>🤔 We get the following error, what does that mean?</p>
+<pre><code>Error from server (NotFound): the server could not find the requested resource</code></pre>
+</div>
+</div>
+</div>
+</section>
+<section id="running-containers-on-k8s-6" class="slide level2">
+<h2>Running containers on K8s</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Scaling a Pod</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>We cannot “scale a Pod”</p>
+<p>(that’s not completely true; we could give it more CPU/RAM)</p></li>
+<li><p>If we want more Pods, we need to create more Pods</p>
+<p>(i.e.&nbsp;execute <code>kubectl run</code> multiple times)</p></li>
+<li><p>There must be a better way!</p>
+<p>(spoiler alert: yes, there is a better way!)</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="running-containers-on-k8s-7" class="slide level2">
+<h2>Running containers on K8s</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong><code>NotFound</code></strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>What’s the meaning of that error?</p>
+<pre><code>Error from server (NotFound): the server could not find the requested resource</code></pre></li>
+<li><p>When we execute <code>kubectl scale THAT-RESOURCE --replicas=THAT-MANY</code>, <br> it is like telling Kubernetes:</p>
+<p><em>go to THAT-RESOURCE and set the scaling button to position THAT-MANY</em></p></li>
+<li><p>Pods do not have a “scaling button”</p></li>
+<li><p>Try to execute the <code>kubectl scale pod</code> command with <code>-v6</code></p></li>
+<li><p>We see a <code>PATCH</code> request to <code>/scale</code>: that’s the “scaling button”</p>
+<p>(technically it’s called a <em>subresource</em> of the Pod)</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="running-containers-on-k8s-8" class="slide level2">
+<h2>Running containers on K8s</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Creating more pods</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>We are going to create a ReplicaSet</p>
+<p>(= set of replicas = set of identical pods)</p></li>
+<li><p>In fact, we will create a Deployment, which itself will create a ReplicaSet</p></li>
+<li><p>Why so many layers? We’ll explain that shortly, don’t worry!</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="running-containers-on-k8s-9" class="slide level2">
+<h2>Running containers on K8s</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Creating a Deployment running <code>ping</code></strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>Let’s create a Deployment instead of a single Pod</p></li>
+<li><p>Create the Deployment; pay attention to the <code>--</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb30-1"><a></a><span class="ex">kubectl</span> create deployment pingpong <span class="at">--image</span><span class="op">=</span>alpine <span class="at">--</span> ping 127.0.0.1</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<li><p>The <code>--</code> is used to separate:</p>
+<ul>
+<li><p>options/flags of <code>kubectl create</code></p></li>
+<li><p>command to run in the container</p></li>
+</ul></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="running-containers-on-k8s-10" class="slide level2">
+<h2>Running containers on K8s</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>What has been created?</strong></p>
+</div>
+<div class="callout-content">
+<!-- ```hide kubectl wait pod --selector=app=pingpong --for condition=ready ``` -->
+<ul>
+<li><p>Check the resources that were created:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb31-1"><a></a><span class="ex">kubectl</span> get all</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Note: <code>kubectl get all</code> is a lie. It doesn’t show everything.</p></li>
+</ul>
+<p>(But it shows a lot of “usual suspects”, i.e.&nbsp;commonly used resources.)</p>
+</div>
+</div>
+</div>
+</section>
+<section id="running-containers-on-k8s-11" class="slide level2">
+<h2>Running containers on K8s</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>There’s a lot going on here!</strong></p>
+</div>
+<div class="callout-content">
+<pre><code>NAME                            READY   STATUS        RESTARTS   AGE
+pod/pingpong                    1/1     Running       0          4m17s
+pod/pingpong-6ccbc77f68-kmgfn   1/1     Running       0          11s
+
+NAME                 TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+service/kubernetes   ClusterIP   10.96.0.1    &lt;none&gt;        443/TCP   3h45
+
+NAME                       READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/pingpong   1/1     1            1           11s
+
+NAME                                  DESIRED   CURRENT   READY   AGE
+replicaset.apps/pingpong-6ccbc77f68   1         1         1       11s</code></pre>
+<p>Our new Pod is not named <code>pingpong</code>, but <code>pingpong-xxxxxxxxxxx-yyyyy</code>.</p>
+<p>We have a Deployment named <code>pingpong</code>, and an extra ReplicaSet, too. What’s going on?</p>
+</div>
+</div>
+</div>
+</section>
+<section id="running-containers-on-k8s-12" class="slide level2">
+<h2>Running containers on K8s</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>From Deployment to Pod</strong></p>
+</div>
+<div class="callout-content">
+<p>We have the following resources:</p>
+<ul>
+<li><p><code>deployment.apps/pingpong</code></p>
+<p>This is the Deployment that we just created.</p></li>
+<li><p><code>replicaset.apps/pingpong-xxxxxxxxxx</code></p>
+<p>This is a Replica Set created by this Deployment.</p></li>
+<li><p><code>pod/pingpong-xxxxxxxxxx-yyyyy</code></p>
+<p>This is a <em>pod</em> created by the Replica Set.</p></li>
+</ul>
+<p>Let’s explain what these things are.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="running-containers-on-k8s-13" class="slide level2">
+<h2>Running containers on K8s</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Pod</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>Can have one or multiple containers</p></li>
+<li><p>Runs on a single node</p>
+<p>(Pod cannot “straddle” multiple nodes)</p></li>
+<li><p>Pods cannot be moved</p>
+<p>(e.g.&nbsp;in case of node outage)</p></li>
+<li><p>Pods cannot be scaled horizontally</p>
+<p>(except by manually creating more Pods)</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="running-containers-on-k8s-14" class="slide level2">
+<h2>Running containers on K8s</h2>
+<div class="callout callout-note callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Pod details</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>A Pod is not a process; it’s an environment for containers</p>
+<ul>
+<li><p>it cannot be “restarted”</p></li>
+<li><p>it cannot “crash”</p></li>
+</ul></li>
+<li><p>The containers in a Pod can crash</p></li>
+<li><p>They may or may not get restarted</p>
+<p>(depending on Pod’s restart policy)</p></li>
+<li><p>If all containers exit successfully, the Pod ends in “Succeeded” phase</p></li>
+<li><p>If some containers fail and don’t get restarted, the Pod ends in “Failed” phase</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="running-containers-on-k8s-15" class="slide level2">
+<h2>Running containers on K8s</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Replica Set</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>Set of identical (replicated) Pods</p></li>
+<li><p>Defined by a pod template + number of desired replicas</p></li>
+<li><p>If there are not enough Pods, the Replica Set creates more</p>
+<p>(e.g.&nbsp;in case of node outage; or simply when scaling up)</p></li>
+<li><p>If there are too many Pods, the Replica Set deletes some</p>
+<p>(e.g.&nbsp;if a node was disconnected and comes back; or when scaling down)</p></li>
+<li><p>We can scale up/down a Replica Set</p>
+<ul>
+<li><p>we update the manifest of the Replica Set</p></li>
+<li><p>as a consequence, the Replica Set controller creates/deletes Pods</p></li>
+</ul></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="running-containers-on-k8s-16" class="slide level2">
+<h2>Running containers on K8s</h2>
+<div class="callout callout-note callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Deployment</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>Replica Sets control <em>identical</em> Pods</p></li>
+<li><p>Deployments are used to roll out different Pods</p>
+<p>(different image, command, environment variables, …)</p></li>
+<li><p>When we update a Deployment with a new Pod definition:</p>
+<ul>
+<li><p>a new Replica Set is created with the new Pod definition</p></li>
+<li><p>that new Replica Set is progressively scaled up</p></li>
+<li><p>meanwhile, the old Replica Set(s) is(are) scaled down</p></li>
+</ul></li>
+<li><p>This is a <em>rolling update</em>, minimizing application downtime</p></li>
+<li><p>When we scale up/down a Deployment, it scales up/down its Replica Set</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="running-containers-on-k8s-17" class="slide level2">
+<h2>Running containers on K8s</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Can we scale now?</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>Let’s try <code>kubectl scale</code> again, but on the Deployment!</p></li>
+<li><p>Scale our <code>pingpong</code> deployment:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb33"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb33-1"><a></a><span class="ex">kubectl</span> scale deployment pingpong <span class="at">--replicas</span> 3</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<li><p>Note that we could also write it like this:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb34-1"><a></a><span class="ex">kubectl</span> scale deployment/pingpong <span class="at">--replicas</span> 3</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<li><p>Check that we now have multiple pods:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb35"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb35-1"><a></a><span class="ex">kubectl</span> get pods</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="running-containers-on-k8s-18" class="slide level2">
+<h2>Running containers on K8s</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Scaling a Replica Set</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>What if we scale the Replica Set instead of the Deployment?</p></li>
+<li><p>The Deployment would notice it right away and scale back to the initial level</p></li>
+<li><p>The Replica Set makes sure that we have the right numbers of Pods</p></li>
+<li><p>The Deployment makes sure that the Replica Set has the right size</p>
+<p>(conceptually, it delegates the management of the Pods to the Replica Set)</p></li>
+<li><p>This might seem weird (why this extra layer?) but will soon make sense</p>
+<p>(when we will look at how rolling updates work!)</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="running-containers-on-k8s-19" class="slide level2">
+<h2>Running containers on K8s</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Checking Deployment logs</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p><code>kubectl logs</code> needs a Pod name</p></li>
+<li><p>But it can also work with a <em>type/name</em></p>
+<p>(e.g.&nbsp;<code>deployment/pingpong</code>)</p></li>
+<li><p>View the result of our <code>ping</code> command:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb36"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb36-1"><a></a><span class="ex">kubectl</span> logs deploy/pingpong <span class="at">--tail</span> 2</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<li><p>It shows us the logs of the first Pod of the Deployment</p></li>
+<li><p>We’ll see later how to get the logs of <em>all</em> the Pods!</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="running-containers-on-k8s-20" class="slide level2">
+<h2>Running containers on K8s</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Resilience</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>The <em>deployment</em> <code>pingpong</code> watches its <em>replica set</em></p></li>
+<li><p>The <em>replica set</em> ensures that the right number of <em>pods</em> are running</p></li>
+<li><p>What happens if pods disappear?</p></li>
+<li><p>In a separate window, watch the list of pods:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb37"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb37-1"><a></a><span class="ex">watch</span> kubectl get pods</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+</ul>
+<!--
+```wait Every 2.0s```
+```tmux split-pane -v```
+-->
+<ul>
+<li><p>Destroy the pod currently shown by <code>kubectl logs</code>:</p>
+<pre><code>kubectl delete pod pingpong-xxxxxxxxxx-yyyyy</code></pre></li>
+</ul>
+<!--
+```tmux select-pane -t 0```
+```copy pingpong-[^-]*-.....```
+```tmux last-pane```
+```keys kubectl delete pod ```
+```paste```
+```key ^J```
+```check```
+-->
+</div>
+</div>
+</div>
+</section>
+<section id="running-containers-on-k8s-21" class="slide level2">
+<h2>Running containers on K8s</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>What happened?</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p><code>kubectl delete pod</code> terminates the pod gracefully</p>
+<p>(sending it the TERM signal and waiting for it to shutdown)</p></li>
+<li><p>As soon as the pod is in “Terminating” state, the Replica Set replaces it</p></li>
+<li><p>But we can still see the output of the “Terminating” pod in <code>kubectl logs</code></p></li>
+<li><p>Until 30 seconds later, when the grace period expires</p></li>
+<li><p>The pod is then killed, and <code>kubectl logs</code> exits</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="running-containers-on-k8s-22" class="slide level2">
+<h2>Running containers on K8s</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Deleting a standalone Pod</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>What happens if we delete a standalone Pod?</p>
+<p>(like the first <code>pingpong</code> Pod that we created)</p></li>
+<li><p>Delete the Pod:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb39"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb39-1"><a></a><span class="ex">kubectl</span> delete pod pingpong</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+</ul>
+<!--
+```key ^D```
+```key ^C```
+-->
+<ul>
+<li><p>No replacement Pod gets created because there is no <em>controller</em> watching it</p></li>
+<li><p>That’s why we will rarely use standalone Pods in practice</p>
+<p>(except for e.g.&nbsp;punctual debugging or executing a short supervised task)</p></li>
+</ul>
+</div>
+</div>
+</div>
+
+
+</section>
+    </div>
+  <div class="quarto-auto-generated-content" style="display: none;">
+<div class="footer footer-default">
+
+</div>
+</div></div>
+
+  <script>window.backupDefine = window.define; window.define = undefined;</script>
+  <script src="site_libs/revealjs/dist/reveal.js"></script>
+  <!-- reveal.js plugins -->
+  <script src="site_libs/revealjs/plugin/quarto-line-highlight/line-highlight.js"></script>
+  <script src="site_libs/revealjs/plugin/pdf-export/pdfexport.js"></script>
+  <script src="site_libs/revealjs/plugin/reveal-menu/menu.js"></script>
+  <script src="site_libs/revealjs/plugin/reveal-menu/quarto-menu.js"></script>
+  <script src="site_libs/revealjs/plugin/multiplex/socket.io.js"></script>
+  <script src="site_libs/revealjs/plugin/multiplex/multiplex.js"></script>
+  <script src="site_libs/revealjs/plugin/quarto-support/support.js"></script>
+  
+
+  <script src="site_libs/revealjs/plugin/notes/notes.js"></script>
+  <script src="site_libs/revealjs/plugin/search/search.js"></script>
+  <script src="site_libs/revealjs/plugin/zoom/zoom.js"></script>
+  <script src="site_libs/revealjs/plugin/math/math.js"></script>
+  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script>
+
+  <script>
+
+      // Full list of configuration options available at:
+      // https://revealjs.com/config/
+      Reveal.initialize({
+'controlsAuto': true,
+'previewLinksAuto': true,
+'pdfSeparateFragments': false,
+'autoAnimateEasing': "ease",
+'autoAnimateDuration': 1,
+'autoAnimateUnmatched': true,
+'jumpToSlide': true,
+'menu': {"side":"left","useTextContentForMissingTitles":true,"markers":false,"loadIcons":false,"custom":[{"title":"Tools","icon":"<i class=\"fas fa-gear\"></i>","content":"<ul class=\"slide-menu-items\">\n<li class=\"slide-tool-item active\" data-item=\"0\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.fullscreen(event)\"><kbd>f</kbd> Fullscreen</a></li>\n<li class=\"slide-tool-item\" data-item=\"1\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.speakerMode(event)\"><kbd>s</kbd> Speaker View</a></li>\n<li class=\"slide-tool-item\" data-item=\"2\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.overview(event)\"><kbd>o</kbd> Slide Overview</a></li>\n<li class=\"slide-tool-item\" data-item=\"3\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.togglePdfExport(event)\"><kbd>e</kbd> PDF Export Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"4\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.toggleScrollView(event)\"><kbd>r</kbd> Scroll View Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"5\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.keyboardHelp(event)\"><kbd>?</kbd> Keyboard Help</a></li>\n</ul>"}],"openButton":true},
+'multiplex': {"url":"https://mplex.vitv.ly","secret":null,"id":"eb61bbf995b1c8abaf276cdae9bc92cd05e8c2fef7880c56f1f6d8869ea66286"},
+'smaller': false,
+ 
+        // Display controls in the bottom right corner
+        controls: false,
+
+        // Help the user learn the controls by providing hints, for example by
+        // bouncing the down arrow when they first encounter a vertical slide
+        controlsTutorial: false,
+
+        // Determines where controls appear, "edges" or "bottom-right"
+        controlsLayout: 'edges',
+
+        // Visibility rule for backwards navigation arrows; "faded", "hidden"
+        // or "visible"
+        controlsBackArrows: 'faded',
+
+        // Display a presentation progress bar
+        progress: true,
+
+        // Display the page number of the current slide
+        slideNumber: 'c/t',
+
+        // 'all', 'print', or 'speaker'
+        showSlideNumber: 'all',
+
+        // Add the current slide number to the URL hash so that reloading the
+        // page/copying the URL will return you to the same slide
+        hash: true,
+
+        // Start with 1 for the hash rather than 0
+        hashOneBasedIndex: false,
+
+        // Flags if we should monitor the hash and change slides accordingly
+        respondToHashChanges: true,
+
+        // Push each slide change to the browser history
+        history: true,
+
+        // Enable keyboard shortcuts for navigation
+        keyboard: true,
+
+        // Enable the slide overview mode
+        overview: true,
+
+        // Disables the default reveal.js slide layout (scaling and centering)
+        // so that you can use custom CSS layout
+        disableLayout: false,
+
+        // Vertical centering of slides
+        center: false,
+
+        // Enables touch navigation on devices with touch input
+        touch: true,
+
+        // Loop the presentation
+        loop: false,
+
+        // Change the presentation direction to be RTL
+        rtl: false,
+
+        // see https://revealjs.com/vertical-slides/#navigation-mode
+        navigationMode: 'linear',
+
+        // Randomizes the order of slides each time the presentation loads
+        shuffle: false,
+
+        // Turns fragments on and off globally
+        fragments: true,
+
+        // Flags whether to include the current fragment in the URL,
+        // so that reloading brings you to the same fragment position
+        fragmentInURL: false,
+
+        // Flags if the presentation is running in an embedded mode,
+        // i.e. contained within a limited portion of the screen
+        embedded: false,
+
+        // Flags if we should show a help overlay when the questionmark
+        // key is pressed
+        help: true,
+
+        // Flags if it should be possible to pause the presentation (blackout)
+        pause: true,
+
+        // Flags if speaker notes should be visible to all viewers
+        showNotes: false,
+
+        // Global override for autoplaying embedded media (null/true/false)
+        autoPlayMedia: null,
+
+        // Global override for preloading lazy-loaded iframes (null/true/false)
+        preloadIframes: null,
+
+        // Number of milliseconds between automatically proceeding to the
+        // next slide, disabled when set to 0, this value can be overwritten
+        // by using a data-autoslide attribute on your slides
+        autoSlide: 0,
+
+        // Stop auto-sliding after user input
+        autoSlideStoppable: true,
+
+        // Use this method for navigation when auto-sliding
+        autoSlideMethod: null,
+
+        // Specify the average time in seconds that you think you will spend
+        // presenting each slide. This is used to show a pacing timer in the
+        // speaker view
+        defaultTiming: null,
+
+        // Enable slide navigation via mouse wheel
+        mouseWheel: false,
+
+        // The display mode that will be used to show slides
+        display: 'block',
+
+        // Hide cursor if inactive
+        hideInactiveCursor: true,
+
+        // Time before the cursor is hidden (in ms)
+        hideCursorTime: 5000,
+
+        // Opens links in an iframe preview overlay
+        previewLinks: false,
+
+        // Transition style (none/fade/slide/convex/concave/zoom)
+        transition: 'none',
+
+        // Transition speed (default/fast/slow)
+        transitionSpeed: 'default',
+
+        // Transition style for full page slide backgrounds
+        // (none/fade/slide/convex/concave/zoom)
+        backgroundTransition: 'none',
+
+        // Number of slides away from the current that are visible
+        viewDistance: 3,
+
+        // Number of slides away from the current that are visible on mobile
+        // devices. It is advisable to set this to a lower number than
+        // viewDistance in order to save resources.
+        mobileViewDistance: 2,
+
+        // The "normal" size of the presentation, aspect ratio will be preserved
+        // when the presentation is scaled to fit different resolutions. Can be
+        // specified using percentage units.
+        width: 1050,
+
+        height: 700,
+
+        // Factor of the display size that should remain empty around the content
+        margin: 0.1,
+
+        math: {
+          mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@2.7.9/MathJax.js',
+          config: 'TeX-AMS_HTML-full',
+          tex2jax: {
+            inlineMath: [['\\(','\\)']],
+            displayMath: [['\\[','\\]']],
+            balanceBraces: true,
+            processEscapes: false,
+            processRefs: true,
+            processEnvironments: true,
+            preview: 'TeX',
+            skipTags: ['script','noscript','style','textarea','pre','code'],
+            ignoreClass: 'tex2jax_ignore',
+            processClass: 'tex2jax_process'
+          },
+        },
+
+        // reveal.js plugins
+        plugins: [QuartoLineHighlight, PdfExport, RevealMenu, QuartoSupport,
+
+          RevealMath,
+          
+          RevealSearch,
+          RevealZoom
+        ]
+      });
+    </script>
+    <script id="quarto-html-after-body" type="application/javascript">
+      window.document.addEventListener("DOMContentLoaded", function (event) {
+        const tabsets =  window.document.querySelectorAll(".panel-tabset-tabby")
+        tabsets.forEach(function(tabset) {
+          const tabby = new Tabby('#' + tabset.id);
+        });
+        const isCodeAnnotation = (el) => {
+          for (const clz of el.classList) {
+            if (clz.startsWith('code-annotation-')) {                     
+              return true;
+            }
+          }
+          return false;
+        }
+        const onCopySuccess = function(e) {
+          // button target
+          const button = e.trigger;
+          // don't keep focus
+          button.blur();
+          // flash "checked"
+          button.classList.add('code-copy-button-checked');
+          var currentTitle = button.getAttribute("title");
+          button.setAttribute("title", "Copied!");
+          let tooltip;
+          if (window.bootstrap) {
+            button.setAttribute("data-bs-toggle", "tooltip");
+            button.setAttribute("data-bs-placement", "left");
+            button.setAttribute("data-bs-title", "Copied!");
+            tooltip = new bootstrap.Tooltip(button, 
+              { trigger: "manual", 
+                customClass: "code-copy-button-tooltip",
+                offset: [0, -8]});
+            tooltip.show();    
+          }
+          setTimeout(function() {
+            if (tooltip) {
+              tooltip.hide();
+              button.removeAttribute("data-bs-title");
+              button.removeAttribute("data-bs-toggle");
+              button.removeAttribute("data-bs-placement");
+            }
+            button.setAttribute("title", currentTitle);
+            button.classList.remove('code-copy-button-checked');
+          }, 1000);
+          // clear code selection
+          e.clearSelection();
+        }
+        const getTextToCopy = function(trigger) {
+          const outerScaffold = trigger.parentElement.cloneNode(true);
+          const codeEl = outerScaffold.querySelector('code');
+          for (const childEl of codeEl.children) {
+            if (isCodeAnnotation(childEl)) {
+              childEl.remove();
+            }
+          }
+          return codeEl.innerText;
+        }
+        const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+          text: getTextToCopy
+        });
+        clipboard.on('success', onCopySuccess);
+        if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+          const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+            text: getTextToCopy,
+            container: window.document.getElementById('quarto-embedded-source-code-modal')
+          });
+          clipboardModal.on('success', onCopySuccess);
+        }
+          var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+          var mailtoRegex = new RegExp(/^mailto:/);
+            var filterRegex = new RegExp("https:\/\/dslnu\.github\.io\/data_analytics\/");
+          var isInternal = (href) => {
+              return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+          }
+          // Inspect non-navigation links and adorn them if external
+         var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+          for (var i=0; i<links.length; i++) {
+            const link = links[i];
+            if (!isInternal(link.href)) {
+              // undo the damage that might have been done by quarto-nav.js in the case of
+              // links that we want to consider external
+              if (link.dataset.originalHref !== undefined) {
+                link.href = link.dataset.originalHref;
+              }
+            }
+          }
+        function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+          const config = {
+            allowHTML: true,
+            maxWidth: 500,
+            delay: 100,
+            arrow: false,
+            appendTo: function(el) {
+                return el.closest('section.slide') || el.parentElement;
+            },
+            interactive: true,
+            interactiveBorder: 10,
+            theme: 'light-border',
+            placement: 'bottom-start',
+          };
+          if (contentFn) {
+            config.content = contentFn;
+          }
+          if (onTriggerFn) {
+            config.onTrigger = onTriggerFn;
+          }
+          if (onUntriggerFn) {
+            config.onUntrigger = onUntriggerFn;
+          }
+            config['offset'] = [0,0];
+            config['maxWidth'] = 700;
+          window.tippy(el, config); 
+        }
+        const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+        for (var i=0; i<noterefs.length; i++) {
+          const ref = noterefs[i];
+          tippyHover(ref, function() {
+            // use id or data attribute instead here
+            let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+            try { href = new URL(href).hash; } catch {}
+            const id = href.replace(/^#\/?/, "");
+            const note = window.document.getElementById(id);
+            if (note) {
+              return note.innerHTML;
+            } else {
+              return "";
+            }
+          });
+        }
+        const findCites = (el) => {
+          const parentEl = el.parentElement;
+          if (parentEl) {
+            const cites = parentEl.dataset.cites;
+            if (cites) {
+              return {
+                el,
+                cites: cites.split(' ')
+              };
+            } else {
+              return findCites(el.parentElement)
+            }
+          } else {
+            return undefined;
+          }
+        };
+        var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+        for (var i=0; i<bibliorefs.length; i++) {
+          const ref = bibliorefs[i];
+          const citeInfo = findCites(ref);
+          if (citeInfo) {
+            tippyHover(citeInfo.el, function() {
+              var popup = window.document.createElement('div');
+              citeInfo.cites.forEach(function(cite) {
+                var citeDiv = window.document.createElement('div');
+                citeDiv.classList.add('hanging-indent');
+                citeDiv.classList.add('csl-entry');
+                var biblioDiv = window.document.getElementById('ref-' + cite);
+                if (biblioDiv) {
+                  citeDiv.innerHTML = biblioDiv.innerHTML;
+                }
+                popup.appendChild(citeDiv);
+              });
+              return popup.innerHTML;
+            });
+          }
+        }
+      });
+      </script>
+    
+
+</body></html>
