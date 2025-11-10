@@ -30,8 +30,8 @@ format:
     theme: default
     multiplex:
       url: 'https://mplex.vitv.ly'
-      secret: '589a3556f26f555b43372da9855fb80b'
-      id: 'f383d86d234a2b6e614ad0237677d2ea99a3db408e766a57906400c1e456ee63'
+      secret: '617cb2a51313dc3aa78114f2d5a6e284'
+      id: '7532d9036148652a0562aea75575dbbe07ad0ff1aa161c00d6f9987495359e26'
 ---
 
 # Query languages
@@ -614,4 +614,328 @@ SSTables.
 - leveled compaction: the key range is split up into smaller SSTables and
 older data is moved into separate “levels,” which allows the compaction to proceed
 more incrementally and use less disk space.
+:::
+
+
+## Storage engines: trees
+:::{.callout-tip icon=false}
+## B-trees
+Introduced in **Organization and Maintenance of Large Ordered Indices**, Bayer et al, Boeing Scientific Research Laboratories, 1970.
+
+- B-trees break the database down into fixed-size **blocks** or **pages**, traditionally 4 KB in size (sometimes bigger), and read or write one page at a time.
+
+- Each page contains several keys and references to child pages.
+  
+- Number of references to child pages in one page of the B-tree is called the **branching factor**.
+:::
+
+## Storage engines: trees
+:::{.callout-important icon=false}
+## Definition
+Let $h \geq 0$ be an integer, $k$ a natural number.
+A directed tree $T$ is in the class $\tau(k,h)$ of **B-trees** if $T$ is either empty ($h=0$)
+or has the following properties:
+
+1. Each path from the root to any leaf has the same length $h$, also called the **height** of $T$, i.e., $h$ = number of nodes in path.
+2. Each node except the root and the leaves has at least $k + 1$ sons. The root is a leaf or has at least two sons.
+3. Each node has at most $2k + 1$ sons.
+:::
+
+## Storage engines: trees
+![](img/btrees)
+
+## Storage engines: trees
+:::{.callout-warning icon=false}
+## B-tree Update
+
+1. search for the leaf page containing that key 
+2. change the value in that page
+3. write the page back to disk (any references to that page remain valid)
+:::
+
+:::{.callout-note icon=false}
+## B-tree Insert
+
+1. find the page whose range encompasses the new key 
+2. add it to that page.
+3. If there isn’t enough free space in the page to accommodate the new key, it is split into two half-full pages, and the parent page is updated to account for the new subdivision of key ranges
+:::
+
+## Storage engines: trees
+![](img/brees_grow)
+
+## Storage engines: trees
+![PostgreSQL page structure](img/postgres_page)
+
+## Storage engines: trees
+:::{.callout-important icon=false}
+## Balancing
+This algorithm ensures that the tree remains **balanced:**
+
+- a B-tree with $n$ keys always has a depth of $O(\log n)$
+- most databases can fit into a B-tree that is three or four levels deep
+- four-level tree of 4 KB pages with a branching factor of 500 can store up to
+256 TB.
+:::
+
+## Storage engines: trees
+:::{.callout-important icon=false}
+## B-tree optimizations
+
+- **write-ahead log (WAL)**. This is an append-only file to which every B-tree modification
+must be written before it can be applied to the pages of the tree itself.
+- **latches** (lightweight locks): solve concurrency issues by protecting the tree’s data structures
+- **copy-on-write** for new page creation
+- **key abbreviation**. Especially in pages on the interior of the tree, keys only need to provide enough information to act as boundaries between key ranges. Packing more keys into a page allows the tree to have a higher branching factor, and thus fewer levels
+- additional **tree pointers**, e.g. siblings
+:::
+
+## Storage engines: index comparison
+:::{.callout-note}
+## LSM-trees vs B-trees
+
+- LSM-trees are typically faster for writes
+- B-trees are thought to be faster for reads
+- Compaction process interferes with ongoing read/write performance
+- LSM-trees: lower storage overhead
+- LSM-trees: issue of **write amplification**
+- B-trees: each key exists exactly in one place in the index
+:::
+
+## Storage engines: index comparison
+![The RUM Conjecture: Read, Update, Memory – Optimize Two at the Expense of the Third.](img/rum.png)
+
+## Storage engines: index comparison
+:::{.callout-warning icon=false}
+## Other index types
+
+- Secondary indexes
+- Clustered indexes
+- Covering indexes
+- Multi-column indexes
+- Fuzzy search indexes
+:::
+
+## Storage engines: in-memory DBs
+![Anti-caching: cold data is moved to disk in a transactionally-safe manner as the database grows in size.](img/anti_caching)
+
+# OLTP vs OLAP
+
+## OLTP vs OLAP
+![](img/oltp_olap)
+
+## OLTP vs OLAP
+:::{.callout-warning icon=false}
+## Definition
+**Data warehousing** is a collection of **decision support**
+technologies, aimed at enabling the **knowledge worker**
+(executive, manager, analyst) to make better and faster
+decisions.
+:::
+
+:::{.callout-tip icon=false}
+## Even worse definition
+A data warehouse is a "subject-oriented, integrated, time-
+varying, non-volatile collection of data that is used primarily
+in organizational decision making."
+:::
+
+Warehouses are **OLAP Gen 1**.
+
+## OLTP vs OLAP
+![](img/data_warehouse)
+
+
+## OLTP vs OLAP
+:::{.callout-tip icon=false}
+## Data warehouse
+
+- It is a separate database that analysts can query without affecting OLTP operations. 
+
+- The data warehouse contains a read-only copy of the data in all the various OLTP systems in the company.
+:::
+
+:::{.callout-important icon=false}
+## Extract–Transform–Load (ETL)
+
+1. Data is extracted from OLTP databases (using either a periodic data dump or a continuous stream of updates)
+2. transformed into an analysis-friendly schema
+3. cleaned up 
+4. and then loaded into the data warehouse. 
+:::
+
+## OLTP vs OLAP
+:::{.callout-warning icon=false}
+## Why separate?
+
+- trying to execute complex OLAP
+queries against the operational databases would result in
+unacceptable performance. 
+- decision support requires non-OLTP data, such as **historical data**
+- decision support requires consolidating data from many heterogeneous sources
+- supporting the multidimensional data models and operations typical of
+OLAP requires special data organization, access, and implementation methods
+:::
+
+## OLTP vs OLAP
+:::{.callout-note icon=false}
+## Data warehouse rollout
+
+1. define the architecture + capacity planning
+2. integrate disparate servers
+3. design schemas and views
+4. connect data sources to the warehouse
+5. define structure of physical storage
+6. write scripts for ETL
+7. implement end-user applications
+:::
+
+## OLTP vs OLAP
+:::{.callout-note icon=false}
+## ETL preparation: cleaning
+
+- **data migration**: specify simple transformation rules
+- **data scrubbing**: use domain-specific knowledge 
+- **data auditing**: discover rules (or violations thereof) by scanning data
+:::
+    
+## OLTP vs OLAP
+:::{.callout-important icon=false}
+## Load preparation: preprocessing
+
+- **checking integrity constraints**
+- **sorting, summarization, aggregation, etc.**
+- **indexing and building other access paths**
+- **partitioning to multiple storage areas**
+:::
+
+## OLTP vs OLAP
+:::{.callout-warning icon=false}
+## Commercial
+
+- Microsoft SQL Server
+- SAP HANA (**OLTAP**)
+- Amazon RedShift
+:::
+
+:::{.callout-tip icon=false}
+## Open-source
+
+- Apache Hive
+- Spark SQL
+- Presto/Trino
+:::
+
+## OLTP vs OLAP
+:::{.callout-important icon=false}
+## The divergence between OLTP DBs and data warehouses
+Data warehouse:
+
+- **Data model:** often relational
+- **Query language:** often SQL-like
+- **Internals:** quite different
+:::
+
+## OLTP vs OLAP
+:::{.callout-tip icon=false}
+## Dimensional model
+
+- Multidimensional data model: a set of numeric **measures** that are the objects of analysis. 
+
+- Each of the numeric measures depends on a set of **dimensions**
+
+- A measure as a value in the multidimensional space of dimensions. 
+
+- Each dimension is described by a set of **attributes**.
+:::
+
+## OLTP vs OLAP
+![](img/olap_dimensional_model)
+
+## OLTP vs OLAP
+:::{.callout-important icon=false}
+## Star schema
+The name “star schema” comes from the fact that when the table relationships are
+visualized, the fact table is in the middle, surrounded by its dimension tables; the
+connections to these tables are like the rays of a star.
+
+- **fact table** -- collection of events occurring at particular time
+- **dimension table** -- **who, what, where, when, how, and why** of the event.
+:::
+
+## OLTP vs OLAP
+![](img/star_schema_simple)
+
+## OLTP vs OLAP
+![](img/star_schema)
+
+## OLTP vs OLAP
+:::{.callout-note icon=false}
+## Snowflake schema: definition
+A variation of star schema, where dimensions are
+further broken down into subdimensions. 
+
+- more normalized than star schemas
+- however, star schemas are often preferred because they are simpler for analysts to work with
+:::
+
+## OLTP vs OLAP
+![](img/snowflake_schema)
+
+## OLTP vs OLAP
+:::{.callout-important icon=false}
+## OLAP cubes
+**Materialized aggregates:** data warehouse queries often involve an aggregate function, such as COUNT, SUM, AVG, MIN, or MAX in SQL. 
+
+If the same aggregates are used often, they can be modified to be **materialized**.
+
+**Relational model** offers **materialized views**.
+:::
+
+## OLTP vs OLAP
+![](img/olap_cube)
+
+
+## OLTP vs OLAP
+:::{.callout-important icon=false}
+## Operations
+
+- **rollup**: increasing the level of aggregation 
+- **drill-down**: decreasing the level of aggregation or increasing detail along one or more
+dimension hierarchies
+- **slice-and-dice**: selection and projection
+- **pivot**: re-orienting the multidimensional view of data
+:::
+
+## OLTP vs OLAP
+:::{.callout-tip icon=false}
+## Pivoting
+The simplest view of pivoting is that it selects two dimensions that are used to aggregate a measure.
+:::
+
+:::{.callout-important icon=false}
+## Rollup
+Rollup corresponds to taking the current data object and
+doing a further group-by on one of the dimensions. 
+
+A converse is called **drill-down**.
+:::
+
+:::{.callout-note icon=false}
+## Slice-and-dice
+Slice-and-dice corresponds to
+reducing the dimensionality of the data, i.e., taking a
+projection of the data on a subset of dimensions for selected
+values of the other dimensions.
+:::
+
+## OLTP vs OLAP
+:::{.callout-tip icon=false}
+## Data warehouse challenges
+
+- couple compute and storage into an on-premises appliance. This forced enterprises to provision and pay for the peak of user load and data under management, which became very costly as datasets grew.
+- more and more datasets were completely unstructured,
+e.g., video, audio, and text documents, which data warehouses could
+not store and query at all.
+- **schema-on-write**
 :::
