@@ -1,0 +1,303 @@
+---
+title: "Big Data Analytics: Lab 10"
+execute:
+  enabled: true
+  echo: true
+  cache: true
+format:
+  html:
+    code-fold: false
+jupyter: python3
+diagram:
+  cache: true
+  cache-dir: ./cache
+  engine:
+    tikz:
+      execpath: lualatex
+filters:
+  - diagram
+---
+
+# Query optimization
+
+
+In order to improve performance (aka `do profiling`), one has to:
+
+  - know where to improve. Here `EXPLAIN` helps
+  - then apply relevant improvement methods. First and foremost, for analytic queries, this means **indexing**.
+
+:::{.callout-important}
+
+- Performance affects **depth** and **breadth** of data analysis.
+- Low performance may lead to **subsampling.**
+:::
+
+## Interpret EXPLAIN
+
+First off, we start with `EXPLAIN`.
+
+Fine quote: 
+
+> "plan reading is an art that deserves significant attention."
+
+
+We can run several queries on `lab10` DB:
+
+1. `explain select * from instances;`
+2. `explain select * from instances limit 10;`
+3. `explain select * from instances limit 10 where "Bird" between 1 and 5;`
+   
+Example output:
+```sql
+ Seq Scan on places365  (cost=0.00..225.00 rows=10000 width=67)
+``` 
+ - First **cost** number is startup cost.
+ - Second is total **cost** if all records are fetched. Units are cost units.
+ - **Width** param is size of each row in bytes.
+
+Bear in mind that the output of `EXPLAIN` is a tree with 2 node types:
+  - **scan nodes**. `WHERE` conditions will appear as attributes to scan nodes.
+  - **additional nodes** for joining, aggregation, sorting, etc.
+
+Sometimes scans might have two levels:
+  - The lower level will identify the row locations to fetch
+  - And the upper level (`bitmap`) will sort the location prior to fetching
+
+### EXPLAIN types and settings
+
+1. One can have more elaborate output with `ANALYZE` (adds execution time, among other things). Note that this will **actually execute** the query.
+
+2. There is also `EXPLAIN (ANALYZE, BUFFERS)` that shows cache and disk data sizes.
+
+### EXPLAIN JOINs
+
+```sql
+explain select i."Car" from instances i, metadata m where i.orig_id=m.orig_id and m.year=2023 limit 20;
+```
+
+Output:
+
+```sql
+                                   QUERY PLAN
+---------------------------------------------------------------------------------
+ Limit  (cost=438.19..499.36 rows=20 width=4)
+   ->  Hash Join  (cost=438.19..973.44 rows=175 width=4)
+         Hash Cond: (i.orig_id = m.orig_id)
+         ->  Seq Scan on instances i  (cost=0.00..496.00 rows=10000 width=14)
+         ->  Hash  (cost=436.00..436.00 rows=175 width=10)
+               ->  Seq Scan on metadata m  (cost=0.00..436.00 rows=175 width=10)
+                     Filter: (year = '2023'::numeric)
+(7 rows)
+```
+
+`Hash join` happens when rows of one table are entered into an in-memory hash table, in which rows of another table are looked up.
+
+## Indexing
+Different index types:
+
+- B-trees
+- hash indexes
+- generalized inverted indexes (GINs)
+- BRIN indexes
+- generalized search trees (GiSTs).
+
+Indexes can be checked either via `pgAdmin` UI, or in `psql` via `\d` command.
+
+More details: <https://www.postgresql.org/docs/current/indexes-types.html>
+
+### B-trees
+Useful when `<   <=   =   >=   >` operations are used. Also `LIKE`, `BETWEEN`, `~`.
+
+This one is used by default in Postgres, when no index type is explicitly specified.
+
+#### Numeric column examples
+
+```sql
+create index bird_ind on instances("Bird") where "Bird" < 10;
+create index bird_ind2 on instances using btree("Bird");
+```
+
+Now we can invoke `EXPLAIN`. Let's first select all column values:
+
+```sql
+explain select "Bird" from instances where "Bird" < 10;
+QUERY PLAN
+------------------------------------------------------------------------------------
+  Index Only Scan using bird_ind on instances  (cost=0.29..270.27 rows=9999 width=3)
+
+```
+
+Find unique entries:
+
+```sql
+explain select distinct "Bird" from instances;
+                                         QUERY PLAN
+--------------------------------------------------------------------------------------------
+ Unique  (cost=0.29..295.29 rows=5 width=3)
+   ->  Index Only Scan using bird_ind2 on instances  (cost=0.29..270.29 rows=10000 width=3)
+(2 rows)
+```
+
+#### String column examples
+
+Now let's apply index to a string column. First a query plan without index:
+
+```sql
+lab10=# explain select distinct source from instances;
+QUERY PLAN
+----------------------------------------------------------------------
+HashAggregate  (cost=521.00..521.02 rows=2 width=10)
+  Group Key: source
+  ->  Seq Scan on instances  (cost=0.00..496.00 rows=10000 width=10)
+
+```
+
+Create index and check query plan:
+
+```sql
+lab10=# create index source_ind on instances using btree("source");
+CREATE INDEX
+lab10=# explain select distinct source from instances;
+                                          QUERY PLAN
+----------------------------------------------------------------------------------------------
+ Unique  (cost=0.29..219.28 rows=2 width=10)
+   ->  Index Only Scan using source_ind on instances  (cost=0.29..194.28 rows=10000 width=10)
+(2 rows)
+```
+
+#### Bitmap heap scans
+
+What if we create another index on numeric column?
+
+```sql
+lab10=# explain select * from instances where "Car" > 1 and "Car" < 3;
+                          QUERY PLAN
+---------------------------------------------------------------
+ Seq Scan on instances  (cost=0.00..546.00 rows=981 width=264)
+   Filter: (("Car" > '1'::numeric) AND ("Car" < '3'::numeric))
+(2 rows)
+```
+
+Create index:
+
+```sql
+lab10=# create index car_ind on instances("Car");
+CREATE INDEX
+lab10=# explain select * from instances where "Car" > 1 and "Car" < 3;
+                               QUERY PLAN
+-------------------------------------------------------------------------
+ Bitmap Heap Scan on instances  (cost=22.34..433.06 rows=981 width=264)
+   Recheck Cond: (("Car" > '1'::numeric) AND ("Car" < '3'::numeric))
+   ->  Bitmap Index Scan on car_ind  (cost=0.00..22.09 rows=981 width=0)
+         Index Cond: (("Car" > '1'::numeric) AND ("Car" < '3'::numeric))
+(4 rows)
+```
+
+Note the `Bitmap Heap Scan` type.
+
+Bitmaps are created ad-hoc for each query. Their contents depend on the query predicates.
+
+#### `EXPLAIN ANALYZE` example
+
+```sql
+lab10=# explain analyze select * from instances where "Car" > 1 and "Car" < 3;
+                                                     QUERY PLAN                                            
+---------------------------------------------------------------------------------------------------------------------
+ Bitmap Heap Scan on instances  (cost=22.34..433.06 rows=981 width=264) (actual time=0.144..0.449 rows=981 loops=1)
+   Recheck Cond: (("Car" > '1'::numeric) AND ("Car" < '3'::numeric))
+   Heap Blocks: exact=362
+   ->  Bitmap Index Scan on car_ind  (cost=0.00..22.09 rows=981 width=0) (actual time=0.123..0.123 rows=981 loops=1)
+         Index Cond: (("Car" > '1'::numeric) AND ("Car" < '3'::numeric))
+ Planning Time: 0.112 ms
+ Execution Time: 0.484 ms
+(7 rows)
+```
+
+`Buffers: shared hit=246` means 246 pages were read from cache, `read` means reading from disk.
+
+### Hash indexes
+
+- Hash index uses equality operator only
+- However, doesn't take much space
+- Uses a 32-bit hash code.
+
+```sql
+lab10=# explain select count(*) from instances where "Road" = 2;
+  QUERY PLAN
+-------------------------------------------------------------------
+Aggregate  (cost=521.92..521.93 rows=1 width=8)
+  ->  Seq Scan on instances  (cost=0.00..521.00 rows=368 width=0)
+      Filter: ("Road" = '2'::numeric)
+```
+
+```sql
+create index road_hash_ind on instances using hash("Road");
+
+lab10=# explain select count(*) from instances where "Road" = 2;
+                                     QUERY PLAN
+-------------------------------------------------------------------------------------
+ Aggregate  (cost=429.29..429.30 rows=1 width=8)
+   ->  Bitmap Heap Scan on instances  (cost=18.85..428.37 rows=368 width=0)
+         Recheck Cond: ("Road" = '2'::numeric)
+         ->  Bitmap Index Scan on road_hash_ind  (cost=0.00..18.76 rows=368 width=0)
+               Index Cond: ("Road" = '2'::numeric)
+(5 rows)
+
+```
+
+
+### GIN indexes
+Useful for composite types like text data, arrays or JSONB.
+
+An example of an GIN index for full-text search:
+
+```sql
+create index on gadm using gin(to_tsvector('english',"COUNTRY"));
+```
+
+And query:
+```sql
+select count(*) from gadm where to_tsvector('english', "COUNTRY") @@ to_tsquery('english', 'United');
+```
+
+See more: https://www.postgresql.org/docs/current/functions-textsearch.html.
+
+These indexes need `AUTOVACUUM` from time to time.
+
+### BRIN indexes
+
+BRIN stands for Block Range Index. BRIN is designed for handling very large tables in which certain columns have some natural correlation with their physical location within the table.
+
+Usage considerations:
+- Good for tables with some natural order
+- Which contain huge amount of rows
+
+Docs here: https://www.postgresql.org/docs/current/indexes-types.html
+
+## Parallelization settings
+
+
+Query parallelization is controlled by various settings, some of these are listed below:
+
+1. Parallel workers count/settings. Can be set by `max_parallel_workers_per_gather` like this:
+```sql
+SHOW max_parallel_workers_per_gather;
+SET max_parallel_workers_per_gather = 4;
+```
+
+Some extra parameters can be inspected via:
+```sql
+SHOW max_worker_processes;
+SHOW max_parallel_workers;
+```
+More info is [here](https://www.postgresql.org/docs/current/runtime-config-resource.html#RUNTIME-CONFIG-RESOURCE-ASYNC-BEHAVIOR).
+
+2. `parallel_setup_cost`: sets the planner's estimate of the cost of launching parallel worker processes. The default is 1000.
+
+3. `parallel_tuple_cost`: sets the planner's estimate of the cost of transferring one tuple from a parallel worker process to another process. The default is 0.1.
+
+## Exercises
+
+1. Improve execution of queries from `lab10` via indexing.
+   - Try different index types.
+   - Use `EXPLAIN` for decision making.
