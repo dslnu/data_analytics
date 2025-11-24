@@ -1,0 +1,1972 @@
+---
+title: "Kubernetes part 3"
+author: 
+  - name: MSDE
+    affiliation: Lviv University
+code-fold: false
+execute:
+  enabled: false
+  cache: true
+diagram:
+  cache: true
+  cache-dir: ./cache
+  engine:
+    tikz:
+      execpath: lualatex
+      additional-packages: |
+        \usetikzlibrary{arrows.meta}
+        \usetikzlibrary{positioning}
+        \usetikzlibrary{decorations.pathreplacing}
+filters:
+  - diagram
+title-slide-attributes:
+  data-background-image: img/k8s_logo.svg
+  data-background-size: contain
+  data-background-opacity: "0.3"
+format: 
+  revealjs:
+    css: ./custom.css
+    preview-links: auto
+    slide-number: true
+    theme: default
+    multiplex:
+      url: 'https://mplex.vitv.ly'
+      secret: '5d4ee4b5f89732ecd284ca89063930b8'
+      id: 'eb61bbf995b1c8abaf276cdae9bc92cd05e8c2fef7880c56f1f6d8869ea66286'
+---
+
+# Managing stacks with Helm
+
+## Managing stacks with Helm
+:::{.callout-tip icon=false}
+## Managing stacks with Helm
+
+- Helm is a (kind of!) package manager for Kubernetes
+
+- We can use it to:
+
+  - find existing packages (called "charts") created by other folks
+
+  - install these packages, configuring them for our particular setup
+
+  - package our own things (for distribution or for internal use)
+
+  - manage the lifecycle of these installs (rollback to previous version etc.)
+
+:::
+
+## Managing stacks with Helm
+:::{.callout-tip icon=false}
+## Helm features
+
+- With Helm, we create "charts"
+
+- These charts can be used internally or distributed publicly
+
+- Public charts can be indexed through the [Artifact Hub](https://artifacthub.io/)
+
+- This gives us a way to find and install other folks' charts
+
+- Helm also gives us ways to manage the lifecycle of what we install:
+
+  - keep track of what we have installed
+
+  - upgrade versions, change parameters, roll back, uninstall
+
+- Furthermore, even if it's not "the" standard, it's definitely "a" standard!
+
+:::
+
+## Managing stacks with Helm
+:::{.callout-tip icon=false}
+## Helm concepts
+
+- `helm` is a CLI tool
+
+- It is used to find, install, upgrade *charts*
+
+- A chart is an archive containing templatized YAML bundles
+
+- Charts are versioned
+
+- Charts can be stored on private or public repositories
+
+:::
+
+## Managing stacks with Helm
+:::{.callout-tip icon=false}
+## Differences between charts and packages
+
+- A package (deb, rpm...) contains binaries, libraries, etc.
+
+- A chart contains YAML manifests
+
+  (the binaries, libraries, etc. are in the images referenced by the chart)
+
+- On most distributions, a package can only be installed once
+
+  (installing another version replaces the installed one)
+
+- A chart can be installed multiple times
+
+- Each installation is called a *release*
+
+- This allows to install e.g. 10 instances of MongoDB
+
+  (with potentially different versions and configurations)
+
+:::
+
+## Managing stacks with Helm
+:::{.callout-tip icon=false}
+## Wait a minute ...
+
+*But, on my Debian system, I have Python 2 **and** Python 3.
+<br/>
+Also, I have multiple versions of the Postgres database engine!*
+
+Yes!
+
+But they have different package names:
+
+- `python2.7`, `python3.8`
+
+- `postgresql-10`, `postgresql-11`
+
+Good to know: the Postgres package in Debian includes
+provisions to deploy multiple Postgres servers on the
+same system, but it's an exception (and it's a lot of
+work done by the package maintainer, not by the `dpkg`
+or `apt` tools).
+
+:::
+
+## Managing stacks with Helm
+:::{.callout-tip icon=false}
+## Installing Helm
+
+- If the `helm` CLI is not installed in your environment, install it
+
+- Check if `helm` is installed:
+  ```bash
+  helm
+  ```
+
+- If it's not installed, run the following command:
+  ```bash
+  curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get-helm-3 \
+  | bash
+  ```
+
+:::
+
+## Managing stacks with Helm
+:::{.callout-tip icon=false}
+## Charts and repositories
+
+- A *repository* (or repo in short) is a collection of charts
+
+- It's just a bunch of files
+
+  (they can be hosted by a static HTTP server, or on a local directory)
+
+- We can add "repos" to Helm, giving them a nickname
+
+- The nickname is used when referring to charts on that repo
+
+  (for instance, if we try to install `hello/world`, that
+  means the chart `world` on the repo `hello`; and that repo
+  `hello` might be something like https://blahblah.hello.io/charts/)
+
+:::
+
+## Managing stacks with Helm
+:::{.callout-tip icon=false}
+## How to find charts
+
+- Go to the [Artifact Hub](https://artifacthub.io/packages/search?kind=0) (https://artifacthub.io)
+
+- Or use `helm search hub ...` from the CLI
+
+- Let's try to find a Helm chart for something called "OWASP Juice Shop"!
+
+  (it is a famous demo app used in security challenges)
+
+:::
+
+## Managing stacks with Helm
+:::{.callout-tip icon=false}
+## Finding charts from the CLI
+
+- We can use `helm search hub <keyword>`
+
+- Look for the OWASP Juice Shop app:
+  ```bash
+  helm search hub owasp juice
+  ```
+
+- Since the URLs are truncated, try with the YAML output:
+  ```bash
+  helm search hub owasp juice -o yaml
+  ```
+
+Then go to → https://artifacthub.io/packages/helm/securecodebox/juice-shop
+
+:::
+
+## Managing stacks with Helm
+:::{.callout-tip icon=false}
+## Finding charts on the web
+
+- We can also use the Artifact Hub search feature
+
+- Go to https://artifacthub.io/
+
+- In the search box on top, enter "owasp juice"
+
+- Click on the "juice-shop" result (not "multi-juicer" or "juicy-ctf")
+
+:::
+
+## Managing stacks with Helm
+:::{.callout-tip icon=false}
+## Installing the chart
+
+- Click on the "Install" button, it will show instructions
+
+- First, add the repository for that chart:
+  ```bash
+  helm repo add juice https://charts.securecodebox.io
+  ```
+
+- Then, install the chart:
+  ```bash
+  helm install my-juice-shop juice/juice-shop
+  ```
+
+Note: it is also possible to install directly a chart, with `--repo https://...`
+
+:::
+
+## Managing stacks with Helm
+:::{.callout-tip icon=false}
+## Charts and releases
+
+- "Installing a chart" means creating a *release*
+
+- In the previous example, the release was named "my-juice-shop"
+
+- We can also use `--generate-name` to ask Helm to generate a name for us
+
+- List the releases:
+  ```bash
+  helm list
+  ```
+
+- Check that we have a `my-juice-shop-...` Pod up and running:
+  ```bash
+  kubectl get pods
+  ```
+
+:::
+
+## Managing stacks with Helm
+:::{.callout-tip icon=false}
+## Viewing resources of a release
+
+- This specific chart labels all its resources with a `release` label
+
+- We can use a selector to see these resources
+
+
+
+- List all the resources created by this release:
+  ```bash
+  kubectl get all --selector=app.kubernetes.io/instance=my-juice-shop
+  ```
+
+
+
+Note: this label wasn't added automatically by Helm.
+<br/>
+It is defined in that chart. In other words, not all charts will provide this label.
+
+:::
+
+## Managing stacks with Helm
+:::{.callout-tip icon=false}
+## Configuring a release
+
+- By default, `juice/juice-shop` creates a service of type `ClusterIP`
+
+- We would like to change that to a `NodePort`
+
+- We could use `kubectl edit service my-juice-shop`, but ...
+
+  ... our changes would get overwritten next time we update that chart!
+
+- Instead, we are going to *set a value*
+
+- Values are parameters that the chart can use to change its behavior
+
+- Values have default values
+
+- Each chart is free to define its own values and their defaults
+
+:::
+
+## Managing stacks with Helm
+:::{.callout-tip icon=false}
+## Checking possible values
+
+- We can inspect a chart with `helm show` or `helm inspect`
+
+
+
+- Look at the README for the app:
+  ```bash
+  helm show readme juice/juice-shop
+  ```
+
+- Look at the values and their defaults:
+  ```bash
+  helm show values juice/juice-shop
+  ```
+
+
+
+The `values` may or may not have useful comments.
+
+The `readme` may or may not have (accurate) explanations for the values.
+
+(If we're unlucky, there won't be any indication about how to use the values!)
+
+:::
+
+## Managing stacks with Helm
+:::{.callout-tip icon=false}
+## Setting values
+
+- Values can be set when installing a chart, or when upgrading it
+
+- We are going to update `my-juice-shop` to change the type of the service
+
+
+
+- Update `my-juice-shop`:
+  ```bash
+  helm upgrade my-juice-shop juice/juice-shop \
+       --set service.type=NodePort
+  ```
+
+
+
+Note that we have to specify the chart that we use (`juice/my-juice-shop`),
+even if we just want to update some values.
+
+We can set multiple values. If we want to set many values, we can use `-f`/`--values` and pass a YAML file with all the values.
+
+All unspecified values will take the default values defined in the chart.
+
+:::
+
+## Managing stacks with Helm
+:::{.callout-tip icon=false}
+## Connecting to the Juice Shop
+
+- Let's check the app that we just installed
+
+
+
+- Check the node port allocated to the service:
+  ```bash
+  kubectl get service my-juice-shop
+  PORT=$(kubectl get service my-juice-shop -o jsonpath={..nodePort})
+  ```
+
+- Connect to it:
+  ```bash
+  curl localhost:$PORT/
+  ```
+
+
+
+:::
+
+
+# Helm chart format
+
+## Helm chart format
+:::{.callout-tip icon=false}
+## Helm chart format
+
+- What exactly is a chart?
+
+- What's in it?
+
+- What would be involved in creating a chart?
+
+  (we won't create a chart, but we'll see the required steps)
+
+:::
+
+## Helm chart format
+:::{.callout-tip icon=false}
+## What is a chart
+
+- A chart is a set of files
+
+- Some of these files are mandatory for the chart to be viable
+
+  (more on that later)
+
+- These files are typically packed in a **tarball**
+
+- These tarballs are stored in "repos"
+
+  (which can be static HTTP servers)
+
+- We can install from a repo, from a local tarball, or an unpacked tarball
+
+  (the latter option is preferred when developing a chart)
+
+:::
+
+## Helm chart format
+:::{.callout-tip icon=false}
+## What's in a chart
+
+- A chart must have at least:
+
+  - a `templates` directory, with YAML manifests for Kubernetes resources
+
+  - a `values.yaml` file, containing (tunable) parameters for the chart
+
+  - a `Chart.yaml` file, containing metadata (name, version, description ...)
+
+- Let's look at a simple chart for a basic demo app
+
+:::
+
+## Helm chart format
+:::{.callout-tip icon=false}
+## Adding the repo
+
+- If you haven't done it before, you need to add the repo for that chart
+
+
+
+- Add the repo that holds the chart for the OWASP Juice Shop:
+  ```bash
+  helm repo add juice https://charts.securecodebox.io
+  ```
+
+
+
+:::
+
+## Helm chart format
+:::{.callout-tip icon=false}
+## Downloading a chart
+
+- We can use `helm pull` to download a chart from a repo
+
+
+
+- Download the tarball for `juice/juice-shop`:
+  ```bash
+  helm pull juice/juice-shop
+  ```
+  (This will create a file named `juice-shop-X.Y.Z.tgz`.)
+
+- Or, download + untar `juice/juice-shop`:
+  ```bash
+  helm pull juice/juice-shop --untar
+  ```
+  (This will create a directory named `juice-shop`.)
+
+
+
+:::
+
+## Helm chart format
+:::{.callout-tip icon=false}
+## Looking at the chart's content
+
+- Let's look at the files and directories in the `juice-shop` chart
+
+
+
+- Display the tree structure of the chart we just downloaded:
+  ```bash
+  tree juice-shop
+  ```
+
+
+
+We see the components mentioned above: `Chart.yaml`, `templates/`, `values.yaml`.
+
+:::
+
+## Helm chart format
+:::{.callout-tip icon=false}
+## Templates
+
+- The `templates/` directory contains YAML manifests for Kubernetes resources
+
+  (Deployments, Services, etc.)
+
+- These manifests can contain template tags
+
+  (using the standard Go template library)
+
+
+
+- Look at the template file for the Service resource:
+  ```bash
+  cat juice-shop/templates/service.yaml
+  ```
+
+
+
+:::
+
+## Helm chart format
+:::{.callout-tip icon=false}
+## Analyzing the template file
+
+- Tags are identified by `{{ ... }}`
+
+- `{{ template "x.y" }}` expands a [named template](https://helm.sh/docs/chart_template_guide/named_templates/#declaring-and-using-templates-with-define-and-template)
+
+  (previously defined with `{{ define "x.y" }}...stuff...{{ end }}`)
+
+- The `.` in `{{ template "x.y" . }}` is the *context* for that named template
+
+  (so that the named template block can access variables from the local context)
+
+- `{{ .Release.xyz }}` refers to [built-in variables](https://helm.sh/docs/chart_template_guide/builtin_objects/) initialized by Helm
+
+  (indicating the chart name, version, whether we are installing or upgrading ...)
+
+- `{{ .Values.xyz }}` refers to tunable/settable [values](https://helm.sh/docs/chart_template_guide/values_files/)
+
+  (more on that in a minute)
+
+:::
+
+## Helm chart format
+:::{.callout-tip icon=false}
+## Values
+
+- Each chart comes with a
+  [values file](https://helm.sh/docs/chart_template_guide/values_files/)
+
+- It's a YAML file containing a set of default parameters for the chart
+
+- The values can be accessed in templates with e.g. `{{ .Values.x.y }}`
+
+  (corresponding to field `y` in map `x` in the values file)
+
+- The values can be set or overridden when installing or ugprading a chart:
+
+  - with `--set x.y=z` (can be used multiple times to set multiple values)
+
+  - with `--values some-yaml-file.yaml` (set a bunch of values from a file)
+
+- Charts following best practices will have values following specific patterns
+
+  (e.g. having a `service` map allowing to set `service.type` etc.)
+
+:::
+
+## Helm chart format
+:::{.callout-tip icon=false}
+## Other useful tags
+
+- `{{ if x }} y {{ end }}` allows to include `y` if `x` evaluates to `true`
+
+  (can be used for e.g. healthchecks, annotations, or even an entire resource)
+
+- `{{ range x }} y {{ end }}` iterates over `x`, evaluating `y` each time
+
+  (the elements of `x` are assigned to `.` in the range scope)
+
+- `{{- x }}`/`{{ x -}}` will remove whitespace on the left/right
+
+- The whole [Sprig](http://masterminds.github.io/sprig/) library, with additions:
+
+  `lower` `upper` `quote` `trim` `default` `b64enc` `b64dec` `sha256sum` `indent` `toYaml` ...
+
+:::
+
+## Helm chart format
+:::{.callout-tip icon=false}
+## Pipelines
+
+- `{{ quote blah }}` can also be expressed as `{{ blah | quote }}`
+
+- With multiple arguments, `{{ x y z }}` can be expressed as `{{ z | x y }}`)
+
+- Example: `{{ .Values.annotations | toYaml | indent 4 }}`
+
+  - transforms the map under `annotations` into a YAML string
+
+  - indents it with 4 spaces (to match the surrounding context)
+
+- Pipelines are not specific to Helm, but a feature of Go templates
+
+  (check the [Go text/template documentation](https://golang.org/pkg/text/template/) for more details and examples)
+
+:::
+
+## Helm chart format
+:::{.callout-tip icon=false}
+## README and NOTES.txt
+
+- At the top-level of the chart, it's a good idea to have a README
+
+- It will be viewable with e.g. `helm show readme juice/juice-shop`
+
+- In the `templates/` directory, we can also have a `NOTES.txt` file
+
+- When the template is installed (or upgraded), `NOTES.txt` is processed too
+
+  (i.e. its `{{ ... }}` tags are evaluated)
+
+- It gets displayed after the install or upgrade
+
+- It's a great place to generate messages to tell the user:
+
+  - how to connect to the release they just deployed
+
+  - any passwords or other thing that we generated for them
+
+:::
+
+## Helm chart format
+:::{.callout-tip icon=false}
+## Additional files
+
+- We can place arbitrary files in the chart (outside of the `templates/` directory)
+
+- They can be accessed in templates with `.Files`
+
+- They can be transformed into ConfigMaps or Secrets with `AsConfig` and `AsSecrets`
+
+  (see [this example](https://helm.sh/docs/chart_template_guide/accessing_files/#configmap-and-secrets-utility-functions) in the Helm docs)
+
+:::
+
+## Helm chart format
+:::{.callout-tip icon=false}
+## Hooks and tests
+
+- We can define *hooks* in our templates
+
+- Hooks are resources annotated with `"helm.sh/hook": NAME-OF-HOOK`
+
+- Hook names include `pre-install`, `post-install`, `test`, [and much more](https://helm.sh/docs/topics/charts_hooks/#the-available-hooks)
+
+- The resources defined in hooks are loaded at a specific time
+
+- Hook execution is *synchronous*
+
+  (if the resource is a Job or Pod, Helm will wait for its completion)
+
+- This can be use for database migrations, backups, notifications, smoke tests ...
+
+- Hooks named `test` are executed only when running `helm test RELEASE-NAME`
+
+:::
+
+# Creating a basic chart
+
+## Creating a basic chart
+:::{.callout-tip icon=false}
+## Creating a basic chart
+
+- We are going to show a way to create a *very simplified* chart
+
+- In a real chart, *lots of things* would be templatized
+
+  (Resource names, service types, number of replicas...)
+
+
+
+- Create a sample chart:
+  ```bash
+  helm create dockercoins
+  ```
+
+- Move away the sample templates and create an empty template directory:
+  ```bash
+  mv dockercoins/templates dockercoins/default-templates
+  mkdir dockercoins/templates
+  ```
+
+
+
+:::
+
+## Creating a basic chart
+:::{.callout-tip icon=false}
+## Adding the manifests of our app
+
+- There is a convenient `dockercoins.yml` in the repo
+
+
+
+- Copy the YAML file to the `templates` subdirectory in the chart:
+  ```bash
+  cp ~/container.training/k8s/dockercoins.yaml dockercoins/templates
+  ```
+
+
+
+- Note: it is probably easier to have multiple YAML files
+
+  (rather than a single, big file with all the manifests)
+
+- But that works too!
+
+:::
+
+## Creating a basic chart
+:::{.callout-tip icon=false}
+## Testing our Helm chart
+
+- Our Helm chart is now ready
+
+  (as surprising as it might seem!)
+
+
+
+- Let's try to install the chart:
+  ```
+  helm install helmcoins dockercoins
+  ```
+  (`helmcoins` is the name of the release; `dockercoins` is the local path of the chart)
+
+
+
+--
+
+- If the application is already deployed, this will fail:
+```
+Error: rendered manifests contain a resource that already exists.
+Unable to continue with install: existing resource conflict:
+kind: Service, namespace: default, name: hasher
+```
+
+:::
+
+## Creating a basic chart
+:::{.callout-tip icon=false}
+## Switching to another namespace
+
+- If there is already a copy of dockercoins in the current namespace:
+
+  - we can switch with `kubens` or `kubectl config set-context`
+
+  - we can also tell Helm to use a different namespace
+
+
+
+- Create a new namespace:
+  ```bash
+  kubectl create namespace helmcoins
+  ```
+
+- Deploy our chart in that namespace:
+  ```bash
+  helm install helmcoins dockercoins --namespace=helmcoins
+  ```
+
+
+
+:::
+
+## Creating a basic chart
+:::{.callout-tip icon=false}
+## Helm releases are namespaced
+
+- Let's try to see the release that we just deployed
+
+
+
+- List Helm releases:
+  ```bash
+  helm list
+  ```
+
+
+
+Our release doesn't show up!
+
+We have to specify its namespace (or switch to that namespace).
+
+:::
+
+## Creating a basic chart
+:::{.callout-tip icon=false}
+## Specifying the namespace
+
+- Try again, with the correct namespace
+
+
+
+- List Helm releases in `helmcoins`:
+  ```bash
+  helm list --namespace=helmcoins
+  ```
+
+
+
+:::
+
+## Creating a basic chart
+:::{.callout-tip icon=false}
+## Checking our new copy of DockerCoins
+
+- We can check the worker logs, or the web UI
+
+
+
+- Retrieve the NodePort number of the web UI:
+  ```bash
+  kubectl get service webui --namespace=helmcoins
+  ```
+
+- Open it in a web browser
+
+- Look at the worker logs:
+  ```bash
+  kubectl logs deploy/worker --tail=10 --follow --namespace=helmcoins
+  ```
+
+
+
+Note: it might take a minute or two for the worker to start.
+
+:::
+
+## Creating a basic chart {.scrollable}
+:::{.callout-tip icon=false}
+## Discussion, shortcomings
+
+- Helm (and Kubernetes) best practices recommend to add a number of annotations
+
+  (e.g. `app.kubernetes.io/name`, `helm.sh/chart`, `app.kubernetes.io/instance` ...)
+
+- Our basic chart doesn't have any of these
+
+- Our basic chart doesn't use any template tag
+
+- Does it make sense to use Helm in that case?
+
+- *Yes,* because Helm will:
+
+  - track the resources created by the chart
+
+  - save successive revisions, allowing us to rollback
+
+[Helm docs][helm-labels] and [Kubernetes docs][k8s-labels
+have details about recommended annotations and labels.
+
+[helm-labels]: https://helm.sh/docs/chart_best_practices/labels/
+[k8s-labels]: https://kubernetes.io/docs/concepts/overview/working-with-objects/common-labels/
+
+:::
+
+## Creating a basic chart
+:::{.callout-tip icon=false}
+## Cleaning up
+
+- Let's remove that chart before moving on
+
+
+
+- Delete the release (don't forget to specify the namespace):
+  ```bash
+  helm delete helmcoins --namespace=helmcoins
+  ```
+
+
+
+:::
+
+## Creating a basic chart
+:::{.callout-tip icon=false}
+## Tips when writing charts
+
+- It is not necessary to `helm install`/`upgrade` to test a chart
+
+- If we just want to look at the generated YAML, use `helm template`:
+  ```bash
+  helm template ./my-chart
+  helm template release-name ./my-chart
+  ```
+
+- Of course, we can use `--set` and `--values` too
+
+- Note that this won't fully validate the YAML!
+
+  (e.g. if there is `apiVersion: klingon` it won't complain)
+
+- This can be used when trying things out
+
+:::
+
+## Creating a basic chart
+:::{.callout-tip icon=false}
+## Exploring the templating system
+
+Try to put something like this in a file in the `templates` directory:
+
+```yaml
+hello: {{ .Values.service.port }}
+comment: {{/* something completely.invalid !!!  */}}
+type: {{ .Values.service | typeOf | printf }}
+### print complex value
+{{ .Values.service | toYaml }}
+### indent it
+indented:
+{{ .Values.service | toYaml | indent 2 }}
+```
+
+Then run `helm template`.
+
+The result is not a valid YAML manifest, but this is a great debugging tool!
+
+:::
+
+# Creating better Helm charts
+
+## Creating better Helm charts
+:::{.callout-tip icon=false}
+## Creating better Helm charts
+
+- We are going to create a chart with the helper `helm create`
+
+- This will give us a chart implementing lots of Helm best practices
+
+  (labels, annotations, structure of the `values.yaml` file ...)
+
+- We will use that chart as a generic Helm chart
+
+- We will use it to deploy DockerCoins
+
+- Each component of DockerCoins will have its own *release*
+
+- In other words, we will "install" that Helm chart multiple times
+
+  (one time per component of DockerCoins)
+
+:::
+
+## Creating better Helm charts
+:::{.callout-tip icon=false}
+## Creating a generic chart
+
+- Rather than starting from scratch, we will use `helm create`
+
+- This will give us a basic chart that we will customize
+
+
+
+- Create a basic chart:
+  ```bash
+  cd ~
+  helm create helmcoins
+  ```
+
+
+
+This creates a basic chart in the directory `helmcoins`.
+
+:::
+
+## Creating better Helm charts
+:::{.callout-tip icon=false}
+## What's in the basic chart?
+
+- The basic chart will create a Deployment and a Service
+
+- Optionally, it will also include an Ingress
+
+- If we don't pass any values, it will deploy the `nginx` image
+
+- We can override many things in that chart
+
+- Let's try to deploy DockerCoins components with that chart!
+
+:::
+
+## Creating better Helm charts
+:::{.callout-tip icon=false}
+## Writing `values.yaml` for our components
+
+- We need to write one `values.yaml` file for each component
+
+  (hasher, redis, rng, webui, worker)
+
+- We will start with the `values.yaml` of the chart, and remove what we don't need
+
+- We will create 5 files:
+
+  hasher.yaml, redis.yaml, rng.yaml, webui.yaml, worker.yaml
+
+- In each file, we want to have:
+  ```yaml
+    image:
+      repository: IMAGE-REPOSITORY-NAME
+      tag: IMAGE-TAG
+  ```
+
+:::
+
+## Creating better Helm charts
+:::{.callout-tip icon=false}
+## Getting started
+
+- For component X, we want to use the image dockercoins/X:v0.1
+
+  (for instance, for rng, we want to use the image dockercoins/rng:v0.1)
+
+- Exception: for redis, we want to use the official image redis:latest
+
+
+
+- Write YAML files for the 5 components, with the following model:
+  ```yaml
+    image:
+      repository: `IMAGE-REPOSITORY-NAME` (e.g. dockercoins/worker)
+      tag: `IMAGE-TAG` (e.g. v0.1)
+  ```
+
+
+
+:::
+
+## Creating better Helm charts
+:::{.callout-tip icon=false}
+## Deploying DockerCoins components
+
+- For convenience, let's work in a separate namespace
+
+
+
+- Create a new namespace (if it doesn't already exist):
+  ```bash
+  kubectl create namespace helmcoins
+  ```
+
+- Switch to that namespace:
+  ```bash
+  kns helmcoins
+  ```
+
+
+
+:::
+
+## Creating better Helm charts
+:::{.callout-tip icon=false}
+## Deploying the chart
+
+- To install a chart, we can use the following command:
+  ```bash
+  helm install COMPONENT-NAME CHART-DIRECTORY
+  ```
+
+- We can also use the following command, which is *idempotent*:
+  ```bash
+  helm upgrade COMPONENT-NAME CHART-DIRECTORY --install
+  ```
+
+
+
+- Install the 5 components of DockerCoins:
+  ```bash
+    for COMPONENT in hasher redis rng webui worker; do
+      helm upgrade $COMPONENT helmcoins --install --values=$COMPONENT.yaml
+    done
+  ```
+
+
+
+:::
+
+## Creating better Helm charts
+:::{.callout-tip icon=false}
+## "Idempotent"
+
+- Idempotent = that can be applied multiple times without changing the result
+
+  (the word is commonly used in maths and computer science)
+
+- In this context, this means:
+
+  - if the action (installing the chart) wasn't done, do it
+
+  - if the action was already done, don't do anything
+
+- Ideally, when such an action fails, it can be retried safely
+
+  (as opposed to, e.g., installing a new release each time we run it)
+
+- Other example: `kubectl apply -f some-file.yaml`
+
+:::
+
+## Creating better Helm charts
+:::{.callout-tip icon=false}
+## Checking what we've done
+
+- Let's see if DockerCoins is working!
+
+
+
+- Check the logs of the worker:
+  ```bash
+  stern worker
+  ```
+
+- Look at the resources that were created:
+  ```bash
+  kubectl get all
+  ```
+
+
+
+There are *many* issues to fix!
+
+:::
+
+## Creating better Helm charts
+:::{.callout-tip icon=false}
+## Can't pull image
+
+- It looks like our images can't be found
+
+
+
+- Use `kubectl describe` on any of the pods in error
+
+
+
+- We're trying to pull `rng:1.16.0` instead of `rng:v0.1`!
+
+- Where does that `1.16.0` tag come from?
+
+:::
+
+## Creating better Helm charts
+:::{.callout-tip icon=false}
+## Inspecting our template
+
+- Let's look at the `templates/` directory
+
+  (and try to find the one generating the Deployment resource)
+
+
+
+- Show the structure of the `helmcoins` chart that Helm generated:
+  ```bash
+  tree helmcoins
+  ```
+
+- Check the file `helmcoins/templates/deployment.yaml`
+
+- Look for the `image:` parameter
+
+
+
+*The image tag references `{{ .Chart.AppVersion }}`. Where does that come from?*
+
+:::
+
+## Creating better Helm charts
+:::{.callout-tip icon=false}
+## The `.Chart` variable
+
+- `.Chart` is a map corresponding to the values in `Chart.yaml`
+
+- Let's look for `AppVersion` there!
+
+
+
+- Check the file `helmcoins/Chart.yaml`
+
+- Look for the `appVersion:` parameter
+
+
+
+(Yes, the case is different between the template and the Chart file.)
+
+:::
+
+## Creating better Helm charts
+:::{.callout-tip icon=false}
+## Using the correct tags
+
+- If we change `AppVersion` to `v0.1`, it will change for *all* deployments
+
+  (including redis)
+
+- Instead, let's change the *template* to use `{{ .Values.image.tag }}`
+
+  (to match what we've specified in our values YAML files)
+
+
+
+- Edit `helmcoins/templates/deployment.yaml`
+
+- Replace `{{ .Chart.AppVersion }}` with `{{ .Values.image.tag }}`
+
+
+
+:::
+
+## Creating better Helm charts
+:::{.callout-tip icon=false}
+## Upgrading to use the new template
+
+- Technically, we just made a new version of the *chart*
+
+- To use the new template, we need to *upgrade* the release to use that chart
+
+
+
+- Upgrade all components:
+  ```bash
+    for COMPONENT in hasher redis rng webui worker; do
+      helm upgrade $COMPONENT helmcoins
+    done
+  ```
+
+- Check how our pods are doing:
+  ```bash
+  kubectl get pods
+  ```
+
+
+
+We should see all pods "Running". But ... not all of them are READY.
+
+:::
+
+## Creating better Helm charts
+:::{.callout-tip icon=false}
+## Troubleshooting readiness
+
+- `hasher`, `rng`, `webui` should show up as `1/1 READY`
+
+- But `redis` and `worker` should show up as `0/1 READY`
+
+- Why?
+
+:::
+
+## Creating better Helm charts
+:::{.callout-tip icon=false}
+## Troubleshooting pods
+
+- The easiest way to troubleshoot pods is to look at *events*
+
+- We can look at all the events on the cluster (with `kubectl get events`)
+
+- Or we can use `kubectl describe` on the objects that have problems
+
+  (`kubectl describe` will retrieve the events related to the object)
+
+
+
+- Check the events for the redis pods:
+  ```bash
+  kubectl describe pod -l app.kubernetes.io/name=redis
+  ```
+
+
+
+It's failing both its liveness and readiness probes!
+
+:::
+
+## Creating better Helm charts
+:::{.callout-tip icon=false}
+## Healthchecks
+
+- The default chart defines healthchecks doing HTTP requests on port 80
+
+- That won't work for redis and worker
+
+  (redis is not HTTP, and not on port 80; worker doesn't even listen)
+
+- We could remove or comment out the healthchecks
+
+- We could also make them conditional
+
+- This sounds more interesting, let's do that!
+
+:::
+
+## Creating better Helm charts
+:::{.callout-tip icon=false}
+## Conditionals
+
+- We need to enclose the healthcheck block with:
+
+  `{{ if false }}` at the beginning (we can change the condition later)
+
+  `{{ end }}` at the end
+
+
+
+- Edit `helmcoins/templates/deployment.yaml`
+
+- Add `{{ if false }}` on the line before `livenessProbe`
+
+- Add `{{ end }}` after the `readinessProbe` section
+
+  (see next slide for details)
+
+
+
+:::
+
+## Creating better Helm charts
+:::{.callout-tip icon=false}
+## New YAML
+This is what the new YAML should look like (added lines commented):
+
+```yaml
+        ports:
+          - name: http
+            containerPort: 80
+            protocol: TCP
+        `{{ if false }}` # added
+        livenessProbe:
+          httpGet:
+            path: /
+            port: http
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+        `{{ end }}` # added
+        resources:
+          {{- toYaml .Values.resources | nindent 12 }}
+```
+
+:::
+
+## Creating better Helm charts
+:::{.callout-tip icon=false}
+## Testing the new chart
+
+- We need to upgrade all the services again to use the new chart
+
+
+
+- Upgrade all components:
+  ```bash
+    for COMPONENT in hasher redis rng webui worker; do
+      helm upgrade $COMPONENT helmcoins
+    done
+  ```
+
+- Check how our pods are doing:
+  ```bash
+  kubectl get pods
+  ```
+
+
+
+Everything should now be running!
+
+:::
+
+## Creating better Helm charts
+:::{.callout-tip icon=false}
+## What's next?
+
+- Is this working now?
+
+
+
+- Let's check the logs of the worker:
+  ```bash
+  stern worker
+  ```
+
+
+
+This error might look familiar ... The worker can't resolve `redis`.
+
+Typically, that error means that the `redis` service doesn't exist.
+
+:::
+
+## Creating better Helm charts
+:::{.callout-tip icon=false}
+## Checking services
+
+- What about the services created by our chart?
+
+
+
+- Check the list of services:
+  ```bash
+  kubectl get services
+  ```
+
+
+
+They are named `COMPONENT-helmcoins` instead of just `COMPONENT`.
+
+We need to change that!
+
+:::
+
+## Creating better Helm charts
+:::{.callout-tip icon=false}
+## Where do the service names come from?
+
+- Look at the YAML template used for the services
+
+- It should be using `{{ include "helmcoins.fullname" }}`
+
+- `include` indicates a *template block* defined somewhere else
+
+
+
+- Find where that `fullname` thing is defined:
+  ```bash
+  grep define.*fullname helmcoins/templates/*
+  ```
+
+
+
+It should be in `_helpers.tpl`.
+
+We can look at the definition, but it's fairly complex ...
+
+:::
+
+## Creating better Helm charts
+:::{.callout-tip icon=false}
+## Changing service names
+
+- Instead of that `{{ include }}` tag, let's use the name of the release
+
+- The name of the release is available as `{{ .Release.Name }}`
+
+
+
+- Edit `helmcoins/templates/service.yaml`
+
+- Replace the service name with `{{ .Release.Name }}`
+
+- Upgrade all the releases to use the new chart
+
+- Confirm that the services now have the right names
+
+
+
+:::
+
+## Creating better Helm charts
+:::{.callout-tip icon=false}
+## Is it working now?
+
+- If we look at the worker logs, it appears that the worker is still stuck
+
+- What could be happening?
+
+- The redis service is not on port 80!
+
+- Let's see how the port number is set
+
+- We need to look at both the *deployment* template and the *service* template
+
+:::
+
+## Creating better Helm charts
+:::{.callout-tip icon=false}
+## Service template
+
+- In the service template, we have the following section:
+  ```yaml
+    ports:
+    - port: {{ .Values.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  ```
+
+- `port` is the port on which the service is "listening"
+
+  (i.e. to which our code needs to connect)
+
+- `targetPort` is the port on which the pods are listening
+
+- The `name` is not important (it's OK if it's `http` even for non-HTTP traffic)
+
+:::
+
+## Creating better Helm charts
+:::{.callout-tip icon=false}
+## Setting the redis port
+
+- Let's add a `service.port` value to the redis release
+
+
+
+- Edit `redis.yaml` to add:
+  ```yaml
+    service:
+      port: 6379
+  ```
+
+- Apply the new values file:
+  ```bash
+  helm upgrade redis helmcoins --values=redis.yaml
+  ```
+
+
+
+:::
+
+## Creating better Helm charts
+:::{.callout-tip icon=false}
+## Deployment template
+
+- If we look at the deployment template, we see this section:
+  ```yaml
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+  ```
+
+- The container port is hard-coded to 80
+
+- We'll change it to use the port number specified in the values
+
+:::
+
+## Creating better Helm charts
+:::{.callout-tip icon=false}
+## Changing the deployment template
+
+  
+
+- Edit `helmcoins/templates/deployment.yaml`
+
+- The line with `containerPort` should be:
+  ```yaml
+  containerPort: {{ .Values.service.port }}
+  ```
+
+
+
+:::
+
+## Creating better Helm charts
+:::{.callout-tip icon=false}
+## Apply changes
+
+- Re-run the for loop to execute `helm upgrade` one more time
+
+- Check the worker logs
+
+- This time, it should be working!
+
+:::
+
+## Creating better Helm charts
+:::{.callout-tip icon=false}
+## Extra steps
+
+- We don't need to create a service for the worker
+
+- We can put the whole service block in a conditional
+
+  (this will require additional changes in other files referencing the service)
+
+- We can set the webui to be a NodePort service
+
+- We can change the number of workers with `replicaCount`
+
+- And much more!
+
+:::
+
+# Charts using other charts
+
+## Charts using other charts
+:::{.callout-tip icon=false}
+## Charts using other charts
+
+- Helm charts can have *dependencies* on other charts
+
+- These dependencies will help us to share or reuse components
+
+  (so that we write and maintain less manifests, less templates, less code!)
+
+- As an example, we will use a community chart for Redis
+
+- This will help people who write charts, and people who use them
+
+- ... And potentially remove a lot of code! ✌️
+
+:::
+
+## Charts using other charts
+:::{.callout-tip icon=false}
+## Redis in DockerCoins
+
+- In the DockerCoins demo app, we have 5 components:
+
+  - 2 internal webservices
+  - 1 worker
+  - 1 public web UI
+  - 1 Redis data store
+
+- Every component is running some custom code, except Redis
+
+- Every component is using a custom image, except Redis
+
+  (which is using the official `redis` image)
+
+- Could we use a standard chart for Redis?
+
+- Yes! Dependencies to the rescue!
+
+:::
+
+## Charts using other charts
+:::{.callout-tip icon=false}
+## Adding our dependency
+
+- First, we will add the dependency to the `Chart.yaml` file
+
+- Then, we will ask Helm to download that dependency
+
+- We will also *lock* the dependency
+
+  (lock it to a specific version, to ensure reproducibility)
+
+:::
+
+## Charts using other charts
+:::{.callout-tip icon=false}
+## Declaring the dependency
+
+- First, let's edit `Chart.yaml`
+
+
+
+- In `Chart.yaml`, fill the `dependencies` section:
+  ```yaml
+    dependencies:
+      - name: redis
+        version: 11.0.5
+        repository: https://charts.bitnami.com/bitnami
+        condition: redis.enabled
+  ```
+
+
+
+Where do that `repository` and `version` come from?
+
+We're assuming here that we did our research,
+or that our resident Helm expert advised us to
+use Bitnami's Redis chart.
+
+:::
+
+## Charts using other charts
+:::{.callout-tip icon=false}
+## Conditions
+
+- The `condition` field gives us a way to enable/disable the dependency:
+  ```yaml
+  conditions: redis.enabled
+  ```
+
+- Here, we can disable Redis with the Helm flag `--set redis.enabled=false`
+
+  (or set that value in a `values.yaml` file)
+
+- Of course, this is mostly useful for *optional* dependencies
+
+  (otherwise, the app ends up being broken since it'll miss a component)
+
+:::
+
+## Charts using other charts
+:::{.callout-tip icon=false}
+## Lock & Load!
+
+- After adding the dependency, we ask Helm to pin an download it
+
+
+
+- Ask Helm:
+  ```bash
+  helm dependency update
+  ```
+
+  (Or `helm dep up`)
+
+
+
+- This wil create `Chart.lock` and fetch the dependency
+
+:::
+
+## Charts using other charts
+:::{.callout-tip icon=false}
+## What's `Chart.lock`?
+
+- This is a common pattern with dependencies
+
+  (see also: `Gemfile.lock`, `package.json.lock`, and many others)
+
+- This lets us define loose dependencies in `Chart.yaml`
+
+  (e.g. "version 11.whatever, but below 12")
+
+- But have the exact version used in `Chart.lock`
+
+- This ensures reproducible deployments
+
+- `Chart.lock` can (should!) be added to our source tree
+
+- `Chart.lock` can (should!) regularly be updated
+
+:::
+
+## Charts using other charts
+:::{.callout-tip icon=false}
+## Loose dependencies
+
+- Here is an example of loose version requirement:
+  ```yaml
+    dependencies:
+      - name: redis
+        version: ">=11, <12"
+        repository: https://charts.bitnami.com/bitnami
+  ```
+
+- This makes sure that we have the most recent version in the 11.x train
+
+- ... But without upgrading to version 12.x
+
+  (because it might be incompatible)
+
+:::
+
+## Charts using other charts
+:::{.callout-tip icon=false}
+## `build` vs `update`
+
+- Helm actually offers two commands to manage dependencies:
+
+  `helm dependency build` = fetch dependencies listed in `Chart.lock`
+
+  `helm dependency update` = update `Chart.lock` (and run `build`)
+
+- When the dependency gets updated, we can/should:
+
+  - `helm dep up` (update `Chart.lock` and fetch new chart)
+
+  - test!
+
+  - if everything is fine, `git add Chart.lock` and commit
+
+:::
+
+## Charts using other charts
+:::{.callout-tip icon=false}
+## Where are my dependencies?
+
+- Dependencies are downloaded to the `charts/` subdirectory
+
+- When they're downloaded, they stay in compressed format (`.tgz`)
+
+- Should we commit them to our code repository?
+
+- Pros:
+
+  - more resilient to internet/mirror failures/decomissioning
+
+- Cons:
+
+  - can add a lot of weight to the repo if charts are big or change often
+
+  - this can be solved by extra tools like git-lfs
+
+:::
+
+## Charts using other charts
+:::{.callout-tip icon=false}
+## Dependency tuning
+
+- DockerCoins expects the `redis` Service to be named `redis`
+
+- Our Redis chart uses a different Service name by default
+
+- Service name is `{{ template "redis.fullname" . }}-master`
+
+- `redis.fullname` looks like this:
+  ```
+    {{- define "redis.fullname" -}}
+    {{- if .Values.fullnameOverride -}}
+    {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
+    {{- else -}}
+    [...
+    {{- end }}
+    {{- end }}
+  ```
+
+- How do we fix this?
+
+:::
+
+## Charts using other charts
+:::{.callout-tip icon=false}
+## Setting dependency variables
+
+- If we set `fullnameOverride` to `redis`:
+
+  - the `{{ template ... }}` block will output `redis`
+
+  - the Service name will be `redis-master`
+
+- A parent chart can set values for its dependencies
+
+- For example, in the parent's `values.yaml`:
+
+  ```yaml
+    redis:                    # Name of the dependency
+      fullnameOverride: redis # Value passed to redis
+      cluster:                # Other values passed to redis
+        enabled: false
+  ```
+
+- User can also set variables with `--set=` or with `--values=`
+
+:::
+
+## Charts using other charts
+:::{.callout-tip icon=false}
+## Passing templates
+
+- We can even pass template `{{ include "template.name" }}`, but warning:
+
+   - need to be evaluated with the `tpl` function, on the child side
+
+   - evaluated in the context of the child, with no access to parent variables
+
+<!-- FIXME this probably deserves an example, but I can't imagine one right now 😅 -->
+
+:::
+
+## Charts using other charts
+:::{.callout-tip icon=false}
+## Getting rid of the `-master`
+
+- Even if we set that `fullnameOverride`, the Service name will be `redis-master`
+
+- To remove the `-master` suffix, we need to edit the chart itself
+
+- To edit the Redis chart, we need to *embed* it in our own chart
+
+- We need to:
+
+  - decompress the chart
+
+  - adjust `Chart.yaml` accordingly
+
+:::
+
+## Charts using other charts
+:::{.callout-tip icon=false}
+## Embedding a dependency
+
+
+
+- Decompress the chart:
+  ```yaml
+  cd charts
+  tar zxf redis-*.tgz
+  cd ..
+  ```
+
+- Edit `Chart.yaml` and update the `dependencies` section:
+  ```yaml
+    dependencies:
+      - name: redis
+        version: '*' # No need to constraint version, from local files
+  ```
+
+- Run `helm dep update`
+
+
+
+:::
+
+## Charts using other charts
+:::{.callout-tip icon=false}
+## Updating the dependency
+
+- Now we can edit the Service name
+
+  (it should be in `charts/redis/templates/redis-master-svc.yaml`)
+
+- Then try to deploy the whole chart!
+
+:::
+
+## Charts using other charts
+:::{.callout-tip icon=false}
+## Embedding a dependency multiple times
+
+- What if we need multiple copies of the same subchart?
+
+  (for instance, if we need two completely different Redis servers)
+
+- We can declare a dependency multiple times, and specify an `alias`:
+  ```yaml
+  dependencies:
+    - name: redis
+      version: '*'
+      alias: querycache
+    - name: redis
+      version: '*'
+      alias: celeryqueue
+  ```
+
+- `.Chart.Name` will be set to the `alias`
+
+:::
+
+## Charts using other charts
+:::{.callout-tip icon=false}
+## Determining if we're in a subchart
+
+- `.Chart.IsRoot` indicates if we're in the top-level chart or in a sub-chart
+
+- Useful in charts that are designed to be used standalone or as dependencies
+
+- Example: generic chart
+
+  - when used standalone (`.Chart.IsRoot` is `true`), use `.Release.Name`
+
+  - when used as a subchart e.g. with multiple aliases, use `.Chart.Name`
+
+:::
