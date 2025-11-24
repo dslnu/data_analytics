@@ -1,0 +1,1282 @@
+---
+title: "Kubernetes part 2"
+author: 
+  - name: MSDE
+    affiliation: Lviv University
+code-fold: false
+execute:
+  enabled: false
+  cache: true
+diagram:
+  cache: true
+  cache-dir: ./cache
+  engine:
+    tikz:
+      execpath: lualatex
+      additional-packages: |
+        \usetikzlibrary{arrows.meta}
+        \usetikzlibrary{positioning}
+        \usetikzlibrary{decorations.pathreplacing}
+filters:
+  - diagram
+title-slide-attributes:
+  data-background-image: img/k8s_logo.svg
+  data-background-size: contain
+  data-background-opacity: "0.3"
+format: 
+  revealjs:
+    css: ./custom.css
+    preview-links: auto
+    slide-number: true
+    theme: default
+    multiplex:
+      url: 'https://mplex.vitv.ly'
+      secret: '5d4ee4b5f89732ecd284ca89063930b8'
+      id: 'eb61bbf995b1c8abaf276cdae9bc92cd05e8c2fef7880c56f1f6d8869ea66286'
+---
+
+## 19,000 words
+
+They say, "a picture is worth one thousand words."
+
+The following 19 slides show what really happens when we run:
+
+```bash
+kubectl create deployment web --image=nginx
+```
+
+## Slideshow
+![](img/kubectl-create-deployment-slideshow/01.svg)
+
+## Slideshow
+![](img/kubectl-create-deployment-slideshow/02.svg)
+
+## Slideshow
+![](img/kubectl-create-deployment-slideshow/03.svg)
+
+## Slideshow
+![](img/kubectl-create-deployment-slideshow/04.svg)
+
+## Slideshow
+![](img/kubectl-create-deployment-slideshow/05.svg)
+
+## Slideshow
+![](img/kubectl-create-deployment-slideshow/06.svg)
+
+## Slideshow
+![](img/kubectl-create-deployment-slideshow/07.svg)
+
+## Slideshow
+![](img/kubectl-create-deployment-slideshow/08.svg)
+
+## Slideshow
+![](img/kubectl-create-deployment-slideshow/09.svg)
+
+## Slideshow
+![](img/kubectl-create-deployment-slideshow/10.svg)
+
+## Slideshow
+![](img/kubectl-create-deployment-slideshow/11.svg)
+
+## Slideshow
+![](img/kubectl-create-deployment-slideshow/12.svg)
+
+## Slideshow
+![](img/kubectl-create-deployment-slideshow/13.svg)
+
+## Slideshow
+![](img/kubectl-create-deployment-slideshow/14.svg)
+
+## Slideshow
+![](img/kubectl-create-deployment-slideshow/15.svg)
+
+## Slideshow
+![](img/kubectl-create-deployment-slideshow/16.svg)
+
+## Slideshow
+![](img/kubectl-create-deployment-slideshow/17.svg)
+
+## Slideshow
+![](img/kubectl-create-deployment-slideshow/18.svg)
+
+## Slideshow
+![](img/kubectl-create-deployment-slideshow/19.svg)
+
+# Exposing containers
+
+:::{.callout-tip icon=false}
+## Exposing containers
+
+- We can connect to our pods using their IP address
+
+- Then we need to figure out a lot of things:
+
+  - how do we look up the IP address of the pod(s)?
+
+  - how do we connect from outside the cluster?
+
+  - how do we load balance traffic?
+
+  - what if a pod fails?
+
+- Kubernetes has a resource type named *Service*
+
+- Services address all these questions!
+
+:::
+
+## Exposing containers
+:::{.callout-tip icon=false}
+## Running containers with open ports
+
+- Since `ping` doesn't have anything to connect to, we'll have to run something else
+
+- We are going to use `jpetazzo/color`, a tiny HTTP server written in Go
+
+- `jpetazzo/color` listens on port 80
+
+- It serves a page showing the pod's name
+
+  (this will be useful when checking load balancing behavior)
+
+- We could also use the `nginx` official image instead
+
+  (but we wouldn't be able to tell the backends from each other)
+
+:::
+
+## Exposing containers
+:::{.callout-tip icon=false}
+## Running our HTTP server
+
+- We will create a deployment with `kubectl create deployment`
+
+- This will create a Pod running our HTTP server
+
+- Create a deployment named `blue`:
+  ```bash
+  kubectl create deployment blue --image=jpetazzo/color
+  ```
+
+:::
+
+## Exposing containers
+:::{.callout-tip icon=false}
+## Connecting to the HTTP server
+
+- Let's connect to the HTTP server directly
+
+  (just to make sure everything works fine; we'll add the Service later)
+
+- Get the IP address of the Pod:
+  ```bash
+  kubectl get pods -o wide
+  ```
+
+- Send an HTTP request to the Pod:
+  ```bash
+  curl http://`IP-ADDRESSS`
+  ```
+
+
+You should see a response from the Pod.
+
+:::
+
+## Exposing containers
+:::{.callout-tip icon=false}
+## Running with a local cluster
+
+If you're running with a local cluster (Docker Desktop, KinD, minikube...),
+you might get a connection timeout (or a message like "no route to host")
+because the Pod isn't reachable directly from your local machine.
+
+In that case, you can test the connection to the Pod by running a shell
+*inside* the cluster:
+
+```bash
+kubectl run -it --rm my-test-pod --image=fedora
+```
+
+Then run `curl` in that Pod.
+
+:::
+
+## Exposing containers
+:::{.callout-tip icon=false}
+## The Pod doesn't have a "stable identity"
+
+- The IP address that we used above isn't "stable"
+
+  (if the Pod gets deleted, the replacement Pod will have a different address)
+
+- Check the IP addresses of running Pods:
+  ```bash
+  watch kubectl get pods -o wide
+  ```
+
+- Delete the Pod:
+  ```bash
+  kubectl delete pod `blue-xxxxxxxx-yyyyy`
+  ```
+
+- Check that the replacement Pod has a different IP address
+
+
+:::
+
+## Exposing containers
+:::{.callout-tip icon=false}
+## Services in a nutshell
+
+- Services give us a *stable endpoint* to connect to a pod or a group of pods
+
+- An easy way to create a service is to use `kubectl expose`
+
+- If we have a deployment named `my-little-deploy`, we can run:
+
+  `kubectl expose deployment my-little-deploy --port=80`
+
+  ... and this will create a service with the same name (`my-little-deploy`)
+
+- Services are automatically added to an internal DNS zone
+
+  (in the example above, our code can now connect to http://my-little-deploy/)
+
+:::
+
+## Exposing containers
+:::{.callout-tip icon=false}
+## Exposing our deployment
+
+- Let's create a Service for our Deployment
+
+- Expose the HTTP port of our server:
+  ```bash
+  kubectl expose deployment blue --port=80
+  ```
+
+- Look up which IP address was allocated:
+  ```bash
+  kubectl get service
+  ```
+
+- By default, this created a `ClusterIP` service
+
+  (we'll discuss later the different types of services)
+
+:::
+
+## Exposing containers
+:::{.callout-tip icon=false}
+## Services are layer 4 constructs
+
+- Services can have IP addresses, but they are still *layer 4*
+
+  (i.e. a service is not just an IP address; it's an IP address + protocol + port)
+
+- As a result: you *have to* indicate the port number for your service
+    
+  (with some exceptions, like `ExternalName` or headless services, covered later)
+
+:::
+
+## Exposing containers
+:::{.callout-tip icon=false}
+## Testing our service
+
+- We will now send a few HTTP requests to our Pod
+
+- Let's obtain the IP address that was allocated for our service, *programmatically:*
+  ```bash
+  CLUSTER_IP=$(kubectl get svc blue -o go-template='{{ .spec.clusterIP }}')
+  ```
+
+<!--
+```hide kubectl wait deploy blue --for condition=available```
+```key ^D```
+```key ^C```
+-->
+
+- Send a few requests:
+  ```bash
+  for i in $(seq 10); do curl http://$CLUSTER_IP; done
+  ```
+:::
+
+## Exposing containers
+:::{.callout-tip icon=false}
+## A *stable* endpoint
+
+- Let's see what happens when the Pod has a problem
+
+- Keep sending requests to the Service address:
+  ```bash
+  while sleep 0.3; do curl http://$CLUSTER_IP; done
+  ```
+
+- Meanwhile, delete the Pod:
+  ```bash
+  kubectl delete pod `blue-xxxxxxxx-yyyyy`
+  ```
+
+- There might be a short interruption when we delete the pod...
+
+- ...But requests will keep flowing after that (without requiring a manual intervention)
+
+:::
+
+## Exposing containers
+:::{.callout-tip icon=false}
+## Load balancing
+
+- The Service will also act as a load balancer
+
+  (if there are multiple Pods in the Deployment)
+
+- Scale up the Deployment:
+  ```bash
+  kubectl scale deployment blue --replicas=3
+  ```
+
+- Send a bunch of requests to the Service:
+  ```bash
+  for i in $(seq 20); do curl http://$CLUSTER_IP; done
+  ```
+
+- Our requests are load balanced across the Pods!
+
+:::
+
+## Exposing containers
+:::{.callout-tip icon=false}
+## DNS integration
+
+- Kubernetes provides an internal DNS resolver
+
+- The resolver maps service names to their internal addresses
+
+- By default, this only works *inside Pods* (not from the nodes themselves)
+
+- Get a shell in a Pod:
+  ```bash
+  kubectl run --rm -it --image=fedora test-dns-integration
+  ```
+
+- Try to resolve the `blue` Service from the Pod:
+  ```bash
+  curl blue
+  ```
+
+:::
+
+## Exposing containers
+:::{.callout-tip icon=false}
+## Under the hood...
+
+- Check the content of `/etc/resolv.conf` inside a Pod
+
+- It will have `nameserver X.X.X.X` (e.g. 10.96.0.10)
+
+- Now check `kubectl get service kube-dns --namespace=kube-system`
+
+- ...It's the same address! 😉
+
+- The FQDN of a service is actually:
+
+  `<service-name>.<namespace>.svc.<cluster-domain>`
+
+- `<cluster-domain>` defaults to `cluster.local`
+
+- And the `search` includes `<namespace>.svc.<cluster-domain>`
+
+:::
+
+## Exposing containers
+:::{.callout-important icon=false}
+## Advantages of services
+
+- We don't need to look up the IP address of the pod(s)
+
+  (we resolve the IP address of the service using DNS)
+
+- There are multiple service types; some of them allow external traffic
+
+  (e.g. `LoadBalancer` and `NodePort`)
+
+- Services provide load balancing
+
+  (for both internal and external traffic)
+
+- Service addresses are independent from pods' addresses
+
+  (when a pod fails, the service seamlessly sends traffic to its replacement)
+
+:::
+
+# Service Types
+
+## Service Types
+:::{.callout-tip icon=false}
+## Service Types
+
+- There are different types of services:
+
+  `ClusterIP`, `NodePort`, `LoadBalancer`, `ExternalName`
+
+- There are also *headless services*
+
+- Services can also have optional *external IPs*
+
+- There is also another resource type called *Ingress*
+
+  (specifically for HTTP services)
+
+- Wow, that's a lot! Let's start with the basics ...
+
+:::
+
+## Service Types
+:::{.callout-tip icon=false}
+## `ClusterIP`
+
+- It's the default service type
+
+- A virtual IP address is allocated for the service
+
+  (in an internal, private range; e.g. 10.96.0.0/12)
+
+- This IP address is reachable only from within the cluster (nodes and pods)
+
+- Our code can connect to the service using the original port number
+
+- Perfect for internal communication, within the cluster
+
+:::
+
+## Service Types
+![](img/kubernetes-services/11-CIP-by-addr.png)
+
+## Service Types
+![](img/kubernetes-services/12-CIP-by-name.png)
+
+## Service Types
+![](img/kubernetes-services/13-CIP-both.png)
+
+## Service Types
+![](img/kubernetes-services/14-CIP-headless.png)
+
+## Service Types
+:::{.callout-tip icon=false}
+## `LoadBalancer`
+
+- An external load balancer is allocated for the service
+
+  (typically a cloud load balancer, e.g. ELB on AWS, GLB on GCE ...)
+
+- This is available only when the underlying infrastructure provides some kind of
+  "load balancer as a service"
+
+- Each service of that type will typically cost a little bit of money
+
+  (e.g. a few cents per hour on AWS or GCE)
+
+- Ideally, traffic would flow directly from the load balancer to the pods
+
+- In practice, it will often flow through a `NodePort` first
+
+:::
+
+## `LoadBalancer`
+![](img/kubernetes-services/31-LB-no-service.png)
+
+## `LoadBalancer`
+![](img/kubernetes-services/32-LB-plus-cip.png)
+
+## `LoadBalancer`
+![](img/kubernetes-services/33-LB-plus-lb.png)
+
+## `LoadBalancer`
+![](img/kubernetes-services/34-LB-internal-traffic.png)
+
+## `LoadBalancer`
+![](img/kubernetes-services/35-LB-pending.png)
+
+## `LoadBalancer`
+![](img/kubernetes-services/36-LB-ccm.png)
+
+## `LoadBalancer`
+![](img/kubernetes-services/37-LB-externalip.png)
+
+## `LoadBalancer`
+![](img/kubernetes-services/38-LB-external-traffic.png)
+
+## `LoadBalancer`
+![](img/kubernetes-services/39-LB-all-traffic.png)
+
+## `LoadBalancer`
+![](img/kubernetes-services/41-NP-why.png)
+
+## `LoadBalancer`
+![](img/kubernetes-services/42-NP-how-1.png)
+
+## `LoadBalancer`
+![](img/kubernetes-services/43-NP-how-2.png)
+
+## `LoadBalancer`
+![](img/kubernetes-services/44-NP-how-3.png)
+
+## `LoadBalancer`
+![](img/kubernetes-services/45-NP-how-4.png)
+
+## `LoadBalancer`
+![](img/kubernetes-services/46-NP-how-5.png)
+
+## `LoadBalancer`
+![](img/kubernetes-services/47-NP-only.png)
+
+## Service Types
+:::{.callout-tip icon=false}
+## `NodePort`
+
+- A port number is allocated for the service
+
+  (by default, in the 30000-32767 range)
+
+- That port is made available *on all our nodes* and anybody can connect to it
+
+  (we can connect to any node on that port to reach the service)
+
+- Our code needs to be changed to connect to that new port number
+
+- Under the hood: `kube-proxy` sets up a bunch of `iptables` rules on our nodes
+
+- Sometimes, it's the only available option for external traffic
+
+  (e.g. most clusters deployed with kubeadm or on-premises)
+
+:::
+
+## Service Types
+:::{.callout-tip icon=false}
+## `ExternalName`
+
+- Services of type `ExternalName` are quite different
+
+- No load balancer (internal or external) is created
+
+- Only a DNS entry gets added to the DNS managed by Kubernetes
+
+- That DNS entry will just be a `CNAME` to a provided record
+
+Example:
+```bash
+kubectl create service externalname k8s --external-name kubernetes.io
+```
+*Creates a CNAME `k8s` pointing to `kubernetes.io`*
+
+:::
+
+## Service Types
+:::{.callout-tip icon=false}
+## External IPs
+
+- We can add an External IP to a service, e.g.:
+  ```bash
+  kubectl expose deploy my-little-deploy --port=80 --external-ip=1.2.3.4
+  ```
+
+- `1.2.3.4` should be the address of one of our nodes
+
+  (it could also be a virtual address, service address, or VIP, shared by multiple nodes)
+
+- Connections to `1.2.3.4:80` will be sent to our service
+
+- External IPs will also show up on services of type `LoadBalancer`
+
+  (they will be added automatically by the process provisioning the load balancer)
+
+:::
+
+## Service Types
+:::{.callout-tip icon=false}
+## Headless services
+
+- Sometimes, we want to access our scaled services directly:
+
+  - if we want to save a tiny little bit of latency (typically less than 1ms)
+
+  - if we need to connect over arbitrary ports (instead of a few fixed ones)
+
+  - if we need to communicate over another protocol than UDP or TCP
+
+  - if we want to decide how to balance the requests client-side
+
+  - ...
+
+- In that case, we can use a "headless service"
+
+:::
+
+## Service Types
+:::{.callout-tip icon=false}
+## Creating a headless services
+
+- A headless service is obtained by setting the `clusterIP` field to `None`
+
+  (Either with `--cluster-ip=None`, or by providing a custom YAML)
+
+- As a result, the service doesn't have a virtual IP address
+
+- Since there is no virtual IP address, there is no load balancer either
+
+- CoreDNS will return the pods' IP addresses as multiple `A` records
+
+- This gives us an easy way to discover all the replicas for a deployment
+
+:::
+
+## Service Types
+:::{.callout-tip icon=false}
+## Services and endpoints
+
+- A service has a number of "endpoints"
+
+- Each endpoint is a host + port where the service is available
+
+- The endpoints are maintained and updated automatically by Kubernetes
+
+- Check the endpoints that Kubernetes has associated with our `blue` service:
+  ```bash
+  kubectl describe service blue
+  ```
+
+In the output, there will be a line starting with `Endpoints:`.
+
+That line will list a bunch of addresses in `host:port` format.
+
+:::
+
+## Service Types
+:::{.callout-tip icon=false}
+## Viewing endpoint details
+
+- When we have many endpoints, our display commands truncate the list
+  ```bash
+  kubectl get endpoints
+  ```
+
+- If we want to see the full list, we can use one of the following commands:
+  ```bash
+  kubectl describe endpoints blue
+  kubectl get endpoints blue -o yaml
+  ```
+
+- These commands will show us a list of IP addresses
+
+- These IP addresses should match the addresses of the corresponding pods:
+  ```bash
+  kubectl get pods -l app=blue -o wide
+  ```
+
+:::
+
+## Service Types
+:::{.callout-tip icon=false}
+## `endpoints` not `endpoint`
+
+- `endpoints` is the only resource that cannot be singular
+
+```bash
+$ kubectl get endpoint
+error: the server doesn't have a resource type "endpoint"
+```
+
+- This is because the type itself is plural (unlike every other resource)
+
+- There is no `endpoint` object: `type Endpoints struct`
+
+- The type doesn't represent a single endpoint, but a list of endpoints
+
+:::
+
+## Service Types
+:::{.callout-tip icon=false}
+## `Ingress`
+
+- Ingresses are another type (kind) of resource
+
+- They are specifically for HTTP services
+
+  (not TCP or UDP)
+
+- They can also handle TLS certificates, URL rewriting ...
+
+- They require an *Ingress Controller* to function
+
+:::
+
+## `Ingress`
+![](img/kubernetes-services/61-ING.png)
+
+## `Ingress`
+![](img/kubernetes-services/62-ING-path.png)
+
+## `Ingress`
+![](img/kubernetes-services/63-ING-policy.png)
+
+## `Ingress`
+![](img/kubernetes-services/64-ING-nolocal.png)
+
+## Service Types
+:::{.callout-tip icon=false}
+## Traffic engineering
+
+- By default, connections to a ClusterIP or a NodePort are load balanced
+  across all the backends of their Service
+
+- This can incur extra network hops (which add latency)
+
+- To remove that extra hop, multiple mechanisms are available:
+
+  - `spec.externalTrafficPolicy`
+
+  - `spec.internalTrafficPolicy`
+
+  - [Topology aware routing](https://kubernetes.io/docs/concepts/services-networking/topology-aware-routing/) annotation (beta)
+
+  - `spec.trafficDistribution` (alpha in 1.30, beta in 1.31)
+
+:::
+
+## Service Types
+:::{.callout-tip icon=false}
+## `internal / externalTrafficPolicy`
+
+- Applies respectively to `ClusterIP` and `NodePort` connections
+
+- Can be set to `Cluster` or `Local`
+
+- `Cluster`: load balance connections across all backends (default)
+
+- `Local`: load balance connections to local backends (on the same node)
+
+- With `Local`, if there is no local backend, the connection will fail!
+
+  (the parameter expresses a "hard rule", not a preference)
+
+- Example: `externalTrafficPolicy: Local` for Ingress controllers
+
+  (as shown on earlier diagrams)
+
+:::
+
+## Service Types
+:::{.callout-tip icon=false}
+## Topology aware routing
+
+- In beta since Kubernetes 1.23
+
+- Enabled with annotation `service.kubernetes.io/topology-mode=Auto` 
+
+- Relies on node label `topology.kubernetes.io/zone`
+
+- Kubernetes service proxy will try to keep connections within a zone
+
+  (connections made by a pod in zone `a` will be sent to pods in zone `a`)
+
+- ...Except if there are no pods in the zone (then fallback to all zones)
+
+- This can mess up autoscaling!
+
+:::
+
+## Service Types
+:::{.callout-important icon=false}
+## `spec.trafficDistribution`
+
+- [KEP4444, Traffic Distribution for Services][kep4444]
+
+- Supersedes topology aware routing
+
+- Multiple values are supported
+
+- `PreferClose` (alpha since K8S 1.30, beta since K8S 1.31, stable since K8S 1.33)
+
+  "try to route traffic to endpoints in the same zone as the client"
+
+- `PreferSameZone` (beta since K8S 1.34)
+
+  "same as `PreferClose` but clearer about the intended semantics"
+
+- `PreferSameNode` (beta since K8S 1.34)
+
+  "try to route traffic to endpoints on the same node as the client"
+
+[kep4444]: https://github.com/kubernetes/enhancements/issues/4444
+:::
+
+# Kubernetes network model
+
+## Kubernetes network model
+:::{.callout-tip icon=false}
+## Kubernetes network model
+
+- TL,DR:
+
+  *Our cluster (nodes and pods) is one big flat IP network.*
+
+- In detail:
+
+  - all nodes must be able to reach each other, without NAT
+
+  - all pods must be able to reach each other, without NAT
+
+  - pods and nodes must be able to reach each other, without NAT
+
+  - each pod is aware of its IP address (no NAT)
+
+  - pod IP addresses are assigned by the network implementation
+
+- Kubernetes doesn't mandate any particular implementation
+
+:::
+
+## Kubernetes network model
+:::{.callout-tip icon=false}
+## Kubernetes network model: the good
+
+- Everything can reach everything
+
+- No address translation
+
+- No port translation
+
+- No new protocol
+
+- The network implementation can decide how to allocate addresses
+
+- IP addresses don't have to be "portable" from a node to another
+
+  (We can use e.g. a subnet per node and use a simple routed topology)
+
+- The specification is simple enough to allow many various implementations
+
+:::
+
+## Kubernetes network model
+:::{.callout-warning icon=false}
+## Kubernetes network model: the less good
+
+- Everything can reach everything
+
+  - if you want security, you need to add network policies
+
+  - the network implementation that you use needs to support them
+
+- There are literally dozens of implementations out there
+
+  (https://github.com/containernetworking/cni/ lists more than 25 plugins)
+
+- Pods have level 3 (IP) connectivity, but *services* are level 4 (TCP or UDP)
+
+  (Services map to a single UDP or TCP port; no port ranges or arbitrary IP packets)
+
+- `kube-proxy` is on the data path when connecting to a pod or container,
+  <br/>and it's not particularly fast (relies on userland proxying or iptables)
+
+:::
+
+## Kubernetes network model
+:::{.callout-tip icon=false}
+## Kubernetes network model: in practice
+
+- The nodes that we are using have been set up to use [Weave](https://github.com/weaveworks/weave)
+
+- We don't endorse Weave in a particular way, it just Works For Us
+
+- Don't worry about the warning about `kube-proxy` performance
+
+- Unless you:
+
+  - routinely saturate 10G network interfaces
+  - count packet rates in millions per second
+  - run high-traffic VOIP or gaming platforms
+  - do weird things that involve millions of simultaneous connections
+    <br/>(in which case you're already familiar with kernel tuning)
+
+- If necessary, there are alternatives to `kube-proxy`; e.g.
+  [`kube-router`](https://www.kube-router.io)
+
+:::
+
+## Kubernetes network model
+:::{.callout-tip icon=false}
+## The Container Network Interface (CNI)
+
+- Most Kubernetes clusters use CNI "plugins" to implement networking
+
+- When a pod is created, Kubernetes delegates the network setup to these plugins
+
+  (it can be a single plugin, or a combination of plugins, each doing one task)
+
+- Typically, CNI plugins will:
+
+  - allocate an IP address (by calling an IPAM plugin)
+
+  - add a network interface into the pod's network namespace
+
+  - configure the interface as well as required routes etc.
+
+:::
+
+## Kubernetes network model
+:::{.callout-tip icon=false}
+## Multiple moving parts
+
+- The "pod-to-pod network" or "pod network":
+
+  - provides communication between pods and nodes
+
+  - is generally implemented with CNI plugins
+
+- The "pod-to-service network":
+
+  - provides internal communication and load balancing
+
+  - is generally implemented with kube-proxy (or e.g. kube-router)
+
+- Network policies:
+
+  - provide firewalling and isolation
+
+  - can be bundled with the "pod network" or provided by another component
+
+:::
+
+## Kubernetes network model
+![Overview of the three Kubernetes network layers](img/k8s-net-0-overview.svg)
+
+## Kubernetes network model
+![Pod-to-pod network](img/k8s-net-1-pod-to-pod.svg)
+
+## Kubernetes network model
+![Pod-to-service network](img/k8s-net-2-pod-to-svc.svg)
+
+## Kubernetes network model
+![Network policies](img/k8s-net-3-netpol.svg)
+
+## Kubernetes network model
+![View with all the layers again](img/k8s-net-4-overview.svg)
+
+## Kubernetes network model
+:::{.callout-tip icon=false}
+## Even more moving parts
+
+- Inbound traffic can be handled by multiple components:
+
+  - something like kube-proxy or kube-router (for NodePort services)
+
+  - load balancers (ideally, connected to the pod network)
+
+- It is possible to use multiple pod networks in parallel
+
+  (with "meta-plugins" like CNI-Genie or Multus)
+
+- Some solutions can fill multiple roles
+
+  (e.g. kube-router can be set up to provide the pod network and/or network policies and/or replace kube-proxy)
+
+:::
+
+# Shipping images with a registry
+
+## Shipping images with a registry
+:::{.callout-tip icon=false}
+## Shipping images with a registry
+
+- Initially, our app was running on a single node
+
+- We could *build* and *run* in the same place
+
+- Therefore, we did not need to *ship* anything
+
+- Now that we want to run on a cluster, things are different
+
+- The easiest way to ship container images is to use a registry
+
+:::
+
+## Shipping images with a registry
+:::{.callout-tip icon=false}
+## How Docker registries work (a reminder)
+
+- What happens when we execute `docker run alpine` ?
+
+- If the Engine needs to pull the `alpine` image, it expands it into `library/alpine`
+
+- `library/alpine` is expanded into `index.docker.io/library/alpine`
+
+- The Engine communicates with `index.docker.io` to retrieve `library/alpine:latest`
+
+- To use something else than `index.docker.io`, we specify it in the image name
+
+- Examples:
+  ```bash
+  docker pull gcr.io/google-containers/alpine-with-bash:1.0
+
+  docker build -t registry.mycompany.io:5000/myimage:awesome .
+  docker push registry.mycompany.io:5000/myimage:awesome
+  ```
+
+:::
+
+## Shipping images with a registry
+:::{.callout-tip icon=false}
+## Running DockerCoins on Kubernetes
+
+- Create one deployment for each component
+
+  (hasher, redis, rng, webui, worker)
+
+- Expose deployments that need to accept connections
+
+  (hasher, redis, rng, webui)
+
+- For redis, we can use the official redis image
+
+- For the 4 others, we need to build images and push them to some registry
+
+:::
+
+## Shipping images with a registry
+:::{.callout-tip icon=false}
+## Building and shipping images
+
+- There are *many* options!
+
+- Manually:
+
+  - build locally (with `docker build` or otherwise)
+
+  - push to the registry
+
+- Automatically:
+
+  - build and test locally
+
+  - when ready, commit and push a code repository
+
+  - the code repository notifies an automated build system
+
+  - that system gets the code, builds it, pushes the image to the registry
+
+:::
+
+## Shipping images with a registry
+:::{.callout-tip icon=false}
+## Which registry do we want to use?
+
+- There are SAAS products like Docker Hub, Quay ...
+
+- Each major cloud provider has an option as well
+
+  (ACR on Azure, ECR on AWS, GCR on Google Cloud...)
+
+- There are also commercial products to run our own registry
+
+  (Docker EE, Quay...)
+
+- And open source options, too!
+
+- When picking a registry, pay attention to its build system
+
+  (when it has one)
+
+:::
+
+## Shipping images with a registry
+:::{.callout-tip icon=false}
+## Building on the fly
+
+- Conceptually, it is possible to build images on the fly from a repository
+
+- Example: [ctr.run](https://ctr.run/)
+
+  (deprecated in August 2020, after being aquired by Datadog)
+
+- It did allow something like this:
+  ```bash
+  docker run ctr.run/github.com/jpetazzo/container.training/dockercoins/hasher
+  ```
+
+- No alternative yet
+
+  (free startup idea, anyone?)
+
+:::
+
+## Shipping images with a registry
+:::{.callout-tip icon=false}
+## Using images from the Docker Hub
+
+- For everyone's convenience, we took care of building DockerCoins images
+
+- We pushed these images to the DockerHub, under the [dockercoins](https://hub.docker.com/u/dockercoins) user
+
+- These images are *tagged* with a version number, `v0.1`
+
+- The full image names are therefore:
+
+  - `dockercoins/hasher:v0.1`
+
+  - `dockercoins/rng:v0.1`
+
+  - `dockercoins/webui:v0.1`
+
+  - `dockercoins/worker:v0.1`
+:::
+
+# Running our application on Kubernetes
+
+## Running our app on Kubernetes
+:::{.callout-tip icon=false}
+## Running our application on Kubernetes
+
+- We can now deploy our code (as well as a redis instance)
+
+- Deploy `redis`:
+  ```bash
+  kubectl create deployment redis --image=redis
+  ```
+
+- Deploy everything else:
+  ```bash
+  kubectl create deployment hasher --image=dockercoins/hasher:v0.1
+  kubectl create deployment rng --image=dockercoins/rng:v0.1
+  kubectl create deployment webui --image=dockercoins/webui:v0.1
+  kubectl create deployment worker --image=dockercoins/worker:v0.1
+  ```
+:::
+
+## Running our app on Kubernetes
+:::{.callout-tip icon=false}
+## Deploying other images
+
+- If we wanted to deploy images from another registry ...
+
+- ... Or with a different tag ...
+
+- ... We could use the following snippet:
+
+```bash
+  REGISTRY=dockercoins
+  TAG=v0.1
+  for SERVICE in hasher rng webui worker; do
+    kubectl create deployment $SERVICE --image=$REGISTRY/$SERVICE:$TAG
+  done
+```
+
+:::
+
+## Running our app on Kubernetes
+:::{.callout-tip icon=false}
+## Is this working?
+
+- After waiting for the deployment to complete, let's look at the logs!
+
+  (Hint: use `kubectl get deploy -w` to watch deployment events)
+
+<!-- ```hide
+kubectl wait deploy/rng --for condition=available
+kubectl wait deploy/worker --for condition=available
+``` -->
+
+- Look at some logs:
+  ```bash
+  kubectl logs deploy/rng
+  kubectl logs deploy/worker
+  ```
+
+🤔 `rng` is fine ... But not `worker`.
+
+💡 Oh right! We forgot to `expose`.
+
+:::
+
+## Running our app on Kubernetes
+:::{.callout-tip icon=false}
+## Connecting containers together
+
+- Three deployments need to be reachable by others: `hasher`, `redis`, `rng`
+
+- `worker` doesn't need to be exposed
+
+- `webui` will be dealt with later
+
+- Expose each deployment, specifying the right port:
+  ```bash
+  kubectl expose deployment redis --port 6379
+  kubectl expose deployment rng --port 80
+  kubectl expose deployment hasher --port 80
+  ```
+:::
+
+## Running our app on Kubernetes
+:::{.callout-tip icon=false}
+## Is this working yet?
+
+- The `worker` has an infinite loop, that retries 10 seconds after an error
+
+- Stream the worker's logs:
+  ```bash
+  kubectl logs deploy/worker --follow
+  ```
+
+  (Give it about 10 seconds to recover)
+
+<!--
+```wait units of work done, updating hash counter```
+```key ^C```
+-->
+
+We should now see the `worker`, well, working happily.
+
+:::
+
+## Running our app on Kubernetes
+:::{.callout-tip icon=false}
+## Exposing services for external access
+
+- Now we would like to access the Web UI
+
+- We will expose it with a `NodePort`
+
+  (just like we did for the registry)
+
+- Create a `NodePort` service for the Web UI:
+  ```bash
+  kubectl expose deploy/webui --type=NodePort --port=80
+  ```
+
+- Check the port that was allocated:
+  ```bash
+  kubectl get svc
+  ```
+:::
+
+## Running our app on Kubernetes
+:::{.callout-tip icon=false}
+## Accessing the web UI
+
+- We can now connect to *any node*, on the allocated node port, to view the web UI
+
+- Open the web UI in your browser (http://node-ip-address:3xxxx/)
+
+<!-- ```open http://node1:3xxxx/``` -->
+
+Yes, this may take a little while to update.
+
+*Alright, we're back to where we started, when we were running on a single node!*
+
+:::
