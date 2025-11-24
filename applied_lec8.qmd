@@ -160,7 +160,7 @@ kubectl create deployment web --image=nginx
 
 :::
 
-## Exposing containers
+## Exposing containers {.scrollable}
 :::{.callout-tip icon=false}
 ## Connecting to the HTTP server
 
@@ -183,13 +183,11 @@ You should see a response from the Pod.
 
 :::
 
-## Exposing containers
-:::{.callout-tip icon=false}
+:::{.callout-important}
 ## Running with a local cluster
 
 If you're running with a local cluster (Docker Desktop, KinD, minikube...),
-you might get a connection timeout (or a message like "no route to host")
-because the Pod isn't reachable directly from your local machine.
+the Pod isn't reachable directly from your local machine.
 
 In that case, you can test the connection to the Pod by running a shell
 *inside* the cluster:
@@ -370,6 +368,7 @@ Then run `curl` in that Pod.
 
 :::
 
+<!--
 ## Exposing containers
 :::{.callout-tip icon=false}
 ## Under the hood...
@@ -391,9 +390,9 @@ Then run `curl` in that Pod.
 - And the `search` includes `<namespace>.svc.<cluster-domain>`
 
 :::
-
+-->
 ## Exposing containers
-:::{.callout-important icon=false}
+:::{.callout-note}
 ## Advantages of services
 
 - We don't need to look up the IP address of the pod(s)
@@ -822,7 +821,7 @@ error: the server doesn't have a resource type "endpoint"
 :::{.callout-tip icon=false}
 ## Kubernetes network model
 
-- TL,DR:
+- **TL,DR:**
 
   *Our cluster (nodes and pods) is one big flat IP network.*
 
@@ -865,7 +864,7 @@ error: the server doesn't have a resource type "endpoint"
 :::
 
 ## Kubernetes network model
-:::{.callout-warning icon=false}
+:::{.callout-warning}
 ## Kubernetes network model: the less good
 
 - Everything can reach everything
@@ -876,7 +875,7 @@ error: the server doesn't have a resource type "endpoint"
 
 - There are literally dozens of implementations out there
 
-  (https://github.com/containernetworking/cni/ lists more than 25 plugins)
+  (<https://github.com/containernetworking/cni/> lists more than 25 plugins)
 
 - Pods have level 3 (IP) connectivity, but *services* are level 4 (TCP or UDP)
 
@@ -887,6 +886,7 @@ error: the server doesn't have a resource type "endpoint"
 
 :::
 
+<!--
 ## Kubernetes network model
 :::{.callout-tip icon=false}
 ## Kubernetes network model: in practice
@@ -909,6 +909,7 @@ error: the server doesn't have a resource type "endpoint"
   [`kube-router`](https://www.kube-router.io)
 
 :::
+-->
 
 ## Kubernetes network model
 :::{.callout-tip icon=false}
@@ -1159,6 +1160,7 @@ error: the server doesn't have a resource type "endpoint"
   ```
 :::
 
+<!--
 ## Running our app on Kubernetes
 :::{.callout-tip icon=false}
 ## Deploying other images
@@ -1178,6 +1180,7 @@ error: the server doesn't have a resource type "endpoint"
 ```
 
 :::
+-->
 
 ## Running our app on Kubernetes
 :::{.callout-tip icon=false}
@@ -1271,6 +1274,14 @@ We should now see the `worker`, well, working happily.
 
 - We can now connect to *any node*, on the allocated node port, to view the web UI
 
+- (minikube-specific) Enable port-forwarding:
+  ```
+  kubectl port-forward svc/webui 8080:80
+  ```
+  or use the url listed by this command:
+  ```
+  minikube service webui --url
+  ```
 - Open the web UI in your browser (http://node-ip-address:3xxxx/)
 
 <!-- ```open http://node1:3xxxx/``` -->
