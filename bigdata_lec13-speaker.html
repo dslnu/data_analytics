@@ -28,6 +28,72 @@
       margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
       vertical-align: middle;
     }
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      { color: #003b4f; background-color: #f1f3f5; }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span { color: #003b4f; } /* Normal */
+    code span.al { color: #ad0000; } /* Alert */
+    code span.an { color: #5e5e5e; } /* Annotation */
+    code span.at { color: #657422; } /* Attribute */
+    code span.bn { color: #ad0000; } /* BaseN */
+    code span.bu { } /* BuiltIn */
+    code span.cf { color: #003b4f; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #20794d; } /* Char */
+    code span.cn { color: #8f5902; } /* Constant */
+    code span.co { color: #5e5e5e; } /* Comment */
+    code span.cv { color: #5e5e5e; font-style: italic; } /* CommentVar */
+    code span.do { color: #5e5e5e; font-style: italic; } /* Documentation */
+    code span.dt { color: #ad0000; } /* DataType */
+    code span.dv { color: #ad0000; } /* DecVal */
+    code span.er { color: #ad0000; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #ad0000; } /* Float */
+    code span.fu { color: #4758ab; } /* Function */
+    code span.im { color: #00769e; } /* Import */
+    code span.in { color: #5e5e5e; } /* Information */
+    code span.kw { color: #003b4f; font-weight: bold; } /* Keyword */
+    code span.op { color: #5e5e5e; } /* Operator */
+    code span.ot { color: #003b4f; } /* Other */
+    code span.pp { color: #ad0000; } /* Preprocessor */
+    code span.sc { color: #5e5e5e; } /* SpecialChar */
+    code span.ss { color: #20794d; } /* SpecialString */
+    code span.st { color: #20794d; } /* String */
+    code span.va { color: #111111; } /* Variable */
+    code span.vs { color: #20794d; } /* VerbatimString */
+    code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   </style>
   <link rel="stylesheet" href="site_libs/revealjs/dist/theme/quarto-534cd8e3a96973385dffff3f4709048d.css">
   <link rel="stylesheet" href="custom.css">
@@ -764,6 +830,475 @@ MSDE
 </div>
 </div>
 </div>
+</section></section>
+<section>
+<section id="storage-formats" class="title-slide slide level1 center">
+<h1>Storage formats</h1>
+
+</section>
+<section id="formats" class="slide level2">
+<h2>Formats</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Data representations</strong></p>
+</div>
+<div class="callout-content">
+<p>Programs usually work with data in (at least) two different representations:</p>
+<ul>
+<li>In memory, data is kept in objects, structs, lists, arrays, hash tables, trees, and so on. These data structures are optimized for efficient access and manipulation by the CPU (typically using pointers).</li>
+<li>When you want to write data to a file or send it over the network, you have to encode it as some kind of self-contained sequence of bytes (for example, a JSON document).</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="formats-1" class="slide level2">
+<h2>Formats</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Transition</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong><span class="math inline">\(\Rightarrow\)</span></strong> <strong>encoding</strong>, <strong>serialization</strong>, <strong>marshalling</strong></li>
+<li><strong><span class="math inline">\(\Leftarrow\)</span></strong> <strong>decoding</strong>, <strong>deserialization</strong>, <strong>unmarshalling</strong></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="formats-2" class="slide level2">
+<h2>Formats</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Textual</strong></p>
+</div>
+<div class="callout-content">
+<p>What’s in common: <strong>readability</strong> and <strong>verbosity</strong>.</p>
+<ul>
+<li>JSON</li>
+<li>XML</li>
+<li>CSV</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="formats-3" class="slide level2">
+<h2>Formats</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>XML</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>no built-in way to differentiate numbers and strings</li>
+<li>no binary string support</li>
+<li>schema support</li>
+</ul>
+</div>
+</div>
+</div>
+
+<img data-src="img/xml_example.png" class="r-stretch"></section>
+<section id="formats-4" class="slide level2">
+<h2>Formats</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>CSV</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>no built-in way to differentiate numbers and strings</li>
+<li>no schema support</li>
+<li>needs escaping rules</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="formats-5" class="slide level2">
+<h2>Formats</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>JSON</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>no binary string support</li>
+<li>no built-in way to differentiate numbers and strings</li>
+<li>schema support</li>
+</ul>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode numberSource json number-lines code-with-copy"><code class="sourceCode json"><span id="cb1-1"><a></a><span class="fu">{</span></span>
+<span id="cb1-2"><a></a>  <span class="dt">"userName"</span><span class="fu">:</span> <span class="st">"Martin"</span><span class="fu">,</span></span>
+<span id="cb1-3"><a></a>  <span class="dt">"favoriteNumber"</span><span class="fu">:</span> <span class="dv">1337</span><span class="fu">,</span></span>
+<span id="cb1-4"><a></a>  <span class="dt">"interests"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"daydreaming"</span><span class="ot">,</span> <span class="st">"hacking"</span><span class="ot">]</span></span>
+<span id="cb1-5"><a></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</section>
+<section id="formats-6" class="slide level2">
+<h2>Formats</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Binary JSON: MessagePack</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/messagepack.png" height="500"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="formats-7" class="slide level2">
+<h2>Formats</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Binary JSON: MessagePack</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>The first byte, <code>0x83</code>, indicates that what follows is an object (top four bits = <code>0x80</code>) with three fields (bottom four bits = <code>0x03</code>)</li>
+<li>The second byte, <code>0xa8</code>, indicates that what follows is a string (top four bits = <code>0xa0</code>) that is eight bytes long (bottom four bits = <code>0x08</code>)</li>
+<li>The next eight bytes are the field name <code>userName</code> in ASCII indicated previously, there’s no need for any marker to tell us where the string ends (or any escaping)</li>
+<li>The next seven bytes encode the six-letter string value Martin with a prefix <code>0xa6</code></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="formats-8" class="slide level2">
+<h2>Formats</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Binary JSON: MessagePack</strong></p>
+</div>
+<div class="callout-content">
+<p>Schema not defined, so field names have to be included in the data.</p>
+<p>Result: 66 bytes (vs original 81)</p>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Solution</strong></p>
+</div>
+<div class="callout-content">
+<p>Use schemas!</p>
+</div>
+</div>
+</div>
+</section>
+<section id="formats-9" class="slide level2">
+<h2>Formats</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Thrift</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode numberSource protobuf number-lines code-with-copy"><code class="sourceCode protobuf"><span id="cb2-1"><a></a>struct Person {</span>
+<span id="cb2-2"><a></a>  <span class="dv">1</span>: <span class="kw">required</span> <span class="dt">string</span> userName,</span>
+<span id="cb2-3"><a></a>  <span class="dv">2</span>: <span class="kw">optional</span> i64 favoriteNumber,</span>
+<span id="cb2-4"><a></a>  <span class="dv">3</span>: <span class="kw">optional</span> list&lt;<span class="dt">string</span>&gt; interests</span>
+<span id="cb2-5"><a></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Protocol Buffers</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode numberSource protobuf number-lines code-with-copy"><code class="sourceCode protobuf"><span id="cb3-1"><a></a><span class="kw">message</span> Person {</span>
+<span id="cb3-2"><a></a>  <span class="kw">required</span> <span class="dt">string</span> user_name = <span class="dv">1</span>;</span>
+<span id="cb3-3"><a></a>  <span class="kw">optional</span> <span class="dt">int64</span> favorite_number = <span class="dv">2</span>;</span>
+<span id="cb3-4"><a></a>  <span class="kw">repeated</span> <span class="dt">string</span> interests = <span class="dv">3</span>;</span>
+<span id="cb3-5"><a></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</section>
+<section id="formats-10" class="slide level2">
+<h2>Formats</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Thrift BinaryProtocol: <strong>59</strong> bytes</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/thrift_binary.png" height="500"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="formats-11" class="slide level2">
+<h2>Formats</h2>
+<div class="callout callout-warning no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Thrift CompactProtocol: <strong>34</strong> bytes</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/thrift_compact.png" height="500"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="formats-12" class="slide level2">
+<h2>Formats</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Protocol Buffers: <strong>34</strong> bytes</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/protobuf.png" height="500"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="formats-13" class="slide level2">
+<h2>Formats</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Thrift/Protobuf details</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p><strong>Schema evolution</strong> is supported by incrementing tag numbers.</p></li>
+<li><p><strong>Lists</strong> not supported in Protobuf.</p></li>
+<li><p>Thrift supports <strong>nested lists</strong>.</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="formats-14" class="slide level2">
+<h2>Formats</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Binary vs textual</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>binary much more compact</li>
+<li>explicit schema is a form of documentation</li>
+<li>schemas allow for forward/backward compatibility</li>
+<li>type checking at compile time</li>
+</ul>
+</div>
+</div>
+</div>
+</section></section>
+<section>
+<section id="google-dremel-and-apache-parquet" class="title-slide slide level1 center">
+<h1>Google Dremel and Apache Parquet</h1>
+
+</section>
+<section id="formats-15" class="slide level2">
+<h2>Formats</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Dremel</strong></p>
+</div>
+<div class="callout-content">
+<p>Column storage is easiest to understand in a relational data model, but it applies equally to nonrelational data.</p>
+<p>For example, Parquet is a columnar storage format that supports a document data model, based on Google’s Dremel.</p>
+</div>
+</div>
+</div>
+
+<aside><div>
+<p>Introduced in “Dremel: Interactive Analysis of Web-Scale Datasets. Communications of the ACM, 2011, 54(6).”</p>
+</div></aside></section>
+<section id="formats-16" class="slide level2">
+<h2>Formats</h2>
+
+<img data-src="img/dremel_pumpkin_tool.png" class="r-stretch"></section>
+<section id="formats-17" class="slide level2">
+<h2>Formats</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Dremel</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>read-only nested data.</li>
+<li>multilevel execution trees</li>
+<li>columnar data layout</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Dremel scaling</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>runs aggregation queries over trillion-row tables in seconds.</li>
+<li>thousands of CPUs and petabytes of data</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="formats-dremel" class="slide level2">
+<h2>Formats: Dremel</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Why nested data support?</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>data used in Web and scientific computing are often non-relational.</p></li>
+<li><p>Data structures used in programming languages, messages exchanged by distributed systems, structured documents, etc., are often nested <!-- as well a nested representation. --></p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="formats-dremel-1" class="slide level2">
+<h2>Formats: Dremel</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Record-wise vs columnar</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/dremel_nested_data.png"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="formats-dremel-2" class="slide level2">
+<h2>Formats: Dremel</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Dremel data model</strong></p>
+</div>
+<div class="callout-content">
+<p><span class="math display">\[
+\tau = \textbf{dom} | \langle A_1: \tau[\ast|?], \dots, A_n: \tau[\ast|?] \rangle
+\]</span></p>
+<ul>
+<li><span class="math inline">\(\tau\)</span> is either <strong>atomic</strong> type or <strong>record</strong> type</li>
+<li><span class="math inline">\(\textbf{dom}\)</span> includes atomic types: integers, floats, strings, etc.</li>
+<li><strong>repeated</strong> fields (“<span class="math inline">\(\ast\)</span>”) can occur multiple times, order is important</li>
+<li><strong>optional</strong> fields (“<span class="math inline">\(?\)</span>”) might be missing</li>
+<li>fields without (“<span class="math inline">\(\ast\)</span>”) or (“<span class="math inline">\(?\)</span>”) are <strong>required</strong></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="formats-dremel-3" class="slide level2">
+<h2>Formats: Dremel</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Dremel nested records</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/dremel_records.png" height="500"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="formats-dremel-4" class="slide level2">
+<h2>Formats: Dremel</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Column-striped representation</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/dremel_columnar_representation.png" height="500"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="formats-dremel-5" class="slide level2">
+<h2>Formats: Dremel</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Path deltas</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/dremel_path_deltas.png"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="formats-dremel-6" class="slide level2">
+<h2>Formats: Dremel</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Tablets</strong></p>
+</div>
+<div class="callout-content">
+<p>A table is stored as a set of <strong>tablets</strong>.</p>
+<p>A tablet is a self-contained horizontal partition of the table. <img data-src="img/dremel_tablet.png"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="formats-dremel-7" class="slide level2">
+<h2>Formats: Dremel</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Record assembly</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>create a finite state machine (FSM) that reads the field values and levels for each field, and appends the values sequentially to the output records.</li>
+<li>An FSM state corresponds to a field reader for each selected field.</li>
+<li>State transitions are labeled with repetition levels.</li>
+<li>Once a reader fetches a value, we look at the next repetition level to decide what next reader to use.</li>
+<li>The FSM is traversed from the start to end state once for each record.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="formats-dremel-8" class="slide level2">
+<h2>Formats: Dremel</h2>
+
+<img data-src="img/dremel_record_assembly.png" class="r-stretch"></section>
+<section id="formats-dremel-9" class="slide level2">
+<h2>Formats: Dremel</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>2 fields example</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/dremel_automaton.png"></p>
+</div>
+</div>
+</div>
 
 
 </section></section>
@@ -805,7 +1340,7 @@ MSDE
 'autoAnimateUnmatched': true,
 'jumpToSlide': true,
 'menu': {"side":"left","useTextContentForMissingTitles":true,"markers":false,"loadIcons":false,"custom":[{"title":"Tools","icon":"<i class=\"fas fa-gear\"></i>","content":"<ul class=\"slide-menu-items\">\n<li class=\"slide-tool-item active\" data-item=\"0\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.fullscreen(event)\"><kbd>f</kbd> Fullscreen</a></li>\n<li class=\"slide-tool-item\" data-item=\"1\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.speakerMode(event)\"><kbd>s</kbd> Speaker View</a></li>\n<li class=\"slide-tool-item\" data-item=\"2\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.overview(event)\"><kbd>o</kbd> Slide Overview</a></li>\n<li class=\"slide-tool-item\" data-item=\"3\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.togglePdfExport(event)\"><kbd>e</kbd> PDF Export Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"4\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.toggleScrollView(event)\"><kbd>r</kbd> Scroll View Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"5\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.keyboardHelp(event)\"><kbd>?</kbd> Keyboard Help</a></li>\n</ul>"}],"openButton":true},
-'multiplex': {"url":"https://mplex.vitv.ly","secret":null,"id":"18b213ba2c7cc5acd818dca24858db1ed553ac99eccdabf344762632da85f6e8"},
+'multiplex': {"url":"https://mplex.vitv.ly","secret":"658f5ab7b763e84990d5e0e643775590","id":"18b213ba2c7cc5acd818dca24858db1ed553ac99eccdabf344762632da85f6e8"},
 'smaller': false,
  
         // Display controls in the bottom right corner
@@ -979,7 +1514,7 @@ MSDE
         plugins: [QuartoLineHighlight, PdfExport, RevealMenu, QuartoSupport,
 
           RevealMath,
-          
+          RevealNotes,
           RevealSearch,
           RevealZoom
         ]
