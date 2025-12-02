@@ -1,0 +1,1178 @@
+---
+title: "Storage formats"
+author: 
+  - name: MSDE
+    affiliation: Lviv University
+code-fold: false
+execute:
+  enabled: true
+  cache: true
+diagram:
+  cache: true
+  cache-dir: ./cache
+  engine:
+    tikz:
+      execpath: lualatex
+      additional-packages: |
+        \usetikzlibrary{arrows.meta}
+        \usetikzlibrary{positioning}
+        \usetikzlibrary{decorations.pathreplacing}
+filters:
+  - diagram
+format: 
+  revealjs:
+    css: custom.css
+    html-math-method:
+      method: mathjax
+      url: "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"
+    preview-links: auto
+    slide-number: true
+    theme: default
+    multiplex:
+      url: 'https://mplex.vitv.ly'
+      secret: '2e85520d4e6e17dba9a74db85ec919e5'
+      id: 'cd4eb18751f7d4f1379fbd81a65fef969a18c230fccbc5949ec5a1991777100e'
+---
+
+
+## Formats
+:::{.callout-tip icon=false}
+## Data representations
+Programs usually work with data in (at least) two different representations:
+
+- In memory, data is kept in objects, structs, lists, arrays, hash tables, trees, and so
+on. These data structures are optimized for efficient access and manipulation by
+the CPU (typically using pointers).
+- When you want to write data to a file or send it over the network, you have to
+encode it as some kind of self-contained sequence of bytes (for example, a JSON
+document).
+:::
+
+## Formats
+:::{.callout-tip icon=false}
+## Transition
+
+- **$\Rightarrow$** **encoding**, **serialization**, **marshalling**
+- **$\Leftarrow$** **decoding**, **deserialization**, **unmarshalling**
+:::
+
+## Formats
+:::{.callout-important icon=false}
+## Textual
+What's in common: **readability** and **verbosity**.
+
+- JSON
+- XML
+- CSV
+:::
+
+## Formats
+:::{.callout-important icon=false}
+## XML
+
+- no built-in way to differentiate numbers and strings
+- no binary string support
+- schema support
+:::
+
+![](img/xml_example)
+
+## Formats
+:::{.callout-tip icon=false}
+## CSV
+
+- no built-in way to differentiate numbers and strings
+- no schema support
+- needs escaping rules
+:::
+
+## Formats
+:::{.callout-tip icon=false}
+## JSON
+
+- no binary string support
+- no built-in way to differentiate numbers and strings
+- schema support
+
+```json
+{
+  "userName": "Martin",
+  "favoriteNumber": 1337,
+  "interests": ["daydreaming", "hacking"]
+}
+```
+:::
+
+## Formats
+:::{.callout-important icon=false}
+## Binary JSON: MessagePack
+![](img/messagepack){height=500}
+:::
+
+## Formats
+:::{.callout-important icon=false}
+## Binary JSON: MessagePack
+
+- The first byte, `0x83`, indicates that what follows is an object (top four bits = `0x80`)
+with three fields (bottom four bits = `0x03`) 
+- The second byte, `0xa8`, indicates that what follows is a string (top four bits =
+`0xa0`) that is eight bytes long (bottom four bits = `0x08`)
+- The next eight bytes are the field name `userName` in ASCII
+indicated previously, there’s no need for any marker to tell us where the string
+ends (or any escaping)
+- The next seven bytes encode the six-letter string value Martin with a prefix `0xa6`
+:::
+
+## Formats
+:::{.callout-important icon=false}
+## Binary JSON: MessagePack
+Schema not defined, so field names have to be included in the data.
+
+Result: 66 bytes (vs original 81)
+:::
+
+:::{.callout-tip icon=false}
+## Solution
+Use schemas!
+:::
+
+## Formats
+:::{.callout-note icon=false}
+## Thrift
+```protobuf
+struct Person {
+  1: required string userName,
+  2: optional i64 favoriteNumber,
+  3: optional list<string> interests
+}
+```
+:::
+
+:::{.callout-tip icon=false}
+## Protocol Buffers
+```protobuf
+message Person {
+  required string user_name = 1;
+  optional int64 favorite_number = 2;
+  repeated string interests = 3;
+}
+```
+:::
+
+## Formats
+:::{.callout-important icon=false}
+## Thrift BinaryProtocol: **59** bytes
+![](img/thrift_binary){height=500}
+:::
+
+## Formats
+:::{.callout-warning icon=false}
+## Thrift CompactProtocol: **34** bytes
+![](img/thrift_compact){height=500}
+:::
+
+
+## Formats
+:::{.callout-tip icon=false}
+## Protocol Buffers: **34** bytes
+![](img/protobuf){height=500}
+:::
+
+## Formats
+:::{.callout-important icon=false}
+## Thrift/Protobuf details
+    
+- **Schema evolution** is supported by incrementing tag numbers.
+
+- **Lists** not supported in Protobuf.
+
+- Thrift supports **nested lists**.
+:::
+
+
+## Formats
+:::{.callout-tip icon=false}
+## Binary vs textual
+
+- binary much more compact
+- explicit schema is a form of documentation
+- schemas allow for forward/backward compatibility
+- type checking at compile time
+:::
+
+# Google Dremel and Apache Parquet
+
+## Formats
+:::{.callout-note icon=false}
+## Dremel
+Column storage is easiest to understand in a relational data model,
+but it applies equally to nonrelational data. 
+
+For example, Parquet is a columnar storage format that supports a document data
+model, based on Google’s Dremel.
+:::
+
+::: aside
+Introduced in "Dremel: Interactive Analysis of Web-Scale Datasets. Communications of the ACM, 2011, 54(6)."
+:::
+
+## Formats
+![](img/dremel_pumpkin_tool)
+
+## Formats
+:::{.callout-important icon=false}
+## Dremel
+
+- read-only nested data. 
+- multilevel execution trees
+- columnar data layout
+:::
+
+:::{.callout-tip icon=false}
+## Dremel scaling
+
+- runs aggregation queries over trillion-row tables in
+seconds. 
+- thousands of CPUs and petabytes of data
+:::
+
+## Formats: Dremel
+:::{.callout-tip icon=false}
+## Why nested data support?
+
+- data used in Web and scientific computing are often
+non-relational. 
+
+- Data structures used in programming languages, messages exchanged by distributed systems, structured documents, etc., are often nested
+<!-- as well a nested representation. --> 
+:::  
+
+## Formats: Dremel
+:::{.callout-important icon=false}
+## Record-wise vs columnar
+![](img/dremel_nested_data)
+:::
+
+## Formats: Dremel
+:::{.callout-tip icon=false}
+## Dremel data model
+$$
+\tau = \textbf{dom} | \langle A_1: \tau[\ast|?], \dots, A_n: \tau[\ast|?] \rangle
+$$
+
+- $\tau$ is either **atomic** type or **record** type
+- $\textbf{dom}$ includes atomic types: integers, floats, strings, etc.
+- **repeated** fields ("$\ast$") can occur multiple times, order is important
+- **optional** fields ("$?$") might be missing
+- fields without ("$\ast$") or ("$?$") are **required**
+::: 
+
+## Formats: Dremel
+:::{.callout-tip icon=false}
+## Dremel nested records
+![](img/dremel_records){height=500}
+:::
+
+## Formats: Dremel
+:::{.callout-important icon=false}
+## Column-striped representation
+![](img/dremel_columnar_representation){height=500}
+:::
+
+## Formats: Dremel
+:::{.callout-tip icon=false}
+## Path deltas
+![](img/dremel_path_deltas)
+:::
+
+## Formats: Dremel
+:::{.callout-note icon=false}
+## Tablets
+A table is stored as a set of **tablets**. 
+
+A tablet is a self-contained horizontal partition of the table.
+![](img/dremel_tablet)
+:::
+
+## Formats: Dremel
+:::{.callout-important icon=false}
+## Record assembly
+
+- create a finite state machine (FSM) that reads the field values and
+levels for each field, and appends the values sequentially
+to the output records. 
+- An FSM state corresponds to a field
+reader for each selected field. 
+- State transitions are labeled
+with repetition levels. 
+- Once a reader fetches a value, we
+look at the next repetition level to decide what next reader
+to use. 
+- The FSM is traversed from the start to end state once for each record.
+:::
+
+## Formats: Dremel
+![](img/dremel_record_assembly)
+
+## Formats: Dremel
+:::{.callout-tip icon=false}
+## 2 fields example
+![](img/dremel_automaton)
+:::
+
+## Dremel aftermath
+:::{.callout-tip icon=false}
+## Dremel main ideas
+
+- SQL for querying/retrieval of data
+- separated compute and storage (elasticity)
+- in situ analysis
+- serverless computing
+- columnar storage
+:::
+
+## Dremel aftermath
+:::{.callout-tip icon=false}
+## Dremel SQL
+
+- First-class support of nested data (because of Protobuf usage)
+- therefore, hierarchical schemas
+- ability to interactively and \textbf{declaratively} analyze huge datasets
+- merged with other dialects at Google into GoogleSQL
+- support for joins and other analytic queries added later
+:::
+
+## Dremel aftermath
+:::{.callout-tip icon=false}
+## Separated compute and storage
+
+- Started running on a few hundred shared-nothing server
+- moved to Borg (managed system, precursor to Kubernetes)
+- replicated storage (each table stored on 3 separate disks)
+- later on, move to disaggregated storage (akin to GFS)
+- disaggregated memory shuffling
+:::
+
+## Dremel aftermath
+![](img/dremel_memory_shuffle)
+
+## Dremel aftermath
+:::{.callout-tip icon=false}
+## In-situ analysis
+
+- accessing data in its original place
+- without upfront data loading and transformation steps
+- enabled by "open-sourcing" the Dremel format for use by other tools
+:::
+
+:::{.callout-important icon=false}
+## Drawback
+Needs complementary managed storage.
+:::
+
+## Dremel aftermath
+:::{.callout-tip icon=false}
+## Tree architecture
+Forms a massively parallel distributed tree for pushing down
+a query to the tree and then aggregating the results from the leaves.
+:::
+
+![](img/dremel_execution_tree1)
+
+## Dremel aftermath
+:::{.callout-tip icon=false}
+## Query execution
+![](img/dremel_execution_tree2)
+:::
+
+## Dremel aftermath
+:::{.callout-tip icon=false}
+## Query execution
+- read, filter, partially pre-aggregate, shuffle
+- final GROUP BY, sort, truncate
+- final ordering and truncation
+- query coordinator reads final 100 records
+
+:::
+
+## Dremel aftermath
+:::{.callout-tip icon=false}
+## Serverless computing
+
+- centralized scheduling, superseding dispatcher
+- shuffle persistence layer
+- flexible execution DAGs
+- dynamic query execution
+:::
+
+## Dremel aftermath
+:::{.callout-tip icon=false}
+## Google BigQuery
+A fully managed, AI-ready data analytics platform that helps you manage and analyze your data with built-in features like machine learning, search, geospatial analysis, and business intelligence.
+
+In other words, an external implementation of Dremel.
+:::
+![](img/bigquery_logo)
+
+## Dremel aftermath
+![](img/bq-architecture)
+
+# Apache Parquet
+
+## Formats: Parquet
+:::{.callout-tip icon=false}
+## Parquet at Twitter
+Parquet stores nested data structures in a flat columnar format using a technique outlined in the Dremel paper from Google. 
+
+> Using Parquet at Twitter, we experienced a reduction in size by one third on our large datasets. Scan times were also reduced to a fraction of the original in the common case of needing only a subset of the columns.
+
+:::
+
+![](img/parquet_logo)
+
+## Formats: Parquet
+![](img/parquet_row_layout)
+
+![](img/parquet_column_layout)
+
+:::{.callout-tip icon=false}
+## Columnar storage advantages
+
+- **better compression** (data is more homogenous)
+- **reduced I/O** will be reduced 
+      <!-- %as we can efficiently scan only a subset of the columns while reading the data. Better compression also reduces the bandwidth required to read the input. -->
+- **better encodings** suitable for vectorization
+:::
+
+## Formats: Parquet
+:::{.callout-tip icon=false}
+## Schema
+
+- nesting represented using **groups** of fields 
+- repetition represented using **repeated** fields. 
+- field **attributes**
+  - repetition
+  - type
+  - name
+- **repetition** types
+  - required: exactly one occurrence
+  - optional: 0 or 1 occurrence
+  - repeated: 0 or more occurrences
+:::
+
+## Formats: Parquet
+:::{.callout-tip icon=false}
+## Schema example
+```protobuf
+message AddressBook {
+  required string owner;
+  repeated string ownerPhoneNumbers;
+  repeated group contacts {
+    required string name;
+    optional string phoneNumber;
+  }
+}
+```
+:::
+
+## Formats: Parquet
+:::{.callout-tip icon=false}
+## List Schema
+```protobuf
+message ExampleList {
+  repeated string list;
+}
+```
+:::
+
+:::{.callout-note icon=false}
+## List Data
+```protobuf
+{
+  list: "a",
+  list: "b",
+  list: "c",
+  ...
+}
+```
+:::
+
+## Formats: Parquet
+:::{.callout-tip icon=false}
+## Map Schema
+```protobuf
+message ExampleMap {
+  repeated group map { 
+    required string key;
+    optional string value;
+  }
+}
+```
+:::
+    
+:::{.callout-note icon=false}
+## Map Data
+```protobuf
+{
+  map: {
+    key: "AL",
+    value: "Alabama"},
+  map: {
+    key: "AK",
+    value: "Alaska" },
+}
+```
+:::
+
+## Formats: Parquet
+![](img/parquet_nested_example){height=300}
+
+![](img/parquet_nested_columns){height=300}
+
+
+## Formats: Parquet
+:::{.callout-tip icon=false}
+## Definition level
+Level for which the field is null.
+
+When a field is defined then all its parents are defined too, but when it is null we need to record the level at which it started being null to be able to reconstruct the record.
+
+```protobuf
+message ExampleDefinitionLevel {
+  optional group a {
+    optional group b {
+      optional string c;
+    }
+  }
+}
+```
+:::
+
+## Formats: Parquet
+![](img/parquet_definition_level)
+
+## Formats: Parquet
+:::{.callout-tip icon=false}
+## Repetition level
+The level at which we have to create a new list for the current value. 
+    <!-- %In other words, the repetition level can be seen as a marker of when to start a new list and at which level. -->
+
+Only levels that are repeated need a Repetition level: optional or required fields are never repeated 
+```protobuf
+message nestedLists {
+  repeated group level1 {
+    repeated string level2;
+  }
+}
+```
+:::
+
+## Formats: Parquet
+![](img/parquet_repetition_level)
+
+## Formats: Parquet
+![](img/parquet_addressbook_levels)
+
+## Formats: Parquet
+```
+AddressBook {
+  owner: "John Smith",
+  contacts: {
+    name: "Edward Miller",
+    phoneNumber: "555 987 6543"
+  }
+  contacts: {
+    name: "Arthur Clarke"
+  }
+}
+AddressBook {
+  owner: "Random Guy"
+}
+```
+
+## Formats: Parquet
+![](img/parquet_addressbook_example)
+
+# Log-Structured Tables
+
+## LSTs
+:::{.callout-tip icon=false}
+## Examples
+
+- Delta Lake
+- Apache Hudi
+- Apache Iceberg
+:::
+
+:::{.callout-note icon=false}
+## Features
+
+- transactions
+- time travel
+- schema evolution
+:::
+
+## LSTs
+:::{.callout-tip icon=false}
+## Why?
+Analytical workloads require frequent incremental updates to structured data.
+:::
+
+:::{.callout-note icon=false}
+## How to solve?
+
+- add a metadata layer on top of immutable columnar files
+- relegate object store management to a third party (e.g. S3 or MinIO)
+- multi-version concurrency control
+:::
+
+## LSTs
+:::{.callout-tip icon=false}
+## Metadata
+
+- stored within file structure of the table
+- commit log of additions/deletions/etc.
+- Copy-on-Write for read-heave scenarios
+- Merge-on-Read for write-heavy scenarios
+:::
+
+## LSTs
+![](img/deltalake_update)
+
+# Example architecture: Apache Iceberg
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Iceberg architecture
+
+- data layer: HDFS, S3, MinIO, etc.
+- datafile formats: Parquet, ORC, Avro
+- compute: Apache Spark, Apache Flink, Apache Hive, Presto, Trino, Dremio
+:::
+<!--
+% \begin{frame}{Iceberg}
+%   Apache Iceberg is one of the leading open formats for
+% updatable Parquet-based tables, which are emerging as the
+% new data storage standard for analytics. Historically,
+% relational databases have stored data row-by-row, packed
+% into physical pages for efficient I/O. Columnar table
+% formats, however, have proven far more efficient for query-
+% intensive workloads. Data lakes began by supporting
+% queries over columnar formats such as Parquet, but of
+% course, transactional updates must also be supported
+% efficiently to address traditional warehouse scenarios.
+% Iceberg is emerging as a popular choice of table format
+% supporting scenarios that require query-intensive
+% workloads mixed with updates, and bulk ingests.
+% \end{frame}
+-->
+
+## Iceberg
+![](img/analytical_workload_components)
+  
+## Iceberg
+:::{.callout-tip icon=false}
+## File format
+
+- Structured (CSV)
+- Semi-structured (JSON)
+- Unstructured (text files, media)
+:::
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Table format
+    
+The table format acts like
+a metadata layer on top of the file format and is responsible
+for specifying how the datafiles should be laid out in
+storage.
+:::
+
+:::{.callout-note icon=false}
+## Goals
+
+- abstract the complexity of the physical data structure 
+- facilitate Data Manipulation Language (DML)
+operations (e.g., doing inserts, updates, and deletes) and
+changing a table’s schema.
+- add atomicity and consistency guarantees
+:::
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Storage engine
+The storage engine is the system responsible for actually
+doing the work of laying out the data in the form specified
+by the table format and keeping all the files and data
+structures up-to-date with the new data. 
+
+Storage engines also handle
+
+- physical optimization of the data
+- index maintenance
+- getting rid of old data
+:::
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Catalog
+
+- The catalog is the central location where compute engines
+and users can go to find out about the existence of a table,
+as well as additional information such as the table name,
+table schema, and where the table data is stored on the
+storage system. 
+- Some catalogs are internal to a system and
+can only be directly interacted with via that system’s
+engine; examples of these catalogs include Postgres and
+Snowflake.
+- Other catalogs, such as Hive and Project
+Nessie, are open for any system to use.
+:::  
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Compute engine
+Compute engine runs user workloads to process the data.
+
+There can be multiple engines.
+
+Massively parallel processing (MPP) engines:
+
+- Apache Spark
+- Snowflake
+- Dremio.
+:::
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Data warehouse
+![](img/iceberg_data_warehouse){height=500}
+:::
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Warehouse features
+
+|Pros|Cons|
+|---|---|
+|Single source of truth | Vendor-specific|
+|Fast analytical workloads | Expensive|
+|Organizes data layout | Not good for ML|
+|Single source of truth | Vendor-specific|
+|Ensures data schemas | Mainly supports structured data|
+
+:::
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Data lake history
+
+- Data on Apache Hadoop + MapReduce
+- Apache Hive: convert SQL to MapReduce, tables as dirs/files
+- Object storage, SQL engines, using Hive as table format
+:::
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Data lake
+![](img/iceberg_data_lake){height=500}
+:::
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Data lake features
+
+|Pros|Cons|
+|---|---|
+|Cost | Performance|
+|Open formats | Lots of config|
+|Unstructured data support | No ACID support|
+|Supports ML workloads ||
+
+:::
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Data lakehouse
+![](img/iceberg_data_lakehouse){height=500}
+:::
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Table Format
+A table format is a method of structuring a dataset’s files to
+present them as a unified table.
+
+From the user’s perspective, it can be defined as the answer to the question
+**"what data is in this table?**
+:::
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Apache Hive
+
+- Tables as directories
+- Partitions as subdirectories
+- Hive Metastore tracks the paths
+:::
+![](img/hive_table_format)
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Hive features
+
+|Pros|Cons|
+|---|---|
+|Efficient query patterns | File/dir listings are slow |
+|File format agnostic | Partitions not always advantageous|
+|Hive Metastore atomic swaps| Dir swaps needed for single files|
+| | Stale table statistics|
+| | Concurrency issues|
+
+:::
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Iceberg, Delta Lake table formats
+Table defined by **files**, not **directories**.
+
+A standard of how metadata defining a data lakehouse table should be written across several files.
+
+- Enable ACID
+- Safe concurrent writes
+- Better table statistics
+:::
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Original Goals (Netflix)
+
+
+- Consistency: updates across multiple partitions should be quick and atomic
+- Performance: avoid excessive file listings
+- Ease of use: no need to be aware of physical dir/file layout
+- Evolvability: no need for full table rewrites
+- Scalability: Netflix scale
+:::
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Iceberg features
+
+- ACID transactions: **optimistic concurrency control**
+- Partion evolution, enabled by metadata files
+- Hidden partitioning: physical (column) + optional transform
+- Row-level ops: Copy-On-Write and Merge-On-Read
+- Time travel, version rollback
+:::
+
+## Iceberg
+![](img/iceberg_partition_evolution)
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Iceberg architecture (metadata tree)
+![](img/iceberg_arch){height=500}
+
+:::
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Metadata tree components
+
+- **Manifest file**
+A list of datafiles (paths and metadata)
+- **Manifest list**
+Files that define a single snapshot of the table as a list of
+manifest files along with stats 
+- **Metadata file**
+Files that define a table’s structure, including its schema,
+partitioning scheme, and a listing of snapshots.
+- **Catalog**
+Contains a mapping of table name -> location
+of the table’s most recent metadata file.
+:::
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Datafiles
+
+- Include **delete files**.
+- Involved in providing data to user queries.
+- Makes up the leaves of the tree structure for Iceberg table.
+- Include basic statistics
+- Parquet, Avro, ORC
+:::
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Parquet architecture
+![](img/parquet_arch){height=500}
+:::
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Parquet architecture
+![](img/iceberg_file_layout){height=500}
+:::
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Types of delete files
+Delete files denote what rows have been logically deleted:
+
+- **Positional delete files**: by specifying the file path of
+the specific file that contains the row and the row number
+- **Equality delete files:** by identifying the row by the values
+of one or more of the fields for the row. 
+:::
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Positional delete files
+![](img/iceberg_positional_delete_files)
+:::
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Equality delete files
+![](img/iceberg_equality_delete_files)
+:::
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Iceberg metadata
+A tree structure consisting of three components:
+
+- manifest files
+- manifest lists
+- metadata files
+:::
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Iceberg manifest files
+Manifest files keep track of files in the data layer (i.e.,
+datafiles and delete files) as well as additional details and
+statistics about each file, such as the minimum and
+maximum values for a datafile’s columns. 
+
+Each manifest file keeps track of a subset of the datafiles.
+
+- stored in Avro format
+- lower/upper column bounds
+- record counts
+- partition membership
+:::
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Avro architecture
+```
+record Person {
+  string userName;
+  union { null, long } favoriteNumber = null;
+  array<string> interests;
+}
+```
+:::
+![](img/avro_schemas)
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Avro encoding
+![](img/avro_encoding)
+:::
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Iceberg manifest lists
+A manifest list is a snapshot of an Iceberg table at a given
+point in time. It contains:
+
+- list of all the manifest files
+- locations, partitions, lower/upper bounds for partition columns of tracked datafiles
+- array of structs, with each struct keeping track of a single manifest file.
+- stored in Avro format
+:::
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Iceberg metadata files
+Track manifest lists.
+
+Store metadata about an Iceberg
+table at a certain point in time
+
+Contain:
+
+- table schema
+- partition information
+  - snapshots, and a pointer to the current one
+  - created every time a change is made to the Iceberg table
+  - registered atomically via the catalog
+:::
+
+## Iceberg
+:::: {.columns}
+
+::: {.column width="60%"}
+
+:::{.callout-tip icon=false}
+## Puffin files
+
+- store statistics and indexes about the data in the table 
+- in addition to stats already in datafile and metadata
+- contain sets of blobs and associated metadata
+- currently support Theta sketches
+- potentially support any index structures (e.g. Bloom filters)
+:::
+
+:::
+
+::: {.column width="40%"}
+![](img/iceberg_puffin_files){height=500}
+:::
+::::
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Theta sketches
+Enable more efficient computing of approximate number of distinct values of a column for a
+given set of rows.
+:::
+![](img/theta_sketch)
+
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Iceberg catalog
+Stores the current location of the current metadata pointer.
+
+Must provide atomic guarantees.
+
+
+- Amazon S3
+- Hive Metastore
+- Project Nessie
+- AWS Glue
+- RDBMS
+- REST
+:::
+
+## Iceberg
+![](img/iceberg_query_path)
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Query path
+
+- Parsing
+- Consult the catalog
+- Write the datafiles/metadata files
+- Update catalog file 
+:::
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Iceberg write query
+![](img/iceberg_write)
+:::
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Iceberg create query
+![](img/iceberg_after_create){height=500}
+:::
+
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Iceberg after insert
+![](img/iceberg_insert){height=500}
+:::
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Iceberg after merge
+![](img/iceberg_merge){height=500}
+:::
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Iceberg after read
+![](img/iceberg_read){height=500}
+:::
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Iceberg after time travel
+![](img/iceberg_time_travel){height=500}
+:::
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Optimizations: compaction
+Types:
+
+- binpack
+- sort
+- z-order
+
+```
+CALL catalog_name.system.rewrite_data_files(
+  table => 'db.sample', 
+  strategy => 'sort', 
+  sort_order => 'id DESC NULLS LAST,name ASC NULLS FIRST');
+```
+:::
+
+
+## Iceberg
+![](img/z_order_compaction)
+
+## Iceberg
+:::{.callout-tip icon=false}
+## z-order compaction
+```
+CALL catalog.system.rewrite_data_files(
+  table => 'people' ,
+  strategy => 'sort' ,
+  sort_order => 'zorder(age,height)'
+)
+```
+![](img/z_order_compaction2){height=300}
+:::
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Optimizations: partitioning
+Partitioning: write records with distinct values of the target field into their own datafiles.
+:::
+![](img/iceberg_partitioning)
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Optimizations: row-level updates
+
+| Type | Reads | Writes |
+|---|---|---|
+| Copy-on-Write | Fastest | Slowest |
+| Merge-on-Read (positional) | Fast | Fast |
+| Merge-on-Read (equality) | Slow | Fastest |
+
+:::
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Copy-on-Write
+![](img/iceberg_copy_on_write)
+:::
+
+## Iceberg
+:::{.callout-tip icon=false}
+## Merge-on-Read
+![](img/iceberg_merge_on_read)
+:::
