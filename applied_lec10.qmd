@@ -1,0 +1,401 @@
+---
+title: "Dask and Kubernetes"
+author: 
+  - name: MSDE
+    affiliation: Lviv University
+code-fold: false
+execute:
+  enabled: false
+  cache: true
+diagram:
+  cache: true
+  cache-dir: ./cache
+  engine:
+    tikz:
+      execpath: lualatex
+      additional-packages: |
+        \usetikzlibrary{arrows.meta}
+        \usetikzlibrary{positioning}
+        \usetikzlibrary{decorations.pathreplacing}
+filters:
+  - diagram
+title-slide-attributes:
+  data-background-image: img/k8s_logo.svg
+  data-background-size: contain
+  data-background-opacity: "0.3"
+format: 
+  revealjs:
+    css: ./custom.css
+    preview-links: auto
+    slide-number: true
+    theme: default
+    multiplex:
+      url: 'https://mplex.vitv.ly'
+      secret: 'dd4f9d02137bd6ce7c02db145defff86'
+      id: '1f05e072789a50ec5bcda4b59f4d9095e1e484c0539ff7105e6974271c52a424'
+---
+
+## Create cluster
+:::{.callout-tip icon=false}
+## EKS cluster
+```
+eksctl create cluster
+```
+:::
+
+## Contexts
+
+:::{.callout-warning}
+## Without minikube
+```
+kubectl config get-contexts
+CURRENT   NAME                                                                   CLUSTER                                               AUTHINFO                                                               NAMESPACE
+*         iam-root-account@attractive-sculpture-1765189350.us-east-1.eksctl.io   attractive-sculpture-1765189350.us-east-1.eksctl.io   iam-root-account@attractive-sculpture-1765189350.us-east-1.eksctl.io
+```
+:::
+
+:::{.callout-note icon=false}
+## With minikube
+```
+kubectl config get-contexts
+CURRENT   NAME                                                                   CLUSTER                                               AUTHINFO                                                               NAMESPACE
+          iam-root-account@attractive-sculpture-1765189350.us-east-1.eksctl.io   attractive-sculpture-1765189350.us-east-1.eksctl.io   iam-root-account@attractive-sculpture-1765189350.us-east-1.eksctl.io
+*         minikube                                                               minikube                                              minikube                                                               default
+```
+:::
+
+## Contexts
+:::{.callout-tip icon=false}
+## Solution
+
+1. `minikube stop`
+
+**OR**
+
+2. `kubectl config use-context iam-root-account@attractive-sculpture-1765189350.us-east-1.eksctl.io`
+:::
+
+:::{.callout-tip icon=false}
+## Result
+```
+$ kubectl config current-context
+iam-root-account@attractive-sculpture-1765189350.us-east-1.eksctl.io
+```
+:::
+
+## Namespace
+:::{.callout-tip icon=false}
+## Create namespace
+```
+kubectl config set-context --current --namespace default
+```
+:::
+
+## Verify deployment
+:::{.callout-tip icon=false}
+## Nodes
+```
+kubectl get nodes
+```
+
+Should see something like:
+```
+NAME                             STATUS   ROLES    AGE    VERSION
+ip-192-168-22-25.ec2.internal    Ready    <none>   104s   v1.32.9-eks-ecaa3a6
+ip-192-168-36-222.ec2.internal   Ready    <none>   104s   v1.32.9-eks-ecaa3a6
+```
+:::
+
+## Install Dask Helm charts
+
+:::{.callout-tip icon=false}
+## Helm repo
+
+Located at <https://github.com/dask/helm-chart>
+
+```
+helm repo add dask https://helm.dask.org/
+helm repo update
+helm install dask1 dask/dask
+```
+:::
+
+## Helm Install result {.scrollable .font8}
+:::{.callout-tip icon=false}
+## Result
+```
+level=WARN msg="unable to find exact version; falling back to closest available version" chart=dask requested="" selected=2024.1.1
+NAME: dask1
+LAST DEPLOYED: Mon Dec  8 12:38:26 2025
+NAMESPACE: default
+STATUS: deployed
+REVISION: 1
+DESCRIPTION: Install complete
+TEST SUITE: None
+NOTES:
+Thank you for installing DASK, released at name: dask1.
+
+To learn more about the release, try:
+
+  $ helm status dask1  # information about running pods and this message
+  $ helm get all dask1     # get full Kubernetes specification
+
+This release includes a Dask scheduler, 3 Dask workers, and  Jupyter servers.
+
+The Jupyter notebook server and Dask scheduler expose external services to
+which you can connect to manage notebooks, or connect directly to the Dask
+cluster. You can get these addresses by running the following:
+
+  export DASK_SCHEDULER="127.0.0.1"
+  export DASK_SCHEDULER_UI_IP="127.0.0.1"
+  export DASK_SCHEDULER_PORT=8080
+  export DASK_SCHEDULER_UI_PORT=8081
+  kubectl port-forward --namespace default svc/dask1-scheduler $DASK_SCHEDULER_PORT:8786 &
+  kubectl port-forward --namespace default svc/dask1-scheduler $DASK_SCHEDULER_UI_PORT:80 &
+
+  export JUPYTER_NOTEBOOK_IP="127.0.0.1"
+  export JUPYTER_NOTEBOOK_PORT=8082
+  kubectl port-forward --namespace default svc/dask1-jupyter $JUPYTER_NOTEBOOK_PORT:80 &
+
+  echo tcp://$DASK_SCHEDULER:$DASK_SCHEDULER_PORT               -- Dask Client connection
+  echo http://$DASK_SCHEDULER_UI_IP:$DASK_SCHEDULER_UI_PORT     -- Dask dashboard
+  echo http://$JUPYTER_NOTEBOOK_IP:$JUPYTER_NOTEBOOK_PORT       -- Jupyter notebook
+
+NOTE: It may take a few minutes for the LoadBalancer IP to be available. Until then, the commands above will not work for the LoadBalancer service type.
+You can watch the status by running 'kubectl get svc --namespace default -w dask1-scheduler'
+
+NOTE: It may take a few minutes for the URLs above to be available if any EXTRA_PIP_PACKAGES or EXTRA_CONDA_PACKAGES were specified,
+because they are installed before their respective services start.
+
+NOTE: The default password to login to the notebook server is `dask`. To change this password, refer to the Jupyter password section in values.yaml, or in the README.md.
+```
+:::
+
+## Check deployment
+:::{.callout-tip icon=false}
+## Pods
+```
+$ kubectl get pods
+NAME                               READY   STATUS    RESTARTS   AGE
+dask1-jupyter-7567df5969-g227q     1/1     Running   0          4m20s
+dask1-scheduler-6fd56ddfb7-fk4pv   1/1     Running   0          4m20s
+dask1-worker-b646fd946-bq5r6       1/1     Running   0          4m20s
+dask1-worker-b646fd946-cnpm4       1/1     Running   0          4m20s
+dask1-worker-b646fd946-t2xcw       1/1     Running   0          4m20s
+```
+:::
+
+## Check running services
+:::{.callout-tip icon=false}
+## Services
+```
+$ kubectl get svc
+NAME              TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)           AGE
+dask1-jupyter     ClusterIP   10.100.109.232   <none>        80/TCP            5m8s
+dask1-scheduler   ClusterIP   10.100.200.215   <none>        8786/TCP,80/TCP   5m8s
+kubernetes        ClusterIP   10.100.0.1       <none>        443/TCP           14m
+```
+:::
+
+:::{.callout-warning}
+## Important
+No **EXTERNAL-IP**! We need to expose via LoadBalancer.
+:::
+
+## Adding LoadBalancer
+
+:::{.callout-tip icon=false}
+## Edit YAML config
+```
+kubectl edit service dask1-scheduler
+```
+Change to `type: LoadBalancer`.
+:::
+
+## Check edits
+:::{.callout-warning icon=false}
+## Check
+```
+$ kubectl get svc
+```
+:::
+
+:::{.callout-tip icon=false}
+## Result
+```
+NAME              TYPE           CLUSTER-IP       EXTERNAL-IP                                                               PORT(S)                       AGE
+dask1-jupyter     ClusterIP      10.100.109.232   <none>                                                                    80/TCP                        8m30s
+dask1-scheduler   LoadBalancer   10.100.200.215   ae365bd92a488425495594710ec03626-1011221649.us-east-1.elb.amazonaws.com   8786:30661/TCP,80:31846/TCP   8m30s
+kubernetes        ClusterIP      10.100.0.1       <none>                                                                    443/TCP                       17m
+```
+:::
+
+## Try to access Jupyter
+:::{.callout-tip icon=false}
+## Port forwarding
+```
+kubectl port-forward svc/dask1-jupyter 8890:80
+```
+:::
+
+## From local
+:::{.callout-tip icon=false}
+## Local Jupyter
+Using the `EXTERNAL-IP` values from the output of `kubectl get svc`:
+```
+from dask.distributed import Client
+addr = "tcp://ae365bd92a488425495594710ec03626-1011221649.us-east-1.elb.amazonaws.com:8786"
+client = Client(addr)
+client
+```
+
+Error!
+:::
+
+## From local
+:::{.callout-tip icon=false}
+## Why?
+Version mismatch.
+
+1. **On Kubernetes**:
+```
+$ kubectl exec deploy/dask1-scheduler -- python -c "import dask, distributed; print('Cluster:', dask.__version__, distributed.__version__)"
+
+Cluster: 2024.1.0 2024.1.0
+```
+
+2. **Local version**:
+```
+$ uv run python -c "import dask, distributed; print('Cluster:', dask.__version__, distributed.__version__)"
+
+Cluster: 2025.9.1 2025.9.1
+```
+:::
+
+
+
+## From local
+:::{.callout-tip icon=false}
+## Solution
+Create `values.yaml`:
+```
+scheduler:
+  spec:
+    type: LoadBalancer
+  image:
+    repository: ghcr.io/dask/dask
+    tag: 2025.9.1 # or your preferred version
+
+worker:
+  image:
+    repository: ghcr.io/dask/dask
+    tag: 2025.9.1
+
+jupyter:
+  image:
+    repository: ghcr.io/dask/dask-notebook
+    tag: 2025.9.1
+```
+:::
+
+## From local
+:::{.callout-tip icon=false}
+## Solution
+
+1. Delete scheduler service (it was edited before when setting LoadBalancer service type):
+```
+kubectl delete svc dask1-scheduler
+```
+2. Then upgrade deployment:
+```
+helm upgrade dask1 dask/dask -f values.yaml
+
+```
+3. **(OPTIONAL, if no EXTERNAL-IP)** Edit again and change `type` to `LoadBalancer.`
+```
+kubectl edit service dask1-scheduler
+```
+:::
+
+## From local
+
+:::{.callout-tip icon=false}
+## Check versions now
+```
+kubectl exec deploy/dask1-scheduler -- python -c "import dask, distributed; print('Cluster:', dask.__version__, distributed.__version__)"
+
+Cluster: 2025.9.1 2025.9.1
+```
+Now local jupyter should work using your new EXTERNAL-IP!
+:::
+
+## From local
+
+:::{.callout-tip icon=false}
+## Dashboard
+Dashboard link is not working!
+
+It's because:
+```
+kubectl get svc dask1-scheduler -o yaml
+```
+gives
+```
+  ports:
+  - name: dask1-scheduler
+    nodePort: 32728
+    port: 8786
+    protocol: TCP
+    targetPort: 8786
+  - name: dask1-webui
+    nodePort: 32453
+    port: 80
+    protocol: TCP
+    targetPort: 8787
+```
+So we should use port 80.
+:::
+
+## From local
+
+:::{.callout-tip icon=false}
+## Test code
+```
+import dask.array as da
+
+# 10,000 x 10,000 random array
+x = da.random.random((10000, 10000), chunks=(500, 500))
+
+result = (x + x.T).mean().compute()
+print(result)
+```
+:::
+
+## Scaling
+:::{.callout-tip icon=false}
+## Current 
+```
+$ kubectl get deployment
+NAME              READY   UP-TO-DATE   AVAILABLE   AGE
+dask1-jupyter     1/1     1            1           50m
+dask1-scheduler   1/1     1            1           50m
+dask1-worker      3/3     3            3           50m
+```
+We can scale to e.g. 5:
+```
+kubectl scale deployment dask1-worker --replicas=5
+```
+:::
+
+## Shutdown
+:::{.callout-tip icon=false}
+## Steps
+1. Delete chart
+```
+helm uninstall dask1
+```
+2. Delete cluster (use output of `eksctl get cluster`)
+```
+eksctl delete cluster attractive-sculpture-1765189350
+```
+:::

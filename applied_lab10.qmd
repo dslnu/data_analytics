@@ -1,0 +1,51 @@
+---
+title: "Applied Analytics: Lab 6"
+execute:
+  enabled: true
+  echo: true
+  cache: true
+format:
+  html:
+    code-fold: false
+jupyter: python3
+diagram:
+  cache: true
+  cache-dir: ./cache
+  engine:
+    tikz:
+      execpath: lualatex
+filters:
+  - diagram
+---
+
+# Data
+We will use the data from <https://registry.opendata.aws/aws-public-blockchain/>.
+
+Data structure is here: <https://github.com/aws-solutions-library-samples/guidance-for-digital-assets-on-aws/blob/main/analytics/consumer/schema/btc.md>.
+
+Additional libraries needed:
+
+```
+uv add yfinance
+uv add s3fs
+```
+
+We will use Dask running on EKS cluster to do some calculations with historical Bitcoin data.
+
+As Bitcoin data on AWS do not contain USD prices, we will use `yfinance` library (<https://github.com/ranaroussi/yfinance>) with the `BTC-USD` ticker to fetch prices.
+
+Dask read example:
+
+```python
+df = dd.read_parquet(
+    s3_path,
+    storage_options={"anon": True},
+    columns=["..."]
+)
+```
+Note that `s3_path` can contain asterisk - this will read in multiple Parquet files.
+
+# Exercises
+
+1. Setup AWS EKS cluster as a backend for Dask.
+2. Compute average fee, average/total transaction amount in BTC and USD for each day of some year. 
