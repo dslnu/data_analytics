@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Applied Data Analytics – Big Data analytics / Applied Data analytics</title>
+<title>Applied Analytics: Lab 6 – Big Data analytics / Applied Data analytics</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -19,6 +19,41 @@ ul.task-list li input[type="checkbox"] {
   width: 0.8em;
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 </style>
 
@@ -99,7 +134,7 @@ ul.task-list li input[type="checkbox"] {
 <span class="menu-text">Big Data analytics</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link active" href="./applied.html" aria-current="page"> 
+    <a class="nav-link" href="./applied.html"> 
 <span class="menu-text">Applied Data analytics</span></a>
   </li>  
   <li class="nav-item">
@@ -122,9 +157,8 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#overview" id="toc-overview" class="nav-link active" data-scroll-target="#overview">Overview</a></li>
-  <li><a href="#lectures" id="toc-lectures" class="nav-link" data-scroll-target="#lectures">Lectures</a></li>
-  <li><a href="#labs" id="toc-labs" class="nav-link" data-scroll-target="#labs">Labs</a></li>
+  <li><a href="#data" id="toc-data" class="nav-link active" data-scroll-target="#data">Data</a></li>
+  <li><a href="#exercises" id="toc-exercises" class="nav-link" data-scroll-target="#exercises">Exercises</a></li>
   </ul>
 </nav>
     </div>
@@ -133,7 +167,7 @@ ul.task-list li input[type="checkbox"] {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Applied Data Analytics</h1>
+<h1 class="title">Applied Analytics: Lab 6</h1>
 </div>
 
 
@@ -150,48 +184,29 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<section id="overview" class="level2">
-<h2 class="anchored" data-anchor-id="overview">Overview</h2>
-<p>Course will cover the following:</p>
-<ul>
-<li>data fetching/preprocessing</li>
-<li>specialized data types:
-<ul>
-<li>geospatial</li>
-<li>financial</li>
-<li>supply chain management</li>
-<li>more</li>
-</ul></li>
-<li>visualization/presentation (e.g.&nbsp;Gradio)</li>
-<li>LLM toolkits (LangChain/LangFlow)</li>
-<li>ML Pipelines (MLFlow/KubeFlow/AirFlow/Prefect/Metaflow)</li>
-<li>MLOps</li>
-<li>Amazon Web Services</li>
-<li>Docker</li>
-</ul>
+<section id="data" class="level1">
+<h1>Data</h1>
+<p>We will use the data from <a href="https://registry.opendata.aws/aws-public-blockchain/" class="uri">https://registry.opendata.aws/aws-public-blockchain/</a>.</p>
+<p>Data structure is here: <a href="https://github.com/aws-solutions-library-samples/guidance-for-digital-assets-on-aws/blob/main/analytics/consumer/schema/btc.md" class="uri">https://github.com/aws-solutions-library-samples/guidance-for-digital-assets-on-aws/blob/main/analytics/consumer/schema/btc.md</a>.</p>
+<p>Additional libraries needed:</p>
+<pre><code>uv add yfinance
+uv add s3fs</code></pre>
+<p>We will use Dask running on EKS cluster to do some calculations with historical Bitcoin data.</p>
+<p>As Bitcoin data on AWS do not contain USD prices, we will use <code>yfinance</code> library (<a href="https://github.com/ranaroussi/yfinance" class="uri">https://github.com/ranaroussi/yfinance</a>) with the <code>BTC-USD</code> ticker to fetch prices.</p>
+<p>Dask read example:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> dd.read_parquet(</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    s3_path,</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    storage_options<span class="op">=</span>{<span class="st">"anon"</span>: <span class="va">True</span>},</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    columns<span class="op">=</span>[<span class="st">"..."</span>]</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Note that <code>s3_path</code> can contain asterisk - this will read in multiple Parquet files.</p>
 </section>
-<section id="lectures" class="level2">
-<h2 class="anchored" data-anchor-id="lectures">Lectures</h2>
-<p><a href="./applied_lec1.html">Lecture 1: Intro to Docker</a></p>
-<p><a href="./applied_lec2.html">Lecture 2: Dockerfiles</a></p>
-<p><a href="./applied_lec3.html">Lecture 3: Docker Networking</a></p>
-<p><a href="./applied_lec5.html">Lecture 4: AWS intro</a></p>
-<p><a href="./applied_lec6.html">Lecture 5: AWS part 2</a></p>
-<p><a href="./applied_lec4.html">Lecture 6: Docker Compose</a></p>
-<p><a href="./applied_lec7.html">Lecture 7: Kubernetes part 1</a></p>
-<p><a href="./applied_lec8.html">Lecture 8: Kubernetes part 2</a></p>
-<p><a href="./applied_lec9.html">Lecture 9: Kubernetes part 3</a></p>
-<p><a href="./applied_lec10.html">Lecture 10: Dask and Kubernetes</a></p>
-</section>
-<section id="labs" class="level2">
-<h2 class="anchored" data-anchor-id="labs">Labs</h2>
-<p><a href="./applied_lab1.html">Lab 1: Environment setup</a></p>
-<p><a href="./applied_lab2.html">Lab 2: Parallelisation and functional programming</a></p>
-<p><a href="./applied_lab3.html">Lab 3: Exercises from Docker intro lecture</a></p>
-<p><a href="./applied_lab4.html">Lab 4: Exercises from Dockerfile lecture</a></p>
-<p><a href="./applied_lab5.html">Lab 5: Python environment in Docker</a></p>
-<p><a href="./applied_lab6.html">Lab 6: Docker on AWS</a></p>
-<p><a href="./applied_lab10.html">Lab 10: Financial data analysis with Dask</a></p>
+<section id="exercises" class="level1">
+<h1>Exercises</h1>
+<ol type="1">
+<li>Setup AWS EKS cluster as a backend for Dask.</li>
+<li>Compute average fee, average/total transaction amount in BTC and USD for each day of some year.</li>
+</ol>
 
 
 </section>
