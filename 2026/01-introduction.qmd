@@ -1,0 +1,1123 @@
+---
+title: "Methods and Techniques of Data Analysis"
+subtitle: "Lecture 1 — Why your model is not the problem"
+author: "MSc Data Science · Department of Mathematics"
+date: today
+date-format: "MMMM YYYY"
+format:
+  revealjs:
+    theme: simple
+    slide-number: c/t
+    show-slide-number: all
+    incremental: false
+    transition: none
+    width: 1280
+    height: 800
+    margin: 0.08
+    center-title-slide: true
+    code-line-numbers: true
+    highlight-style: github
+    fig-align: center
+    preview-links: auto
+    hash-type: number
+    embed-resources: true
+    menu:
+      side: left
+  html:
+    toc: true
+    toc-depth: 2
+    number-sections: false
+execute:
+  echo: true
+  eval: false
+---
+
+# Before anything else {.center background-color="#1c1c1c"}
+
+## You have an index card {background-color="#1c1c1c" style="color:#f0f0f0"}
+
+Write your name on it. Keep it for the next ninety minutes.
+
+Three times today I will show you a result and ask you to commit to an answer **before** the
+reveal.
+
+Write the answer down. Do not discuss it.
+
+I will collect the cards at the end and hand them back to you in week sixteen.
+
+::: {.notes}
+The physical commitment is the whole mechanism. Silent internal agreement produces no
+learning, because students revise their memory of what they believed the moment the answer
+appears. Insist on the writing. Walk around during the first demonstration and check that
+people are actually doing it; after the first reveal they will do it voluntarily.
+
+Do not introduce yourself yet. Do not show the syllabus. Administration comes at minute 80.
+:::
+
+## A question to hold onto
+
+> What would have to be true about the world for this number to mean what I think it means?
+
+You will be asked this in every laboratory, in every problem set, and in the capstone
+rubric.
+
+By week sixteen you should find it impossible to look at a reported result without asking it.
+
+::: {.notes}
+Put this on the board and leave it up all semester if the room allows. It is the one-line
+compression of the entire course.
+:::
+
+# Part 1 — Three ways to be confidently wrong {background-color="#1c1c1c"}
+
+## The setup {background-color="#1c1c1c" style="color:#f0f0f0"}
+
+Three analyses.
+
+Each performed competently. Each using methods you already know. Each producing a
+confident, well-formatted, publishable answer.
+
+Each answer is wrong.
+
+None of the three errors is a modelling error.
+
+::: {.notes}
+Say "none of the three is a modelling error" slowly. It is the thesis and it will not be
+believed until after the third demonstration.
+:::
+
+## Demonstration one: an admissions decision
+
+A university is investigated for discrimination in graduate admissions.
+
+Here are the aggregate figures.
+
+| Applicants | Admitted | Rate |
+|---|---|---|
+| Men | 3,738 of 8,442 | **44%** |
+| Women | 1,494 of 4,321 | **35%** |
+
+A nine-point gap across more than twelve thousand applications.
+
+::: {.notes}
+Berkeley 1973, Bickel, Hammel and O'Connell in *Science*, 1975. Do not name it yet; some
+students will recognise it and that is fine, but naming it early converts the exercise from
+a demonstration into a recitation.
+:::
+
+## The same data, by department
+
+| Department | Men applied | Men admitted | Women applied | Women admitted |
+|---|---|---|---|---|
+| A | 825 | **62%** | 108 | **82%** |
+| B | 560 | **63%** | 25 | **68%** |
+| C | 325 | **37%** | 593 | **34%** |
+| D | 417 | **33%** | 375 | **35%** |
+| E | 191 | **28%** | 393 | **24%** |
+| F | 373 | **6%** | 341 | **7%** |
+
+Four of six departments favour women. The aggregate favours men.
+
+## Card, question one {.center}
+
+::: {style="font-size:1.4em"}
+**Which analysis is correct — the aggregate, or the department-level one?**
+
+Write: *aggregate*, *departments*, or *neither*.
+:::
+
+::: {.notes}
+Collect the room's split verbally before revealing. Usually 70 percent say departments,
+20 percent neither, 10 percent aggregate. Whatever they say, the correct answer is that the
+question is malformed, which is where we go next.
+:::
+
+## The answer is: the question is malformed
+
+Neither analysis is "correct" until you say **what you are trying to estimate**.
+
+::: {.fragment}
+**Estimand A** — the total effect of applicant gender on admission probability.
+Do *not* adjust for department. Department is a mediator: women applied to more competitive
+departments.
+:::
+
+::: {.fragment}
+**Estimand B** — the direct effect within a department, holding department fixed.
+*Do* adjust.
+:::
+
+::: {.fragment}
+These are different questions with different answers. Both numbers are correct. Neither is
+*the* answer.
+:::
+
+::: {.notes}
+This is the first appearance of the estimand-first discipline, which is Step 4 of the spine.
+Do not develop the formalism now. The point is only that "which analysis is right" is not
+answerable without a stated target.
+:::
+
+## Simpson's paradox is the easy version
+
+Most of you have seen this before. Here is the version that is genuinely counterintuitive.
+
+Adjusting for a variable can **create** an association that does not exist.
+
+Twenty lines of code, no data required.
+
+::: {.notes}
+Everyone knows Simpson's paradox as trivia. Almost nobody has internalised collider bias,
+because the verbal argument does not convince and it has to be seen numerically. This is why
+we simulate.
+:::
+
+## Collider bias, simulated
+
+```python
+import numpy as np
+rng = np.random.default_rng(0)
+n = 100_000
+
+# Two genuinely independent causes.
+talent = rng.normal(size=n)
+looks  = rng.normal(size=n)
+
+print(np.corrcoef(talent, looks)[0, 1])
+# -> -0.002   (independent, as constructed)
+
+# Hollywood casts you if you have EITHER talent OR looks.
+famous = (talent + looks) > 1.5
+
+print(np.corrcoef(talent[famous], looks[famous])[0, 1])
+# -> ?
+```
+
+::: {.notes}
+Run this live if you can. The live run is worth more than the slide. Pause before revealing
+the second number and take a show of hands on the sign.
+:::
+
+## Card, question two {.center}
+
+::: {style="font-size:1.4em"}
+**Among famous people, is talent correlated with looks?**
+
+Write: *positive*, *negative*, or *zero*.
+:::
+
+## The result
+
+```python
+print(np.corrcoef(talent[famous], looks[famous])[0, 1])
+# -> -0.63
+```
+
+A strong **negative** correlation, between two variables that are independent by
+construction.
+
+::: {.fragment}
+Nothing was measured badly. The sample size is 100,000. The code is four lines.
+
+The error is that we conditioned on a **common effect** of both variables.
+:::
+
+::: {.notes}
+The magnitude surprises people. Emphasise that no amount of additional data helps, and that
+a larger sample makes the wrong answer more precise.
+
+If time permits, note that this is why "among hospitalised patients", "among survivors",
+"among funded startups", and "among published studies" are all dangerous phrases.
+:::
+
+## What just happened
+
+```
+    talent ──┐
+             ├──> famous     ← we conditioned here
+    looks  ──┘
+```
+
+::: {.fragment}
+`talent` and `looks` are independent. `famous` is a **collider** on the path between them.
+
+Conditioning on a collider opens a path that was closed.
+:::
+
+::: {.fragment}
+The folk rule "adjust for everything you have" is wrong, and this is why. Weeks 2–4 give you
+the machinery to know which variables to adjust for and which to leave alone.
+:::
+
+## Demonstration one: the lesson
+
+The analysis was competent. The arithmetic was correct. The sample was large.
+
+::: {.fragment}
+The failure happened **before any modelling**, at the point where someone decided which
+variables to include.
+:::
+
+::: {.fragment}
+No cross-validation would have caught it. No better model would have fixed it.
+:::
+
+## Demonstration two: a clinical risk model
+
+A hospital asks you to predict which patients will be readmitted within thirty days.
+
+You build a model. Here is the evaluation.
+
+| Metric | Value |
+|---|---|
+| AUROC | **0.97** |
+| Accuracy | 0.94 |
+| Precision | 0.91 |
+| Recall | 0.88 |
+| 5-fold CV, stratified | stable across folds |
+
+Held-out test set. Nothing was tuned on it.
+
+::: {.notes}
+Let this sit. Let someone say "that's suspiciously good" — there is usually one. Agree that
+it is suspicious, and then ask them what specifically they would check. Most cannot answer,
+which is the point.
+:::
+
+## Card, question three {.center}
+
+::: {style="font-size:1.4em"}
+**Would you deploy this model?**
+
+Write: *yes*, *no*, or *what I would check first*.
+:::
+
+## The feature importances
+
+```python
+model.feature_importances_.sort_values(ascending=False).head(6)
+```
+
+```
+discharge_disposition_code    0.412
+number_inpatient              0.183
+discharge_date                0.121
+num_medications               0.077
+time_in_hospital              0.064
+age                           0.041
+```
+
+::: {.fragment}
+`discharge_disposition_code` records **where the patient went when they left**.
+
+One of its values means "transferred to another acute care hospital."
+:::
+
+::: {.notes}
+This is the Diabetes 130-US hospitals dataset structure, which we use again in week 8. The
+leak is real and is present in many published analyses of it.
+:::
+
+## Three kinds of leak, all present here
+
+::: {.fragment}
+**1. Outcome-adjacent features.** A variable recorded at or after the moment the outcome is
+determined. Here: discharge disposition and discharge date.
+:::
+
+::: {.fragment}
+**2. Treatment as predictor.** The clinician already suspected the risk and acted on it. The
+model learns to predict *the clinician*, not the patient. It will fail the moment protocols
+change.
+:::
+
+::: {.fragment}
+**3. Preprocessing leak.** Imputation and scaling fitted on the full dataset before
+splitting. Small, silent, and present in a large fraction of student projects.
+:::
+
+## After removing the leaks
+
+| Metric | Leaky | Clean |
+|---|---|---|
+| AUROC | 0.97 | **0.68** |
+| Precision | 0.91 | 0.31 |
+| Recall | 0.88 | 0.44 |
+
+::: {.fragment}
+0.68 is a *reasonable* readmission model. The literature lives around there.
+
+The 0.97 was never a model. It was a description of the label.
+:::
+
+::: {.notes}
+Worth saying explicitly: the honest model is the one that looks worse. Students spend three
+years being rewarded for higher numbers, and this course inverts that incentive. Say so now
+and again at minute 80.
+:::
+
+## Demonstration two: the lesson
+
+::: {.fragment}
+The failure was in **evaluation design**, not in the model.
+:::
+
+::: {.fragment}
+A random train-test split was the wrong split. The correct split is temporal: train on
+earlier admissions, test on later ones, because that is how the model would be used.
+:::
+
+::: {.fragment}
+You will measure the size of this gap at least three times this semester, in three different
+domains.
+:::
+
+## Demonstration three: a trading strategy
+
+A cross-sectional equity signal, tested on twenty years of daily data.
+
+| | |
+|---|---|
+| Annualised return | 14.2% |
+| Annualised volatility | 9.1% |
+| **Sharpe ratio** | **1.56** |
+| Max drawdown | −11.4% |
+| Alpha vs. Fama-French 5-factor | 6.8% (t = 3.1) |
+
+Out of sample. Net of a 10 basis point transaction cost assumption.
+
+::: {.notes}
+Show an equity curve if you have one; a smooth upward line does more work than the table.
+:::
+
+## Card, question four {.center}
+
+::: {style="font-size:1.4em"}
+**Would you allocate capital to this strategy?**
+
+Write: *yes*, *no*, or *what I would ask for*.
+:::
+
+## The construction
+
+```python
+rng = np.random.default_rng(42)
+
+strategies = []
+for i in range(200):
+    # A signal built from pure noise, by construction.
+    signal  = rng.normal(size=(n_days, n_stocks))
+    returns = backtest(signal, prices, cost_bps=10)
+    strategies.append(returns)
+
+best = max(strategies, key=sharpe)
+print(sharpe(best))
+# -> 1.56
+```
+
+::: {.fragment}
+The signal contains **no information**. It is noise.
+
+You have been shown the maximum of two hundred draws, presented as if it were one.
+:::
+
+## The two hundred siblings
+
+The reported Sharpe of 1.56 is the maximum of a distribution.
+
+::: {.fragment}
+The expected maximum Sharpe of $N$ independent worthless strategies grows roughly like
+$\sqrt{2\log N}$.
+
+For $N = 200$ over 20 years, a Sharpe near 1.5 is **exactly what you should expect from
+nothing**.
+:::
+
+::: {.fragment}
+The t-statistic of 3.1 was computed as if one hypothesis had been tested. Two hundred were.
+:::
+
+::: {.notes}
+Harvey, Liu and Zhu (2016) argue the effective threshold for a new factor should be a
+t-statistic near 3 rather than 2, precisely because of the size of the search. Mention the
+paper; it is assigned in week 9.
+:::
+
+## The uncomfortable part
+
+You would not have done this deliberately.
+
+::: {.fragment}
+You would have tried a few signal definitions. Adjusted a lookback window. Tried a different
+universe. Dropped a bad year. Re-run with a different rebalancing frequency.
+:::
+
+::: {.fragment}
+Then reported the one that worked.
+:::
+
+::: {.fragment}
+That is the same procedure. The only difference is that the search was informal, so you did
+not count it.
+:::
+
+::: {.notes}
+This lands hardest of the three, because students can see themselves doing it. It
+generalises well beyond finance: the same thing happens with model specifications, feature
+sets, and preprocessing choices in every domain.
+:::
+
+## Demonstration three: the lesson
+
+::: {.fragment}
+The failure was in **uncertainty quantification**. The reported interval accounted for
+sampling variation and nothing else.
+:::
+
+::: {.fragment}
+In most applied work, sampling variability is the *smallest* of the uncertainties.
+Specification uncertainty and search uncertainty dominate, and neither appears in a standard
+confidence interval.
+:::
+
+# Part 2 — The diagnosis {background-color="#1c1c1c"}
+
+## What the three have in common {background-color="#1c1c1c" style="color:#f0f0f0"}
+
+::: {.fragment}
+None was a failure of technique.
+:::
+
+::: {.fragment}
+None would have been fixed by a better model, more compute, more data, or more
+cross-validation.
+:::
+
+::: {.fragment}
+Each occurred at a different point in a process that most of you have never been taught
+explicitly.
+:::
+
+## Where your prior training stopped
+
+Undergraduate data science hands you:
+
+- a clean dataset
+- a well-posed question
+- a metric to optimise
+
+::: {.fragment}
+Every one of today's three failures happens *outside* that boundary — in choosing the
+question, constructing the data, or designing the test.
+:::
+
+::: {.fragment}
+This is not a criticism of your prior courses. It is a statement about what is left.
+:::
+
+## The thesis of this course {.center}
+
+::: {style="font-size:1.3em"}
+This course is **not** about better models.
+
+It is about the steps on either side of the model, where nearly all real errors live.
+:::
+
+::: {.notes}
+Pause here. This is the hinge of the lecture. Everything before it was evidence; everything
+after it is the plan.
+:::
+
+## Two courses, one problem
+
+You are taking *Big Data Analytics* alongside this. The division is deliberate.
+
+| | Big Data Analytics | This course |
+|---|---|---|
+| Central question | Can we compute it? | Does it mean what we think? |
+| Failure taught | Job dies, cluster idles | Confident, well-formatted, wrong |
+| Core objects | Partitions, task graphs, columnar formats | Estimands, assumptions, estimators |
+| Artefact | A pipeline that scales | A claim with an error bar |
+
+## The test
+
+::: {style="font-size:1.15em"}
+If the interesting thing about a task **disappears** when you shrink the data to a thousand
+rows —
+
+it belongs in *Big Data Analytics*.
+:::
+
+::: {.fragment style="font-size:1.15em"}
+If the interesting thing **survives** at a thousand rows —
+
+it belongs here.
+:::
+
+::: {.fragment}
+Several datasets appear in both courses. Gaia, the taxi records, exchange tick data,
+Sentinel-2. Same data, different question.
+:::
+
+# Part 3 — The methods spine {background-color="#1c1c1c"}
+
+## Nine steps, twelve domains {background-color="#1c1c1c" style="color:#f0f0f0"}
+
+Every project this semester runs through the same nine-step rubric.
+
+The domain changes. The skeleton does not.
+
+::: {.fragment}
+This is the actual content of the course. Astronomy, genomics, and procurement fraud are the
+delivery mechanism.
+:::
+
+::: {.notes}
+Warn them that the repetition will feel excessive around week 7 and that this is intended.
+The transfer happens on roughly the fifth repetition, when they start recognising which step
+a new problem is really about before they know anything about the domain.
+:::
+
+## The spine
+
+::: {style="font-size:0.9em"}
+1. **Provenance** — where did these numbers come from, and who gained by producing them?
+2. **Schema** — what is the shape, and what invariants must hold?
+3. **Measurement** — what do the values measure, and what does absence mean?
+4. **Estimand** — what number am I trying to learn, and what makes it identifiable?
+5. **Estimation** — which estimator, and why that one?
+6. **Uncertainty** — how wrong could this be, and from how many sources?
+7. **Evaluation** — how would I know if it were wrong?
+8. **Reproducibility** — can someone else get this number again?
+9. **Communication** — who acts on this, and what decision improves?
+:::
+
+::: {.notes}
+Hand this out on paper in week one. Students should be able to recite it by week sixteen and
+should structure every report around it.
+:::
+
+## Step 1 — Provenance and acquisition
+
+> Where did these numbers come from, who produced them, why, and what did they gain or lose
+> by producing them?
+
+Data are not found objects. Someone chose an instrument, a sampling frame, a coding scheme,
+and a retention policy — usually for reasons unrelated to your analysis.
+
+::: {.fragment}
+**Five questions you will answer in writing for every project:**
+
+1. What is the unit of observation, precisely?
+2. What is the target population, and how does the sampling frame differ from it?
+3. What was measured, and what was derived, imputed, or modelled upstream?
+4. Has this been revised since publication, and does the archive keep the vintage you need?
+5. If someone had an incentive to influence these numbers, how would they do it?
+:::
+
+## Step 2 — Schema, contracts, structure
+
+> What is the shape of the data, what invariants must hold, and how do you detect violations
+> automatically?
+
+You already know SQL, so this step moves fast. We push past querying into modelling.
+
+::: {.fragment}
+- Dimensional modelling; entity-relationship reasoning over messy sources
+- **Valid time vs. transaction time** — when something was true, versus when the database
+  learned it
+- Automated validation that fails a pipeline rather than warning
+- Tidy long format vs. wide analysis matrix, and when to move between them
+:::
+
+::: {.notes}
+The bitemporal distinction is week 11 material but plant it now. "What did we believe about
+this supplier on the date the contract was awarded?" is a question a non-bitemporal warehouse
+simply cannot answer.
+:::
+
+## Step 3 — Measurement and missingness
+
+> What do the recorded values actually measure, and what does absence mean?
+
+::: {.fragment}
+A laboratory value is absent because nobody ordered the test.
+
+Nobody ordered it because the clinician was not worried.
+
+The clinician's worry is what you are trying to predict.
+:::
+
+::: {.fragment}
+**The missingness is more informative than the value.**
+:::
+
+::: {.fragment}
+MCAR / MAR / MNAR and the limits of that taxonomy · measurement error, classical and
+Berkson · attenuation bias · construct validity · censoring vs. truncation · digit
+preference and heaping
+:::
+
+## Step 4 — Estimand and identification
+
+> What number am I trying to learn, defined **without reference to any estimation
+> procedure**?
+
+::: {.fragment}
+You will be forbidden from writing code until you have written a sentence of this form:
+
+> *I want to estimate the average change in $Y$ that would result from setting $X$ from
+> $x_0$ to $x_1$, in population $P$, at time $t$.*
+:::
+
+::: {.fragment}
+Only then does the question of method arise.
+
+This is the demonstration-one failure, and it is the single most valuable habit this course
+can give you.
+:::
+
+## Step 5 — Estimation
+
+> Given the estimand and the identification argument, which estimator, and why that one?
+
+::: {.fragment}
+- Regression as **adjustment** versus regression as **prediction** — different objects
+- A regularised coefficient is not an estimate of anything in particular
+- Matching, weighting, doubly robust estimators
+- The bootstrap and its failure cases
+- When a simple difference in means is right and adding covariates makes things worse
+:::
+
+::: {.notes}
+Note how short this slide is relative to the others. Estimation is the part students already
+over-weight; the course deliberately spends less time here than they expect.
+:::
+
+## Step 6 — Uncertainty
+
+> How wrong could this be, and from how many sources?
+
+::: {.fragment}
+You arrive with Bayesian machinery, which is an advantage. The gap is elsewhere:
+:::
+
+::: {.fragment}
+In most applied work, **sampling variability is the smallest of the uncertainties**.
+
+Specification uncertainty, measurement uncertainty, and cleaning-choice uncertainty dominate
+— and none of them appear in a standard confidence interval.
+:::
+
+::: {.fragment}
+Multiverse and specification-curve analysis · calibration · proper scoring rules ·
+sensitivity to unmeasured confounding · multiplicity in all its disguises
+:::
+
+## Step 7 — Evaluation
+
+> How do you know the answer is good, using a test the answer could actually fail?
+
+::: {.fragment}
+**The recurring lesson of this course:** a random train-test split is almost always the wrong
+split, and the amount by which it flatters you is a measurable quantity.
+
+You will measure it at least three times.
+:::
+
+::: {.fragment}
+Splits that respect dependence — temporal, spatial, group, patient, cluster ·
+negative controls · placebo tests · injection-recovery · offline-versus-online divergence
+:::
+
+## Step 8 — Reproducibility
+
+> Can someone else — including you in six months — obtain this number again?
+
+You know Git and Docker, so this is brisk. The parts you will not have seen:
+
+::: {.fragment}
+- Data versioning (DVC, or content-addressed snapshots with recorded checksums)
+- Explicit dependency graphs (Snakemake, Make)
+- Environment pinning that actually pins
+- Seeding, and the reproducibility of stochastic algorithms across library versions
+:::
+
+::: {.fragment}
+**Hard requirement, every deliverable:** one command regenerates every number in the report
+from raw data.
+:::
+
+## Step 9 — Communication and decision
+
+> Who acts on this, what decision are they making, and what does your output need to look
+> like for that decision to improve?
+
+::: {.fragment}
+- A result is a **claim with a stated uncertainty**, not a metric
+- Communicating a null result
+- Statistical significance is not a decision-relevant statement
+- Decision curve analysis; expected-value-of-information reasoning
+- Writing for a reader who stops after the first paragraph
+:::
+
+## Mapping today back to the spine
+
+| Demonstration | Failed at |
+|---|---|
+| Admissions / collider | **Step 4** — estimand and identification |
+| The 0.97 AUC | **Step 7** — evaluation design |
+| The 1.56 Sharpe | **Step 6** — uncertainty under search |
+
+::: {.fragment}
+Three failures, three different steps, zero modelling errors.
+:::
+
+::: {.notes}
+This slide is the payoff of the first hour. Take a moment on it.
+:::
+
+## Why the same rubric, twelve times
+
+::: {.fragment}
+Because a domain tour teaches domain trivia.
+:::
+
+::: {.fragment}
+Students who spend two weeks each on genomics, finance, and satellite imagery — learning a
+different vocabulary in each — leave with twelve sets of facts and no transferable skill.
+:::
+
+::: {.fragment}
+The rubric is what transfers. By week nine you should be able to open an unfamiliar dataset
+in a domain you know nothing about and say, within twenty minutes, which step is going to
+be the hard one.
+:::
+
+# Part 4 — Infrastructure {background-color="#1c1c1c"}
+
+## Laptop-first, deliberately {background-color="#1c1c1c" style="color:#f0f0f0"}
+
+Every project this semester runs on **16 GB of RAM, four cores, no GPU**, within a working
+session.
+
+::: {.fragment}
+This is not a limitation. It is a pedagogical choice.
+:::
+
+::: {.fragment}
+A course where every project begins with "spin up a cluster" teaches you to reach for
+infrastructure before thinking. The other course inoculates you against that. This one must
+not undo it.
+:::
+
+## The stack
+
+::: {style="font-size:0.85em"}
+| Layer | Tools |
+|---|---|
+| Environment | Python 3.11+, `uv` or conda, lockfile committed |
+| Numerics | NumPy, pandas / Polars, SciPy, scikit-learn, statsmodels |
+| Causal | `DoWhy`, `EconML`, `linearmodels`, `dagitty`, staggered-DiD packages |
+| Data | **DuckDB**, Arrow, Parquet |
+| Validation | Pandera or Great Expectations |
+| Orchestration | Snakemake or a plain Makefile |
+| Data versioning | DVC, or checksummed snapshots |
+| Survival | `lifelines`, `scikit-survival` |
+| Geospatial | `xarray`, `geopandas`, `rioxarray`, `h3` |
+:::
+
+Domain-specific Docker images are published per week. Pull them before the laboratory.
+
+## Making large data fit: three techniques
+
+::: {.fragment}
+**1. Columnar formats with pushdown.** Convert to Parquet; read only the columns and row
+groups you need. A 200 GB CSV frequently becomes a 4 GB Parquet file you never fully read.
+:::
+
+::: {.fragment}
+**2. DuckDB over files.** Query Parquet, CSV, and remote HTTP ranges directly in SQL, with
+out-of-core execution. You already know SQL, so this is free capability.
+:::
+
+::: {.fragment}
+**3. Principled subsetting.** Spatial bounding boxes, time windows, seeded random or
+stratified samples.
+
+The discipline: the subset must be reproducible **from the recipe**, never shipped as a file
+of unknown provenance.
+:::
+
+## DuckDB, concretely
+
+```sql
+-- No ingestion step. No server. Out-of-core.
+SELECT
+    pickup_zone,
+    date_trunc('hour', tpep_pickup_datetime) AS hr,
+    count(*)          AS trips,
+    median(trip_distance) AS med_dist
+FROM read_parquet('s3://nyc-tlc/yellow_tripdata_2024-*.parquet')
+WHERE trip_distance BETWEEN 0.1 AND 100
+GROUP BY 1, 2;
+```
+
+::: {.fragment}
+This runs on your laptop against hundreds of millions of rows, because Parquet lets the
+engine skip everything it does not need.
+
+Roughly a third of the "big data" problems you will meet this semester dissolve here.
+:::
+
+## The one-command rule
+
+Every deliverable, without exception:
+
+```bash
+$ make all
+```
+
+::: {.fragment}
+regenerates **every number, table, and figure** in the report from raw inputs.
+:::
+
+::: {.fragment}
+Not "the notebook runs." Not "here are the cells in order."
+
+One command, from a clean checkout, on a machine that is not yours.
+:::
+
+::: {.notes}
+Enforce this from problem set one. It is far cheaper to establish in week 5 than to retrofit
+in week 15, and the capstone rubric allocates 10 percent to it.
+:::
+
+## When you may use the cluster
+
+There is a modest HPC allocation. You must justify each request. Four legitimate reasons:
+
+::: {.fragment}
+1. **Irreducible scale** — subsetting would change the scientific question (all-sky Gaia
+   clustering; multi-year Sentinel-2 over a large region).
+2. **Embarrassingly parallel simulation** — the best use of a small cluster, and the
+   recommended way to validate a method.
+3. **The one transformer fine-tune** in week 10, which has a CPU fallback.
+4. **Once, for calibration** — so you have felt the difference between eleven hours and
+   eleven minutes rather than been told about it.
+:::
+
+## Ethics is graded, in context
+
+Three themes recur, taught where they arise rather than as a bolted-on lecture:
+
+::: {.fragment}
+**Re-identification.** Data anonymous per record and identifying in combination. We run the
+actual attacks — trajectory unicity, the taxi medallion hash — because attacks are memorable
+and principles are not.
+:::
+
+::: {.fragment}
+**Harm from correct models.** A well-calibrated model can produce an unjust system.
+:::
+
+::: {.fragment}
+**Accusation from anomaly.** In week 11 you will produce a ranked list of suspicious
+entities. At realistic base rates most of the top of that list is innocent. You will compute
+and report that number *before* naming anyone.
+:::
+
+# Part 5 — The contract {background-color="#1c1c1c"}
+
+## Accuracy is not graded {background-color="#1c1c1c" style="color:#f0f0f0"}
+
+::: {style="font-size:1.25em"}
+Model performance appears **nowhere** in the capstone rubric.
+:::
+
+::: {.fragment style="font-size:1.15em"}
+A capstone that finds a null result, correctly, with a good design, earns full marks.
+:::
+
+::: {.notes}
+Say this twice. Nobody believes it the first time, because three years of coursework have
+taught the opposite. Put it in writing in the handbook and refer back to it when the first
+problem set is returned.
+:::
+
+## The capstone rubric
+
+::: {style="font-size:0.85em"}
+| Criterion | Weight |
+|---|---|
+| Provenance and acquisition | 10% |
+| Schema and validation | 10% |
+| Measurement and missingness | 15% |
+| **Estimand and identification** | **20%** |
+| Estimation and uncertainty | 15% |
+| Evaluation | 15% |
+| Reproducibility | 10% |
+| Communication | 5% |
+:::
+
+That is the spine, weighted. Nothing else is graded.
+
+## Causal inference is the gate
+
+Weeks 2–4 are an intensive block: potential outcomes, DAGs, confounding, colliders,
+difference-in-differences, instrumental variables, sensitivity analysis.
+
+::: {.fragment}
+It is examined in **week 4**, separately and early, and it is worth 20 percent.
+:::
+
+::: {.fragment}
+The examination format: four scenarios described in words. Draw the DAG, name the estimand,
+name the identification strategy, name the threat, specify one falsification test.
+
+**No estimation required.**
+:::
+
+::: {.fragment}
+Students who can do this can learn any estimator later. Students who cannot will misuse every
+estimator they learn.
+:::
+
+## Defect hunts
+
+Every laboratory notebook contains at least one **seeded defect**.
+
+::: {.fragment}
+A leaked feature. A join that silently duplicates rows. A random split where a grouped split
+is required. An imputation that destroys the signal.
+:::
+
+::: {.fragment}
+You find it, name it against the spine, and fix it. This is graded at 10 percent.
+:::
+
+::: {.fragment}
+The purpose is to convert passive execution into diagnosis. Assume every notebook I give you
+is broken, because it is.
+:::
+
+## Assessment
+
+| Component | Weight |
+|---|---|
+| Causal inference examination (week 4) | 20% |
+| Four problem sets | 20% |
+| Defect-hunt participation | 10% |
+| **Capstone project** | **40%** |
+| Peer review of one capstone | 10% |
+
+::: {.fragment}
+The peer review is graded on the quality of the criticism. You will find that the errors you
+spot easily in someone else's work are the ones you made yourself.
+:::
+
+## The semester
+
+::: {style="font-size:0.8em"}
+| Weeks | Content |
+|---|---|
+| 1 | Today; sports analytics warm-up laboratory |
+| 2–4 | **Causal inference block** — examined week 4 |
+| 5 | Geoscience and earth observation |
+| 6 | Astronomy |
+| 7 | Genetics and bioinformatics |
+| 8 | Healthcare and epidemiology |
+| 9 | Finance and economics — *capstone proposal due* |
+| 10 | Natural language and text as data |
+| 11 | Entity-centric analytics |
+| 12 | Recommender systems and off-policy evaluation |
+| 13 | Energy systems |
+| 14 | Mobility and urban systems |
+| 15 | Reliability and survival analysis |
+| 16 | Capstone presentations |
+:::
+
+## The capstone
+
+Choose **any project from the catalogue that we did not cover in class**.
+
+::: {.fragment}
+Twelve domains at survey depth in the taught weeks. One domain in real depth, chosen by you.
+:::
+
+::: {.fragment}
+Proposal due week 9. Presentations week 16.
+
+The catalogue document has thirty-four projects with datasets, methods, and references. Read
+the chapters that interest you before week 9.
+:::
+
+# This week {background-color="#1c1c1c"}
+
+## Three things before next lecture {background-color="#1c1c1c" style="color:#f0f0f0"}
+
+::: {style="font-size:1.15em"}
+::: {.fragment}
+**1.** Pull the Docker image and verify it runs. Ten minutes. Do it today, not Sunday night.
+:::
+
+::: {.fragment}
+**2.** Read Hernán and Robins, *Causal Inference: What If*, Chapter 1. Freely available. It
+is fourteen pages.
+:::
+
+::: {.fragment}
+**3.** On your index card, write one question you would like your capstone to answer. It does
+not have to be good. It has to exist.
+:::
+:::
+
+## The laboratory, Thursday
+
+Sports analytics — the easiest domain in the catalogue, chosen deliberately.
+
+::: {.fragment}
+No cognitive budget goes to learning the field, so the whole session goes to walking the
+nine-step spine end to end on a problem you already understand.
+:::
+
+::: {.fragment}
+Expected goals from open event data. Calibration rather than AUC. One seeded defect.
+
+You will finish week one having completed the full rubric once.
+:::
+
+## Cards, please {.center background-color="#1c1c1c" style="color:#f0f0f0"}
+
+::: {style="font-size:1.2em"}
+I will keep these and hand them back in week sixteen, next to your capstone.
+:::
+
+::: {.fragment style="font-size:1.2em"}
+> What would have to be true about the world for this number to mean what I think it means?
+:::
+
+::: {.notes}
+Collect the cards physically. Keep them in an envelope with the cohort year on it. Returning
+them in week 16 next to a finished capstone is the single most effective closing device I
+know, and it costs nothing.
+:::
+
+## References {.smaller}
+
+- Bickel, E. A., Hammel, E. A., and O'Connell, J. W. (1975). Sex bias in graduate
+  admissions: data from Berkeley. *Science* 187(4175).
+- Hernán, M. A., and Robins, J. M. *Causal Inference: What If.* Chapman & Hall/CRC. Freely
+  available from the authors.
+- Elwert, F., and Winship, C. (2014). Endogenous selection bias: the problem of conditioning
+  on a collider variable. *Annual Review of Sociology* 40.
+- Kaufman, S., Rosset, S., Perlich, C., and Stitelman, O. (2012). Leakage in data mining.
+  *ACM TKDD* 6(4).
+- Kapoor, S., and Narayanan, A. (2023). Leakage and the reproducibility crisis in
+  machine-learning-based science. *Patterns* 4(9).
+- Harvey, C. R., Liu, Y., and Zhu, H. (2016). ... and the cross-section of expected returns.
+  *Review of Financial Studies* 29(1).
+- Bailey, D. H., and López de Prado, M. (2014). The deflated Sharpe ratio. *Journal of
+  Portfolio Management* 40(5).
+- Gelman, A., and Loken, E. (2014). The statistical crisis in science. *American Scientist*
+  102(6).
