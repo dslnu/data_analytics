@@ -635,7 +635,7 @@ Processing an **unbounded** sequence of events as they arrive.
 ## Rule of thumb
 - Need a fresh answer within seconds? **Stream**.
 - Need to crunch the full history accurately? **Batch**.
-- Need both? Read on.
+- Need both? Lambda/Kappa/etc.
 :::
 
 ## Lambda architecture
@@ -670,55 +670,12 @@ Treat **everything as a stream**, including historical data (replayed through th
 ## Summary
 - **Lambda**: proven, flexible, but duplicated logic.
 - **Kappa**: simpler mental model, but depends on your streaming platform being able to replay history efficiently.
-- Neither is "correct" -- the choice depends on your latency needs and operational maturity.
 :::
 
-## Lambda vs. Kappa, visualized
 
-```{.tikz}
-\usetikzlibrary{arrows.meta}
-\begin{tikzpicture}[
-  box/.style={draw, very thick, rounded corners, minimum width=2.6cm, minimum height=1cm, align=center, font=\small},
-  arr/.style={-{Latex[length=2.5mm]}, thick},
-  archtitle/.style={font=\bfseries\normalsize}
-]
-  % --- Lambda architecture ---
-  \node[archtitle] at (4.8,9.0) {Lambda architecture};
+## Lambda vs. Kappa
 
-  \node[box] (src1) at (0,6) {Data\\Source};
-  \node[box] (batch) at (3.2,7.4) {Batch\\Layer};
-  \node[box] (speed) at (3.2,4.6) {Speed\\Layer};
-  \node[box] (serve1) at (6.4,6) {Serving\\Layer};
-  \node[box] (query1) at (9.6,6) {Queries};
-
-  \draw[arr] (src1) -- (batch);
-  \draw[arr] (src1) -- (speed);
-  \draw[arr] (batch) -- (serve1);
-  \draw[arr] (speed) -- (serve1);
-  \draw[arr] (serve1) -- (query1);
-
-  \node[font=\scriptsize, align=center] at (3.2,8.35) {recomputed,\\accurate};
-  \node[font=\scriptsize, align=center] at (3.2,3.65) {low-latency,\\approximate};
-
-  % --- divider ---
-  \draw[dashed] (-0.8,2.8) -- (10.4,2.8);
-
-  % --- Kappa architecture ---
-  \node[archtitle] at (4.8,2.2) {Kappa architecture};
-
-  \node[box] (src2) at (0,0.3) {Event\\Log};
-  \node[box] (stream) at (3.2,0.3) {Stream\\Processing};
-  \node[box] (serve2) at (6.4,0.3) {Serving\\Layer};
-  \node[box] (query2) at (9.6,0.3) {Queries};
-
-  \draw[arr] (src2) -- (stream);
-  \draw[arr] (stream) -- (serve2);
-  \draw[arr] (serve2) -- (query2);
-
-  \draw[arr] (stream.south) to[out=-90,in=-90,looseness=1.6]
-    node[below,font=\scriptsize]{replay from earlier offset} (src2.south);
-\end{tikzpicture}
-```
+![](img/lambda_vs_kappa)
 
 ## Challenges
 
@@ -731,13 +688,7 @@ There are 2 main challenges associated with Big Data.
 - how do we process and extract valuable information from the data within the given **time frame**?
 :::
 
-# Big Data in the wild
-
-## Why look at use cases?
-:::{.callout-tip icon=false}
-## Motivation
-Every concept in this lecture exists to solve real problems. Here's a quick tour across industries.
-:::
+# Use cases
 
 ## Healthcare
 :::{.callout-note icon=false}
@@ -785,12 +736,6 @@ Every concept in this lecture exists to solve real problems. Here's a quick tour
 - Satellite and remote-sensing imagery archives (petabyte-scale).
 - Climate and weather simulation output.
 - We'll spend several lectures later in this course on geospatial Big Data specifically.
-:::
-
-## Common thread
-:::{.callout-tip icon=false}
-## What connects them?
-Every example above still comes down to the same two challenges from before: storing and managing huge volumes efficiently, and extracting value within a useful time frame.
 :::
 
 # The Big Data ecosystem
@@ -873,10 +818,6 @@ Pandas is single-threaded and loads everything into RAM. A newer generation of t
 | DuckDB | multi-thread, SQL | partially (spills) | ad-hoc SQL over files |
 | Dask | multi-thread/-process, distributed | yes | pandas-like API at cluster scale |
 | cuDF | GPU | no | GPU-accelerated analytics |
-:::
-
-::: aside
-Dask is covered in depth over several lectures later in the course.
 :::
 
 ## Table formats: the lakehouse idea
@@ -1008,23 +949,6 @@ Once data is stored, queried, and streaming, machine learning tooling takes over
 - **Dask-ML**: scales familiar scikit-learn-style workflows using Dask.
 :::
 
-## Course roadmap
-:::{.callout-tip icon=false}
-## What's ahead
-| Topic | Lectures |
-|---|---|
-| Speeding up computation | Lec 2-3 |
-| Dask (parallel/distributed compute) | Lec 4-6 |
-| GeoScience / geospatial Big Data | Lec 7-10 |
-| Databases & query languages | Lec 11-13 |
-| Data storage formats | Lec 14 |
-| Distributed systems | Lec 15 |
-:::
-
-::: aside
-See `bigdata.qmd` for the full lecture and lab list.
-:::
-
 ## How to choose
 :::{.callout-note icon=false}
 ## Quick heuristics
@@ -1036,107 +960,12 @@ See `bigdata.qmd` for the full lecture and lab list.
 - Need geospatial-specific tooling? That's a whole unit of its own.
 :::
 
-# Common myths about Big Data
-
-## Myth: more data always wins
-:::{.callout-warning icon=false}
-## Myth
-"More data always beats a better model or method."
-:::
-:::{.callout-tip icon=false}
-## Reality
-Data quality, relevance, and sampling bias often matter more than raw volume. A huge biased dataset can be worse than a small representative one.
-:::
-
-## Myth: Big Data replaces statistics
-:::{.callout-warning icon=false}
-## Myth
-"With enough data, we don't need sampling, hypothesis testing, or statistical rigor."
-:::
-:::{.callout-tip icon=false}
-## Reality
-Statistical thinking matters *more* at scale: spurious correlations multiply, and biased collection processes don't disappear just because N is large.
-:::
-
-## Myth: Volume is the only V that matters
-:::{.callout-warning icon=false}
-## Myth
-"If it's not huge, it's not Big Data."
-:::
-:::{.callout-tip icon=false}
-## Reality
-A small, fast-moving, highly varied, or unreliable dataset can pose exactly the same engineering challenges as a huge one. Volume is just the most visible V.
-:::
-
-## Myth: correlation implies causation
-:::{.callout-warning icon=false}
-## Myth
-"We found a strong correlation in the data, so we found the cause."
-:::
-:::{.callout-tip icon=false}
-## Reality
-Large datasets make it *easier*, not harder, to find spurious correlations by chance. Causal claims still require careful study design.
-:::
-
-## Myth: Big Data alone solves ML
-:::{.callout-warning icon=false}
-## Myth
-"If we just feed a model enough data, it will learn the right thing automatically."
-:::
-:::{.callout-tip icon=false}
-## Reality
-Feature engineering, problem framing, and evaluation design still matter. Scale helps, but doesn't replace them.
-:::
-
-# Ethics and privacy
-
-## Why this matters
-:::{.callout-important icon=false}
-## The tradeoff
-The same techniques that create value from data can also cause real harm if used carelessly. Big Data practitioners carry that responsibility.
-:::
-
-## Privacy & surveillance
-:::{.callout-warning icon=false}
-## Concerns
-- Aggregating data across sources can re-identify "anonymized" individuals.
-- Continuous collection (location, browsing, IoT) enables detailed behavioral profiles.
-- Data breaches expose sensitive information at massive scale.
-:::
-
-## Algorithmic bias
-:::{.callout-important icon=false}
-## Concerns
-- Models trained on historical data can encode and amplify past discrimination.
-- Underrepresented groups in the data lead to worse outcomes for them.
-- Bias can enter at collection, labeling, or modeling stages.
-:::
-
-## Consent & ownership
-:::{.callout-note icon=false}
-## Concerns
-- Who owns data generated by a user's activity?
-- Is consent to collect data actually informed?
-- Secondary use of data can go far beyond what was originally agreed to.
-:::
-
-## Regulatory context
-:::{.callout-tip icon=false}
-## A moving target
-- Regulations like the EU's **GDPR** and similar laws elsewhere set rules around consent, storage, and the right to deletion.
-- Compliance is a real engineering constraint, not just a legal formality: it affects retention, access control, and system design.
-:::
-
-::: aside
-Ethical and legal considerations aren't a footnote -- they shape architecture decisions from day one.
-:::
-
 # References
 
 ## Books
 :::{.callout-note icon=false}
 ## Core reading
-- Martin Kleppmann, *Designing Data-Intensive Applications*, O'Reilly, 2017.
+- Martin Kleppmann, *Designing Data-Intensive Applications*, O'Reilly, 2026
 - Viktor Mayer-Schönberger & Kenneth Cukier, *Big Data: A Revolution That Will Transform How We Live, Work, and Think*, 2013.
 :::
 
