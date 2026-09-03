@@ -54,7 +54,7 @@ import geopandas as gpd
 from pathlib import Path
 
 # Define path do the data
-data_folder = Path("_data/Austin")
+data_folder = Path("../_data/Austin")
 fp = data_folder / "austin_pop_density_2019.gpkg"
 
 # Read in the data and check the contents
@@ -623,7 +623,7 @@ Let's start by reading the data from the `eu_countries_2022.gpkg` file. The CRS 
 import geopandas as gpd
 
 # Read the file
-fp = "_data/EU_countries/eu_countries_2022.gpkg"
+fp = "../_data/EU_countries/eu_countries_2022.gpkg"
 data = gpd.read_file(fp)
 
 # What is the type?
@@ -715,7 +715,7 @@ Let's save our projected layer into a Shapefile so that we can use it later.
 ```{python}
 #| echo: true
 # Ouput filepath
-outfp = "_data/EU_countries/Europe_borders_epsg3035.shp"
+outfp = "../_data/EU_countries/Europe_borders_epsg3035.shp"
 
 # Save to disk
 data.to_file(outfp)
@@ -892,7 +892,7 @@ Let's use a global country border dataset obtained from Natural Earth:
 #| echo: true
 import geopandas
 
-fp = "_data/Natural_Earth/ne_110m_admin_0_countries.zip"
+fp = "../_data/Natural_Earth/ne_110m_admin_0_countries.zip"
 admin = gpd.read_file(fp)
 admin.crs
 ```
@@ -1010,7 +1010,7 @@ import pandas as pd
 import geopandas as gpd
 
 # Filepath
-fp = "_data/Helsinki/addresses.txt"
+fp = "../_data/Helsinki/addresses.txt"
 
 # Read the data
 data = pd.read_csv(fp, sep=";")
@@ -1022,12 +1022,12 @@ data.head()
 :::{.callout-warning icon=false}
 ## Geocoding addresses
 Proceed with geocoding, this might take a while. Don't forget to set your `user_agent`.
-```{python}
+```python
 #| echo: true
 from geopandas.tools import geocode
 
 geo = geocode(
-    data["addr"], provider="nominatim", user_agent="quarto_lnu", timeout=10
+    data["addr"], provider="nominatim", user_agent="quarto_lnu2", timeout=10
 )
 geo.head()
 ```
@@ -1038,16 +1038,16 @@ geo.head()
 ## Geocoding addresses
 We can join the data from the original text file to the geocoded result:
 <!-- #endregion -->
-```{python}
+```python
 #| echo: true
 join = geo.join(data)
 join.head()
 ```
 Save to file:
-```{python}
+```python
 #| echo: true
 # Output file path
-outfp = "_data/Helsinki/addresses.gpkg"
+outfp = "../_data/Helsinki/addresses.gpkg"
 
 # Save to Shapefile
 join.to_file(outfp)
@@ -1060,7 +1060,7 @@ join.to_file(outfp)
 
 Finally, we can have a look how the points look on a map:
 
-```{python}
+```python
 #| echo: true
 join.explore(color="red", marker_kwds={"radius": 5})
 ```
@@ -1109,7 +1109,7 @@ geo2.explore(
 ## Reverse geocoding
 
 To do the reverse geocoding, i.e. finding addresses to these points, we can use the `reverse_geocode()` function of `geopandas`.
-```{python}
+```python
 #| echo: true
 points = geo[["geometry"]].copy()
 points.head()
@@ -1117,7 +1117,7 @@ points.head()
 
 The `reverse_geocode()` works similarly as the `geocode()` function that we saw earlier, but in this case the function accepts as an input either a `GeoSeries`, or a list of `shapely` `Point` objects. 
 
-```{python}
+```python
 #| echo: true
 from geopandas.tools import reverse_geocode
 
