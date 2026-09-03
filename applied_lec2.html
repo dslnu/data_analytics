@@ -6,8 +6,8 @@
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="site_libs/quarto-html/light-border.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-587c61ba64f3a5504c4d52d930310e48.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
-  <meta name="generator" content="quarto-1.8.26">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.10.18">
 
   <meta name="author" content="MSDE">
   <title>Big Data analytics / Applied Data analytics – Dockerfiles</title>
@@ -17,10 +17,16 @@
   <link rel="stylesheet" href="site_libs/revealjs/dist/reset.css">
   <link rel="stylesheet" href="site_libs/revealjs/dist/reveal.css">
   <style>
-    code{white-space: pre-wrap;}
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
     span.smallcaps{font-variant: small-caps;}
-    div.columns{display: flex; gap: min(4vw, 1.5em);}
-    div.column{flex: auto; overflow-x: auto;}
+    div.columns{display: flex; gap: 1.5em;}
+    div.column{flex: auto;}
+    @media screen {
+    div.columns{gap: min(4vw, 1.5em);}
+    div.column{overflow-x: auto;}
+    }
     div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
     ul.task-list{list-style: none;}
     ul.task-list li input[type="checkbox"] {
@@ -95,7 +101,7 @@
     code span.vs { color: #20794d; } /* VerbatimString */
     code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   </style>
-  <link rel="stylesheet" href="site_libs/revealjs/dist/theme/quarto-534cd8e3a96973385dffff3f4709048d.css">
+  <link rel="stylesheet" href="site_libs/revealjs/dist/theme/quarto-2740581606dc327e82f18f789b69d8a0.css">
   <link rel="stylesheet" href="./custom.css">
   <link href="site_libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
   <link href="site_libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
@@ -199,7 +205,7 @@
 <div class="quarto-title-authors">
 <div class="quarto-title-author">
 <div class="quarto-title-author-name">
-MSDE 
+MSDE
 </div>
         <p class="quarto-title-affiliation">
             Lviv University
@@ -867,10 +873,10 @@ root@0e2f53d52f7d:/#
 <div class="callout-content">
 <p>We want to build a container that compiles a basic “Hello world” program in C.</p>
 <p>Here is the program, <code>hello.c</code>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode numberSource c number-lines code-with-copy"><code class="sourceCode c"><span id="cb25-1"><a></a><span class="dt">int</span> main <span class="op">()</span> <span class="op">{</span></span>
-<span id="cb25-2"><a></a>  puts<span class="op">(</span><span class="st">"Hello, world!"</span><span class="op">);</span></span>
-<span id="cb25-3"><a></a>  <span class="cf">return</span> <span class="dv">0</span><span class="op">;</span></span>
-<span id="cb25-4"><a></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode numberSource c number-lines code-with-copy"><code class="sourceCode c"><span id="cb25-1"><a aria-label="1"></a><span class="dt">int</span> main <span class="op">()</span> <span class="op">{</span></span>
+<span id="cb25-2"><a aria-label="2"></a>  puts<span class="op">(</span><span class="st">"Hello, world!"</span><span class="op">);</span></span>
+<span id="cb25-3"><a aria-label="3"></a>  <span class="cf">return</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb25-4"><a aria-label="4"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Let’s create a new directory, and put this file in there.</p>
 <p>Then we will write the Dockerfile.</p>
 </div>
@@ -888,12 +894,12 @@ root@0e2f53d52f7d:/#
 <p>On Debian and Ubuntu, the package <code>build-essential</code> will get us a compiler.</p>
 <p>When installing it, don’t forget to specify the <code>-y</code> flag, otherwise the build will fail (since the build cannot be interactive).</p>
 <p>Then we will use COPY to place the source file into the container.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb26-1"><a></a><span class="kw">FROM</span> ubuntu</span>
-<span id="cb26-2"><a></a><span class="kw">RUN</span> [<span class="st">"apt-get"</span>, <span class="st">"update"</span>]</span>
-<span id="cb26-3"><a></a><span class="kw">RUN</span> [<span class="st">"apt-get"</span>, <span class="st">"install"</span>, <span class="st">"-y"</span>, <span class="st">"build-essential"</span>]</span>
-<span id="cb26-4"><a></a><span class="kw">COPY</span> hello.c /</span>
-<span id="cb26-5"><a></a><span class="kw">RUN</span> <span class="fu">make</span> hello</span>
-<span id="cb26-6"><a></a><span class="kw">CMD</span> <span class="ex">/hello</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb26-1"><a aria-label="1"></a><span class="kw">FROM</span> ubuntu</span>
+<span id="cb26-2"><a aria-label="2"></a><span class="kw">RUN</span> [<span class="st">"apt-get"</span>, <span class="st">"update"</span>]</span>
+<span id="cb26-3"><a aria-label="3"></a><span class="kw">RUN</span> [<span class="st">"apt-get"</span>, <span class="st">"install"</span>, <span class="st">"-y"</span>, <span class="st">"build-essential"</span>]</span>
+<span id="cb26-4"><a aria-label="4"></a><span class="kw">COPY</span> hello.c /</span>
+<span id="cb26-5"><a aria-label="5"></a><span class="kw">RUN</span> <span class="fu">make</span> hello</span>
+<span id="cb26-6"><a aria-label="6"></a><span class="kw">CMD</span> <span class="ex">/hello</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Create this Dockerfile.</p>
 </div>
 </div>
@@ -1195,15 +1201,15 @@ root@0e2f53d52f7d:/#
 </div>
 <div class="callout-content">
 <p>You will frequently see Dockerfiles like this:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb29-1"><a></a><span class="kw">FROM</span> ubuntu</span>
-<span id="cb29-2"><a></a><span class="kw">RUN</span> <span class="ex">apt-get</span> update <span class="kw">&amp;&amp;</span> <span class="ex">apt-get</span> install xxx <span class="kw">&amp;&amp;</span> <span class="ex">...</span> <span class="kw">&amp;&amp;</span> <span class="ex">apt-get</span> remove xxx <span class="kw">&amp;&amp;</span> <span class="ex">...</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb29-1"><a aria-label="1"></a><span class="kw">FROM</span> ubuntu</span>
+<span id="cb29-2"><a aria-label="2"></a><span class="kw">RUN</span> <span class="ex">apt-get</span> update <span class="kw">&amp;&amp;</span> <span class="ex">apt-get</span> install xxx <span class="kw">&amp;&amp;</span> <span class="ex">...</span> <span class="kw">&amp;&amp;</span> <span class="ex">apt-get</span> remove xxx <span class="kw">&amp;&amp;</span> <span class="ex">...</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Or the (more readable) variant:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb30-1"><a></a><span class="kw">FROM</span> ubuntu</span>
-<span id="cb30-2"><a></a><span class="kw">RUN</span> <span class="ex">apt-get</span> update <span class="dt">\</span></span>
-<span id="cb30-3"><a></a> <span class="kw">&amp;&amp;</span> <span class="ex">apt-get</span> install xxx <span class="dt">\</span></span>
-<span id="cb30-4"><a></a> <span class="kw">&amp;&amp;</span> <span class="ex">...</span> <span class="dt">\</span></span>
-<span id="cb30-5"><a></a> <span class="kw">&amp;&amp;</span> <span class="ex">apt-get</span> remove xxx <span class="dt">\</span></span>
-<span id="cb30-6"><a></a> <span class="kw">&amp;&amp;</span> <span class="ex">...</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb30-1"><a aria-label="1"></a><span class="kw">FROM</span> ubuntu</span>
+<span id="cb30-2"><a aria-label="2"></a><span class="kw">RUN</span> <span class="ex">apt-get</span> update <span class="dt">\</span></span>
+<span id="cb30-3"><a aria-label="3"></a> <span class="kw">&amp;&amp;</span> <span class="ex">apt-get</span> install xxx <span class="dt">\</span></span>
+<span id="cb30-4"><a aria-label="4"></a> <span class="kw">&amp;&amp;</span> <span class="ex">...</span> <span class="dt">\</span></span>
+<span id="cb30-5"><a aria-label="5"></a> <span class="kw">&amp;&amp;</span> <span class="ex">apt-get</span> remove xxx <span class="dt">\</span></span>
+<span id="cb30-6"><a aria-label="6"></a> <span class="kw">&amp;&amp;</span> <span class="ex">...</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>This <code>RUN</code> command gives us a single layer.</p>
 <p>The files that are added, then removed in the same layer, do not grow the layer size.</p>
 </div>
@@ -1254,8 +1260,8 @@ root@0e2f53d52f7d:/#
 </div>
 <div class="callout-content">
 <p>This results in a Dockerfile looking like this:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb31-1"><a></a><span class="kw">FROM</span> ubuntu</span>
-<span id="cb31-2"><a></a><span class="kw">COPY</span> xxx /usr/local/bin</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb31-1"><a aria-label="1"></a><span class="kw">FROM</span> ubuntu</span>
+<span id="cb31-2"><a aria-label="2"></a><span class="kw">COPY</span> xxx /usr/local/bin</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Of course, this implies that the file <code>xxx</code> exists in the build context.</p>
 <p>That file has to exist before you can run <code>docker build</code>.</p>
 <p>For instance, it can:</p>
@@ -1319,13 +1325,13 @@ root@0e2f53d52f7d:/#
 <p>This can be done in (at least) two ways.</p>
 <ul>
 <li><p>Activate experimental features and squash the final image:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb32"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb32-1"><a></a><span class="ex">docker</span> image build <span class="at">--squash</span> ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb32"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb32-1"><a aria-label="1"></a><span class="ex">docker</span> image build <span class="at">--squash</span> ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 <li><p>Export/import the final image.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb33"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb33-1"><a></a><span class="ex">docker</span> build <span class="at">-t</span> temp-image .</span>
-<span id="cb33-2"><a></a><span class="ex">docker</span> run <span class="at">--entrypoint</span> true <span class="at">--name</span> temp-container temp-image</span>
-<span id="cb33-3"><a></a><span class="ex">docker</span> export temp-container <span class="kw">|</span> <span class="ex">docker</span> import <span class="at">-</span> final-image</span>
-<span id="cb33-4"><a></a><span class="ex">docker</span> rm temp-container</span>
-<span id="cb33-5"><a></a><span class="ex">docker</span> rmi temp-image</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb33"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb33-1"><a aria-label="1"></a><span class="ex">docker</span> build <span class="at">-t</span> temp-image .</span>
+<span id="cb33-2"><a aria-label="2"></a><span class="ex">docker</span> run <span class="at">--entrypoint</span> true <span class="at">--name</span> temp-container temp-image</span>
+<span id="cb33-3"><a aria-label="3"></a><span class="ex">docker</span> export temp-container <span class="kw">|</span> <span class="ex">docker</span> import <span class="at">-</span> final-image</span>
+<span id="cb33-4"><a aria-label="4"></a><span class="ex">docker</span> rm temp-container</span>
+<span id="cb33-5"><a aria-label="5"></a><span class="ex">docker</span> rmi temp-image</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 </ul>
 </div>
 </div>
@@ -1416,12 +1422,12 @@ root@0e2f53d52f7d:/#
 <ul>
 <li><p>Each stage is numbered, starting at <code>0</code></p></li>
 <li><p>We can copy a file from a previous stage by indicating its number, e.g.:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb34-1"><a></a><span class="kw">COPY</span> <span class="op">--from=0</span> /file/from/first/stage /location/in/current/stage</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb34-1"><a aria-label="1"></a><span class="kw">COPY</span> <span class="op">--from=0</span> /file/from/first/stage /location/in/current/stage</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 <li><p>We can also name stages, and reference these names:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb35"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb35-1"><a></a><span class="kw">FROM</span> golang <span class="kw">AS</span> builder</span>
-<span id="cb35-2"><a></a><span class="kw">RUN</span> <span class="ex">...</span></span>
-<span id="cb35-3"><a></a><span class="kw">FROM</span> alpine</span>
-<span id="cb35-4"><a></a><span class="kw">COPY</span> <span class="op">--from=builder</span> /go/bin/mylittlebinary /usr/local/bin/</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb35"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb35-1"><a aria-label="1"></a><span class="kw">FROM</span> golang <span class="kw">AS</span> builder</span>
+<span id="cb35-2"><a aria-label="2"></a><span class="kw">RUN</span> <span class="ex">...</span></span>
+<span id="cb35-3"><a aria-label="3"></a><span class="kw">FROM</span> alpine</span>
+<span id="cb35-4"><a aria-label="4"></a><span class="kw">COPY</span> <span class="op">--from=builder</span> /go/bin/mylittlebinary /usr/local/bin/</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 </ul>
 </div>
 </div>
@@ -1456,18 +1462,18 @@ root@0e2f53d52f7d:/#
 </div>
 <div class="callout-content">
 <p>Here is the final Dockerfile:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb36"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb36-1"><a></a><span class="kw">FROM</span> ubuntu <span class="kw">AS</span> compiler</span>
-<span id="cb36-2"><a></a><span class="kw">RUN</span> [<span class="st">"apt-get"</span>, <span class="st">"update"</span>]</span>
-<span id="cb36-3"><a></a><span class="kw">RUN</span> [<span class="st">"apt-get"</span>, <span class="st">"install"</span>, <span class="st">"-y"</span>, <span class="st">"build-essential"</span>]</span>
-<span id="cb36-4"><a></a><span class="kw">COPY</span> hello.c /</span>
-<span id="cb36-5"><a></a><span class="kw">RUN</span> [<span class="st">"make"</span>, <span class="st">"hello"</span>]</span>
-<span id="cb36-6"><a></a></span>
-<span id="cb36-7"><a></a><span class="kw">FROM</span> ubuntu</span>
-<span id="cb36-8"><a></a><span class="kw">COPY</span> <span class="op">--from=compiler</span> /hello /hello</span>
-<span id="cb36-9"><a></a><span class="kw">CMD</span> <span class="ex">/hello</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb36"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb36-1"><a aria-label="1"></a><span class="kw">FROM</span> ubuntu <span class="kw">AS</span> compiler</span>
+<span id="cb36-2"><a aria-label="2"></a><span class="kw">RUN</span> [<span class="st">"apt-get"</span>, <span class="st">"update"</span>]</span>
+<span id="cb36-3"><a aria-label="3"></a><span class="kw">RUN</span> [<span class="st">"apt-get"</span>, <span class="st">"install"</span>, <span class="st">"-y"</span>, <span class="st">"build-essential"</span>]</span>
+<span id="cb36-4"><a aria-label="4"></a><span class="kw">COPY</span> hello.c /</span>
+<span id="cb36-5"><a aria-label="5"></a><span class="kw">RUN</span> [<span class="st">"make"</span>, <span class="st">"hello"</span>]</span>
+<span id="cb36-6"><a aria-label="6"></a></span>
+<span id="cb36-7"><a aria-label="7"></a><span class="kw">FROM</span> ubuntu</span>
+<span id="cb36-8"><a aria-label="8"></a><span class="kw">COPY</span> <span class="op">--from=compiler</span> /hello /hello</span>
+<span id="cb36-9"><a aria-label="9"></a><span class="kw">CMD</span> <span class="ex">/hello</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Let’s build it, and check that it works correctly:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb37"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb37-1"><a></a><span class="ex">docker</span> build <span class="at">-t</span> hellomultistage .</span>
-<span id="cb37-2"><a></a><span class="ex">docker</span> run hellomultistage</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb37"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb37-1"><a aria-label="1"></a><span class="ex">docker</span> build <span class="at">-t</span> hellomultistage .</span>
+<span id="cb37-2"><a aria-label="2"></a><span class="ex">docker</span> run hellomultistage</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1500,11 +1506,11 @@ root@0e2f53d52f7d:/#
 <p><strong>Results</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb38"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb38-1"><a></a><span class="ex">$</span> docker images <span class="kw">|</span> <span class="fu">grep</span> ubuntu</span>
-<span id="cb38-2"><a></a><span class="ex">ubuntu</span>                                         latest         353675e2a41b   2 weeks ago      139MB</span>
-<span id="cb38-3"><a></a><span class="ex">$</span> docker images <span class="kw">|</span> <span class="fu">grep</span> hello</span>
-<span id="cb38-4"><a></a><span class="ex">hellomultistage</span>                                latest         977190f18730   55 seconds ago   139MB</span>
-<span id="cb38-5"><a></a><span class="ex">hello</span>                                          latest         09316393a5fe   30 minutes ago   707MB</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb38"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb38-1"><a aria-label="1"></a><span class="ex">$</span> docker images <span class="kw">|</span> <span class="fu">grep</span> ubuntu</span>
+<span id="cb38-2"><a aria-label="2"></a><span class="ex">ubuntu</span>                                         latest         353675e2a41b   2 weeks ago      139MB</span>
+<span id="cb38-3"><a aria-label="3"></a><span class="ex">$</span> docker images <span class="kw">|</span> <span class="fu">grep</span> hello</span>
+<span id="cb38-4"><a aria-label="4"></a><span class="ex">hellomultistage</span>                                latest         977190f18730   55 seconds ago   139MB</span>
+<span id="cb38-5"><a aria-label="5"></a><span class="ex">hello</span>                                          latest         09316393a5fe   30 minutes ago   707MB</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1519,7 +1525,7 @@ root@0e2f53d52f7d:/#
 <div class="callout-content">
 <ul>
 <li><p>We can also tag an intermediary stage with the following command:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb39"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb39-1"><a></a><span class="ex">docker</span> build <span class="at">--target</span> STAGE <span class="at">--tag</span> NAME</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb39"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb39-1"><a aria-label="1"></a><span class="ex">docker</span> build <span class="at">--target</span> STAGE <span class="at">--tag</span> NAME</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 <li><p>This will create an image (named <code>NAME</code>) corresponding to stage <code>STAGE</code></p></li>
 <li><p>This can be used to easily access an intermediary stage for inspection</p>
 <p>(instead of parsing the output of <code>docker build</code> to find out the image ID)</p></li>
@@ -1580,7 +1586,7 @@ root@0e2f53d52f7d:/#
 <li><p>BuildKit has a caching feature for run stages</p></li>
 <li><p>It can address download caches elegantly</p></li>
 <li><p>Example:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb40"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb40-1"><a></a><span class="ex">RUN</span> <span class="at">--mount</span><span class="op">=</span>type=cache,target=/pipcache pip install <span class="at">--cache-dir</span> /pipcache ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb40"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb40-1"><a aria-label="1"></a><span class="ex">RUN</span> <span class="at">--mount</span><span class="op">=</span>type=cache,target=/pipcache pip install <span class="at">--cache-dir</span> /pipcache ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 <li><p>The cache won’t be in the final image, but it’ll persist across builds</p></li>
 </ul>
 </div>
@@ -1616,7 +1622,7 @@ root@0e2f53d52f7d:/#
 <div class="callout-content">
 <ul>
 <li><p>This can be done from the Docker CLI:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb41"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb41-1"><a></a><span class="ex">docker</span> login</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb41"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb41-1"><a aria-label="1"></a><span class="ex">docker</span> login</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 </ul>
 </div>
 </div>
@@ -1658,9 +1664,9 @@ root@0e2f53d52f7d:/#
 <div class="callout-content">
 <ul>
 <li><p>Let’s tag our <code>figlet</code> image (or any other to our liking):</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb42"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb42-1"><a></a><span class="ex">docker</span> tag figlet jpetazzo/figlet</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb42"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb42-1"><a aria-label="1"></a><span class="ex">docker</span> tag figlet jpetazzo/figlet</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 <li><p>And push it to the Hub:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb43"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb43-1"><a></a><span class="ex">docker</span> push jpetazzo/figlet</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb43"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb43-1"><a aria-label="1"></a><span class="ex">docker</span> push jpetazzo/figlet</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 <li><p>That’s it!</p></li>
 </ul>
 </div>
@@ -1769,11 +1775,11 @@ root@0e2f53d52f7d:/#
 <li><p>Combine commands by using <code>&amp;&amp;</code> to continue commands and <code>\</code> to wrap lines.</p></li>
 </ul>
 <p>Note: it is frequent to build a Dockerfile line by line:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb44"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb44-1"><a></a><span class="kw">RUN</span> <span class="ex">apt-get</span> install thisthing</span>
-<span id="cb44-2"><a></a><span class="kw">RUN</span> <span class="ex">apt-get</span> install andthatthing andthatotherone</span>
-<span id="cb44-3"><a></a><span class="kw">RUN</span> <span class="ex">apt-get</span> install somemorestuff</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb44"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb44-1"><a aria-label="1"></a><span class="kw">RUN</span> <span class="ex">apt-get</span> install thisthing</span>
+<span id="cb44-2"><a aria-label="2"></a><span class="kw">RUN</span> <span class="ex">apt-get</span> install andthatthing andthatotherone</span>
+<span id="cb44-3"><a aria-label="3"></a><span class="kw">RUN</span> <span class="ex">apt-get</span> install somemorestuff</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>And then refactor it trivially before shipping:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb45"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb45-1"><a></a><span class="kw">RUN</span> <span class="ex">apt-get</span> install thisthing andthatthing andthatotherone somemorestuff</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb45"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb45-1"><a aria-label="1"></a><span class="kw">RUN</span> <span class="ex">apt-get</span> install thisthing andthatthing andthatotherone somemorestuff</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1808,12 +1814,12 @@ root@0e2f53d52f7d:/#
 </div>
 <div class="callout-content">
 <p>The dependencies are reinstalled every time, because the build system does not know if <code>requirements.txt</code> has been updated.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb46"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb46-1"><a></a><span class="ex">FROM</span> python</span>
-<span id="cb46-2"><a></a><span class="ex">WORKDIR</span> /src</span>
-<span id="cb46-3"><a></a><span class="ex">COPY</span> . .</span>
-<span id="cb46-4"><a></a><span class="ex">RUN</span> pip install <span class="at">-qr</span> requirements.txt</span>
-<span id="cb46-5"><a></a><span class="ex">EXPOSE</span> 5000</span>
-<span id="cb46-6"><a></a><span class="ex">CMD</span> [<span class="st">"python"</span>, <span class="st">"app.py"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb46"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb46-1"><a aria-label="1"></a><span class="ex">FROM</span> python</span>
+<span id="cb46-2"><a aria-label="2"></a><span class="ex">WORKDIR</span> /src</span>
+<span id="cb46-3"><a aria-label="3"></a><span class="ex">COPY</span> . .</span>
+<span id="cb46-4"><a aria-label="4"></a><span class="ex">RUN</span> pip install <span class="at">-qr</span> requirements.txt</span>
+<span id="cb46-5"><a aria-label="5"></a><span class="ex">EXPOSE</span> 5000</span>
+<span id="cb46-6"><a aria-label="6"></a><span class="ex">CMD</span> [<span class="st">"python"</span>, <span class="st">"app.py"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1827,13 +1833,13 @@ root@0e2f53d52f7d:/#
 </div>
 <div class="callout-content">
 <p>Adding the dependencies as a separate step means that Docker can cache more efficiently and only install them when <code>requirements.txt</code> changes.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb47"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb47-1"><a></a><span class="ex">FROM</span> python</span>
-<span id="cb47-2"><a></a><span class="ex">WORKDIR</span> /src</span>
-<span id="cb47-3"><a></a><span class="ex">COPY</span> requirements.txt .</span>
-<span id="cb47-4"><a></a><span class="ex">RUN</span> pip install <span class="at">-qr</span> requirements.txt</span>
-<span id="cb47-5"><a></a><span class="ex">COPY</span> . .</span>
-<span id="cb47-6"><a></a><span class="ex">EXPOSE</span> 5000</span>
-<span id="cb47-7"><a></a><span class="ex">CMD</span> [<span class="st">"python"</span>, <span class="st">"app.py"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb47"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb47-1"><a aria-label="1"></a><span class="ex">FROM</span> python</span>
+<span id="cb47-2"><a aria-label="2"></a><span class="ex">WORKDIR</span> /src</span>
+<span id="cb47-3"><a aria-label="3"></a><span class="ex">COPY</span> requirements.txt .</span>
+<span id="cb47-4"><a aria-label="4"></a><span class="ex">RUN</span> pip install <span class="at">-qr</span> requirements.txt</span>
+<span id="cb47-5"><a aria-label="5"></a><span class="ex">COPY</span> . .</span>
+<span id="cb47-6"><a aria-label="6"></a><span class="ex">EXPOSE</span> 5000</span>
+<span id="cb47-7"><a aria-label="7"></a><span class="ex">CMD</span> [<span class="st">"python"</span>, <span class="st">"app.py"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1851,10 +1857,10 @@ root@0e2f53d52f7d:/#
 <li><p>Layers cannot represent efficiently when a file is moved either.</p></li>
 <li><p>As a result, operations like <code>chown</code>, <code>chmod</code>, <code>mv</code> can be expensive.</p></li>
 <li><p>For instance, in the Dockerfile snippet below, each <code>RUN</code> line creates a layer with an entire copy of <code>some-file</code>.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb48"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb48-1"><a></a><span class="kw">COPY</span> some-file .</span>
-<span id="cb48-2"><a></a><span class="kw">RUN</span> <span class="fu">chown</span> www-data:www-data some-file</span>
-<span id="cb48-3"><a></a><span class="kw">RUN</span> <span class="fu">chmod</span> 644 some-file</span>
-<span id="cb48-4"><a></a><span class="kw">RUN</span> <span class="fu">mv</span> some-file /var/www</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb48"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb48-1"><a aria-label="1"></a><span class="kw">COPY</span> some-file .</span>
+<span id="cb48-2"><a aria-label="2"></a><span class="kw">RUN</span> <span class="fu">chown</span> www-data:www-data some-file</span>
+<span id="cb48-3"><a aria-label="3"></a><span class="kw">RUN</span> <span class="fu">chmod</span> 644 some-file</span>
+<span id="cb48-4"><a aria-label="4"></a><span class="kw">RUN</span> <span class="fu">mv</span> some-file /var/www</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 <li><p>How can we avoid that?</p></li>
 </ul>
 </div>
@@ -1873,12 +1879,12 @@ root@0e2f53d52f7d:/#
 <li><p>Instead of using <code>mv</code>, directly put files at the right place.</p></li>
 <li><p>When extracting archives (tar, zip…), merge operations in a single layer.</p>
 <p>Example:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb49"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb49-1"><a></a>  ...</span>
-<span id="cb49-2"><a></a>  <span class="kw">RUN</span> <span class="fu">wget</span> http://.../foo.tar.gz <span class="dt">\</span></span>
-<span id="cb49-3"><a></a>   <span class="kw">&amp;&amp;</span> <span class="fu">tar</span> <span class="at">-zxf</span> foo.tar.gz <span class="dt">\</span></span>
-<span id="cb49-4"><a></a>   <span class="kw">&amp;&amp;</span> <span class="fu">mv</span> foo/fooctl /usr/local/bin <span class="dt">\</span></span>
-<span id="cb49-5"><a></a>   <span class="kw">&amp;&amp;</span> <span class="fu">rm</span> <span class="at">-rf</span> foo foo.tar.gz</span>
-<span id="cb49-6"><a></a>...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb49"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb49-1"><a aria-label="1"></a>  ...</span>
+<span id="cb49-2"><a aria-label="2"></a>  <span class="kw">RUN</span> <span class="fu">wget</span> http://.../foo.tar.gz <span class="dt">\</span></span>
+<span id="cb49-3"><a aria-label="3"></a>   <span class="kw">&amp;&amp;</span> <span class="fu">tar</span> <span class="at">-zxf</span> foo.tar.gz <span class="dt">\</span></span>
+<span id="cb49-4"><a aria-label="4"></a>   <span class="kw">&amp;&amp;</span> <span class="fu">mv</span> foo/fooctl /usr/local/bin <span class="dt">\</span></span>
+<span id="cb49-5"><a aria-label="5"></a>   <span class="kw">&amp;&amp;</span> <span class="fu">rm</span> <span class="at">-rf</span> foo foo.tar.gz</span>
+<span id="cb49-6"><a aria-label="6"></a>...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 </ul>
 </div>
 </div>
@@ -1895,10 +1901,10 @@ root@0e2f53d52f7d:/#
 <ul>
 <li><p>The Dockerfile instruction <code>COPY</code> can take a <code>--chown</code> parameter.</p>
 <p>Examples:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb50"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb50-1"><a></a>...</span>
-<span id="cb50-2"><a></a><span class="kw">COPY</span> <span class="op">--chown=1000</span> some-file .</span>
-<span id="cb50-3"><a></a><span class="kw">COPY</span> <span class="op">--chown=1000:1000</span> some-file .</span>
-<span id="cb50-4"><a></a><span class="kw">COPY</span> <span class="op">--chown=www-data:www-data</span> some-file .</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb50"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb50-1"><a aria-label="1"></a>...</span>
+<span id="cb50-2"><a aria-label="2"></a><span class="kw">COPY</span> <span class="op">--chown=1000</span> some-file .</span>
+<span id="cb50-3"><a aria-label="3"></a><span class="kw">COPY</span> <span class="op">--chown=1000:1000</span> some-file .</span>
+<span id="cb50-4"><a aria-label="4"></a><span class="kw">COPY</span> <span class="op">--chown=www-data:www-data</span> some-file .</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 <li><p>The <code>--chown</code> flag can specify a user, or a user:group pair.</p></li>
 <li><p>The user and group can be specified as names or numbers.</p></li>
 <li><p>When using names, the names must exist in <code>/etc/passwd</code> or <code>/etc/group</code>.</p>
@@ -1932,18 +1938,18 @@ root@0e2f53d52f7d:/#
 <p><strong>Embedding unit tests in the build process</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb51"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb51-1"><a></a><span class="kw">FROM</span> &lt;baseimage&gt;</span>
-<span id="cb51-2"><a></a><span class="kw">RUN</span> <span class="op">&lt;</span>install <span class="ex">dependencies</span><span class="op">&gt;</span></span>
-<span id="cb51-3"><a></a><span class="kw">COPY</span> &lt;code&gt;</span>
-<span id="cb51-4"><a></a><span class="kw">RUN</span> <span class="op">&lt;</span>build <span class="ex">code</span><span class="op">&gt;</span></span>
-<span id="cb51-5"><a></a><span class="kw">RUN</span> <span class="op">&lt;</span>install <span class="bu">test</span> dependencies<span class="op">&gt;</span></span>
-<span id="cb51-6"><a></a><span class="kw">COPY</span> &lt;test data sets and fixtures&gt;</span>
-<span id="cb51-7"><a></a><span class="kw">RUN</span> <span class="op">&lt;</span>unit <span class="ex">tests</span><span class="op">&gt;</span></span>
-<span id="cb51-8"><a></a><span class="kw">FROM</span> &lt;baseimage&gt;</span>
-<span id="cb51-9"><a></a><span class="kw">RUN</span> <span class="op">&lt;</span>install <span class="ex">dependencies</span><span class="op">&gt;</span></span>
-<span id="cb51-10"><a></a><span class="kw">COPY</span> &lt;code&gt;</span>
-<span id="cb51-11"><a></a><span class="kw">RUN</span> <span class="op">&lt;</span>build <span class="ex">code</span><span class="op">&gt;</span></span>
-<span id="cb51-12"><a></a><span class="kw">CMD</span><span class="ex">,</span> EXPOSE ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb51"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb51-1"><a aria-label="1"></a><span class="kw">FROM</span> &lt;baseimage&gt;</span>
+<span id="cb51-2"><a aria-label="2"></a><span class="kw">RUN</span> <span class="op">&lt;</span>install <span class="ex">dependencies</span><span class="op">&gt;</span></span>
+<span id="cb51-3"><a aria-label="3"></a><span class="kw">COPY</span> &lt;code&gt;</span>
+<span id="cb51-4"><a aria-label="4"></a><span class="kw">RUN</span> <span class="op">&lt;</span>build <span class="ex">code</span><span class="op">&gt;</span></span>
+<span id="cb51-5"><a aria-label="5"></a><span class="kw">RUN</span> <span class="op">&lt;</span>install <span class="bu">test</span> dependencies<span class="op">&gt;</span></span>
+<span id="cb51-6"><a aria-label="6"></a><span class="kw">COPY</span> &lt;test data sets and fixtures&gt;</span>
+<span id="cb51-7"><a aria-label="7"></a><span class="kw">RUN</span> <span class="op">&lt;</span>unit <span class="ex">tests</span><span class="op">&gt;</span></span>
+<span id="cb51-8"><a aria-label="8"></a><span class="kw">FROM</span> &lt;baseimage&gt;</span>
+<span id="cb51-9"><a aria-label="9"></a><span class="kw">RUN</span> <span class="op">&lt;</span>install <span class="ex">dependencies</span><span class="op">&gt;</span></span>
+<span id="cb51-10"><a aria-label="10"></a><span class="kw">COPY</span> &lt;code&gt;</span>
+<span id="cb51-11"><a aria-label="11"></a><span class="kw">RUN</span> <span class="op">&lt;</span>build <span class="ex">code</span><span class="op">&gt;</span></span>
+<span id="cb51-12"><a aria-label="12"></a><span class="kw">CMD</span><span class="ex">,</span> EXPOSE ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <ul>
 <li>The build fails as soon as an instruction fails</li>
 <li>If <code>RUN &lt;unit tests&gt;</code> fails, the build doesn’t produce an image</li>
@@ -1994,15 +2000,15 @@ root@0e2f53d52f7d:/#
 <li><p>the size of the final image.</p></li>
 </ul>
 <p>This is often done at the expense of build time and convenience for the image maintainer; but when an image is downloaded millions of time, saving even a few seconds of pull time can be worth it.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb52"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb52-1"><a></a><span class="kw">RUN</span> <span class="ex">apt-get</span> update <span class="kw">&amp;&amp;</span> <span class="ex">apt-get</span> install <span class="at">-y</span> libpng12-dev libjpeg-dev <span class="kw">&amp;&amp;</span> <span class="fu">rm</span> <span class="at">-rf</span> /var/lib/apt/lists/<span class="pp">*</span> <span class="dt">\</span></span>
-<span id="cb52-2"><a></a>    <span class="kw">&amp;&amp;</span> <span class="ex">docker-php-ext-configure</span> gd <span class="at">--with-png-dir</span><span class="op">=</span>/usr <span class="at">--with-jpeg-dir</span><span class="op">=</span>/usr <span class="dt">\</span></span>
-<span id="cb52-3"><a></a>    <span class="kw">&amp;&amp;</span> <span class="ex">docker-php-ext-install</span> gd</span>
-<span id="cb52-4"><a></a>...</span>
-<span id="cb52-5"><a></a><span class="kw">RUN</span> <span class="ex">curl</span> <span class="at">-o</span> wordpress.tar.gz <span class="at">-SL</span> https://wordpress.org/wordpress-<span class="va">${WORDPRESS_UPSTREAM_VERSION}</span>.tar.gz <span class="dt">\</span></span>
-<span id="cb52-6"><a></a>    <span class="kw">&amp;&amp;</span> <span class="bu">echo</span> <span class="st">"</span><span class="va">$WORDPRESS_SHA1</span><span class="st"> *wordpress.tar.gz"</span> <span class="kw">|</span> <span class="fu">sha1sum</span> <span class="at">-c</span> <span class="at">-</span> <span class="dt">\</span></span>
-<span id="cb52-7"><a></a>    <span class="kw">&amp;&amp;</span> <span class="fu">tar</span> <span class="at">-xzf</span> wordpress.tar.gz <span class="at">-C</span> /usr/src/ <span class="dt">\</span></span>
-<span id="cb52-8"><a></a>    <span class="kw">&amp;&amp;</span> <span class="fu">rm</span> wordpress.tar.gz <span class="dt">\</span></span>
-<span id="cb52-9"><a></a>    <span class="kw">&amp;&amp;</span> <span class="fu">chown</span> <span class="at">-R</span> www-data:www-data /usr/src/wordpress</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb52"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb52-1"><a aria-label="1"></a><span class="kw">RUN</span> <span class="ex">apt-get</span> update <span class="kw">&amp;&amp;</span> <span class="ex">apt-get</span> install <span class="at">-y</span> libpng12-dev libjpeg-dev <span class="kw">&amp;&amp;</span> <span class="fu">rm</span> <span class="at">-rf</span> /var/lib/apt/lists/<span class="pp">*</span> <span class="dt">\</span></span>
+<span id="cb52-2"><a aria-label="2"></a>    <span class="kw">&amp;&amp;</span> <span class="ex">docker-php-ext-configure</span> gd <span class="at">--with-png-dir</span><span class="op">=</span>/usr <span class="at">--with-jpeg-dir</span><span class="op">=</span>/usr <span class="dt">\</span></span>
+<span id="cb52-3"><a aria-label="3"></a>    <span class="kw">&amp;&amp;</span> <span class="ex">docker-php-ext-install</span> gd</span>
+<span id="cb52-4"><a aria-label="4"></a>...</span>
+<span id="cb52-5"><a aria-label="5"></a><span class="kw">RUN</span> <span class="ex">curl</span> <span class="at">-o</span> wordpress.tar.gz <span class="at">-SL</span> https://wordpress.org/wordpress-<span class="va">${WORDPRESS_UPSTREAM_VERSION}</span>.tar.gz <span class="dt">\</span></span>
+<span id="cb52-6"><a aria-label="6"></a>    <span class="kw">&amp;&amp;</span> <span class="bu">echo</span> <span class="st">"</span><span class="va">$WORDPRESS_SHA1</span><span class="st"> *wordpress.tar.gz"</span> <span class="kw">|</span> <span class="fu">sha1sum</span> <span class="at">-c</span> <span class="at">-</span> <span class="dt">\</span></span>
+<span id="cb52-7"><a aria-label="7"></a>    <span class="kw">&amp;&amp;</span> <span class="fu">tar</span> <span class="at">-xzf</span> wordpress.tar.gz <span class="at">-C</span> /usr/src/ <span class="dt">\</span></span>
+<span id="cb52-8"><a aria-label="8"></a>    <span class="kw">&amp;&amp;</span> <span class="fu">rm</span> wordpress.tar.gz <span class="dt">\</span></span>
+<span id="cb52-9"><a aria-label="9"></a>    <span class="kw">&amp;&amp;</span> <span class="fu">chown</span> <span class="at">-R</span> www-data:www-data /usr/src/wordpress</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -2040,24 +2046,24 @@ root@0e2f53d52f7d:/#
 <p><strong>Dockerfile for Jekyll</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb53"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb53-1"><a></a><span class="kw">FROM</span> debian:sid</span>
-<span id="cb53-2"><a></a></span>
-<span id="cb53-3"><a></a><span class="kw">RUN</span> <span class="ex">apt-get</span> update <span class="at">-q</span></span>
-<span id="cb53-4"><a></a><span class="kw">RUN</span> <span class="ex">apt-get</span> install <span class="at">-yq</span> build-essential make</span>
-<span id="cb53-5"><a></a><span class="kw">RUN</span> <span class="ex">apt-get</span> install <span class="at">-yq</span> zlib1g-dev</span>
-<span id="cb53-6"><a></a><span class="kw">RUN</span> <span class="ex">apt-get</span> install <span class="at">-yq</span> ruby ruby-dev</span>
-<span id="cb53-7"><a></a><span class="kw">RUN</span> <span class="ex">apt-get</span> install <span class="at">-yq</span> python-pygments</span>
-<span id="cb53-8"><a></a><span class="kw">RUN</span> <span class="ex">apt-get</span> install <span class="at">-yq</span> nodejs</span>
-<span id="cb53-9"><a></a><span class="kw">RUN</span> <span class="ex">apt-get</span> install <span class="at">-yq</span> cmake</span>
-<span id="cb53-10"><a></a><span class="kw">RUN</span> <span class="ex">gem</span> install <span class="at">--no-rdoc</span> <span class="at">--no-ri</span> github-pages</span>
-<span id="cb53-11"><a></a></span>
-<span id="cb53-12"><a></a><span class="kw">COPY</span> . /blog</span>
-<span id="cb53-13"><a></a><span class="kw">WORKDIR</span> /blog</span>
-<span id="cb53-14"><a></a></span>
-<span id="cb53-15"><a></a><span class="kw">VOLUME</span> /blog/_site</span>
-<span id="cb53-16"><a></a></span>
-<span id="cb53-17"><a></a><span class="kw">EXPOSE</span> 4000</span>
-<span id="cb53-18"><a></a><span class="kw">CMD</span> [<span class="st">"jekyll"</span>, <span class="st">"serve"</span>, <span class="st">"--host"</span>, <span class="st">"0.0.0.0"</span>, <span class="st">"--incremental"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb53"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb53-1"><a aria-label="1"></a><span class="kw">FROM</span> debian:sid</span>
+<span id="cb53-2"><a aria-label="2"></a></span>
+<span id="cb53-3"><a aria-label="3"></a><span class="kw">RUN</span> <span class="ex">apt-get</span> update <span class="at">-q</span></span>
+<span id="cb53-4"><a aria-label="4"></a><span class="kw">RUN</span> <span class="ex">apt-get</span> install <span class="at">-yq</span> build-essential make</span>
+<span id="cb53-5"><a aria-label="5"></a><span class="kw">RUN</span> <span class="ex">apt-get</span> install <span class="at">-yq</span> zlib1g-dev</span>
+<span id="cb53-6"><a aria-label="6"></a><span class="kw">RUN</span> <span class="ex">apt-get</span> install <span class="at">-yq</span> ruby ruby-dev</span>
+<span id="cb53-7"><a aria-label="7"></a><span class="kw">RUN</span> <span class="ex">apt-get</span> install <span class="at">-yq</span> python-pygments</span>
+<span id="cb53-8"><a aria-label="8"></a><span class="kw">RUN</span> <span class="ex">apt-get</span> install <span class="at">-yq</span> nodejs</span>
+<span id="cb53-9"><a aria-label="9"></a><span class="kw">RUN</span> <span class="ex">apt-get</span> install <span class="at">-yq</span> cmake</span>
+<span id="cb53-10"><a aria-label="10"></a><span class="kw">RUN</span> <span class="ex">gem</span> install <span class="at">--no-rdoc</span> <span class="at">--no-ri</span> github-pages</span>
+<span id="cb53-11"><a aria-label="11"></a></span>
+<span id="cb53-12"><a aria-label="12"></a><span class="kw">COPY</span> . /blog</span>
+<span id="cb53-13"><a aria-label="13"></a><span class="kw">WORKDIR</span> /blog</span>
+<span id="cb53-14"><a aria-label="14"></a></span>
+<span id="cb53-15"><a aria-label="15"></a><span class="kw">VOLUME</span> /blog/_site</span>
+<span id="cb53-16"><a aria-label="16"></a></span>
+<span id="cb53-17"><a aria-label="17"></a><span class="kw">EXPOSE</span> 4000</span>
+<span id="cb53-18"><a aria-label="18"></a><span class="kw">CMD</span> [<span class="st">"jekyll"</span>, <span class="st">"serve"</span>, <span class="st">"--host"</span>, <span class="st">"0.0.0.0"</span>, <span class="st">"--incremental"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -2073,12 +2079,12 @@ root@0e2f53d52f7d:/#
 <p>Images can have a tag, indicating the version of the image.</p>
 <p>But sometimes, there are multiple important components, and we need to indicate the versions for all of them.</p>
 <p>This can be done with environment variables:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb54"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb54-1"><a></a><span class="kw">ENV</span> PIP=9.0.3 <span class="op">\</span></span>
-<span id="cb54-2"><a></a>    ZC_BUILDOUT=2.11.2 <span class="op">\</span></span>
-<span id="cb54-3"><a></a>    SETUPTOOLS=38.7.0 <span class="op">\</span></span>
-<span id="cb54-4"><a></a>    PLONE_MAJOR=5.1 <span class="op">\</span></span>
-<span id="cb54-5"><a></a>    PLONE_VERSION=5.1.0 <span class="op">\</span></span>
-<span id="cb54-6"><a></a>    PLONE_MD5=76dc6cfc1c749d763c32fff3a9870d8d</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb54"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb54-1"><a aria-label="1"></a><span class="kw">ENV</span> PIP=9.0.3 <span class="op">\</span></span>
+<span id="cb54-2"><a aria-label="2"></a>    ZC_BUILDOUT=2.11.2 <span class="op">\</span></span>
+<span id="cb54-3"><a aria-label="3"></a>    SETUPTOOLS=38.7.0 <span class="op">\</span></span>
+<span id="cb54-4"><a aria-label="4"></a>    PLONE_MAJOR=5.1 <span class="op">\</span></span>
+<span id="cb54-5"><a aria-label="5"></a>    PLONE_VERSION=5.1.0 <span class="op">\</span></span>
+<span id="cb54-6"><a aria-label="6"></a>    PLONE_MD5=76dc6cfc1c749d763c32fff3a9870d8d</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -2114,22 +2120,22 @@ root@0e2f53d52f7d:/#
 <p><strong>A typical entrypoint script</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb55"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb55-1"><a></a> <span class="co">#!/bin/sh</span></span>
-<span id="cb55-2"><a></a> set -e</span>
-<span id="cb55-3"><a></a> </span>
-<span id="cb55-4"><a></a> <span class="co"># first arg is '-f' or '--some-option'</span></span>
-<span id="cb55-5"><a></a> <span class="co"># or first arg is 'something.conf'</span></span>
-<span id="cb55-6"><a></a> if [ <span class="st">"${1#-}"</span> != <span class="st">"$1"</span> ] || [ <span class="st">"${1%.conf}"</span> != <span class="st">"$1"</span> ]; then</span>
-<span id="cb55-7"><a></a>    set -- redis-server <span class="st">"$@"</span></span>
-<span id="cb55-8"><a></a> fi</span>
-<span id="cb55-9"><a></a> </span>
-<span id="cb55-10"><a></a> <span class="co"># allow the container to be started with '--user'</span></span>
-<span id="cb55-11"><a></a> if [ <span class="st">"$1"</span> = <span class="st">'redis-server'</span> -a <span class="st">"$(id -u)"</span> = <span class="st">'0'</span> ]; then</span>
-<span id="cb55-12"><a></a>    chown -R redis .</span>
-<span id="cb55-13"><a></a>    exec su-exec redis <span class="st">"$0"</span> <span class="st">"$@"</span></span>
-<span id="cb55-14"><a></a> fi</span>
-<span id="cb55-15"><a></a> </span>
-<span id="cb55-16"><a></a> exec <span class="st">"$@"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb55"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb55-1"><a aria-label="1"></a> <span class="co">#!/bin/sh</span></span>
+<span id="cb55-2"><a aria-label="2"></a> set -e</span>
+<span id="cb55-3"><a aria-label="3"></a> </span>
+<span id="cb55-4"><a aria-label="4"></a> <span class="co"># first arg is '-f' or '--some-option'</span></span>
+<span id="cb55-5"><a aria-label="5"></a> <span class="co"># or first arg is 'something.conf'</span></span>
+<span id="cb55-6"><a aria-label="6"></a> if [ <span class="st">"${1#-}"</span> != <span class="st">"$1"</span> ] || [ <span class="st">"${1%.conf}"</span> != <span class="st">"$1"</span> ]; then</span>
+<span id="cb55-7"><a aria-label="7"></a>    set -- redis-server <span class="st">"$@"</span></span>
+<span id="cb55-8"><a aria-label="8"></a> fi</span>
+<span id="cb55-9"><a aria-label="9"></a> </span>
+<span id="cb55-10"><a aria-label="10"></a> <span class="co"># allow the container to be started with '--user'</span></span>
+<span id="cb55-11"><a aria-label="11"></a> if [ <span class="st">"$1"</span> = <span class="st">'redis-server'</span> -a <span class="st">"$(id -u)"</span> = <span class="st">'0'</span> ]; then</span>
+<span id="cb55-12"><a aria-label="12"></a>    chown -R redis .</span>
+<span id="cb55-13"><a aria-label="13"></a>    exec su-exec redis <span class="st">"$0"</span> <span class="st">"$@"</span></span>
+<span id="cb55-14"><a aria-label="14"></a> fi</span>
+<span id="cb55-15"><a aria-label="15"></a> </span>
+<span id="cb55-16"><a aria-label="16"></a> exec <span class="st">"$@"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -2151,16 +2157,16 @@ root@0e2f53d52f7d:/#
 <li><p>remote asset URLs (e.g.&nbsp;source tarballs) …</p></li>
 </ul>
 <p>Instead, use environment variables.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb56"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb56-1"><a></a><span class="kw">ENV</span> NODE_VERSION 10.2.1</span>
-<span id="cb56-2"><a></a>...</span>
-<span id="cb56-3"><a></a><span class="kw">RUN</span> <span class="ex">...</span></span>
-<span id="cb56-4"><a></a>    &amp;&amp; curl -fsSLO --compressed <span class="st">"https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION.tar.xz"</span> <span class="op">\</span></span>
-<span id="cb56-5"><a></a>    &amp;&amp; curl -fsSLO --compressed <span class="st">"https://nodejs.org/dist/v$NODE_VERSION/SHASUMS256.txt.asc"</span> <span class="op">\</span></span>
-<span id="cb56-6"><a></a>    &amp;&amp; gpg --batch --decrypt --output SHASUMS256.txt SHASUMS256.txt.asc <span class="op">\</span></span>
-<span id="cb56-7"><a></a>    &amp;&amp; grep <span class="st">" node-v$NODE_VERSION.tar.xz\$"</span> SHASUMS256.txt | sha256sum -c - <span class="op">\</span></span>
-<span id="cb56-8"><a></a>    &amp;&amp; tar -xf <span class="st">"node-v$NODE_VERSION.tar.xz"</span> <span class="op">\</span></span>
-<span id="cb56-9"><a></a>    &amp;&amp; cd <span class="st">"node-v$NODE_VERSION"</span> <span class="op">\</span></span>
-<span id="cb56-10"><a></a>...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb56"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb56-1"><a aria-label="1"></a><span class="kw">ENV</span> NODE_VERSION 10.2.1</span>
+<span id="cb56-2"><a aria-label="2"></a>...</span>
+<span id="cb56-3"><a aria-label="3"></a><span class="kw">RUN</span> <span class="ex">...</span></span>
+<span id="cb56-4"><a aria-label="4"></a>    &amp;&amp; curl -fsSLO --compressed <span class="st">"https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION.tar.xz"</span> <span class="op">\</span></span>
+<span id="cb56-5"><a aria-label="5"></a>    &amp;&amp; curl -fsSLO --compressed <span class="st">"https://nodejs.org/dist/v$NODE_VERSION/SHASUMS256.txt.asc"</span> <span class="op">\</span></span>
+<span id="cb56-6"><a aria-label="6"></a>    &amp;&amp; gpg --batch --decrypt --output SHASUMS256.txt SHASUMS256.txt.asc <span class="op">\</span></span>
+<span id="cb56-7"><a aria-label="7"></a>    &amp;&amp; grep <span class="st">" node-v$NODE_VERSION.tar.xz\$"</span> SHASUMS256.txt | sha256sum -c - <span class="op">\</span></span>
+<span id="cb56-8"><a aria-label="8"></a>    &amp;&amp; tar -xf <span class="st">"node-v$NODE_VERSION.tar.xz"</span> <span class="op">\</span></span>
+<span id="cb56-9"><a aria-label="9"></a>    &amp;&amp; cd <span class="st">"node-v$NODE_VERSION"</span> <span class="op">\</span></span>
+<span id="cb56-10"><a aria-label="10"></a>...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -2193,14 +2199,14 @@ root@0e2f53d52f7d:/#
 </div>
 <div class="callout-content">
 <p>This Dockerfile builds an image leveraging gunicorn:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb57"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb57-1"><a></a><span class="kw">FROM</span> python</span>
-<span id="cb57-2"><a></a><span class="kw">RUN</span> <span class="ex">pip</span> install flask</span>
-<span id="cb57-3"><a></a><span class="kw">RUN</span> <span class="ex">pip</span> install gunicorn</span>
-<span id="cb57-4"><a></a><span class="kw">RUN</span> <span class="ex">pip</span> install redis</span>
-<span id="cb57-5"><a></a><span class="kw">COPY</span> . /src</span>
-<span id="cb57-6"><a></a><span class="kw">WORKDIR</span> /src</span>
-<span id="cb57-7"><a></a><span class="kw">CMD</span> <span class="ex">gunicorn</span> <span class="at">--bind</span> 0.0.0.0:5000 <span class="at">--workers</span> 10 counter:app</span>
-<span id="cb57-8"><a></a><span class="kw">EXPOSE</span> 5000</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb57"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb57-1"><a aria-label="1"></a><span class="kw">FROM</span> python</span>
+<span id="cb57-2"><a aria-label="2"></a><span class="kw">RUN</span> <span class="ex">pip</span> install flask</span>
+<span id="cb57-3"><a aria-label="3"></a><span class="kw">RUN</span> <span class="ex">pip</span> install gunicorn</span>
+<span id="cb57-4"><a aria-label="4"></a><span class="kw">RUN</span> <span class="ex">pip</span> install redis</span>
+<span id="cb57-5"><a aria-label="5"></a><span class="kw">COPY</span> . /src</span>
+<span id="cb57-6"><a aria-label="6"></a><span class="kw">WORKDIR</span> /src</span>
+<span id="cb57-7"><a aria-label="7"></a><span class="kw">CMD</span> <span class="ex">gunicorn</span> <span class="at">--bind</span> 0.0.0.0:5000 <span class="at">--workers</span> 10 counter:app</span>
+<span id="cb57-8"><a aria-label="8"></a><span class="kw">EXPOSE</span> 5000</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -2222,17 +2228,17 @@ root@0e2f53d52f7d:/#
 <li><p>the <code>DEBUG</code> environment variable is set,</p></li>
 <li><p>a volume is used to provide a faster local development workflow.</p></li>
 </ul>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb58"><pre class="sourceCode numberSource yaml number-lines code-with-copy"><code class="sourceCode yaml"><span id="cb58-1"><a></a><span class="fu">services</span><span class="kw">:</span></span>
-<span id="cb58-2"><a></a><span class="at">  </span><span class="fu">www</span><span class="kw">:</span></span>
-<span id="cb58-3"><a></a><span class="at">    </span><span class="fu">build</span><span class="kw">:</span><span class="at"> www</span></span>
-<span id="cb58-4"><a></a><span class="at">    </span><span class="fu">ports</span><span class="kw">:</span></span>
-<span id="cb58-5"><a></a><span class="at">      </span><span class="kw">-</span><span class="at"> 8000:5000</span></span>
-<span id="cb58-6"><a></a><span class="at">    </span><span class="fu">user</span><span class="kw">:</span><span class="at"> nobody</span></span>
-<span id="cb58-7"><a></a><span class="at">    </span><span class="fu">environment</span><span class="kw">:</span></span>
-<span id="cb58-8"><a></a><span class="at">      </span><span class="fu">DEBUG</span><span class="kw">:</span><span class="at"> </span><span class="dv">1</span></span>
-<span id="cb58-9"><a></a><span class="at">    </span><span class="fu">command</span><span class="kw">:</span><span class="at"> python counter.py</span></span>
-<span id="cb58-10"><a></a><span class="at">    </span><span class="fu">volumes</span><span class="kw">:</span></span>
-<span id="cb58-11"><a></a><span class="at">      </span><span class="kw">-</span><span class="at"> ./www:/src</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb58"><pre class="sourceCode numberSource yaml number-lines code-with-copy"><code class="sourceCode yaml"><span id="cb58-1"><a aria-label="1"></a><span class="fu">services</span><span class="kw">:</span></span>
+<span id="cb58-2"><a aria-label="2"></a><span class="at">  </span><span class="fu">www</span><span class="kw">:</span></span>
+<span id="cb58-3"><a aria-label="3"></a><span class="at">    </span><span class="fu">build</span><span class="kw">:</span><span class="at"> www</span></span>
+<span id="cb58-4"><a aria-label="4"></a><span class="at">    </span><span class="fu">ports</span><span class="kw">:</span></span>
+<span id="cb58-5"><a aria-label="5"></a><span class="at">      </span><span class="kw">-</span><span class="at"> 8000:5000</span></span>
+<span id="cb58-6"><a aria-label="6"></a><span class="at">    </span><span class="fu">user</span><span class="kw">:</span><span class="at"> nobody</span></span>
+<span id="cb58-7"><a aria-label="7"></a><span class="at">    </span><span class="fu">environment</span><span class="kw">:</span></span>
+<span id="cb58-8"><a aria-label="8"></a><span class="at">      </span><span class="fu">DEBUG</span><span class="kw">:</span><span class="at"> </span><span class="dv">1</span></span>
+<span id="cb58-9"><a aria-label="9"></a><span class="at">    </span><span class="fu">command</span><span class="kw">:</span><span class="at"> python counter.py</span></span>
+<span id="cb58-10"><a aria-label="10"></a><span class="at">    </span><span class="fu">volumes</span><span class="kw">:</span></span>
+<span id="cb58-11"><a aria-label="11"></a><span class="at">      </span><span class="kw">-</span><span class="at"> ./www:/src</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -2314,9 +2320,9 @@ root@0e2f53d52f7d:/#
 <p>We have copy-pasted the ID, or used a shortened prefix.</p>
 <p>But each container can also be referenced by its name.</p>
 <p>If a container is named <code>thumbnail-worker</code>, I can do:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb59"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb59-1"><a></a><span class="ex">$</span> docker logs thumbnail-worker</span>
-<span id="cb59-2"><a></a><span class="ex">$</span> docker stop thumbnail-worker</span>
-<span id="cb59-3"><a></a><span class="ex">etc.</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb59"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb59-1"><a aria-label="1"></a><span class="ex">$</span> docker logs thumbnail-worker</span>
+<span id="cb59-2"><a aria-label="2"></a><span class="ex">$</span> docker stop thumbnail-worker</span>
+<span id="cb59-3"><a aria-label="3"></a><span class="ex">etc.</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -2349,7 +2355,7 @@ root@0e2f53d52f7d:/#
 </div>
 <div class="callout-content">
 <p>You can set the name of the container when you create it.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb60"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb60-1"><a></a><span class="ex">$</span> docker run <span class="at">--name</span> ticktock jpetazzo/clock</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb60"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb60-1"><a aria-label="1"></a><span class="ex">$</span> docker run <span class="at">--name</span> ticktock jpetazzo/clock</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>If you specify a name that already exists, Docker will refuse to create the container.</p>
 <p>This lets us enforce unicity of a given resource.</p>
 </div>
@@ -2381,11 +2387,11 @@ root@0e2f53d52f7d:/#
 </div>
 <div class="callout-content">
 <p>The <code>docker inspect</code> command will output a very detailed JSON map.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb61"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb61-1"><a></a><span class="ex">$</span> docker inspect <span class="op">&lt;</span>containerID<span class="op">&gt;</span></span>
-<span id="cb61-2"><a></a><span class="ex">[{</span></span>
-<span id="cb61-3"><a></a><span class="ex">...</span></span>
-<span id="cb61-4"><a></a><span class="kw">(</span><span class="ex">many</span> pages of JSON here<span class="kw">)</span></span>
-<span id="cb61-5"><a></a><span class="ex">...</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb61"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb61-1"><a aria-label="1"></a><span class="ex">$</span> docker inspect <span class="op">&lt;</span>containerID<span class="op">&gt;</span></span>
+<span id="cb61-2"><a aria-label="2"></a><span class="ex">[{</span></span>
+<span id="cb61-3"><a aria-label="3"></a><span class="ex">...</span></span>
+<span id="cb61-4"><a aria-label="4"></a><span class="kw">(</span><span class="ex">many</span> pages of JSON here<span class="kw">)</span></span>
+<span id="cb61-5"><a aria-label="5"></a><span class="ex">...</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>There are multiple ways to consume that information.</p>
 </div>
 </div>
@@ -2405,7 +2411,7 @@ root@0e2f53d52f7d:/#
 <li><p>It’s painful.</p></li>
 <li><p>If you really must parse JSON from the Shell, use JQ! (It’s great.)</p></li>
 </ul>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb62"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb62-1"><a></a><span class="ex">$</span> docker inspect <span class="op">&lt;</span>containerID<span class="op">&gt;</span> <span class="kw">|</span> <span class="ex">jq</span> .</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb62"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb62-1"><a aria-label="1"></a><span class="ex">$</span> docker inspect <span class="op">&lt;</span>containerID<span class="op">&gt;</span> <span class="kw">|</span> <span class="ex">jq</span> .</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <ul>
 <li>We will see a better solution which doesn’t require extra tools.</li>
 </ul>
@@ -2422,8 +2428,8 @@ root@0e2f53d52f7d:/#
 </div>
 <div class="callout-content">
 <p>You can specify a format string, which will be parsed by Go’s text/template package.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb63"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb63-1"><a></a><span class="ex">$</span> docker inspect <span class="at">--format</span> <span class="st">'{{ json .Created }}'</span> <span class="op">&lt;</span>containerID<span class="op">&gt;</span></span>
-<span id="cb63-2"><a></a><span class="st">"2015-02-24T07:21:11.712240394Z"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb63"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb63-1"><a aria-label="1"></a><span class="ex">$</span> docker inspect <span class="at">--format</span> <span class="st">'{{ json .Created }}'</span> <span class="op">&lt;</span>containerID<span class="op">&gt;</span></span>
+<span id="cb63-2"><a aria-label="2"></a><span class="st">"2015-02-24T07:21:11.712240394Z"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <ul>
 <li><p>The generic syntax is to wrap the expression with double curly braces.</p></li>
 <li><p>The expression starts with a dot representing the JSON object.</p></li>
@@ -2467,9 +2473,9 @@ root@0e2f53d52f7d:/#
 </div>
 <div class="callout-content">
 <p>Let’s create a few containers with a label <code>owner</code>.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb64"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb64-1"><a></a><span class="ex">docker</span> run <span class="at">-d</span> <span class="at">-l</span> owner=alice nginx</span>
-<span id="cb64-2"><a></a><span class="ex">docker</span> run <span class="at">-d</span> <span class="at">-l</span> owner=bob nginx</span>
-<span id="cb64-3"><a></a><span class="ex">docker</span> run <span class="at">-d</span> <span class="at">-l</span> owner nginx</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb64"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb64-1"><a aria-label="1"></a><span class="ex">docker</span> run <span class="at">-d</span> <span class="at">-l</span> owner=alice nginx</span>
+<span id="cb64-2"><a aria-label="2"></a><span class="ex">docker</span> run <span class="at">-d</span> <span class="at">-l</span> owner=bob nginx</span>
+<span id="cb64-3"><a aria-label="3"></a><span class="ex">docker</span> run <span class="at">-d</span> <span class="at">-l</span> owner nginx</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>We didn’t specify a value for the <code>owner</code> label in the last example.</p>
 <p>This is equivalent to setting the value to be an empty string.</p>
 </div>
@@ -2485,13 +2491,13 @@ root@0e2f53d52f7d:/#
 </div>
 <div class="callout-content">
 <p>We can view the labels with <code>docker inspect</code>.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb65"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb65-1"><a></a><span class="ex">$</span> docker inspect <span class="va">$(</span><span class="ex">docker</span> ps <span class="at">-lq</span><span class="va">)</span> <span class="kw">|</span> <span class="fu">grep</span> <span class="at">-A3</span> Labels</span>
-<span id="cb65-2"><a></a>            <span class="st">"Labels"</span><span class="ex">:</span> {</span>
-<span id="cb65-3"><a></a>                <span class="st">"maintainer"</span><span class="ex">:</span> <span class="st">"NGINX Docker Maintainers &lt;docker-maint@nginx.com&gt;"</span>,</span>
-<span id="cb65-4"><a></a>                <span class="st">"owner"</span><span class="ex">:</span> <span class="st">""</span></span>
-<span id="cb65-5"><a></a>            <span class="er">}</span><span class="ex">,</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb65"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb65-1"><a aria-label="1"></a><span class="ex">$</span> docker inspect <span class="va">$(</span><span class="ex">docker</span> ps <span class="at">-lq</span><span class="va">)</span> <span class="kw">|</span> <span class="fu">grep</span> <span class="at">-A3</span> Labels</span>
+<span id="cb65-2"><a aria-label="2"></a>            <span class="st">"Labels"</span><span class="ex">:</span> {</span>
+<span id="cb65-3"><a aria-label="3"></a>                <span class="st">"maintainer"</span><span class="ex">:</span> <span class="st">"NGINX Docker Maintainers &lt;docker-maint@nginx.com&gt;"</span>,</span>
+<span id="cb65-4"><a aria-label="4"></a>                <span class="st">"owner"</span><span class="ex">:</span> <span class="st">""</span></span>
+<span id="cb65-5"><a aria-label="5"></a>            <span class="er">}</span><span class="ex">,</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>We can use the <code>--format</code> flag to list the value of a label.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb66"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb66-1"><a></a><span class="ex">$</span> docker inspect <span class="va">$(</span><span class="ex">docker</span> ps <span class="at">-q</span><span class="va">)</span> <span class="at">--format</span> <span class="st">'OWNER={{.Config.Labels.owner}}'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb66"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb66-1"><a aria-label="1"></a><span class="ex">$</span> docker inspect <span class="va">$(</span><span class="ex">docker</span> ps <span class="at">-q</span><span class="va">)</span> <span class="at">--format</span> <span class="st">'OWNER={{.Config.Labels.owner}}'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -2505,9 +2511,9 @@ root@0e2f53d52f7d:/#
 </div>
 <div class="callout-content">
 <p>We can list containers having a specific label.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb67"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb67-1"><a></a><span class="ex">$</span> docker ps <span class="at">--filter</span> label=owner</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb67"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb67-1"><a aria-label="1"></a><span class="ex">$</span> docker ps <span class="at">--filter</span> label=owner</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Or we can list containers having a specific label with a specific value.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb68"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb68-1"><a></a><span class="ex">$</span> docker ps <span class="at">--filter</span> label=owner=alice</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb68"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb68-1"><a aria-label="1"></a><span class="ex">$</span> docker ps <span class="at">--filter</span> label=owner=alice</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -2608,7 +2614,7 @@ root@0e2f53d52f7d:/#
 </div>
 <div class="callout-content">
 <p>If you run Docker on Linux, container processes are visible on the host.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb69"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb69-1"><a></a><span class="ex">$</span> ps faux <span class="kw">|</span> <span class="fu">less</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb69"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb69-1"><a aria-label="1"></a><span class="ex">$</span> ps faux <span class="kw">|</span> <span class="fu">less</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <ul>
 <li><p>Scroll around the output of this command.</p></li>
 <li><p>You should see the <code>jpetazzo/clock</code> container.</p></li>
@@ -2651,7 +2657,7 @@ root@0e2f53d52f7d:/#
 <li><p>We <em>could</em> run some SSH server in the container …</p></li>
 <li><p>But it is easier to use <code>docker exec</code>.</p></li>
 </ul>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb70"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb70-1"><a></a><span class="ex">$</span> docker exec <span class="at">-ti</span> ticktock sh</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb70"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb70-1"><a aria-label="1"></a><span class="ex">$</span> docker exec <span class="at">-ti</span> ticktock sh</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <ul>
 <li><p>This creates a new process (running <code>sh</code>) <em>inside</em> the container.</p></li>
 <li><p>This can also be done “manually” with the tool <code>nsenter</code>.</p></li>
@@ -2706,11 +2712,11 @@ root@0e2f53d52f7d:/#
 </div>
 <div class="callout-content">
 <p>As an exercise, we are going to try to find out what’s wrong with <code>jpetazzo/crashtest</code>.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb71"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb71-1"><a></a><span class="ex">docker</span> run jpetazzo/crashtest</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb71"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb71-1"><a aria-label="1"></a><span class="ex">docker</span> run jpetazzo/crashtest</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The container starts, but then stops immediately, without any output.</p>
 <p>What would MacGyver™ do?</p>
 <p>First, let’s check the status of that container.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb72"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb72-1"><a></a><span class="ex">docker</span> ps <span class="at">-l</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb72"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb72-1"><a aria-label="1"></a><span class="ex">docker</span> ps <span class="at">-l</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -2726,7 +2732,7 @@ root@0e2f53d52f7d:/#
 <ul>
 <li>We can use <code>docker diff</code> to see files that were added / changed / removed.</li>
 </ul>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb73"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb73-1"><a></a><span class="ex">docker</span> diff <span class="op">&lt;</span>container_id<span class="op">&gt;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb73"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb73-1"><a aria-label="1"></a><span class="ex">docker</span> diff <span class="op">&lt;</span>container_id<span class="op">&gt;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <ul>
 <li><p>The container ID was shown by <code>docker ps -l</code>.</p></li>
 <li><p>We can also see it with <code>docker ps -lq</code>.</p></li>
@@ -2747,11 +2753,11 @@ root@0e2f53d52f7d:/#
 <ul>
 <li>We can extract files with <code>docker cp</code>.</li>
 </ul>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb74"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb74-1"><a></a><span class="ex">docker</span> cp <span class="op">&lt;</span>container_id<span class="op">&gt;</span>:/var/log/nginx/error.log .</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb74"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb74-1"><a aria-label="1"></a><span class="ex">docker</span> cp <span class="op">&lt;</span>container_id<span class="op">&gt;</span>:/var/log/nginx/error.log .</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <ul>
 <li>Then we can look at that log file.</li>
 </ul>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb75"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb75-1"><a></a><span class="fu">cat</span> error.log</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb75"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb75-1"><a aria-label="1"></a><span class="fu">cat</span> error.log</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>(The directory <code>/run/nginx</code> doesn’t exist.)</p>
 </div>
 </div>
@@ -2771,11 +2777,11 @@ root@0e2f53d52f7d:/#
 <li><p>We cannot specify a different program to run with <code>docker start</code></p></li>
 <li><p>But we can create a new image from the crashed container</p></li>
 </ul>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb76"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb76-1"><a></a><span class="ex">docker</span> commit <span class="op">&lt;</span>container_id<span class="op">&gt;</span> debugimage</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb76"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb76-1"><a aria-label="1"></a><span class="ex">docker</span> commit <span class="op">&lt;</span>container_id<span class="op">&gt;</span> debugimage</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <ul>
 <li>Then we can run a new container from that image, with a custom entrypoint</li>
 </ul>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb77"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb77-1"><a></a><span class="ex">docker</span> run <span class="at">-ti</span> <span class="at">--entrypoint</span> sh debugimage</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb77"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb77-1"><a aria-label="1"></a><span class="ex">docker</span> run <span class="at">-ti</span> <span class="at">--entrypoint</span> sh debugimage</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -2793,7 +2799,7 @@ root@0e2f53d52f7d:/#
 <li><p>This is done with <code>docker export</code>.</p></li>
 <li><p>It generates a tar archive.</p></li>
 </ul>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb78"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb78-1"><a></a><span class="ex">docker</span> export <span class="op">&lt;</span>container_id<span class="op">&gt;</span> <span class="kw">|</span> <span class="fu">tar</span> tv</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb78"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb78-1"><a aria-label="1"></a><span class="ex">docker</span> export <span class="op">&lt;</span>container_id<span class="op">&gt;</span> <span class="kw">|</span> <span class="fu">tar</span> tv</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>This will give a detailed listing of the content of the container.</p>
 </div>
 </div>

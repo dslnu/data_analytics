@@ -2,17 +2,23 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.8.26">
+<meta name="generator" content="quarto-1.10.18">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
 <title>Big Data Analytics: Lab 1 – Big Data analytics / Applied Data analytics</title>
 <style>
-code{white-space: pre-wrap;}
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
 span.smallcaps{font-variant: small-caps;}
-div.columns{display: flex; gap: min(4vw, 1.5em);}
-div.column{flex: auto; overflow-x: auto;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
 div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 ul.task-list{list-style: none;}
 ul.task-list li input[type="checkbox"] {
@@ -67,15 +73,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <meta name="quarto:offset" content="./">
 <script src="site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="site_libs/quarto-html/popper.min.js"></script>
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-587c61ba64f3a5504c4d52d930310e48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-5b4ad623e5705c0698d39aec6f10cf02.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-445b8638c3d06994fee0907d791121c4.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -173,6 +178,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul class="collapse">
   <li><a href="#numeric-types-optimization" id="toc-numeric-types-optimization" class="nav-link" data-scroll-target="#numeric-types-optimization">Numeric types optimization</a></li>
   </ul></li>
+  <li><a href="#vectorization-query-performance" id="toc-vectorization-query-performance" class="nav-link" data-scroll-target="#vectorization-query-performance">Vectorization &amp; query performance</a>
+  <ul class="collapse">
+  <li><a href="#filtering-.query-.eval-vs.-boolean-masks" id="toc-filtering-.query-.eval-vs.-boolean-masks" class="nav-link" data-scroll-target="#filtering-.query-.eval-vs.-boolean-masks">Filtering: <code>.query()</code> / <code>.eval()</code> vs.&nbsp;boolean masks</a></li>
+  </ul></li>
+  <li><a href="#chunked-processing" id="toc-chunked-processing" class="nav-link" data-scroll-target="#chunked-processing">Chunked processing</a></li>
+  <li><a href="#polars" id="toc-polars" class="nav-link" data-scroll-target="#polars">Polars</a></li>
+  <li><a href="#pandas-vs.-polars" id="toc-pandas-vs.-polars" class="nav-link" data-scroll-target="#pandas-vs.-polars">Pandas vs.&nbsp;Polars</a></li>
   <li><a href="#exercises" id="toc-exercises" class="nav-link" data-scroll-target="#exercises">Exercises</a></li>
   </ul></li>
   </ul>
@@ -238,7 +250,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="storage-optimization" class="level2">
 <h2 class="anchored" data-anchor-id="storage-optimization">Storage optimization</h2>
 <p>We’ll get the sample dataset from <a href="https://www.kaggle.com/datasets/anthonytherrien/depression-dataset" class="uri">https://www.kaggle.com/datasets/anthonytherrien/depression-dataset</a>.</p>
-<div id="adbcf2af" class="cell" data-execution_count="2">
+<div id="ff68b411" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>dd <span class="op">=</span> pd.read_csv(<span class="st">'_files/depression_data.csv'</span>)</span>
@@ -372,7 +384,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>Let’s see some memory usage stats:</p>
-<div id="9d03430a" class="cell" data-execution_count="3">
+<div id="7f9023b5" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>dd.info(memory_usage<span class="op">=</span><span class="st">'deep'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>&lt;class 'pandas.core.frame.DataFrame'&gt;
@@ -403,7 +415,7 @@ memory usage: 294.9 MB</code></pre>
 <p><strong>Note:</strong> Pandas stores memory in blocks, managed by <code>BlockManager</code> class. There is a separate block class for each type, like <code>ObjectBlock</code> or <code>FloatBlock</code>.</p>
 <p>Nice write-up here: <a href="https://uwekorn.com/2020/05/24/the-one-pandas-internal.html" class="uri">https://uwekorn.com/2020/05/24/the-one-pandas-internal.html</a>.</p>
 <p>Let’s examine memory usage for each type:</p>
-<div id="ade86195" class="cell" data-execution_count="4">
+<div id="4ffb4396" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> dtype <span class="kw">in</span> [<span class="st">'float'</span>,<span class="st">'int'</span>,<span class="st">'object'</span>]:</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    selected_dtype <span class="op">=</span> dd.select_dtypes(include<span class="op">=</span>[dtype])</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    mean_usage_b <span class="op">=</span> selected_dtype.memory_usage(deep<span class="op">=</span><span class="va">True</span>).mean()</span>
@@ -418,7 +430,7 @@ Average memory usage for object columns: 20.39 MB</code></pre>
 <section id="numeric-types-optimization" class="level3">
 <h3 class="anchored" data-anchor-id="numeric-types-optimization">Numeric types optimization</h3>
 <p>Let’s first use <code>iinfo</code> to check ranges for different subtypes:</p>
-<div id="e895b47a" class="cell" data-execution_count="5">
+<div id="f6208730" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>int_types <span class="op">=</span> [<span class="st">"uint8"</span>, <span class="st">"int8"</span>, <span class="st">"int16"</span>, <span class="st">"int32"</span>, <span class="st">"int64"</span>]</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> it <span class="kw">in</span> int_types:</span>
@@ -458,7 +470,7 @@ max = 9223372036854775807
 </div>
 <p>We can use <code>pd.to_numeric()</code> to downcast numeric types.</p>
 <p>First, let’s write a helper function for memory usage display:</p>
-<div id="4a501989" class="cell" data-execution_count="6">
+<div id="e03f644b" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> mem_usage(pandas_obj):</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">isinstance</span>(pandas_obj,pd.DataFrame):</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>        usage_b <span class="op">=</span> pandas_obj.memory_usage(deep<span class="op">=</span><span class="va">True</span>).<span class="bu">sum</span>()</span>
@@ -468,7 +480,7 @@ max = 9223372036854775807
 <span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="st">"</span><span class="sc">{:03.2f}</span><span class="st"> MB"</span>.<span class="bu">format</span>(usage_mb)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Note that “Age” and “Number of Children” columns can be presented as unsigned ints. Let’s convert:</p>
-<div id="649d2313" class="cell" data-execution_count="7">
+<div id="edaa128e" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>dd_int <span class="op">=</span> dd.select_dtypes(include<span class="op">=</span>[<span class="st">'int'</span>])</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>converted_int <span class="op">=</span> dd_int.<span class="bu">apply</span>(pd.to_numeric,downcast<span class="op">=</span><span class="st">'unsigned'</span>)</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Before: "</span>, mem_usage(dd_int))</span>
@@ -510,7 +522,7 @@ After:  0.79 MB</code></pre>
 </div>
 </div>
 <p>Nice. Now let’s process <code>float</code> columns (<code>Income</code>):</p>
-<div id="bf3d3ba1" class="cell" data-execution_count="8">
+<div id="62a5b815" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>dd_float <span class="op">=</span> dd.select_dtypes(include<span class="op">=</span>[<span class="st">'float'</span>])</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>converted_float <span class="op">=</span> dd_float.<span class="bu">apply</span>(pd.to_numeric,downcast<span class="op">=</span><span class="st">'float'</span>)</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Before: "</span>, mem_usage(dd_float))</span>
@@ -548,7 +560,7 @@ After:  3.16 MB</code></pre>
 </div>
 <p>Nothing spectacular.</p>
 <p>Now let’s create a new optimized <code>DataFrame</code>:</p>
-<div id="d60d3e16" class="cell" data-execution_count="9">
+<div id="923726b8" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>optimized_dd <span class="op">=</span> dd.copy()</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>optimized_dd[converted_int.columns] <span class="op">=</span> converted_int</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>optimized_dd[converted_float.columns] <span class="op">=</span> converted_float</span>
@@ -565,7 +577,7 @@ After:  3.16 MB</code></pre>
 <p>We can use categoricals (<a href="https://pandas.pydata.org/pandas-docs/stable/categorical.html" class="uri">https://pandas.pydata.org/pandas-docs/stable/categorical.html</a>) to optimize object columns.</p>
 <p><img src="img/categorical.png" class="img-fluid"></p>
 <p>Let’s look at the number of unique values for each object type:</p>
-<div id="9612a694" class="cell" data-execution_count="10">
+<div id="4d447ffd" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>dd_obj <span class="op">=</span> dd.select_dtypes(include<span class="op">=</span>[<span class="st">'object'</span>]).copy()</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>dd_obj.describe()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="9">
@@ -663,7 +675,7 @@ After:  3.16 MB</code></pre>
 </div>
 </div>
 <p>Let’s start with one column first: “Education Level”</p>
-<div id="3d048b80" class="cell" data-execution_count="11">
+<div id="cab66e25" class="cell" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>edu_level <span class="op">=</span> dd_obj[<span class="st">"Education Level"</span>]</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(edu_level.head())</span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>edu_level_cat <span class="op">=</span> edu_level.astype(<span class="st">'category'</span>)</span>
@@ -685,7 +697,7 @@ Categories (5, object): ['Associate Degree', 'Bachelor's Degree', 'High School',
 </div>
 </div>
 <p>We can look at the category codes:</p>
-<div id="69a33095" class="cell" data-execution_count="12">
+<div id="0c15489d" class="cell" data-execution_count="12">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>edu_level_cat.head().cat.codes</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="11">
 <pre><code>0    1
@@ -697,7 +709,7 @@ dtype: int8</code></pre>
 </div>
 </div>
 <p>Compare memory usage:</p>
-<div id="98dda9da" class="cell" data-execution_count="13">
+<div id="4b29c24c" class="cell" data-execution_count="13">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(mem_usage(edu_level))</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(mem_usage(edu_level_cat))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -710,6 +722,398 @@ dtype: int8</code></pre>
 <p>Converting all object columns and creating a new optimized DataFrame is left as part of <strong>Exercise 1</strong>.</p>
 </section>
 </section>
+<section id="vectorization-query-performance" class="level2">
+<h2 class="anchored" data-anchor-id="vectorization-query-performance">Vectorization &amp; query performance</h2>
+<p>We can also optimize by modifying the actual operation. Let’s derive a simple “risk score” from <code>Age</code>, <code>Income</code>, and <code>Number of Children</code> four different ways, and time each.</p>
+<div id="cfb93032" class="cell" data-execution_count="14">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> risk_score(age, income, children):</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> age <span class="op">*</span> <span class="fl">0.5</span> <span class="op">-</span> income <span class="op">/</span> <span class="dv">10_000</span> <span class="op">+</span> children <span class="op">*</span> <span class="dv">2</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><strong><code>.apply(axis=1)</code></strong> – calls a Python function once per row:</p>
+<div id="272c17a5" class="cell" data-execution_count="15">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>timeit dd.<span class="bu">apply</span>(<span class="kw">lambda</span> row: risk_score(row[<span class="st">"Age"</span>], row[<span class="st">"Income"</span>], row[<span class="st">"Number of Children"</span>]), axis<span class="op">=</span><span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>1.2 s ± 3.63 ms per loop (mean ± std. dev. of 7 runs, 1 loop each)</code></pre>
+</div>
+</div>
+<p><strong><code>.iterrows()</code></strong> – iterates row by row, unpacking into a <code>Series</code> each time (notoriously slow):</p>
+<div id="2af07593" class="cell" data-execution_count="16">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> with_iterrows(df):</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> []</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _, row <span class="kw">in</span> df.iterrows():</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>        out.append(risk_score(row[<span class="st">"Age"</span>], row[<span class="st">"Income"</span>], row[<span class="st">"Number of Children"</span>]))</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>timeit with_iterrows(dd)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>4.38 s ± 61.1 ms per loop (mean ± std. dev. of 7 runs, 1 loop each)</code></pre>
+</div>
+</div>
+<p><strong><code>.itertuples()</code></strong> – same idea, but yields lightweight namedtuples instead of <code>Series</code>:</p>
+<div id="a369ef96" class="cell" data-execution_count="17">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> with_itertuples(df):</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> []</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> row <span class="kw">in</span> df.itertuples():</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>        out.append(risk_score(row.Age, row.Income, row._5))  <span class="co"># "Number of Children" -&gt; _5 (spaces aren't valid attribute names)</span></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out</span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>timeit with_itertuples(dd)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>270 ms ± 5.54 ms per loop (mean ± std. dev. of 7 runs, 1 loop each)</code></pre>
+</div>
+</div>
+<p><strong>Vectorized</strong> – no Python-level loop at all, the whole computation runs in C/numpy:</p>
+<div id="839fd979" class="cell" data-execution_count="18">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>timeit risk_score(dd[<span class="st">"Age"</span>], dd[<span class="st">"Income"</span>], dd[<span class="st">"Number of Children"</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>710 μs ± 22.3 μs per loop (mean ± std. dev. of 7 runs, 1,000 loops each)</code></pre>
+</div>
+</div>
+<p>Let’s tabulate and plot the four timings:</p>
+<div id="50b6bbe3" class="cell" data-execution_count="19">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> time</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> time_it(fn, n<span class="op">=</span><span class="dv">5</span>):</span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>    start <span class="op">=</span> time.perf_counter()</span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(n):</span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>        fn()</span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (time.perf_counter() <span class="op">-</span> start) <span class="op">/</span> n</span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>timings <span class="op">=</span> {</span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">".apply(axis=1)"</span>: time_it(<span class="kw">lambda</span>: dd.<span class="bu">apply</span>(<span class="kw">lambda</span> row: risk_score(row[<span class="st">"Age"</span>], row[<span class="st">"Income"</span>], row[<span class="st">"Number of Children"</span>]), axis<span class="op">=</span><span class="dv">1</span>), n<span class="op">=</span><span class="dv">3</span>),</span>
+<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">".iterrows()"</span>: time_it(<span class="kw">lambda</span>: with_iterrows(dd), n<span class="op">=</span><span class="dv">3</span>),</span>
+<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">".itertuples()"</span>: time_it(<span class="kw">lambda</span>: with_itertuples(dd), n<span class="op">=</span><span class="dv">3</span>),</span>
+<span id="cb31-14"><a href="#cb31-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">"vectorized"</span>: time_it(<span class="kw">lambda</span>: risk_score(dd[<span class="st">"Age"</span>], dd[<span class="st">"Income"</span>], dd[<span class="st">"Number of Children"</span>])),</span>
+<span id="cb31-15"><a href="#cb31-15" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb31-16"><a href="#cb31-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-17"><a href="#cb31-17" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">6</span>, <span class="dv">4</span>))</span>
+<span id="cb31-18"><a href="#cb31-18" aria-hidden="true" tabindex="-1"></a>plt.barh(<span class="bu">list</span>(timings.keys()), <span class="bu">list</span>(timings.values()))</span>
+<span id="cb31-19"><a href="#cb31-19" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"seconds (lower is better)"</span>)</span>
+<span id="cb31-20"><a href="#cb31-20" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">"Row-wise computation: four approaches"</span>)</span>
+<span id="cb31-21"><a href="#cb31-21" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb31-22"><a href="#cb31-22" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="bigdata_lab1_files/figure-html/cell-19-output-1.png" width="566" height="374" class="figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<section id="filtering-.query-.eval-vs.-boolean-masks" class="level3">
+<h3 class="anchored" data-anchor-id="filtering-.query-.eval-vs.-boolean-masks">Filtering: <code>.query()</code> / <code>.eval()</code> vs.&nbsp;boolean masks</h3>
+<div id="eeff5a75" class="cell" data-execution_count="20">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>timeit dd[(dd[<span class="st">"Income"</span>] <span class="op">&lt;</span> <span class="dv">30000</span>) <span class="op">&amp;</span> (dd[<span class="st">"Age"</span>] <span class="op">&gt;</span> <span class="dv">50</span>)]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>7.49 ms ± 222 μs per loop (mean ± std. dev. of 7 runs, 100 loops each)</code></pre>
+</div>
+</div>
+<div id="7a3a2464" class="cell" data-execution_count="21">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>timeit dd.query(<span class="st">"Income &lt; 30000 and Age &gt; 50"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>8.17 ms ± 95.9 μs per loop (mean ± std. dev. of 7 runs, 100 loops each)</code></pre>
+</div>
+</div>
+<p><code>.query()</code>/<code>.eval()</code> parse the expression and can use the <code>numexpr</code> engine under the hood (one of pandas’ “recommended performance dependencies”).</p>
+</section>
+</section>
+<section id="chunked-processing" class="level2">
+<h2 class="anchored" data-anchor-id="chunked-processing">Chunked processing</h2>
+<p><code>depression_data.csv</code> is small enough (47MB) - let’s generate a synthetic dataset.</p>
+<div id="2a3def32" class="cell" data-execution_count="22">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> make_transactions(n_rows<span class="op">=</span><span class="dv">5_000_000</span>, seed<span class="op">=</span><span class="dv">0</span>):</span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>    rng <span class="op">=</span> np.random.default_rng(seed)</span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>    categories <span class="op">=</span> [<span class="st">"electronics"</span>, <span class="st">"grocery"</span>, <span class="st">"apparel"</span>, <span class="st">"home"</span>, <span class="st">"toys"</span>, <span class="st">"books"</span>]</span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.DataFrame({</span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a>        <span class="st">"transaction_id"</span>: np.arange(n_rows),</span>
+<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a>        <span class="st">"customer_id"</span>: rng.integers(<span class="dv">0</span>, <span class="dv">200_000</span>, n_rows),</span>
+<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a>        <span class="st">"product_category"</span>: rng.choice(categories, n_rows),</span>
+<span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a>        <span class="st">"amount"</span>: rng.gamma(<span class="fl">2.0</span>, <span class="fl">25.0</span>, n_rows).<span class="bu">round</span>(<span class="dv">2</span>),</span>
+<span id="cb36-12"><a href="#cb36-12" aria-hidden="true" tabindex="-1"></a>        <span class="st">"timestamp"</span>: pd.date_range(<span class="st">"2023-01-01"</span>, periods<span class="op">=</span>n_rows, freq<span class="op">=</span><span class="st">"s"</span>),</span>
+<span id="cb36-13"><a href="#cb36-13" aria-hidden="true" tabindex="-1"></a>        <span class="st">"is_fraud"</span>: rng.random(n_rows) <span class="op">&lt;</span> <span class="fl">0.01</span>,</span>
+<span id="cb36-14"><a href="#cb36-14" aria-hidden="true" tabindex="-1"></a>    })</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Store it to file:</p>
+<div id="abdea9a2" class="cell" data-execution_count="23">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>transactions <span class="op">=</span> make_transactions()</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>transactions.to_csv(<span class="st">"_files/transactions.csv"</span>, index<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(mem_usage(transactions))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>421.20 MB</code></pre>
+</div>
+</div>
+<p>Now let’s load.</p>
+<p><strong>Naive approach</strong> – load everything, then aggregate:</p>
+<div id="f84d1b90" class="cell" data-execution_count="24">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>load_ext memory_profiler</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="bb0271e0" class="cell" data-execution_count="25">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>memit</span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>whole <span class="op">=</span> pd.read_csv(<span class="st">"_files/transactions.csv"</span>)</span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>naive_totals <span class="op">=</span> whole.groupby(<span class="st">"product_category"</span>)[<span class="st">"amount"</span>].<span class="bu">sum</span>()</span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a><span class="kw">del</span> whole</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>peak memory: 1560.31 MiB, increment: 884.55 MiB</code></pre>
+</div>
+</div>
+<p><strong>Chunked approach</strong> – read and aggregate incrementally, never holding the full file in memory at once:</p>
+<div id="d58ec3fb" class="cell" data-execution_count="26">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>memit</span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>partial_totals <span class="op">=</span> pd.Series(dtype<span class="op">=</span><span class="st">"float64"</span>)</span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> chunk <span class="kw">in</span> pd.read_csv(<span class="st">"_files/transactions.csv"</span>, chunksize<span class="op">=</span><span class="dv">500_000</span>):</span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>    chunk_totals <span class="op">=</span> chunk.groupby(<span class="st">"product_category"</span>)[<span class="st">"amount"</span>].<span class="bu">sum</span>()</span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a>    partial_totals <span class="op">=</span> partial_totals.add(chunk_totals, fill_value<span class="op">=</span><span class="dv">0</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>peak memory: 1313.50 MiB, increment: 49.09 MiB</code></pre>
+</div>
+</div>
+<div id="e65dd4ef" class="cell" data-execution_count="27">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>partial_totals.sort_index().equals(naive_totals.sort_index())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="26">
+<pre><code>False</code></pre>
+</div>
+</div>
+<p><code>%%memit</code> (from <code>memory_profiler</code>, already installed) reports <strong>peak</strong> memory for each cell – compare the two numbers above. The chunked version trades a bit of extra bookkeeping code for a peak memory footprint that no longer scales with total file size, only with <code>chunksize</code>.</p>
+</section>
+<section id="polars" class="level2">
+<h2 class="anchored" data-anchor-id="polars">Polars</h2>
+<p><a href="https://pola.rs">Polars</a> is a newer, Rust-based dataframe library: multi-threaded by default, built on the Arrow memory format, and offering both an eager and a <strong>lazy</strong> API. Install it:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb46"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> add polars</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="fbcae1ea" class="cell" data-execution_count="28">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars <span class="im">as</span> pl</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><strong>Eager API</strong> – looks a lot like pandas:</p>
+<div id="cac87cae" class="cell" data-execution_count="29">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb48"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>pl_transactions <span class="op">=</span> pl.read_csv(<span class="st">"_files/transactions.csv"</span>, try_parse_dates<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>pl_transactions.head()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="28">
+<div><style>
+.dataframe > thead > tr,
+.dataframe > tbody > tr {
+  text-align: right;
+  white-space: pre-wrap;
+}
+</style>
+<small>shape: (5, 6)</small>
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">transaction_id</th>
+<th data-quarto-table-cell-role="th">customer_id</th>
+<th data-quarto-table-cell-role="th">product_category</th>
+<th data-quarto-table-cell-role="th">amount</th>
+<th data-quarto-table-cell-role="th">timestamp</th>
+<th data-quarto-table-cell-role="th">is_fraud</th>
+</tr>
+<tr class="even">
+<td>i64</td>
+<td>i64</td>
+<td>str</td>
+<td>f64</td>
+<td>datetime[μs]</td>
+<td>bool</td>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>170124</td>
+<td>"apparel"</td>
+<td>70.47</td>
+<td>2023-01-01 00:00:00</td>
+<td>false</td>
+</tr>
+<tr class="even">
+<td>1</td>
+<td>127392</td>
+<td>"electronics"</td>
+<td>23.17</td>
+<td>2023-01-01 00:00:01</td>
+<td>false</td>
+</tr>
+<tr class="odd">
+<td>2</td>
+<td>102227</td>
+<td>"grocery"</td>
+<td>20.75</td>
+<td>2023-01-01 00:00:02</td>
+<td>false</td>
+</tr>
+<tr class="even">
+<td>3</td>
+<td>53957</td>
+<td>"books"</td>
+<td>82.25</td>
+<td>2023-01-01 00:00:03</td>
+<td>false</td>
+</tr>
+<tr class="odd">
+<td>4</td>
+<td>61565</td>
+<td>"books"</td>
+<td>44.89</td>
+<td>2023-01-01 00:00:04</td>
+<td>false</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div id="8bed74ad" class="cell" data-execution_count="30">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb49"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>pl_transactions<span class="sc">.</span>estimated_size(<span class="st">'mb'</span>)<span class="sc">:.2f}</span><span class="ss"> MB"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>183.38 MB</code></pre>
+</div>
+</div>
+<p>Compare that against <code>mem_usage(transactions)</code> from the pandas load above – Polars tends to infer tighter default dtypes out of the box, without any manual downcasting step.</p>
+<p><strong>Lazy API</strong> – instead of executing immediately, build a query plan and only run it when you call <code>.collect()</code>:</p>
+<div id="b888d998" class="cell" data-execution_count="31">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb51"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>query <span class="op">=</span> (</span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>    pl.scan_csv(<span class="st">"_files/transactions.csv"</span>, try_parse_dates<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"is_fraud"</span>))</span>
+<span id="cb51-4"><a href="#cb51-4" aria-hidden="true" tabindex="-1"></a>    .group_by(<span class="st">"product_category"</span>)</span>
+<span id="cb51-5"><a href="#cb51-5" aria-hidden="true" tabindex="-1"></a>    .agg(pl.col(<span class="st">"amount"</span>).<span class="bu">sum</span>().alias(<span class="st">"total_amount"</span>))</span>
+<span id="cb51-6"><a href="#cb51-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb51-7"><a href="#cb51-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(query.explain())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>AGGREGATE[maintain_order: false]
+  [col("amount").sum().alias("total_amount")] BY [col("product_category")]
+  FROM
+  simple π 2/2 ["product_category", "amount"]
+    Csv SCAN [_files/transactions.csv]
+    PROJECT 3/6 COLUMNS
+    SELECTION: col("is_fraud")
+    ESTIMATED ROWS: 5456673</code></pre>
+</div>
+</div>
+<div id="b5e064c3" class="cell" data-execution_count="32">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb53"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>query.collect()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="31">
+<div><style>
+.dataframe > thead > tr,
+.dataframe > tbody > tr {
+  text-align: right;
+  white-space: pre-wrap;
+}
+</style>
+<small>shape: (6, 2)</small>
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">product_category</th>
+<th data-quarto-table-cell-role="th">total_amount</th>
+</tr>
+<tr class="even">
+<td>str</td>
+<td>f64</td>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>"electronics"</td>
+<td>413361.08</td>
+</tr>
+<tr class="even">
+<td>"apparel"</td>
+<td>416842.87</td>
+</tr>
+<tr class="odd">
+<td>"toys"</td>
+<td>418925.29</td>
+</tr>
+<tr class="even">
+<td>"home"</td>
+<td>416086.77</td>
+</tr>
+<tr class="odd">
+<td>"books"</td>
+<td>424281.73</td>
+</tr>
+<tr class="even">
+<td>"grocery"</td>
+<td>411714.84</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<p><code>.explain()</code> prints the <em>optimized</em> query plan, with no execution yet.</p>
+</section>
+<section id="pandas-vs.-polars" class="level2">
+<h2 class="anchored" data-anchor-id="pandas-vs.-polars">Pandas vs.&nbsp;Polars</h2>
+<p>Let’s compare. First, three functions:</p>
+<div id="5bc49fc4" class="cell" data-execution_count="33">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb54"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> pandas_task():</span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a>    df <span class="op">=</span> pd.read_csv(<span class="st">"_files/transactions.csv"</span>)</span>
+<span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> df[df[<span class="st">"is_fraud"</span>]].groupby(<span class="st">"product_category"</span>)[<span class="st">"amount"</span>].<span class="bu">sum</span>()</span>
+<span id="cb54-4"><a href="#cb54-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb54-5"><a href="#cb54-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> polars_eager_task():</span>
+<span id="cb54-6"><a href="#cb54-6" aria-hidden="true" tabindex="-1"></a>    df <span class="op">=</span> pl.read_csv(<span class="st">"_files/transactions.csv"</span>)</span>
+<span id="cb54-7"><a href="#cb54-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> df.<span class="bu">filter</span>(pl.col(<span class="st">"is_fraud"</span>)).group_by(<span class="st">"product_category"</span>).agg(pl.col(<span class="st">"amount"</span>).<span class="bu">sum</span>())</span>
+<span id="cb54-8"><a href="#cb54-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb54-9"><a href="#cb54-9" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> polars_lazy_task():</span>
+<span id="cb54-10"><a href="#cb54-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (</span>
+<span id="cb54-11"><a href="#cb54-11" aria-hidden="true" tabindex="-1"></a>        pl.scan_csv(<span class="st">"_files/transactions.csv"</span>)</span>
+<span id="cb54-12"><a href="#cb54-12" aria-hidden="true" tabindex="-1"></a>        .<span class="bu">filter</span>(pl.col(<span class="st">"is_fraud"</span>))</span>
+<span id="cb54-13"><a href="#cb54-13" aria-hidden="true" tabindex="-1"></a>        .group_by(<span class="st">"product_category"</span>)</span>
+<span id="cb54-14"><a href="#cb54-14" aria-hidden="true" tabindex="-1"></a>        .agg(pl.col(<span class="st">"amount"</span>).<span class="bu">sum</span>())</span>
+<span id="cb54-15"><a href="#cb54-15" aria-hidden="true" tabindex="-1"></a>        .collect()</span>
+<span id="cb54-16"><a href="#cb54-16" aria-hidden="true" tabindex="-1"></a>    )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Run benchmark:</p>
+<div id="2b84c244" class="cell" data-execution_count="34">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb55"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> memory_profiler <span class="im">import</span> memory_usage <span class="im">as</span> _memory_usage</span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> benchmark(fn, n<span class="op">=</span><span class="dv">3</span>):</span>
+<span id="cb55-4"><a href="#cb55-4" aria-hidden="true" tabindex="-1"></a>    times <span class="op">=</span> []</span>
+<span id="cb55-5"><a href="#cb55-5" aria-hidden="true" tabindex="-1"></a>    peak_mems <span class="op">=</span> []</span>
+<span id="cb55-6"><a href="#cb55-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(n):</span>
+<span id="cb55-7"><a href="#cb55-7" aria-hidden="true" tabindex="-1"></a>        start <span class="op">=</span> time.perf_counter()</span>
+<span id="cb55-8"><a href="#cb55-8" aria-hidden="true" tabindex="-1"></a>        mem_trace <span class="op">=</span> _memory_usage((fn,), interval<span class="op">=</span><span class="fl">0.01</span>, max_usage<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb55-9"><a href="#cb55-9" aria-hidden="true" tabindex="-1"></a>        times.append(time.perf_counter() <span class="op">-</span> start)</span>
+<span id="cb55-10"><a href="#cb55-10" aria-hidden="true" tabindex="-1"></a>        peak_mems.append(mem_trace <span class="cf">if</span> <span class="bu">isinstance</span>(mem_trace, <span class="bu">float</span>) <span class="cf">else</span> mem_trace[<span class="dv">0</span>])</span>
+<span id="cb55-11"><a href="#cb55-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> {<span class="st">"seconds"</span>: <span class="bu">sum</span>(times) <span class="op">/</span> <span class="bu">len</span>(times), <span class="st">"peak_mb"</span>: <span class="bu">max</span>(peak_mems)}</span>
+<span id="cb55-12"><a href="#cb55-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-13"><a href="#cb55-13" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> {</span>
+<span id="cb55-14"><a href="#cb55-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">"pandas"</span>: benchmark(pandas_task),</span>
+<span id="cb55-15"><a href="#cb55-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">"polars (eager)"</span>: benchmark(polars_eager_task),</span>
+<span id="cb55-16"><a href="#cb55-16" aria-hidden="true" tabindex="-1"></a>    <span class="st">"polars (lazy)"</span>: benchmark(polars_lazy_task),</span>
+<span id="cb55-17"><a href="#cb55-17" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb55-18"><a href="#cb55-18" aria-hidden="true" tabindex="-1"></a>results</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="33">
+<pre><code>{'pandas': {'seconds': 2.0579825553189344, 'peak_mb': 1824.890625},
+ 'polars (eager)': {'seconds': 0.27434119432776544, 'peak_mb': 2145.34375},
+ 'polars (lazy)': {'seconds': 0.25423944467911497, 'peak_mb': 2221.671875}}</code></pre>
+</div>
+</div>
+<div id="1c23e686" class="cell" data-execution_count="35">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb57"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">4</span>))</span>
+<span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a>names <span class="op">=</span> <span class="bu">list</span>(results.keys())</span>
+<span id="cb57-3"><a href="#cb57-3" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].bar(names, [results[n][<span class="st">"seconds"</span>] <span class="cf">for</span> n <span class="kw">in</span> names])</span>
+<span id="cb57-4"><a href="#cb57-4" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_title(<span class="st">"Time (s, lower is better)"</span>)</span>
+<span id="cb57-5"><a href="#cb57-5" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].bar(names, [results[n][<span class="st">"peak_mb"</span>] <span class="cf">for</span> n <span class="kw">in</span> names])</span>
+<span id="cb57-6"><a href="#cb57-6" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_title(<span class="st">"Peak memory (MB, lower is better)"</span>)</span>
+<span id="cb57-7"><a href="#cb57-7" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax <span class="kw">in</span> axes:</span>
+<span id="cb57-8"><a href="#cb57-8" aria-hidden="true" tabindex="-1"></a>    ax.tick_params(axis<span class="op">=</span><span class="st">"x"</span>, rotation<span class="op">=</span><span class="dv">20</span>)</span>
+<span id="cb57-9"><a href="#cb57-9" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb57-10"><a href="#cb57-10" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="bigdata_lab1_files/figure-html/cell-35-output-1.png" width="950" height="374" class="figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
 <section id="exercises" class="level2">
 <h2 class="anchored" data-anchor-id="exercises">Exercises</h2>
 <ol type="1">
@@ -720,17 +1124,15 @@ dtype: int8</code></pre>
 <li>HuggingFace</li>
 <li>or <a href="https://archive.ics.uci.edu" class="uri">https://archive.ics.uci.edu</a>.</li>
 </ul>
-<ol start="2" type="1">
-<li>Use Dora library installed in <a href="./applied_lab1.html">Applied lab1</a> for data cleaning.</li>
-</ol>
 <!-- 3. Create a data type describing the data structures you're working with in your Pandas DataFrame. -->
 <!--    Use mypy for type annotations. -->
 <!-- :::{.callout-note} -->
 <!-- mypy does not improve performance. However, it makes the code easier to understand. -->
 <!-- ::: -->
-<ol start="3" type="1">
+<ol start="2" type="1">
 <li><p>Perform numerical and object types conversions aimed at minimizing storage space, as outlined above.</p></li>
 <li><p>Measure performance impact and plot it via e.g.&nbsp;<code>matplotlib</code>.</p></li>
+<li><p>Compare Pandas against Polars for at least one filter and one group-by operation. Plot and briefly discuss the results – where did Polars win, where didn’t it, and why?</p></li>
 </ol>
 
 

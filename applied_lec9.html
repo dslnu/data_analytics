@@ -6,8 +6,8 @@
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="site_libs/quarto-html/light-border.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-587c61ba64f3a5504c4d52d930310e48.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
-  <meta name="generator" content="quarto-1.8.26">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.10.18">
 
   <meta name="author" content="MSDE">
   <title>Big Data analytics / Applied Data analytics – Kubernetes part 3</title>
@@ -17,10 +17,16 @@
   <link rel="stylesheet" href="site_libs/revealjs/dist/reset.css">
   <link rel="stylesheet" href="site_libs/revealjs/dist/reveal.css">
   <style>
-    code{white-space: pre-wrap;}
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
     span.smallcaps{font-variant: small-caps;}
-    div.columns{display: flex; gap: min(4vw, 1.5em);}
-    div.column{flex: auto; overflow-x: auto;}
+    div.columns{display: flex; gap: 1.5em;}
+    div.column{flex: auto;}
+    @media screen {
+    div.columns{gap: min(4vw, 1.5em);}
+    div.column{overflow-x: auto;}
+    }
     div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
     ul.task-list{list-style: none;}
     ul.task-list li input[type="checkbox"] {
@@ -95,7 +101,7 @@
     code span.vs { color: #20794d; } /* VerbatimString */
     code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   </style>
-  <link rel="stylesheet" href="site_libs/revealjs/dist/theme/quarto-534cd8e3a96973385dffff3f4709048d.css">
+  <link rel="stylesheet" href="site_libs/revealjs/dist/theme/quarto-2740581606dc327e82f18f789b69d8a0.css">
   <link rel="stylesheet" href="./custom.css">
   <link href="site_libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
   <link href="site_libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
@@ -199,7 +205,7 @@
 <div class="quarto-title-authors">
 <div class="quarto-title-author">
 <div class="quarto-title-author-name">
-MSDE 
+MSDE
 </div>
         <p class="quarto-title-affiliation">
             Lviv University
@@ -332,10 +338,10 @@ MSDE
 <ul>
 <li><p>If the <code>helm</code> CLI is not installed in your environment, install it</p></li>
 <li><p>Check if <code>helm</code> is installed:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a></a><span class="ex">helm</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a aria-label="1"></a><span class="ex">helm</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 <li><p>If it’s not installed, run the following command:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a></a><span class="ex">curl</span> https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get-helm-3 <span class="dt">\</span></span>
-<span id="cb2-2"><a></a><span class="kw">|</span> <span class="fu">bash</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a aria-label="1"></a><span class="ex">curl</span> https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get-helm-3 <span class="dt">\</span></span>
+<span id="cb2-2"><a aria-label="2"></a><span class="kw">|</span> <span class="fu">bash</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 </ul>
 </div>
 </div>
@@ -390,9 +396,9 @@ MSDE
 <ul>
 <li><p>We can use <code>helm search hub &lt;keyword&gt;</code></p></li>
 <li><p>Look for the OWASP Juice Shop app:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a></a><span class="ex">helm</span> search hub owasp juice</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a aria-label="1"></a><span class="ex">helm</span> search hub owasp juice</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 <li><p>Since the URLs are truncated, try with the YAML output:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a></a><span class="ex">helm</span> search hub owasp juice <span class="at">-o</span> yaml</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a aria-label="1"></a><span class="ex">helm</span> search hub owasp juice <span class="at">-o</span> yaml</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 </ul>
 <p>Then go to → https://artifacthub.io/packages/helm/securecodebox/juice-shop</p>
 </div>
@@ -428,9 +434,9 @@ MSDE
 <ul>
 <li><p>Click on the “Install” button, it will show instructions</p></li>
 <li><p>First, add the repository for that chart:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a></a><span class="ex">helm</span> repo add juice https://charts.securecodebox.io</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a aria-label="1"></a><span class="ex">helm</span> repo add juice https://charts.securecodebox.io</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 <li><p>Then, install the chart:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb6-1"><a></a><span class="ex">helm</span> install my-juice-shop juice/juice-shop</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb6-1"><a aria-label="1"></a><span class="ex">helm</span> install my-juice-shop juice/juice-shop</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 </ul>
 <p>Note: it is also possible to install directly a chart, with <code>--repo https://...</code></p>
 </div>
@@ -450,9 +456,9 @@ MSDE
 <li><p>In the previous example, the release was named “my-juice-shop”</p></li>
 <li><p>We can also use <code>--generate-name</code> to ask Helm to generate a name for us</p></li>
 <li><p>List the releases:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a></a><span class="ex">helm</span> list</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a aria-label="1"></a><span class="ex">helm</span> list</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 <li><p>Check that we have a <code>my-juice-shop-...</code> Pod up and running:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a></a><span class="ex">kubectl</span> get pods</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a aria-label="1"></a><span class="ex">kubectl</span> get pods</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 </ul>
 </div>
 </div>
@@ -470,7 +476,7 @@ MSDE
 <li><p>This specific chart labels all its resources with a <code>release</code> label</p></li>
 <li><p>We can use a selector to see these resources</p></li>
 <li><p>List all the resources created by this release:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb9-1"><a></a><span class="ex">kubectl</span> get all <span class="at">--selector</span><span class="op">=</span>app.kubernetes.io/instance=my-juice-shop</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb9-1"><a aria-label="1"></a><span class="ex">kubectl</span> get all <span class="at">--selector</span><span class="op">=</span>app.kubernetes.io/instance=my-juice-shop</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 </ul>
 <p>Note: this label wasn’t added automatically by Helm. <br> It is defined in that chart. In other words, not all charts will provide this label.</p>
 </div>
@@ -510,9 +516,9 @@ MSDE
 <ul>
 <li><p>We can inspect a chart with <code>helm show</code> or <code>helm inspect</code></p></li>
 <li><p>Look at the README for the app:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb10-1"><a></a><span class="ex">helm</span> show readme juice/juice-shop</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb10-1"><a aria-label="1"></a><span class="ex">helm</span> show readme juice/juice-shop</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 <li><p>Look at the values and their defaults:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb11-1"><a></a><span class="ex">helm</span> show values juice/juice-shop</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb11-1"><a aria-label="1"></a><span class="ex">helm</span> show values juice/juice-shop</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 </ul>
 <p>The <code>values</code> may or may not have useful comments.</p>
 <p>The <code>readme</code> may or may not have (accurate) explanations for the values.</p>
@@ -533,8 +539,8 @@ MSDE
 <li><p>Values can be set when installing a chart, or when upgrading it</p></li>
 <li><p>We are going to update <code>my-juice-shop</code> to change the type of the service</p></li>
 <li><p>Update <code>my-juice-shop</code>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb12-1"><a></a><span class="ex">helm</span> upgrade my-juice-shop juice/juice-shop <span class="dt">\</span></span>
-<span id="cb12-2"><a></a>     <span class="at">--set</span> service.type=NodePort</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb12-1"><a aria-label="1"></a><span class="ex">helm</span> upgrade my-juice-shop juice/juice-shop <span class="dt">\</span></span>
+<span id="cb12-2"><a aria-label="2"></a>     <span class="at">--set</span> service.type=NodePort</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 </ul>
 <p>Note that we have to specify the chart that we use (<code>juice/my-juice-shop</code>), even if we just want to update some values.</p>
 <p>We can set multiple values. If we want to set many values, we can use <code>-f</code>/<code>--values</code> and pass a YAML file with all the values.</p>
@@ -554,10 +560,10 @@ MSDE
 <ul>
 <li><p>Let’s check the app that we just installed</p></li>
 <li><p>Check the node port allocated to the service:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb13-1"><a></a><span class="ex">kubectl</span> get service my-juice-shop</span>
-<span id="cb13-2"><a></a><span class="va">PORT</span><span class="op">=</span><span class="va">$(</span><span class="ex">kubectl</span> get service my-juice-shop <span class="at">-o</span> jsonpath={..nodePort}<span class="va">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb13-1"><a aria-label="1"></a><span class="ex">kubectl</span> get service my-juice-shop</span>
+<span id="cb13-2"><a aria-label="2"></a><span class="va">PORT</span><span class="op">=</span><span class="va">$(</span><span class="ex">kubectl</span> get service my-juice-shop <span class="at">-o</span> jsonpath={..nodePort}<span class="va">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 <li><p>Connect to it:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb14-1"><a></a><span class="ex">curl</span> localhost:<span class="va">$PORT</span>/</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb14-1"><a aria-label="1"></a><span class="ex">curl</span> localhost:<span class="va">$PORT</span>/</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 </ul>
 </div>
 </div>
@@ -640,7 +646,7 @@ MSDE
 <ul>
 <li><p>If you haven’t done it before, you need to add the repo for that chart</p></li>
 <li><p>Add the repo that holds the chart for the OWASP Juice Shop:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb15-1"><a></a><span class="ex">helm</span> repo add juice https://charts.securecodebox.io</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb15-1"><a aria-label="1"></a><span class="ex">helm</span> repo add juice https://charts.securecodebox.io</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 </ul>
 </div>
 </div>
@@ -657,10 +663,10 @@ MSDE
 <ul>
 <li><p>We can use <code>helm pull</code> to download a chart from a repo</p></li>
 <li><p>Download the tarball for <code>juice/juice-shop</code>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb16-1"><a></a><span class="ex">helm</span> pull juice/juice-shop</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb16-1"><a aria-label="1"></a><span class="ex">helm</span> pull juice/juice-shop</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>(This will create a file named <code>juice-shop-X.Y.Z.tgz</code>.)</p></li>
 <li><p>Or, download + untar <code>juice/juice-shop</code>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb17-1"><a></a><span class="ex">helm</span> pull juice/juice-shop <span class="at">--untar</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb17-1"><a aria-label="1"></a><span class="ex">helm</span> pull juice/juice-shop <span class="at">--untar</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>(This will create a directory named <code>juice-shop</code>.)</p></li>
 </ul>
 </div>
@@ -678,7 +684,7 @@ MSDE
 <ul>
 <li><p>Let’s look at the files and directories in the <code>juice-shop</code> chart</p></li>
 <li><p>Display the tree structure of the chart we just downloaded:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb18-1"><a></a><span class="ex">tree</span> juice-shop</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb18-1"><a aria-label="1"></a><span class="ex">tree</span> juice-shop</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 </ul>
 <p>We see the components mentioned above: <code>Chart.yaml</code>, <code>templates/</code>, <code>values.yaml</code>.</p>
 </div>
@@ -699,7 +705,7 @@ MSDE
 <li><p>These manifests can contain template tags</p>
 <p>(using the standard Go template library)</p></li>
 <li><p>Look at the template file for the Service resource:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb19-1"><a></a><span class="fu">cat</span> juice-shop/templates/service.yaml</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb19-1"><a aria-label="1"></a><span class="fu">cat</span> juice-shop/templates/service.yaml</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 </ul>
 </div>
 </div>
@@ -880,10 +886,10 @@ MSDE
 <li><p>In a real chart, <em>lots of things</em> would be templatized</p>
 <p>(Resource names, service types, number of replicas…)</p></li>
 <li><p>Create a sample chart:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb20-1"><a></a><span class="ex">helm</span> create dockercoins</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb20-1"><a aria-label="1"></a><span class="ex">helm</span> create dockercoins</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 <li><p>Move away the sample templates and create an empty template directory:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb21-1"><a></a><span class="fu">mv</span> dockercoins/templates dockercoins/default-templates</span>
-<span id="cb21-2"><a></a><span class="fu">mkdir</span> dockercoins/templates</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb21-1"><a aria-label="1"></a><span class="fu">mv</span> dockercoins/templates dockercoins/default-templates</span>
+<span id="cb21-2"><a aria-label="2"></a><span class="fu">mkdir</span> dockercoins/templates</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 </ul>
 </div>
 </div>
@@ -900,7 +906,7 @@ MSDE
 <ul>
 <li><p>There is a convenient <code>dockercoins.yml</code> in the repo</p></li>
 <li><p>Copy the YAML file to the <code>templates</code> subdirectory in the chart:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb22-1"><a></a><span class="fu">cp</span> ~/container.training/k8s/dockercoins.yaml dockercoins/templates</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb22-1"><a aria-label="1"></a><span class="fu">cp</span> ~/container.training/k8s/dockercoins.yaml dockercoins/templates</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 <li><p>Note: it is probably easier to have multiple YAML files</p>
 <p>(rather than a single, big file with all the manifests)</p></li>
 <li><p>But that works too!</p></li>
@@ -950,9 +956,9 @@ kind: Service, namespace: default, name: hasher</code></pre>
 <li><p>we can also tell Helm to use a different namespace</p></li>
 </ul></li>
 <li><p>Create a new namespace:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb25-1"><a></a><span class="ex">kubectl</span> create namespace helmcoins</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb25-1"><a aria-label="1"></a><span class="ex">kubectl</span> create namespace helmcoins</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 <li><p>Deploy our chart in that namespace:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb26-1"><a></a><span class="ex">helm</span> install helmcoins dockercoins <span class="at">--namespace</span><span class="op">=</span>helmcoins</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb26-1"><a aria-label="1"></a><span class="ex">helm</span> install helmcoins dockercoins <span class="at">--namespace</span><span class="op">=</span>helmcoins</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 </ul>
 </div>
 </div>
@@ -969,7 +975,7 @@ kind: Service, namespace: default, name: hasher</code></pre>
 <ul>
 <li><p>Let’s try to see the release that we just deployed</p></li>
 <li><p>List Helm releases:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb27-1"><a></a><span class="ex">helm</span> list</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb27-1"><a aria-label="1"></a><span class="ex">helm</span> list</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 </ul>
 <p>Our release doesn’t show up!</p>
 <p>We have to specify its namespace (or switch to that namespace).</p>
@@ -988,7 +994,7 @@ kind: Service, namespace: default, name: hasher</code></pre>
 <ul>
 <li><p>Try again, with the correct namespace</p></li>
 <li><p>List Helm releases in <code>helmcoins</code>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb28-1"><a></a><span class="ex">helm</span> list <span class="at">--namespace</span><span class="op">=</span>helmcoins</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb28-1"><a aria-label="1"></a><span class="ex">helm</span> list <span class="at">--namespace</span><span class="op">=</span>helmcoins</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 </ul>
 </div>
 </div>
@@ -1005,10 +1011,10 @@ kind: Service, namespace: default, name: hasher</code></pre>
 <ul>
 <li><p>We can check the worker logs, or the web UI</p></li>
 <li><p>Retrieve the NodePort number of the web UI:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb29-1"><a></a><span class="ex">kubectl</span> get service webui <span class="at">--namespace</span><span class="op">=</span>helmcoins</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb29-1"><a aria-label="1"></a><span class="ex">kubectl</span> get service webui <span class="at">--namespace</span><span class="op">=</span>helmcoins</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 <li><p>Open it in a web browser</p></li>
 <li><p>Look at the worker logs:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb30-1"><a></a><span class="ex">kubectl</span> logs deploy/worker <span class="at">--tail</span><span class="op">=</span>10 <span class="at">--follow</span> <span class="at">--namespace</span><span class="op">=</span>helmcoins</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb30-1"><a aria-label="1"></a><span class="ex">kubectl</span> logs deploy/worker <span class="at">--tail</span><span class="op">=</span>10 <span class="at">--follow</span> <span class="at">--namespace</span><span class="op">=</span>helmcoins</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 </ul>
 <p>Note: it might take a minute or two for the worker to start.</p>
 </div>
@@ -1051,7 +1057,7 @@ kind: Service, namespace: default, name: hasher</code></pre>
 <ul>
 <li><p>Let’s remove that chart before moving on</p></li>
 <li><p>Delete the release (don’t forget to specify the namespace):</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb31-1"><a></a><span class="ex">helm</span> delete helmcoins <span class="at">--namespace</span><span class="op">=</span>helmcoins</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb31-1"><a aria-label="1"></a><span class="ex">helm</span> delete helmcoins <span class="at">--namespace</span><span class="op">=</span>helmcoins</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 </ul>
 </div>
 </div>
@@ -1068,8 +1074,8 @@ kind: Service, namespace: default, name: hasher</code></pre>
 <ul>
 <li><p>It is not necessary to <code>helm install</code>/<code>upgrade</code> to test a chart</p></li>
 <li><p>If we just want to look at the generated YAML, use <code>helm template</code>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb32"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb32-1"><a></a><span class="ex">helm</span> template ./my-chart</span>
-<span id="cb32-2"><a></a><span class="ex">helm</span> template release-name ./my-chart</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb32"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb32-1"><a aria-label="1"></a><span class="ex">helm</span> template ./my-chart</span>
+<span id="cb32-2"><a aria-label="2"></a><span class="ex">helm</span> template release-name ./my-chart</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 <li><p>Of course, we can use <code>--set</code> and <code>--values</code> too</p></li>
 <li><p>Note that this won’t fully validate the YAML!</p>
 <p>(e.g.&nbsp;if there is <code>apiVersion: klingon</code> it won’t complain)</p></li>
@@ -1088,14 +1094,14 @@ kind: Service, namespace: default, name: hasher</code></pre>
 </div>
 <div class="callout-content">
 <p>Try to put something like this in a file in the <code>templates</code> directory:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb33"><pre class="sourceCode numberSource yaml number-lines code-with-copy"><code class="sourceCode yaml"><span id="cb33-1"><a></a><span class="fu">hello</span><span class="kw">:</span><span class="at"> </span><span class="kw">{</span><span class="at">{ .Values.service.port </span><span class="kw">}</span><span class="at">}</span></span>
-<span id="cb33-2"><a></a><span class="fu">comment</span><span class="kw">:</span><span class="at"> </span><span class="kw">{</span><span class="at">{/* something completely.invalid </span><span class="ot">!!!</span><span class="at">  </span><span class="ot">*/}}</span></span>
-<span id="cb33-3"><a></a><span class="fu">type</span><span class="kw">:</span><span class="at"> </span><span class="kw">{</span><span class="at">{ .Values.service | typeOf | printf </span><span class="kw">}}</span></span>
-<span id="cb33-4"><a></a><span class="co">### print complex value</span></span>
-<span id="cb33-5"><a></a><span class="kw">{</span><span class="at">{ .Values.service | toYaml </span><span class="kw">}</span><span class="at">}</span></span>
-<span id="cb33-6"><a></a><span class="co">### indent it</span></span>
-<span id="cb33-7"><a></a><span class="fu">indented</span><span class="kw">:</span></span>
-<span id="cb33-8"><a></a><span class="kw">{</span><span class="at">{ .Values.service | toYaml | indent 2 </span><span class="kw">}</span><span class="at">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb33"><pre class="sourceCode numberSource yaml number-lines code-with-copy"><code class="sourceCode yaml"><span id="cb33-1"><a aria-label="1"></a><span class="fu">hello</span><span class="kw">:</span><span class="at"> </span><span class="kw">{</span><span class="at">{ .Values.service.port </span><span class="kw">}</span><span class="at">}</span></span>
+<span id="cb33-2"><a aria-label="2"></a><span class="fu">comment</span><span class="kw">:</span><span class="at"> </span><span class="kw">{</span><span class="at">{/* something completely.invalid </span><span class="ot">!!!</span><span class="at">  </span><span class="ot">*/}}</span></span>
+<span id="cb33-3"><a aria-label="3"></a><span class="fu">type</span><span class="kw">:</span><span class="at"> </span><span class="kw">{</span><span class="at">{ .Values.service | typeOf | printf </span><span class="kw">}}</span></span>
+<span id="cb33-4"><a aria-label="4"></a><span class="co">### print complex value</span></span>
+<span id="cb33-5"><a aria-label="5"></a><span class="kw">{</span><span class="at">{ .Values.service | toYaml </span><span class="kw">}</span><span class="at">}</span></span>
+<span id="cb33-6"><a aria-label="6"></a><span class="co">### indent it</span></span>
+<span id="cb33-7"><a aria-label="7"></a><span class="fu">indented</span><span class="kw">:</span></span>
+<span id="cb33-8"><a aria-label="8"></a><span class="kw">{</span><span class="at">{ .Values.service | toYaml | indent 2 </span><span class="kw">}</span><span class="at">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Then run <code>helm template</code>.</p>
 <p>The result is not a valid YAML manifest, but this is a great debugging tool!</p>
 </div>
@@ -1141,8 +1147,8 @@ kind: Service, namespace: default, name: hasher</code></pre>
 <li><p>Rather than starting from scratch, we will use <code>helm create</code></p></li>
 <li><p>This will give us a basic chart that we will customize</p></li>
 <li><p>Create a basic chart:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb34-1"><a></a><span class="bu">cd</span> ~</span>
-<span id="cb34-2"><a></a><span class="ex">helm</span> create helmcoins</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb34-1"><a aria-label="1"></a><span class="bu">cd</span> ~</span>
+<span id="cb34-2"><a aria-label="2"></a><span class="ex">helm</span> create helmcoins</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 </ul>
 <p>This creates a basic chart in the directory <code>helmcoins</code>.</p>
 </div>
@@ -1183,9 +1189,9 @@ kind: Service, namespace: default, name: hasher</code></pre>
 <li><p>We will create 5 files:</p>
 <p>hasher.yaml, redis.yaml, rng.yaml, webui.yaml, worker.yaml</p></li>
 <li><p>In each file, we want to have:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb35"><pre class="sourceCode numberSource yaml number-lines code-with-copy"><code class="sourceCode yaml"><span id="cb35-1"><a></a><span class="at">  </span><span class="fu">image</span><span class="kw">:</span></span>
-<span id="cb35-2"><a></a><span class="at">    </span><span class="fu">repository</span><span class="kw">:</span><span class="at"> IMAGE-REPOSITORY-NAME</span></span>
-<span id="cb35-3"><a></a><span class="at">    </span><span class="fu">tag</span><span class="kw">:</span><span class="at"> IMAGE-TAG</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb35"><pre class="sourceCode numberSource yaml number-lines code-with-copy"><code class="sourceCode yaml"><span id="cb35-1"><a aria-label="1"></a><span class="at">  </span><span class="fu">image</span><span class="kw">:</span></span>
+<span id="cb35-2"><a aria-label="2"></a><span class="at">    </span><span class="fu">repository</span><span class="kw">:</span><span class="at"> IMAGE-REPOSITORY-NAME</span></span>
+<span id="cb35-3"><a aria-label="3"></a><span class="at">    </span><span class="fu">tag</span><span class="kw">:</span><span class="at"> IMAGE-TAG</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 </ul>
 </div>
 </div>
@@ -1204,9 +1210,9 @@ kind: Service, namespace: default, name: hasher</code></pre>
 <p>(for instance, for rng, we want to use the image dockercoins/rng:v0.1)</p></li>
 <li><p>Exception: for redis, we want to use the official image redis:latest</p></li>
 <li><p>Write YAML files for the 5 components, with the following model:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb36"><pre class="sourceCode numberSource yaml number-lines code-with-copy"><code class="sourceCode yaml"><span id="cb36-1"><a></a><span class="at">  </span><span class="fu">image</span><span class="kw">:</span></span>
-<span id="cb36-2"><a></a><span class="at">    </span><span class="fu">repository</span><span class="kw">:</span><span class="at"> `IMAGE-REPOSITORY-NAME` (e.g. dockercoins/worker)</span></span>
-<span id="cb36-3"><a></a><span class="at">    </span><span class="fu">tag</span><span class="kw">:</span><span class="at"> `IMAGE-TAG` (e.g. v0.1)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb36"><pre class="sourceCode numberSource yaml number-lines code-with-copy"><code class="sourceCode yaml"><span id="cb36-1"><a aria-label="1"></a><span class="at">  </span><span class="fu">image</span><span class="kw">:</span></span>
+<span id="cb36-2"><a aria-label="2"></a><span class="at">    </span><span class="fu">repository</span><span class="kw">:</span><span class="at"> `IMAGE-REPOSITORY-NAME` (e.g. dockercoins/worker)</span></span>
+<span id="cb36-3"><a aria-label="3"></a><span class="at">    </span><span class="fu">tag</span><span class="kw">:</span><span class="at"> `IMAGE-TAG` (e.g. v0.1)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 </ul>
 </div>
 </div>
@@ -1223,9 +1229,9 @@ kind: Service, namespace: default, name: hasher</code></pre>
 <ul>
 <li><p>For convenience, let’s work in a separate namespace</p></li>
 <li><p>Create a new namespace (if it doesn’t already exist):</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb37"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb37-1"><a></a><span class="ex">kubectl</span> create namespace helmcoins</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb37"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb37-1"><a aria-label="1"></a><span class="ex">kubectl</span> create namespace helmcoins</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 <li><p>Switch to that namespace:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb38"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb38-1"><a></a><span class="ex">kns</span> helmcoins</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb38"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb38-1"><a aria-label="1"></a><span class="ex">kns</span> helmcoins</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 </ul>
 </div>
 </div>
@@ -1241,13 +1247,13 @@ kind: Service, namespace: default, name: hasher</code></pre>
 <div class="callout-content">
 <ul>
 <li><p>To install a chart, we can use the following command:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb39"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb39-1"><a></a><span class="ex">helm</span> install COMPONENT-NAME CHART-DIRECTORY</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb39"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb39-1"><a aria-label="1"></a><span class="ex">helm</span> install COMPONENT-NAME CHART-DIRECTORY</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 <li><p>We can also use the following command, which is <em>idempotent</em>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb40"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb40-1"><a></a><span class="ex">helm</span> upgrade COMPONENT-NAME CHART-DIRECTORY <span class="at">--install</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb40"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb40-1"><a aria-label="1"></a><span class="ex">helm</span> upgrade COMPONENT-NAME CHART-DIRECTORY <span class="at">--install</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 <li><p>Install the 5 components of DockerCoins:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb41"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb41-1"><a></a>  <span class="cf">for</span> COMPONENT <span class="kw">in</span> hasher redis rng webui worker<span class="kw">;</span> <span class="cf">do</span></span>
-<span id="cb41-2"><a></a>    <span class="ex">helm</span> upgrade <span class="va">$COMPONENT</span> helmcoins <span class="at">--install</span> <span class="at">--values</span><span class="op">=</span><span class="va">$COMPONENT</span>.yaml</span>
-<span id="cb41-3"><a></a>  <span class="cf">done</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb41"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb41-1"><a aria-label="1"></a>  <span class="cf">for</span> COMPONENT <span class="kw">in</span> hasher redis rng webui worker<span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb41-2"><a aria-label="2"></a>    <span class="ex">helm</span> upgrade <span class="va">$COMPONENT</span> helmcoins <span class="at">--install</span> <span class="at">--values</span><span class="op">=</span><span class="va">$COMPONENT</span>.yaml</span>
+<span id="cb41-3"><a aria-label="3"></a>  <span class="cf">done</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 </ul>
 </div>
 </div>
@@ -1288,9 +1294,9 @@ kind: Service, namespace: default, name: hasher</code></pre>
 <ul>
 <li><p>Let’s see if DockerCoins is working!</p></li>
 <li><p>Check the logs of the worker:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb42"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb42-1"><a></a><span class="ex">stern</span> worker</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb42"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb42-1"><a aria-label="1"></a><span class="ex">stern</span> worker</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 <li><p>Look at the resources that were created:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb43"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb43-1"><a></a><span class="ex">kubectl</span> get all</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb43"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb43-1"><a aria-label="1"></a><span class="ex">kubectl</span> get all</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 </ul>
 <p>There are <em>many</em> issues to fix!</p>
 </div>
@@ -1327,7 +1333,7 @@ kind: Service, namespace: default, name: hasher</code></pre>
 <li><p>Let’s look at the <code>templates/</code> directory</p>
 <p>(and try to find the one generating the Deployment resource)</p></li>
 <li><p>Show the structure of the <code>helmcoins</code> chart that Helm generated:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb44"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb44-1"><a></a><span class="ex">tree</span> helmcoins</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb44"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb44-1"><a aria-label="1"></a><span class="ex">tree</span> helmcoins</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 <li><p>Check the file <code>helmcoins/templates/deployment.yaml</code></p></li>
 <li><p>Look for the <code>image:</code> parameter</p></li>
 </ul>
@@ -1387,11 +1393,11 @@ kind: Service, namespace: default, name: hasher</code></pre>
 <li><p>Technically, we just made a new version of the <em>chart</em></p></li>
 <li><p>To use the new template, we need to <em>upgrade</em> the release to use that chart</p></li>
 <li><p>Upgrade all components:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb45"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb45-1"><a></a>  <span class="cf">for</span> COMPONENT <span class="kw">in</span> hasher redis rng webui worker<span class="kw">;</span> <span class="cf">do</span></span>
-<span id="cb45-2"><a></a>    <span class="ex">helm</span> upgrade <span class="va">$COMPONENT</span> helmcoins</span>
-<span id="cb45-3"><a></a>  <span class="cf">done</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb45"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb45-1"><a aria-label="1"></a>  <span class="cf">for</span> COMPONENT <span class="kw">in</span> hasher redis rng webui worker<span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb45-2"><a aria-label="2"></a>    <span class="ex">helm</span> upgrade <span class="va">$COMPONENT</span> helmcoins</span>
+<span id="cb45-3"><a aria-label="3"></a>  <span class="cf">done</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 <li><p>Check how our pods are doing:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb46"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb46-1"><a></a><span class="ex">kubectl</span> get pods</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb46"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb46-1"><a aria-label="1"></a><span class="ex">kubectl</span> get pods</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 </ul>
 <p>We should see all pods “Running”. But … not all of them are READY.</p>
 </div>
@@ -1429,7 +1435,7 @@ kind: Service, namespace: default, name: hasher</code></pre>
 <li><p>Or we can use <code>kubectl describe</code> on the objects that have problems</p>
 <p>(<code>kubectl describe</code> will retrieve the events related to the object)</p></li>
 <li><p>Check the events for the redis pods:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb47"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb47-1"><a></a><span class="ex">kubectl</span> describe pod <span class="at">-l</span> app.kubernetes.io/name=redis</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb47"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb47-1"><a aria-label="1"></a><span class="ex">kubectl</span> describe pod <span class="at">-l</span> app.kubernetes.io/name=redis</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 </ul>
 <p>It’s failing both its liveness and readiness probes!</p>
 </div>
@@ -1486,22 +1492,22 @@ kind: Service, namespace: default, name: hasher</code></pre>
 </div>
 <div class="callout-content">
 <p>This is what the new YAML should look like (added lines commented):</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb48"><pre class="sourceCode numberSource yaml number-lines code-with-copy"><code class="sourceCode yaml"><span id="cb48-1"><a></a><span class="at">        </span><span class="fu">ports</span><span class="kw">:</span></span>
-<span id="cb48-2"><a></a><span class="at">          </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> http</span></span>
-<span id="cb48-3"><a></a><span class="at">            </span><span class="fu">containerPort</span><span class="kw">:</span><span class="at"> </span><span class="dv">80</span></span>
-<span id="cb48-4"><a></a><span class="at">            </span><span class="fu">protocol</span><span class="kw">:</span><span class="at"> TCP</span></span>
-<span id="cb48-5"><a></a><span class="at">        `{ if false }`</span><span class="co"> # added</span></span>
-<span id="cb48-6"><a></a><span class="at">        </span><span class="fu">livenessProbe</span><span class="kw">:</span></span>
-<span id="cb48-7"><a></a><span class="at">          </span><span class="fu">httpGet</span><span class="kw">:</span></span>
-<span id="cb48-8"><a></a><span class="at">            </span><span class="fu">path</span><span class="kw">:</span><span class="at"> /</span></span>
-<span id="cb48-9"><a></a><span class="at">            </span><span class="fu">port</span><span class="kw">:</span><span class="at"> http</span></span>
-<span id="cb48-10"><a></a><span class="at">        </span><span class="fu">readinessProbe</span><span class="kw">:</span></span>
-<span id="cb48-11"><a></a><span class="at">          </span><span class="fu">httpGet</span><span class="kw">:</span></span>
-<span id="cb48-12"><a></a><span class="at">            </span><span class="fu">path</span><span class="kw">:</span><span class="at"> /</span></span>
-<span id="cb48-13"><a></a><span class="at">            </span><span class="fu">port</span><span class="kw">:</span><span class="at"> http</span></span>
-<span id="cb48-14"><a></a><span class="at">        `{ end }`</span><span class="co"> # added</span></span>
-<span id="cb48-15"><a></a><span class="at">        </span><span class="fu">resources</span><span class="kw">:</span></span>
-<span id="cb48-16"><a></a><span class="at">          </span><span class="kw">{</span><span class="at">{- toYaml .Values.resources | nindent 12 </span><span class="kw">}</span><span class="at">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb48"><pre class="sourceCode numberSource yaml number-lines code-with-copy"><code class="sourceCode yaml"><span id="cb48-1"><a aria-label="1"></a><span class="at">        </span><span class="fu">ports</span><span class="kw">:</span></span>
+<span id="cb48-2"><a aria-label="2"></a><span class="at">          </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> http</span></span>
+<span id="cb48-3"><a aria-label="3"></a><span class="at">            </span><span class="fu">containerPort</span><span class="kw">:</span><span class="at"> </span><span class="dv">80</span></span>
+<span id="cb48-4"><a aria-label="4"></a><span class="at">            </span><span class="fu">protocol</span><span class="kw">:</span><span class="at"> TCP</span></span>
+<span id="cb48-5"><a aria-label="5"></a><span class="at">        `{ if false }`</span><span class="co"> # added</span></span>
+<span id="cb48-6"><a aria-label="6"></a><span class="at">        </span><span class="fu">livenessProbe</span><span class="kw">:</span></span>
+<span id="cb48-7"><a aria-label="7"></a><span class="at">          </span><span class="fu">httpGet</span><span class="kw">:</span></span>
+<span id="cb48-8"><a aria-label="8"></a><span class="at">            </span><span class="fu">path</span><span class="kw">:</span><span class="at"> /</span></span>
+<span id="cb48-9"><a aria-label="9"></a><span class="at">            </span><span class="fu">port</span><span class="kw">:</span><span class="at"> http</span></span>
+<span id="cb48-10"><a aria-label="10"></a><span class="at">        </span><span class="fu">readinessProbe</span><span class="kw">:</span></span>
+<span id="cb48-11"><a aria-label="11"></a><span class="at">          </span><span class="fu">httpGet</span><span class="kw">:</span></span>
+<span id="cb48-12"><a aria-label="12"></a><span class="at">            </span><span class="fu">path</span><span class="kw">:</span><span class="at"> /</span></span>
+<span id="cb48-13"><a aria-label="13"></a><span class="at">            </span><span class="fu">port</span><span class="kw">:</span><span class="at"> http</span></span>
+<span id="cb48-14"><a aria-label="14"></a><span class="at">        `{ end }`</span><span class="co"> # added</span></span>
+<span id="cb48-15"><a aria-label="15"></a><span class="at">        </span><span class="fu">resources</span><span class="kw">:</span></span>
+<span id="cb48-16"><a aria-label="16"></a><span class="at">          </span><span class="kw">{</span><span class="at">{- toYaml .Values.resources | nindent 12 </span><span class="kw">}</span><span class="at">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1517,11 +1523,11 @@ kind: Service, namespace: default, name: hasher</code></pre>
 <ul>
 <li><p>We need to upgrade all the services again to use the new chart</p></li>
 <li><p>Upgrade all components:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb49"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb49-1"><a></a>  <span class="cf">for</span> COMPONENT <span class="kw">in</span> hasher redis rng webui worker<span class="kw">;</span> <span class="cf">do</span></span>
-<span id="cb49-2"><a></a>    <span class="ex">helm</span> upgrade <span class="va">$COMPONENT</span> helmcoins</span>
-<span id="cb49-3"><a></a>  <span class="cf">done</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb49"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb49-1"><a aria-label="1"></a>  <span class="cf">for</span> COMPONENT <span class="kw">in</span> hasher redis rng webui worker<span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb49-2"><a aria-label="2"></a>    <span class="ex">helm</span> upgrade <span class="va">$COMPONENT</span> helmcoins</span>
+<span id="cb49-3"><a aria-label="3"></a>  <span class="cf">done</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 <li><p>Check how our pods are doing:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb50"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb50-1"><a></a><span class="ex">kubectl</span> get pods</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb50"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb50-1"><a aria-label="1"></a><span class="ex">kubectl</span> get pods</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 </ul>
 <p>Everything should now be running!</p>
 </div>
@@ -1539,7 +1545,7 @@ kind: Service, namespace: default, name: hasher</code></pre>
 <ul>
 <li><p>Is this working now?</p></li>
 <li><p>Let’s check the logs of the worker:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb51"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb51-1"><a></a><span class="ex">stern</span> worker</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb51"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb51-1"><a aria-label="1"></a><span class="ex">stern</span> worker</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 </ul>
 <p>This error might look familiar … The worker can’t resolve <code>redis</code>.</p>
 <p>Typically, that error means that the <code>redis</code> service doesn’t exist.</p>
@@ -1558,7 +1564,7 @@ kind: Service, namespace: default, name: hasher</code></pre>
 <ul>
 <li><p>What about the services created by our chart?</p></li>
 <li><p>Check the list of services:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb52"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb52-1"><a></a><span class="ex">kubectl</span> get services</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb52"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb52-1"><a aria-label="1"></a><span class="ex">kubectl</span> get services</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 </ul>
 <p>They are named <code>COMPONENT-helmcoins</code> instead of just <code>COMPONENT</code>.</p>
 <p>We need to change that!</p>
@@ -1579,7 +1585,7 @@ kind: Service, namespace: default, name: hasher</code></pre>
 <li><p>It should be using <code>{ include "helmcoins.fullname" }</code></p></li>
 <li><p><code>include</code> indicates a <em>template block</em> defined somewhere else</p></li>
 <li><p>Find where that <code>fullname</code> thing is defined:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb53"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb53-1"><a></a><span class="fu">grep</span> define.<span class="pp">*</span>fullname helmcoins/templates/<span class="pp">*</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb53"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb53-1"><a aria-label="1"></a><span class="fu">grep</span> define.<span class="pp">*</span>fullname helmcoins/templates/<span class="pp">*</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 </ul>
 <p>It should be in <code>_helpers.tpl</code>.</p>
 <p>We can look at the definition, but it’s fairly complex …</p>
@@ -1636,11 +1642,11 @@ kind: Service, namespace: default, name: hasher</code></pre>
 <div class="callout-content">
 <ul>
 <li><p>In the service template, we have the following section:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb54"><pre class="sourceCode numberSource yaml number-lines code-with-copy"><code class="sourceCode yaml"><span id="cb54-1"><a></a><span class="at">  </span><span class="fu">ports</span><span class="kw">:</span></span>
-<span id="cb54-2"><a></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">port</span><span class="kw">:</span><span class="at"> </span><span class="kw">{</span><span class="at">{ .Values.service.port </span><span class="kw">}</span><span class="at">}</span></span>
-<span id="cb54-3"><a></a><span class="at">    </span><span class="fu">targetPort</span><span class="kw">:</span><span class="at"> http</span></span>
-<span id="cb54-4"><a></a><span class="at">    </span><span class="fu">protocol</span><span class="kw">:</span><span class="at"> TCP</span></span>
-<span id="cb54-5"><a></a><span class="at">    </span><span class="fu">name</span><span class="kw">:</span><span class="at"> http</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb54"><pre class="sourceCode numberSource yaml number-lines code-with-copy"><code class="sourceCode yaml"><span id="cb54-1"><a aria-label="1"></a><span class="at">  </span><span class="fu">ports</span><span class="kw">:</span></span>
+<span id="cb54-2"><a aria-label="2"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">port</span><span class="kw">:</span><span class="at"> </span><span class="kw">{</span><span class="at">{ .Values.service.port </span><span class="kw">}</span><span class="at">}</span></span>
+<span id="cb54-3"><a aria-label="3"></a><span class="at">    </span><span class="fu">targetPort</span><span class="kw">:</span><span class="at"> http</span></span>
+<span id="cb54-4"><a aria-label="4"></a><span class="at">    </span><span class="fu">protocol</span><span class="kw">:</span><span class="at"> TCP</span></span>
+<span id="cb54-5"><a aria-label="5"></a><span class="at">    </span><span class="fu">name</span><span class="kw">:</span><span class="at"> http</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 <li><p><code>port</code> is the port on which the service is “listening”</p>
 <p>(i.e.&nbsp;to which our code needs to connect)</p></li>
 <li><p><code>targetPort</code> is the port on which the pods are listening</p></li>
@@ -1661,10 +1667,10 @@ kind: Service, namespace: default, name: hasher</code></pre>
 <ul>
 <li><p>Let’s add a <code>service.port</code> value to the redis release</p></li>
 <li><p>Edit <code>redis.yaml</code> to add:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb55"><pre class="sourceCode numberSource yaml number-lines code-with-copy"><code class="sourceCode yaml"><span id="cb55-1"><a></a><span class="at">  </span><span class="fu">service</span><span class="kw">:</span></span>
-<span id="cb55-2"><a></a><span class="at">    </span><span class="fu">port</span><span class="kw">:</span><span class="at"> </span><span class="dv">6379</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb55"><pre class="sourceCode numberSource yaml number-lines code-with-copy"><code class="sourceCode yaml"><span id="cb55-1"><a aria-label="1"></a><span class="at">  </span><span class="fu">service</span><span class="kw">:</span></span>
+<span id="cb55-2"><a aria-label="2"></a><span class="at">    </span><span class="fu">port</span><span class="kw">:</span><span class="at"> </span><span class="dv">6379</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 <li><p>Apply the new values file:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb56"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb56-1"><a></a><span class="ex">helm</span> upgrade redis helmcoins <span class="at">--values</span><span class="op">=</span>redis.yaml</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb56"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb56-1"><a aria-label="1"></a><span class="ex">helm</span> upgrade redis helmcoins <span class="at">--values</span><span class="op">=</span>redis.yaml</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 </ul>
 </div>
 </div>
@@ -1680,10 +1686,10 @@ kind: Service, namespace: default, name: hasher</code></pre>
 <div class="callout-content">
 <ul>
 <li><p>If we look at the deployment template, we see this section:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb57"><pre class="sourceCode numberSource yaml number-lines code-with-copy"><code class="sourceCode yaml"><span id="cb57-1"><a></a><span class="at">        </span><span class="fu">ports</span><span class="kw">:</span></span>
-<span id="cb57-2"><a></a><span class="at">          </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> http</span></span>
-<span id="cb57-3"><a></a><span class="at">            </span><span class="fu">containerPort</span><span class="kw">:</span><span class="at"> </span><span class="dv">80</span></span>
-<span id="cb57-4"><a></a><span class="at">            </span><span class="fu">protocol</span><span class="kw">:</span><span class="at"> TCP</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb57"><pre class="sourceCode numberSource yaml number-lines code-with-copy"><code class="sourceCode yaml"><span id="cb57-1"><a aria-label="1"></a><span class="at">        </span><span class="fu">ports</span><span class="kw">:</span></span>
+<span id="cb57-2"><a aria-label="2"></a><span class="at">          </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> http</span></span>
+<span id="cb57-3"><a aria-label="3"></a><span class="at">            </span><span class="fu">containerPort</span><span class="kw">:</span><span class="at"> </span><span class="dv">80</span></span>
+<span id="cb57-4"><a aria-label="4"></a><span class="at">            </span><span class="fu">protocol</span><span class="kw">:</span><span class="at"> TCP</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 <li><p>The container port is hard-coded to 80</p></li>
 <li><p>We’ll change it to use the port number specified in the values</p></li>
 </ul>
@@ -1702,7 +1708,7 @@ kind: Service, namespace: default, name: hasher</code></pre>
 <ul>
 <li><p>Edit <code>helmcoins/templates/deployment.yaml</code></p></li>
 <li><p>The line with <code>containerPort</code> should be:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb58"><pre class="sourceCode numberSource yaml number-lines code-with-copy"><code class="sourceCode yaml"><span id="cb58-1"><a></a><span class="fu">containerPort</span><span class="kw">:</span><span class="at"> </span><span class="kw">{</span><span class="at">{ .Values.service.port </span><span class="kw">}</span><span class="at">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb58"><pre class="sourceCode numberSource yaml number-lines code-with-copy"><code class="sourceCode yaml"><span id="cb58-1"><a aria-label="1"></a><span class="fu">containerPort</span><span class="kw">:</span><span class="at"> </span><span class="kw">{</span><span class="at">{ .Values.service.port </span><span class="kw">}</span><span class="at">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 </ul>
 </div>
 </div>
@@ -1825,11 +1831,11 @@ kind: Service, namespace: default, name: hasher</code></pre>
 <ul>
 <li><p>First, let’s edit <code>Chart.yaml</code></p></li>
 <li><p>In <code>Chart.yaml</code>, fill the <code>dependencies</code> section:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb59"><pre class="sourceCode numberSource yaml number-lines code-with-copy"><code class="sourceCode yaml"><span id="cb59-1"><a></a><span class="at">  </span><span class="fu">dependencies</span><span class="kw">:</span></span>
-<span id="cb59-2"><a></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> redis</span></span>
-<span id="cb59-3"><a></a><span class="at">      </span><span class="fu">version</span><span class="kw">:</span><span class="at"> </span><span class="fl">11.0.5</span></span>
-<span id="cb59-4"><a></a><span class="at">      </span><span class="fu">repository</span><span class="kw">:</span><span class="at"> https://charts.bitnami.com/bitnami</span></span>
-<span id="cb59-5"><a></a><span class="at">      </span><span class="fu">condition</span><span class="kw">:</span><span class="at"> redis.enabled</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb59"><pre class="sourceCode numberSource yaml number-lines code-with-copy"><code class="sourceCode yaml"><span id="cb59-1"><a aria-label="1"></a><span class="at">  </span><span class="fu">dependencies</span><span class="kw">:</span></span>
+<span id="cb59-2"><a aria-label="2"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> redis</span></span>
+<span id="cb59-3"><a aria-label="3"></a><span class="at">      </span><span class="fu">version</span><span class="kw">:</span><span class="at"> </span><span class="fl">11.0.5</span></span>
+<span id="cb59-4"><a aria-label="4"></a><span class="at">      </span><span class="fu">repository</span><span class="kw">:</span><span class="at"> https://charts.bitnami.com/bitnami</span></span>
+<span id="cb59-5"><a aria-label="5"></a><span class="at">      </span><span class="fu">condition</span><span class="kw">:</span><span class="at"> redis.enabled</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 </ul>
 <p>Where do that <code>repository</code> and <code>version</code> come from?</p>
 <p>We’re assuming here that we did our research, or that our resident Helm expert advised us to use Bitnami’s Redis chart.</p>
@@ -1847,7 +1853,7 @@ kind: Service, namespace: default, name: hasher</code></pre>
 <div class="callout-content">
 <ul>
 <li><p>The <code>condition</code> field gives us a way to enable/disable the dependency:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb60"><pre class="sourceCode numberSource yaml number-lines code-with-copy"><code class="sourceCode yaml"><span id="cb60-1"><a></a><span class="fu">conditions</span><span class="kw">:</span><span class="at"> redis.enabled</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb60"><pre class="sourceCode numberSource yaml number-lines code-with-copy"><code class="sourceCode yaml"><span id="cb60-1"><a aria-label="1"></a><span class="fu">conditions</span><span class="kw">:</span><span class="at"> redis.enabled</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 <li><p>Here, we can disable Redis with the Helm flag <code>--set redis.enabled=false</code></p>
 <p>(or set that value in a <code>values.yaml</code> file)</p></li>
 <li><p>Of course, this is mostly useful for <em>optional</em> dependencies</p>
@@ -1868,7 +1874,7 @@ kind: Service, namespace: default, name: hasher</code></pre>
 <ul>
 <li><p>After adding the dependency, we ask Helm to pin an download it</p></li>
 <li><p>Ask Helm:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb61"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb61-1"><a></a><span class="ex">helm</span> dependency update</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb61"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb61-1"><a aria-label="1"></a><span class="ex">helm</span> dependency update</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>(Or <code>helm dep up</code>)</p></li>
 <li><p>This wil create <code>Chart.lock</code> and fetch the dependency</p></li>
 </ul>
@@ -1908,10 +1914,10 @@ kind: Service, namespace: default, name: hasher</code></pre>
 <div class="callout-content">
 <ul>
 <li><p>Here is an example of loose version requirement:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb62"><pre class="sourceCode numberSource yaml number-lines code-with-copy"><code class="sourceCode yaml"><span id="cb62-1"><a></a><span class="at">  </span><span class="fu">dependencies</span><span class="kw">:</span></span>
-<span id="cb62-2"><a></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> redis</span></span>
-<span id="cb62-3"><a></a><span class="at">      </span><span class="fu">version</span><span class="kw">:</span><span class="at"> </span><span class="st">"&gt;=11, &lt;12"</span></span>
-<span id="cb62-4"><a></a><span class="at">      </span><span class="fu">repository</span><span class="kw">:</span><span class="at"> https://charts.bitnami.com/bitnami</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb62"><pre class="sourceCode numberSource yaml number-lines code-with-copy"><code class="sourceCode yaml"><span id="cb62-1"><a aria-label="1"></a><span class="at">  </span><span class="fu">dependencies</span><span class="kw">:</span></span>
+<span id="cb62-2"><a aria-label="2"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> redis</span></span>
+<span id="cb62-3"><a aria-label="3"></a><span class="at">      </span><span class="fu">version</span><span class="kw">:</span><span class="at"> </span><span class="st">"&gt;=11, &lt;12"</span></span>
+<span id="cb62-4"><a aria-label="4"></a><span class="at">      </span><span class="fu">repository</span><span class="kw">:</span><span class="at"> https://charts.bitnami.com/bitnami</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 <li><p>This makes sure that we have the most recent version in the 11.x train</p></li>
 <li><p>… But without upgrading to version 12.x</p>
 <p>(because it might be incompatible)</p></li>
@@ -2011,10 +2017,10 @@ kind: Service, namespace: default, name: hasher</code></pre>
 </ul></li>
 <li><p>A parent chart can set values for its dependencies</p></li>
 <li><p>For example, in the parent’s <code>values.yaml</code>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb64"><pre class="sourceCode numberSource yaml number-lines code-with-copy"><code class="sourceCode yaml"><span id="cb64-1"><a></a><span class="at">  </span><span class="fu">redis</span><span class="kw">:</span><span class="co">                    # Name of the dependency</span></span>
-<span id="cb64-2"><a></a><span class="at">    </span><span class="fu">fullnameOverride</span><span class="kw">:</span><span class="at"> redis</span><span class="co"> # Value passed to redis</span></span>
-<span id="cb64-3"><a></a><span class="at">    </span><span class="fu">cluster</span><span class="kw">:</span><span class="co">                # Other values passed to redis</span></span>
-<span id="cb64-4"><a></a><span class="at">      </span><span class="fu">enabled</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb64"><pre class="sourceCode numberSource yaml number-lines code-with-copy"><code class="sourceCode yaml"><span id="cb64-1"><a aria-label="1"></a><span class="at">  </span><span class="fu">redis</span><span class="kw">:</span><span class="co">                    # Name of the dependency</span></span>
+<span id="cb64-2"><a aria-label="2"></a><span class="at">    </span><span class="fu">fullnameOverride</span><span class="kw">:</span><span class="at"> redis</span><span class="co"> # Value passed to redis</span></span>
+<span id="cb64-3"><a aria-label="3"></a><span class="at">    </span><span class="fu">cluster</span><span class="kw">:</span><span class="co">                # Other values passed to redis</span></span>
+<span id="cb64-4"><a aria-label="4"></a><span class="at">      </span><span class="fu">enabled</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 <li><p>User can also set variables with <code>--set=</code> or with <code>--values=</code></p></li>
 </ul>
 </div>
@@ -2073,13 +2079,13 @@ kind: Service, namespace: default, name: hasher</code></pre>
 <div class="callout-content">
 <ul>
 <li><p>Decompress the chart:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb65"><pre class="sourceCode numberSource yaml number-lines code-with-copy"><code class="sourceCode yaml"><span id="cb65-1"><a></a><span class="at">cd charts</span></span>
-<span id="cb65-2"><a></a><span class="at">tar zxf redis-*.tgz</span></span>
-<span id="cb65-3"><a></a><span class="at">cd ..</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb65"><pre class="sourceCode numberSource yaml number-lines code-with-copy"><code class="sourceCode yaml"><span id="cb65-1"><a aria-label="1"></a><span class="at">cd charts</span></span>
+<span id="cb65-2"><a aria-label="2"></a><span class="at">tar zxf redis-*.tgz</span></span>
+<span id="cb65-3"><a aria-label="3"></a><span class="at">cd ..</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 <li><p>Edit <code>Chart.yaml</code> and update the <code>dependencies</code> section:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb66"><pre class="sourceCode numberSource yaml number-lines code-with-copy"><code class="sourceCode yaml"><span id="cb66-1"><a></a><span class="at">  </span><span class="fu">dependencies</span><span class="kw">:</span></span>
-<span id="cb66-2"><a></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> redis</span></span>
-<span id="cb66-3"><a></a><span class="at">      </span><span class="fu">version</span><span class="kw">:</span><span class="at"> </span><span class="st">'*'</span><span class="co"> # No need to constraint version, from local files</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb66"><pre class="sourceCode numberSource yaml number-lines code-with-copy"><code class="sourceCode yaml"><span id="cb66-1"><a aria-label="1"></a><span class="at">  </span><span class="fu">dependencies</span><span class="kw">:</span></span>
+<span id="cb66-2"><a aria-label="2"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> redis</span></span>
+<span id="cb66-3"><a aria-label="3"></a><span class="at">      </span><span class="fu">version</span><span class="kw">:</span><span class="at"> </span><span class="st">'*'</span><span class="co"> # No need to constraint version, from local files</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 <li><p>Run <code>helm dep update</code></p></li>
 </ul>
 </div>
@@ -2115,13 +2121,13 @@ kind: Service, namespace: default, name: hasher</code></pre>
 <li><p>What if we need multiple copies of the same subchart?</p>
 <p>(for instance, if we need two completely different Redis servers)</p></li>
 <li><p>We can declare a dependency multiple times, and specify an <code>alias</code>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb67"><pre class="sourceCode numberSource yaml number-lines code-with-copy"><code class="sourceCode yaml"><span id="cb67-1"><a></a><span class="fu">dependencies</span><span class="kw">:</span></span>
-<span id="cb67-2"><a></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> redis</span></span>
-<span id="cb67-3"><a></a><span class="at">    </span><span class="fu">version</span><span class="kw">:</span><span class="at"> </span><span class="st">'*'</span></span>
-<span id="cb67-4"><a></a><span class="at">    </span><span class="fu">alias</span><span class="kw">:</span><span class="at"> querycache</span></span>
-<span id="cb67-5"><a></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> redis</span></span>
-<span id="cb67-6"><a></a><span class="at">    </span><span class="fu">version</span><span class="kw">:</span><span class="at"> </span><span class="st">'*'</span></span>
-<span id="cb67-7"><a></a><span class="at">    </span><span class="fu">alias</span><span class="kw">:</span><span class="at"> celeryqueue</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb67"><pre class="sourceCode numberSource yaml number-lines code-with-copy"><code class="sourceCode yaml"><span id="cb67-1"><a aria-label="1"></a><span class="fu">dependencies</span><span class="kw">:</span></span>
+<span id="cb67-2"><a aria-label="2"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> redis</span></span>
+<span id="cb67-3"><a aria-label="3"></a><span class="at">    </span><span class="fu">version</span><span class="kw">:</span><span class="at"> </span><span class="st">'*'</span></span>
+<span id="cb67-4"><a aria-label="4"></a><span class="at">    </span><span class="fu">alias</span><span class="kw">:</span><span class="at"> querycache</span></span>
+<span id="cb67-5"><a aria-label="5"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> redis</span></span>
+<span id="cb67-6"><a aria-label="6"></a><span class="at">    </span><span class="fu">version</span><span class="kw">:</span><span class="at"> </span><span class="st">'*'</span></span>
+<span id="cb67-7"><a aria-label="7"></a><span class="at">    </span><span class="fu">alias</span><span class="kw">:</span><span class="at"> celeryqueue</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 <li><p><code>.Chart.Name</code> will be set to the <code>alias</code></p></li>
 </ul>
 </div>

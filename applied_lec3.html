@@ -6,8 +6,8 @@
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="site_libs/quarto-html/light-border.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-587c61ba64f3a5504c4d52d930310e48.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
-  <meta name="generator" content="quarto-1.8.26">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.10.18">
 
   <meta name="author" content="MSDE">
   <title>Big Data analytics / Applied Data analytics – Docker Networking</title>
@@ -17,10 +17,16 @@
   <link rel="stylesheet" href="site_libs/revealjs/dist/reset.css">
   <link rel="stylesheet" href="site_libs/revealjs/dist/reveal.css">
   <style>
-    code{white-space: pre-wrap;}
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
     span.smallcaps{font-variant: small-caps;}
-    div.columns{display: flex; gap: min(4vw, 1.5em);}
-    div.column{flex: auto; overflow-x: auto;}
+    div.columns{display: flex; gap: 1.5em;}
+    div.column{flex: auto;}
+    @media screen {
+    div.columns{gap: min(4vw, 1.5em);}
+    div.column{overflow-x: auto;}
+    }
     div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
     ul.task-list{list-style: none;}
     ul.task-list li input[type="checkbox"] {
@@ -95,7 +101,7 @@
     code span.vs { color: #20794d; } /* VerbatimString */
     code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   </style>
-  <link rel="stylesheet" href="site_libs/revealjs/dist/theme/quarto-534cd8e3a96973385dffff3f4709048d.css">
+  <link rel="stylesheet" href="site_libs/revealjs/dist/theme/quarto-2740581606dc327e82f18f789b69d8a0.css">
   <link rel="stylesheet" href="./custom.css">
   <link href="site_libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
   <link href="site_libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
@@ -199,7 +205,7 @@
 <div class="quarto-title-authors">
 <div class="quarto-title-author">
 <div class="quarto-title-author-name">
-MSDE 
+MSDE
 </div>
         <p class="quarto-title-affiliation">
             Lviv University
@@ -335,8 +341,8 @@ MSDE
 <p><strong>Running an NGINX server</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a></a><span class="ex">$</span> docker run <span class="at">-d</span> <span class="at">-P</span> nginx</span>
-<span id="cb1-2"><a></a><span class="ex">66b1ce719198711292c8f34f84a7b68c3876cf9f67015e752b94e189d35a204e</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a aria-label="1"></a><span class="ex">$</span> docker run <span class="at">-d</span> <span class="at">-P</span> nginx</span>
+<span id="cb1-2"><a aria-label="2"></a><span class="ex">66b1ce719198711292c8f34f84a7b68c3876cf9f67015e752b94e189d35a204e</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <ul>
 <li><p>Docker will automatically pull the <code>nginx</code> image from the Docker Hub</p></li>
 <li><p><code>-d</code> / <code>--detach</code> tells Docker to run it in the background</p></li>
@@ -360,9 +366,9 @@ MSDE
 <li><p>First, we need to find the <em>port number</em> used by Docker</p>
 <p>(the NGINX container listens on port 80, but this port will be <em>mapped</em>)</p></li>
 <li><p>We can use <code>docker ps</code>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a></a><span class="ex">$</span> docker ps</span>
-<span id="cb2-2"><a></a><span class="ex">CONTAINER</span> ID  IMAGE  ...  PORTS                  ...</span>
-<span id="cb2-3"><a></a><span class="ex">e40ffb406c9e</span>  nginx  ...  0.0.0.0:<span class="kw">`</span><span class="ex">12345</span><span class="kw">`</span><span class="at">-</span><span class="op">&gt;</span>80/tcp  ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a aria-label="1"></a><span class="ex">$</span> docker ps</span>
+<span id="cb2-2"><a aria-label="2"></a><span class="ex">CONTAINER</span> ID  IMAGE  ...  PORTS                  ...</span>
+<span id="cb2-3"><a aria-label="3"></a><span class="ex">e40ffb406c9e</span>  nginx  ...  0.0.0.0:<span class="kw">`</span><span class="ex">12345</span><span class="kw">`</span><span class="at">-</span><span class="op">&gt;</span>80/tcp  ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 <li><p>This means:</p>
 <p><em>port 12345 on the Docker host is mapped to port 80 in the container</em></p></li>
 <li><p>Now we need to connect to the Docker host!</p></li>
@@ -422,12 +428,12 @@ MSDE
 <div class="callout-content">
 <p>You can also use <code>curl</code> directly from the Docker host.</p>
 <p>Make sure to use the right port number if it is different from the example below:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a></a><span class="ex">$</span> curl localhost:12345</span>
-<span id="cb3-2"><a></a><span class="op">&lt;</span>!DOCTYPE <span class="ex">html</span><span class="op">&gt;</span></span>
-<span id="cb3-3"><a></a><span class="op">&lt;</span>html<span class="op">&gt;</span></span>
-<span id="cb3-4"><a></a><span class="op">&lt;</span>head<span class="op">&gt;</span></span>
-<span id="cb3-5"><a></a><span class="op">&lt;</span>title<span class="op">&gt;</span>Welcome <span class="ex">to</span> nginx!<span class="op">&lt;</span>/title<span class="op">&gt;</span></span>
-<span id="cb3-6"><a></a><span class="ex">...</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a aria-label="1"></a><span class="ex">$</span> curl localhost:12345</span>
+<span id="cb3-2"><a aria-label="2"></a><span class="op">&lt;</span>!DOCTYPE <span class="ex">html</span><span class="op">&gt;</span></span>
+<span id="cb3-3"><a aria-label="3"></a><span class="op">&lt;</span>html<span class="op">&gt;</span></span>
+<span id="cb3-4"><a aria-label="4"></a><span class="op">&lt;</span>head<span class="op">&gt;</span></span>
+<span id="cb3-5"><a aria-label="5"></a><span class="op">&lt;</span>title<span class="op">&gt;</span>Welcome <span class="ex">to</span> nginx!<span class="op">&lt;</span>/title<span class="op">&gt;</span></span>
+<span id="cb3-6"><a aria-label="6"></a><span class="ex">...</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -444,17 +450,17 @@ MSDE
 <li><p>There is metadata in the image telling “this image has something on port 80”.</p></li>
 <li><p>We can see that metadata with <code>docker inspect</code>:</p></li>
 </ul>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a></a><span class="ex">$</span> docker inspect <span class="at">--format</span> <span class="st">'{{.Config.ExposedPorts}}'</span> nginx</span>
-<span id="cb4-2"><a></a><span class="va">map</span><span class="op">[</span><span class="dv">80</span>/tcp:{}<span class="op">]</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a aria-label="1"></a><span class="ex">$</span> docker inspect <span class="at">--format</span> <span class="st">'{{.Config.ExposedPorts}}'</span> nginx</span>
+<span id="cb4-2"><a aria-label="2"></a><span class="va">map</span><span class="op">[</span><span class="dv">80</span>/tcp:{}<span class="op">]</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <ul>
 <li><p>This metadata was set in the Dockerfile, with the <code>EXPOSE</code> keyword.</p></li>
 <li><p>We can see that with <code>docker history</code>:</p></li>
 </ul>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a></a><span class="ex">$</span> docker history nginx</span>
-<span id="cb5-2"><a></a><span class="ex">IMAGE</span>               CREATED             CREATED BY</span>
-<span id="cb5-3"><a></a><span class="ex">7f70b30f2cc6</span>        11 days ago         /bin/sh <span class="at">-c</span> <span class="co">#(nop)  CMD ["nginx" "-g" "…</span></span>
-<span id="cb5-4"><a></a><span class="op">&lt;</span>missing<span class="op">&gt;</span>           11 <span class="ex">days</span> ago         /bin/sh <span class="at">-c</span> <span class="co">#(nop)  STOPSIGNAL [SIGTERM]</span></span>
-<span id="cb5-5"><a></a><span class="op">&lt;</span>missing<span class="op">&gt;</span>           11 <span class="ex">days</span> ago         /bin/sh <span class="at">-c</span> <span class="co">#(nop)  EXPOSE 80/tcp</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a aria-label="1"></a><span class="ex">$</span> docker history nginx</span>
+<span id="cb5-2"><a aria-label="2"></a><span class="ex">IMAGE</span>               CREATED             CREATED BY</span>
+<span id="cb5-3"><a aria-label="3"></a><span class="ex">7f70b30f2cc6</span>        11 days ago         /bin/sh <span class="at">-c</span> <span class="co">#(nop)  CMD ["nginx" "-g" "…</span></span>
+<span id="cb5-4"><a aria-label="4"></a><span class="op">&lt;</span>missing<span class="op">&gt;</span>           11 <span class="ex">days</span> ago         /bin/sh <span class="at">-c</span> <span class="co">#(nop)  STOPSIGNAL [SIGTERM]</span></span>
+<span id="cb5-5"><a aria-label="5"></a><span class="op">&lt;</span>missing<span class="op">&gt;</span>           11 <span class="ex">days</span> ago         /bin/sh <span class="at">-c</span> <span class="co">#(nop)  EXPOSE 80/tcp</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -510,8 +516,8 @@ MSDE
 <div class="callout-content">
 <p>Parsing the output of <code>docker ps</code> would be painful.</p>
 <p>There is a command to help us:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb6-1"><a></a><span class="ex">$</span> docker port <span class="op">&lt;</span>containerID<span class="op">&gt;</span> 80</span>
-<span id="cb6-2"><a></a><span class="ex">0.0.0.0:12345</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb6-1"><a aria-label="1"></a><span class="ex">$</span> docker port <span class="op">&lt;</span>containerID<span class="op">&gt;</span> 80</span>
+<span id="cb6-2"><a aria-label="2"></a><span class="ex">0.0.0.0:12345</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -525,9 +531,9 @@ MSDE
 </div>
 <div class="callout-content">
 <p>If you want to set port numbers yourself, no problem:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a></a><span class="ex">$</span> docker run <span class="at">-d</span> <span class="at">-p</span> 80:80 nginx</span>
-<span id="cb7-2"><a></a><span class="ex">$</span> docker run <span class="at">-d</span> <span class="at">-p</span> 8000:80 nginx</span>
-<span id="cb7-3"><a></a><span class="ex">$</span> docker run <span class="at">-d</span> <span class="at">-p</span> 8080:80 <span class="at">-p</span> 8888:80 nginx</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a aria-label="1"></a><span class="ex">$</span> docker run <span class="at">-d</span> <span class="at">-p</span> 80:80 nginx</span>
+<span id="cb7-2"><a aria-label="2"></a><span class="ex">$</span> docker run <span class="at">-d</span> <span class="at">-p</span> 8000:80 nginx</span>
+<span id="cb7-3"><a aria-label="3"></a><span class="ex">$</span> docker run <span class="at">-d</span> <span class="at">-p</span> 8080:80 <span class="at">-p</span> 8888:80 nginx</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <ul>
 <li>We are running three NGINX web servers.</li>
 <li>The first one is exposed on port 80.</li>
@@ -579,8 +585,8 @@ MSDE
 </div>
 <div class="callout-content">
 <p>We can use the <code>docker inspect</code> command to find the IP address of the container.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a></a><span class="ex">$</span> docker inspect <span class="at">--format</span> <span class="st">'{{ .NetworkSettings.IPAddress }}'</span> <span class="op">&lt;</span>yourContainerID<span class="op">&gt;</span></span>
-<span id="cb8-2"><a></a><span class="ex">172.17.0.3</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a aria-label="1"></a><span class="ex">$</span> docker inspect <span class="at">--format</span> <span class="st">'{{ .NetworkSettings.IPAddress }}'</span> <span class="op">&lt;</span>yourContainerID<span class="op">&gt;</span></span>
+<span id="cb8-2"><a aria-label="2"></a><span class="ex">172.17.0.3</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <ul>
 <li><p><code>docker inspect</code> is an advanced command, that can retrieve a ton of information about our containers.</p></li>
 <li><p>Here, we provide it with a format string to extract exactly the private IP address of the container.</p></li>
@@ -598,11 +604,11 @@ MSDE
 </div>
 <div class="callout-content">
 <p>Let’s try to ping our container <em>from another container.</em></p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb9-1"><a></a><span class="ex">docker</span> run alpine ping <span class="kw">`</span><span class="op">&lt;</span>ipaddress<span class="op">&gt;</span><span class="kw">`</span></span>
-<span id="cb9-2"><a></a><span class="ex">PING</span> 172.17.0.X <span class="er">(</span><span class="ex">172.17.0.X</span><span class="kw">)</span><span class="bu">:</span> 56 data bytes</span>
-<span id="cb9-3"><a></a><span class="ex">64</span> bytes from 172.17.0.X: seq=0 ttl=64 time=0.106 ms</span>
-<span id="cb9-4"><a></a><span class="ex">64</span> bytes from 172.17.0.X: seq=1 ttl=64 time=0.250 ms</span>
-<span id="cb9-5"><a></a><span class="ex">64</span> bytes from 172.17.0.X: seq=2 ttl=64 time=0.188 ms</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb9-1"><a aria-label="1"></a><span class="ex">docker</span> run alpine ping <span class="kw">`</span><span class="op">&lt;</span>ipaddress<span class="op">&gt;</span><span class="kw">`</span></span>
+<span id="cb9-2"><a aria-label="2"></a><span class="ex">PING</span> 172.17.0.X <span class="er">(</span><span class="ex">172.17.0.X</span><span class="kw">)</span><span class="bu">:</span> 56 data bytes</span>
+<span id="cb9-3"><a aria-label="3"></a><span class="ex">64</span> bytes from 172.17.0.X: seq=0 ttl=64 time=0.106 ms</span>
+<span id="cb9-4"><a aria-label="4"></a><span class="ex">64</span> bytes from 172.17.0.X: seq=1 ttl=64 time=0.250 ms</span>
+<span id="cb9-5"><a aria-label="5"></a><span class="ex">64</span> bytes from 172.17.0.X: seq=2 ttl=64 time=0.188 ms</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>When running on Linux, we can even ping that IP address directly!</p>
 <p>(And connect to a container’s ports even if they aren’t published.)</p>
 </div>
@@ -791,13 +797,13 @@ MSDE
 <div class="callout-content">
 <p>Docker has “networks”.</p>
 <p>We can manage them with the <code>docker network</code> commands; for instance:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb10-1"><a></a><span class="ex">$</span> docker network ls</span>
-<span id="cb10-2"><a></a><span class="ex">NETWORK</span> ID          NAME                DRIVER</span>
-<span id="cb10-3"><a></a><span class="ex">6bde79dfcf70</span>        bridge              bridge</span>
-<span id="cb10-4"><a></a><span class="ex">8d9c78725538</span>        none                null</span>
-<span id="cb10-5"><a></a><span class="ex">eb0eeab782f4</span>        host                host</span>
-<span id="cb10-6"><a></a><span class="ex">4c1ff84d6d3f</span>        blog-dev            overlay</span>
-<span id="cb10-7"><a></a><span class="ex">228a4355d548</span>        blog-prod           overlay</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb10-1"><a aria-label="1"></a><span class="ex">$</span> docker network ls</span>
+<span id="cb10-2"><a aria-label="2"></a><span class="ex">NETWORK</span> ID          NAME                DRIVER</span>
+<span id="cb10-3"><a aria-label="3"></a><span class="ex">6bde79dfcf70</span>        bridge              bridge</span>
+<span id="cb10-4"><a aria-label="4"></a><span class="ex">8d9c78725538</span>        none                null</span>
+<span id="cb10-5"><a aria-label="5"></a><span class="ex">eb0eeab782f4</span>        host                host</span>
+<span id="cb10-6"><a aria-label="6"></a><span class="ex">4c1ff84d6d3f</span>        blog-dev            overlay</span>
+<span id="cb10-7"><a aria-label="7"></a><span class="ex">228a4355d548</span>        blog-prod           overlay</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>New networks can be created (with <code>docker network create</code>).</p>
 <p>(Note: networks <code>none</code> and <code>host</code> are special; let’s set them aside for now.)</p>
 </div>
@@ -937,15 +943,15 @@ MSDE
 </div>
 <div class="callout-content">
 <p>Let’s create a network called <code>dev</code>.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb11-1"><a></a><span class="ex">$</span> docker network create dev</span>
-<span id="cb11-2"><a></a><span class="ex">4c1ff84d6d3f1733d3e233ee039cac276f425a9d5228a4355d54878293a889ba</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb11-1"><a aria-label="1"></a><span class="ex">$</span> docker network create dev</span>
+<span id="cb11-2"><a aria-label="2"></a><span class="ex">4c1ff84d6d3f1733d3e233ee039cac276f425a9d5228a4355d54878293a889ba</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The network is now visible with the <code>network ls</code> command:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb12-1"><a></a><span class="ex">$</span> docker network ls</span>
-<span id="cb12-2"><a></a><span class="ex">NETWORK</span> ID          NAME                DRIVER</span>
-<span id="cb12-3"><a></a><span class="ex">6bde79dfcf70</span>        bridge              bridge</span>
-<span id="cb12-4"><a></a><span class="ex">8d9c78725538</span>        none                null</span>
-<span id="cb12-5"><a></a><span class="ex">eb0eeab782f4</span>        host                host</span>
-<span id="cb12-6"><a></a><span class="ex">4c1ff84d6d3f</span>        dev                 bridge</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb12-1"><a aria-label="1"></a><span class="ex">$</span> docker network ls</span>
+<span id="cb12-2"><a aria-label="2"></a><span class="ex">NETWORK</span> ID          NAME                DRIVER</span>
+<span id="cb12-3"><a aria-label="3"></a><span class="ex">6bde79dfcf70</span>        bridge              bridge</span>
+<span id="cb12-4"><a aria-label="4"></a><span class="ex">8d9c78725538</span>        none                null</span>
+<span id="cb12-5"><a aria-label="5"></a><span class="ex">eb0eeab782f4</span>        host                host</span>
+<span id="cb12-6"><a aria-label="6"></a><span class="ex">4c1ff84d6d3f</span>        dev                 bridge</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -960,8 +966,8 @@ MSDE
 <div class="callout-content">
 <p>We will create a <em>named</em> container on this network.</p>
 <p>It will be reachable with its name, <code>es</code>.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb13-1"><a></a><span class="ex">$</span> docker run <span class="at">-d</span> <span class="at">--name</span> es <span class="at">--net</span> dev elasticsearch:2</span>
-<span id="cb13-2"><a></a><span class="ex">8abb80e229ce8926c7223beb69699f5f34d6f1d438bfc5682db893e798046863</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb13-1"><a aria-label="1"></a><span class="ex">$</span> docker run <span class="at">-d</span> <span class="at">--name</span> es <span class="at">--net</span> dev elasticsearch:2</span>
+<span id="cb13-2"><a aria-label="2"></a><span class="ex">8abb80e229ce8926c7223beb69699f5f34d6f1d438bfc5682db893e798046863</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -975,19 +981,19 @@ MSDE
 </div>
 <div class="callout-content">
 <p>Now, create another container on this network.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb14-1"><a></a><span class="ex">$</span> docker run <span class="at">-ti</span> <span class="at">--net</span> dev alpine sh</span>
-<span id="cb14-2"><a></a><span class="ex">root@0ecccdfa45ef:/#</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb14-1"><a aria-label="1"></a><span class="ex">$</span> docker run <span class="at">-ti</span> <span class="at">--net</span> dev alpine sh</span>
+<span id="cb14-2"><a aria-label="2"></a><span class="ex">root@0ecccdfa45ef:/#</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>From this new container, we can resolve and ping the other one, using its assigned name:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb15-1"><a></a><span class="ex">/</span> <span class="co"># ping es</span></span>
-<span id="cb15-2"><a></a><span class="ex">PING</span> es <span class="er">(</span><span class="ex">172.18.0.2</span><span class="kw">)</span> <span class="ex">56</span><span class="er">(</span><span class="ex">84</span><span class="kw">)</span> <span class="ex">bytes</span> of data.</span>
-<span id="cb15-3"><a></a><span class="ex">64</span> bytes from es.dev <span class="er">(</span><span class="ex">172.18.0.2</span><span class="kw">)</span><span class="bu">:</span> icmp_seq=1 ttl=64 time=0.221 ms</span>
-<span id="cb15-4"><a></a><span class="ex">64</span> bytes from es.dev <span class="er">(</span><span class="ex">172.18.0.2</span><span class="kw">)</span><span class="bu">:</span> icmp_seq=2 ttl=64 time=0.114 ms</span>
-<span id="cb15-5"><a></a><span class="ex">64</span> bytes from es.dev <span class="er">(</span><span class="ex">172.18.0.2</span><span class="kw">)</span><span class="bu">:</span> icmp_seq=3 ttl=64 time=0.114 ms</span>
-<span id="cb15-6"><a></a><span class="ex">^C</span></span>
-<span id="cb15-7"><a></a><span class="ex">---</span> es ping statistics <span class="at">---</span></span>
-<span id="cb15-8"><a></a><span class="ex">3</span> packets transmitted, 3 received, 0% packet loss, time 2000ms</span>
-<span id="cb15-9"><a></a><span class="ex">rtt</span> min/avg/max/mdev = 0.114/0.149/0.221/0.052 ms</span>
-<span id="cb15-10"><a></a><span class="ex">root@0ecccdfa45ef:/#</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb15-1"><a aria-label="1"></a><span class="ex">/</span> <span class="co"># ping es</span></span>
+<span id="cb15-2"><a aria-label="2"></a><span class="ex">PING</span> es <span class="er">(</span><span class="ex">172.18.0.2</span><span class="kw">)</span> <span class="ex">56</span><span class="er">(</span><span class="ex">84</span><span class="kw">)</span> <span class="ex">bytes</span> of data.</span>
+<span id="cb15-3"><a aria-label="3"></a><span class="ex">64</span> bytes from es.dev <span class="er">(</span><span class="ex">172.18.0.2</span><span class="kw">)</span><span class="bu">:</span> icmp_seq=1 ttl=64 time=0.221 ms</span>
+<span id="cb15-4"><a aria-label="4"></a><span class="ex">64</span> bytes from es.dev <span class="er">(</span><span class="ex">172.18.0.2</span><span class="kw">)</span><span class="bu">:</span> icmp_seq=2 ttl=64 time=0.114 ms</span>
+<span id="cb15-5"><a aria-label="5"></a><span class="ex">64</span> bytes from es.dev <span class="er">(</span><span class="ex">172.18.0.2</span><span class="kw">)</span><span class="bu">:</span> icmp_seq=3 ttl=64 time=0.114 ms</span>
+<span id="cb15-6"><a aria-label="6"></a><span class="ex">^C</span></span>
+<span id="cb15-7"><a aria-label="7"></a><span class="ex">---</span> es ping statistics <span class="at">---</span></span>
+<span id="cb15-8"><a aria-label="8"></a><span class="ex">3</span> packets transmitted, 3 received, 0% packet loss, time 2000ms</span>
+<span id="cb15-9"><a aria-label="9"></a><span class="ex">rtt</span> min/avg/max/mdev = 0.114/0.149/0.221/0.052 ms</span>
+<span id="cb15-10"><a aria-label="10"></a><span class="ex">root@0ecccdfa45ef:/#</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1002,16 +1008,16 @@ MSDE
 <div class="callout-content">
 <p>Since Docker Engine 1.10, name resolution is implemented by a dynamic resolver.</p>
 <p>Archeological note: when CNM was introduced (in Docker Engine 1.9, November 2015) name resolution was implemented with <code>/etc/hosts</code>, and it was updated each time CONTAINERs were added/removed. This could cause interesting race conditions since <code>/etc/hosts</code> was a bind-mount (and couldn’t be updated atomically).</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb16-1"><a></a><span class="ex">[root@0ecccdfa45ef</span> /]# cat /etc/hosts</span>
-<span id="cb16-2"><a></a><span class="ex">172.18.0.3</span>  0ecccdfa45ef</span>
-<span id="cb16-3"><a></a><span class="ex">127.0.0.1</span>       localhost</span>
-<span id="cb16-4"><a></a><span class="ex">::1</span>     localhost ip6-localhost ip6-loopback</span>
-<span id="cb16-5"><a></a><span class="ex">fe00::0</span> ip6-localnet</span>
-<span id="cb16-6"><a></a><span class="ex">ff00::0</span> ip6-mcastprefix</span>
-<span id="cb16-7"><a></a><span class="ex">ff02::1</span> ip6-allnodes</span>
-<span id="cb16-8"><a></a><span class="ex">ff02::2</span> ip6-allrouters</span>
-<span id="cb16-9"><a></a><span class="ex">172.18.0.2</span>      es</span>
-<span id="cb16-10"><a></a><span class="ex">172.18.0.2</span>      es.dev</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb16-1"><a aria-label="1"></a><span class="ex">[root@0ecccdfa45ef</span> /]# cat /etc/hosts</span>
+<span id="cb16-2"><a aria-label="2"></a><span class="ex">172.18.0.3</span>  0ecccdfa45ef</span>
+<span id="cb16-3"><a aria-label="3"></a><span class="ex">127.0.0.1</span>       localhost</span>
+<span id="cb16-4"><a aria-label="4"></a><span class="ex">::1</span>     localhost ip6-localhost ip6-loopback</span>
+<span id="cb16-5"><a aria-label="5"></a><span class="ex">fe00::0</span> ip6-localnet</span>
+<span id="cb16-6"><a aria-label="6"></a><span class="ex">ff00::0</span> ip6-mcastprefix</span>
+<span id="cb16-7"><a aria-label="7"></a><span class="ex">ff02::1</span> ip6-allnodes</span>
+<span id="cb16-8"><a aria-label="8"></a><span class="ex">ff02::2</span> ip6-allrouters</span>
+<span id="cb16-9"><a aria-label="9"></a><span class="ex">172.18.0.2</span>      es</span>
+<span id="cb16-10"><a aria-label="10"></a><span class="ex">172.18.0.2</span>      es.dev</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1052,9 +1058,9 @@ MSDE
 <li><p>We don’t know much about it so we will try to run it and see what happens!</p></li>
 </ul>
 <p>Start the container, exposing all its ports:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb17-1"><a></a><span class="ex">$</span> docker run <span class="at">--net</span> dev <span class="at">-d</span> <span class="at">-P</span> jpetazzo/trainingwheels</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb17-1"><a aria-label="1"></a><span class="ex">$</span> docker run <span class="at">--net</span> dev <span class="at">-d</span> <span class="at">-P</span> jpetazzo/trainingwheels</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Check the port that has been allocated to it:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb18-1"><a></a><span class="ex">$</span> docker ps <span class="at">-l</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb18-1"><a aria-label="1"></a><span class="ex">$</span> docker ps <span class="at">-l</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1099,7 +1105,7 @@ MSDE
 <li><p>It must have the right network alias (<code>redis</code>) so the application can find it.</p></li>
 </ul>
 <p>Start the container:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb19-1"><a></a><span class="ex">$</span> docker run <span class="at">--net</span> dev <span class="at">--net-alias</span> redis <span class="at">-d</span> redis</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb19-1"><a aria-label="1"></a><span class="ex">$</span> docker run <span class="at">--net</span> dev <span class="at">--net-alias</span> redis <span class="at">-d</span> redis</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1140,8 +1146,8 @@ MSDE
 <li><p>Container names are unique (there can be only one <code>--name redis</code>)</p></li>
 <li><p>Network aliases are not unique</p></li>
 <li><p>We can have the same network alias in different networks:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb20-1"><a></a><span class="ex">docker</span> run <span class="at">--net</span> dev <span class="at">--net-alias</span> redis ...</span>
-<span id="cb20-2"><a></a><span class="ex">docker</span> run <span class="at">--net</span> prod <span class="at">--net-alias</span> redis ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb20-1"><a aria-label="1"></a><span class="ex">docker</span> run <span class="at">--net</span> dev <span class="at">--net-alias</span> redis ...</span>
+<span id="cb20-2"><a aria-label="2"></a><span class="ex">docker</span> run <span class="at">--net</span> prod <span class="at">--net-alias</span> redis ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 <li><p>We can even have multiple containers with the same alias in the same network</p>
 <p>(in that case, we get multiple DNS entries, aka “DNS round robin”)</p></li>
 </ul>
@@ -1158,8 +1164,8 @@ MSDE
 </div>
 <div class="callout-content">
 <p>Let’s try to ping our <code>es</code> container from another container, when that other container is <em>not</em> on the <code>dev</code> network.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb21-1"><a></a><span class="ex">$</span> docker run <span class="at">--rm</span> alpine ping es</span>
-<span id="cb21-2"><a></a><span class="ex">ping:</span> bad address <span class="st">'es'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb21-1"><a aria-label="1"></a><span class="ex">$</span> docker run <span class="at">--rm</span> alpine ping es</span>
+<span id="cb21-2"><a aria-label="2"></a><span class="ex">ping:</span> bad address <span class="st">'es'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Names can be resolved only when containers are on the same network.</p>
 <p>Containers can contact each other only when they are on the same network (you can try to ping using the IP address to verify).</p>
 </div>
@@ -1195,13 +1201,13 @@ MSDE
 </div>
 <div class="callout-content">
 <p>Create the <code>prod</code> network.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb22-1"><a></a><span class="ex">$</span> docker network create prod</span>
-<span id="cb22-2"><a></a><span class="ex">5a41562fecf2d8f115bedc16865f7336232a04268bdf2bd816aecca01b68d50c</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb22-1"><a aria-label="1"></a><span class="ex">$</span> docker network create prod</span>
+<span id="cb22-2"><a aria-label="2"></a><span class="ex">5a41562fecf2d8f115bedc16865f7336232a04268bdf2bd816aecca01b68d50c</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>We can now create multiple containers with the <code>es</code> alias on the new <code>prod</code> network.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb23-1"><a></a><span class="ex">$</span> docker run <span class="at">-d</span> <span class="at">--name</span> prod-es-1 <span class="at">--net-alias</span> es <span class="at">--net</span> prod elasticsearch:2</span>
-<span id="cb23-2"><a></a><span class="ex">38079d21caf0c5533a391700d9e9e920724e89200083df73211081c8a356d771</span></span>
-<span id="cb23-3"><a></a><span class="ex">$</span> docker run <span class="at">-d</span> <span class="at">--name</span> prod-es-2 <span class="at">--net-alias</span> es <span class="at">--net</span> prod elasticsearch:2</span>
-<span id="cb23-4"><a></a><span class="ex">1820087a9c600f43159688050dcc164c298183e1d2e62d5694fd46b10ac3bc3d</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb23-1"><a aria-label="1"></a><span class="ex">$</span> docker run <span class="at">-d</span> <span class="at">--name</span> prod-es-1 <span class="at">--net-alias</span> es <span class="at">--net</span> prod elasticsearch:2</span>
+<span id="cb23-2"><a aria-label="2"></a><span class="ex">38079d21caf0c5533a391700d9e9e920724e89200083df73211081c8a356d771</span></span>
+<span id="cb23-3"><a aria-label="3"></a><span class="ex">$</span> docker run <span class="at">-d</span> <span class="at">--name</span> prod-es-2 <span class="at">--net-alias</span> es <span class="at">--net</span> prod elasticsearch:2</span>
+<span id="cb23-4"><a aria-label="4"></a><span class="ex">1820087a9c600f43159688050dcc164c298183e1d2e62d5694fd46b10ac3bc3d</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1215,10 +1221,10 @@ MSDE
 </div>
 <div class="callout-content">
 <p>Let’s try DNS resolution first, using the <code>nslookup</code> tool that ships with the <code>alpine</code> image.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb24"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb24-1"><a></a><span class="ex">$</span> docker run <span class="at">--net</span> prod <span class="at">--rm</span> alpine nslookup es</span>
-<span id="cb24-2"><a></a><span class="ex">Name:</span>      es</span>
-<span id="cb24-3"><a></a><span class="ex">Address</span> 1: 172.23.0.3 prod-es-2.prod</span>
-<span id="cb24-4"><a></a><span class="ex">Address</span> 2: 172.23.0.2 prod-es-1.prod</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb24"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb24-1"><a aria-label="1"></a><span class="ex">$</span> docker run <span class="at">--net</span> prod <span class="at">--rm</span> alpine nslookup es</span>
+<span id="cb24-2"><a aria-label="2"></a><span class="ex">Name:</span>      es</span>
+<span id="cb24-3"><a aria-label="3"></a><span class="ex">Address</span> 1: 172.23.0.3 prod-es-2.prod</span>
+<span id="cb24-4"><a aria-label="4"></a><span class="ex">Address</span> 2: 172.23.0.2 prod-es-1.prod</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>(You can ignore the <code>can't resolve '(null)'</code> errors.)</p>
 </div>
 </div>
@@ -1234,17 +1240,17 @@ MSDE
 <div class="callout-content">
 <p>Each ElasticSearch instance has a name (generated when it is started). This name can be seen when we issue a simple HTTP request on the ElasticSearch API endpoint.</p>
 <p>Try the following command a few times:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb25-1"><a></a><span class="ex">$</span> docker run <span class="at">--rm</span> <span class="at">--net</span> dev centos curl <span class="at">-s</span> es:9200</span>
-<span id="cb25-2"><a></a><span class="kw">{</span></span>
-<span id="cb25-3"><a></a>  <span class="st">"name"</span> : <span class="st">"Tarot"</span>,</span>
-<span id="cb25-4"><a></a><span class="ex">...</span></span>
-<span id="cb25-5"><a></a><span class="kw">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb25-1"><a aria-label="1"></a><span class="ex">$</span> docker run <span class="at">--rm</span> <span class="at">--net</span> dev centos curl <span class="at">-s</span> es:9200</span>
+<span id="cb25-2"><a aria-label="2"></a><span class="kw">{</span></span>
+<span id="cb25-3"><a aria-label="3"></a>  <span class="st">"name"</span> : <span class="st">"Tarot"</span>,</span>
+<span id="cb25-4"><a aria-label="4"></a><span class="ex">...</span></span>
+<span id="cb25-5"><a aria-label="5"></a><span class="kw">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Then try it a few times by replacing <code>--net dev</code> with <code>--net prod</code>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb26-1"><a></a><span class="ex">$</span> docker run <span class="at">--rm</span> <span class="at">--net</span> prod centos curl <span class="at">-s</span> es:9200</span>
-<span id="cb26-2"><a></a><span class="kw">{</span></span>
-<span id="cb26-3"><a></a>  <span class="st">"name"</span> : <span class="st">"The Symbiote"</span>,</span>
-<span id="cb26-4"><a></a><span class="ex">...</span></span>
-<span id="cb26-5"><a></a><span class="kw">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb26-1"><a aria-label="1"></a><span class="ex">$</span> docker run <span class="at">--rm</span> <span class="at">--net</span> prod centos curl <span class="at">-s</span> es:9200</span>
+<span id="cb26-2"><a aria-label="2"></a><span class="kw">{</span></span>
+<span id="cb26-3"><a aria-label="3"></a>  <span class="st">"name"</span> : <span class="st">"The Symbiote"</span>,</span>
+<span id="cb26-4"><a aria-label="4"></a><span class="ex">...</span></span>
+<span id="cb26-5"><a aria-label="5"></a><span class="kw">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1322,10 +1328,10 @@ It's OK to use DNS to discover available endpoints, but remember that you have t
 <li>The IP address has to be within the subnet used for the container.</li>
 </ul>
 <p>A full example would look like this.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb27-1"><a></a><span class="ex">$</span> docker network create <span class="at">--subnet</span> 10.66.0.0/16 pubnet</span>
-<span id="cb27-2"><a></a><span class="ex">42fb16ec412383db6289a3e39c3c0224f395d7f85bcb1859b279e7a564d4e135</span></span>
-<span id="cb27-3"><a></a><span class="ex">$</span> docker run <span class="at">--net</span> pubnet <span class="at">--ip</span> 10.66.66.66 <span class="at">-d</span> nginx</span>
-<span id="cb27-4"><a></a><span class="ex">b2887adeb5578a01fd9c55c435cad56bbbe802350711d2743691f95743680b09</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb27-1"><a aria-label="1"></a><span class="ex">$</span> docker network create <span class="at">--subnet</span> 10.66.0.0/16 pubnet</span>
+<span id="cb27-2"><a aria-label="2"></a><span class="ex">42fb16ec412383db6289a3e39c3c0224f395d7f85bcb1859b279e7a564d4e135</span></span>
+<span id="cb27-3"><a aria-label="3"></a><span class="ex">$</span> docker run <span class="at">--net</span> pubnet <span class="at">--ip</span> 10.66.66.66 <span class="at">-d</span> nginx</span>
+<span id="cb27-4"><a aria-label="4"></a><span class="ex">b2887adeb5578a01fd9c55c435cad56bbbe802350711d2743691f95743680b09</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1450,11 +1456,11 @@ General idea:
 <ul>
 <li><p>We have a container named <code>es</code> connected to a network named <code>dev</code>.</p></li>
 <li><p>Let’s start a simple alpine container on the default network:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb28-1"><a></a><span class="ex">$</span> docker run <span class="at">-ti</span> alpine sh</span>
-<span id="cb28-2"><a></a><span class="ex">/</span> <span class="co">#</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb28-1"><a aria-label="1"></a><span class="ex">$</span> docker run <span class="at">-ti</span> alpine sh</span>
+<span id="cb28-2"><a aria-label="2"></a><span class="ex">/</span> <span class="co">#</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 <li><p>In this container, try to ping the <code>es</code> container:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb29-1"><a></a><span class="ex">/</span> <span class="co"># ping es</span></span>
-<span id="cb29-2"><a></a><span class="ex">ping:</span> bad address <span class="st">'es'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb29-1"><a aria-label="1"></a><span class="ex">/</span> <span class="co"># ping es</span></span>
+<span id="cb29-2"><a aria-label="2"></a><span class="ex">ping:</span> bad address <span class="st">'es'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>This doesn’t work, but we will change that by connecting the container.</p></li>
 </ul>
 </div>
@@ -1476,7 +1482,7 @@ General idea:
 <li><p>running <code>docker ps -lq</code> on the host.</p></li>
 </ul></li>
 <li><p>Run the following command on the host:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb30-1"><a></a><span class="ex">$</span> docker network connect dev <span class="op">&lt;</span>container_id<span class="op">&gt;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb30-1"><a aria-label="1"></a><span class="ex">$</span> docker network connect dev <span class="op">&lt;</span>container_id<span class="op">&gt;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 </ul>
 </div>
 </div>
@@ -1493,11 +1499,11 @@ General idea:
 <ul>
 <li><p>Try again to <code>ping es</code> from the container.</p></li>
 <li><p>It should now work correctly:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb31-1"><a></a><span class="ex">/</span> <span class="co"># ping es</span></span>
-<span id="cb31-2"><a></a><span class="ex">PING</span> es <span class="er">(</span><span class="ex">172.20.0.3</span><span class="kw">)</span><span class="bu">:</span> 56 data bytes</span>
-<span id="cb31-3"><a></a><span class="ex">64</span> bytes from 172.20.0.3: seq=0 ttl=64 time=0.376 ms</span>
-<span id="cb31-4"><a></a><span class="ex">64</span> bytes from 172.20.0.3: seq=1 ttl=64 time=0.130 ms</span>
-<span id="cb31-5"><a></a><span class="ex">^C</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb31-1"><a aria-label="1"></a><span class="ex">/</span> <span class="co"># ping es</span></span>
+<span id="cb31-2"><a aria-label="2"></a><span class="ex">PING</span> es <span class="er">(</span><span class="ex">172.20.0.3</span><span class="kw">)</span><span class="bu">:</span> 56 data bytes</span>
+<span id="cb31-3"><a aria-label="3"></a><span class="ex">64</span> bytes from 172.20.0.3: seq=0 ttl=64 time=0.376 ms</span>
+<span id="cb31-4"><a aria-label="4"></a><span class="ex">64</span> bytes from 172.20.0.3: seq=1 ttl=64 time=0.130 ms</span>
+<span id="cb31-5"><a aria-label="5"></a><span class="ex">^C</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 <li><p>Interrupt it with Ctrl-C.</p></li>
 </ul>
 </div>
@@ -1513,20 +1519,20 @@ General idea:
 </div>
 <div class="callout-content">
 <p>We can look at the list of network interfaces with <code>ifconfig</code>, <code>ip a</code>, or <code>ip l</code>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb32"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb32-1"><a></a><span class="ex">/</span> <span class="co"># ip a</span></span>
-<span id="cb32-2"><a></a><span class="ex">1:</span> lo: <span class="op">&lt;</span>LOOPBACK,UP,LOWER_UP<span class="op">&gt;</span> mtu 65536 qdisc noqueue state UNKNOWN qlen 1000</span>
-<span id="cb32-3"><a></a>    <span class="ex">link/loopback</span> 00:00:00:00:00:00 brd 00:00:00:00:00:00</span>
-<span id="cb32-4"><a></a>    <span class="ex">inet</span> 127.0.0.1/8 scope host lo</span>
-<span id="cb32-5"><a></a>       <span class="ex">valid_lft</span> forever preferred_lft forever</span>
-<span id="cb32-6"><a></a><span class="ex">18:</span> eth0@if19: <span class="op">&lt;</span>BROADCAST,MULTICAST,UP,LOWER_UP,M-DOWN<span class="op">&gt;</span> mtu 1500 qdisc noqueue state UP</span>
-<span id="cb32-7"><a></a>    <span class="ex">link/ether</span> 02:42:ac:11:00:02 brd ff:ff:ff:ff:ff:ff</span>
-<span id="cb32-8"><a></a>    <span class="ex">inet</span> 172.17.0.2/16 brd 172.17.255.255 scope global eth0</span>
-<span id="cb32-9"><a></a>       <span class="ex">valid_lft</span> forever preferred_lft forever</span>
-<span id="cb32-10"><a></a><span class="ex">20:</span> eth1@if21: <span class="op">&lt;</span>BROADCAST,MULTICAST,UP,LOWER_UP,M-DOWN<span class="op">&gt;</span> mtu 1500 qdisc noqueue state UP</span>
-<span id="cb32-11"><a></a>    <span class="ex">link/ether</span> 02:42:ac:14:00:04 brd ff:ff:ff:ff:ff:ff</span>
-<span id="cb32-12"><a></a>    <span class="ex">inet</span> 172.20.0.4/16 brd 172.20.255.255 scope global eth1</span>
-<span id="cb32-13"><a></a>       <span class="ex">valid_lft</span> forever preferred_lft forever</span>
-<span id="cb32-14"><a></a><span class="ex">/</span> <span class="co">#</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb32"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb32-1"><a aria-label="1"></a><span class="ex">/</span> <span class="co"># ip a</span></span>
+<span id="cb32-2"><a aria-label="2"></a><span class="ex">1:</span> lo: <span class="op">&lt;</span>LOOPBACK,UP,LOWER_UP<span class="op">&gt;</span> mtu 65536 qdisc noqueue state UNKNOWN qlen 1000</span>
+<span id="cb32-3"><a aria-label="3"></a>    <span class="ex">link/loopback</span> 00:00:00:00:00:00 brd 00:00:00:00:00:00</span>
+<span id="cb32-4"><a aria-label="4"></a>    <span class="ex">inet</span> 127.0.0.1/8 scope host lo</span>
+<span id="cb32-5"><a aria-label="5"></a>       <span class="ex">valid_lft</span> forever preferred_lft forever</span>
+<span id="cb32-6"><a aria-label="6"></a><span class="ex">18:</span> eth0@if19: <span class="op">&lt;</span>BROADCAST,MULTICAST,UP,LOWER_UP,M-DOWN<span class="op">&gt;</span> mtu 1500 qdisc noqueue state UP</span>
+<span id="cb32-7"><a aria-label="7"></a>    <span class="ex">link/ether</span> 02:42:ac:11:00:02 brd ff:ff:ff:ff:ff:ff</span>
+<span id="cb32-8"><a aria-label="8"></a>    <span class="ex">inet</span> 172.17.0.2/16 brd 172.17.255.255 scope global eth0</span>
+<span id="cb32-9"><a aria-label="9"></a>       <span class="ex">valid_lft</span> forever preferred_lft forever</span>
+<span id="cb32-10"><a aria-label="10"></a><span class="ex">20:</span> eth1@if21: <span class="op">&lt;</span>BROADCAST,MULTICAST,UP,LOWER_UP,M-DOWN<span class="op">&gt;</span> mtu 1500 qdisc noqueue state UP</span>
+<span id="cb32-11"><a aria-label="11"></a>    <span class="ex">link/ether</span> 02:42:ac:14:00:04 brd ff:ff:ff:ff:ff:ff</span>
+<span id="cb32-12"><a aria-label="12"></a>    <span class="ex">inet</span> 172.20.0.4/16 brd 172.20.255.255 scope global eth1</span>
+<span id="cb32-13"><a aria-label="13"></a>       <span class="ex">valid_lft</span> forever preferred_lft forever</span>
+<span id="cb32-14"><a aria-label="14"></a><span class="ex">/</span> <span class="co">#</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Each network connection is materialized with a virtual network interface.</p>
 <p>As we can see, we can be connected to multiple networks at the same time.</p>
 </div>
@@ -1543,13 +1549,13 @@ General idea:
 <div class="callout-content">
 <ul>
 <li><p>Let’s try the symmetrical command to disconnect the container:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb33"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb33-1"><a></a><span class="ex">$</span> docker network disconnect dev <span class="op">&lt;</span>container_id<span class="op">&gt;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb33"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb33-1"><a aria-label="1"></a><span class="ex">$</span> docker network disconnect dev <span class="op">&lt;</span>container_id<span class="op">&gt;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 <li><p>From now on, if we try to ping <code>es</code>, it will not resolve:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb34-1"><a></a><span class="ex">/</span> <span class="co"># ping es</span></span>
-<span id="cb34-2"><a></a><span class="ex">ping:</span> bad address <span class="st">'es'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb34-1"><a aria-label="1"></a><span class="ex">/</span> <span class="co"># ping es</span></span>
+<span id="cb34-2"><a aria-label="2"></a><span class="ex">ping:</span> bad address <span class="st">'es'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 <li><p>Trying to ping the IP address directly won’t work either:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb35"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb35-1"><a></a><span class="ex">/</span> <span class="co"># ping 172.20.0.3</span></span>
-<span id="cb35-2"><a></a><span class="ex">...</span> <span class="er">(</span><span class="ex">nothing</span> happens until we interrupt it with Ctrl-C<span class="kw">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb35"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb35-1"><a aria-label="1"></a><span class="ex">/</span> <span class="co"># ping 172.20.0.3</span></span>
+<span id="cb35-2"><a aria-label="2"></a><span class="ex">...</span> <span class="er">(</span><span class="ex">nothing</span> happens until we interrupt it with Ctrl-C<span class="kw">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 </ul>
 </div>
 </div>
@@ -1683,11 +1689,11 @@ eth0      Link encap:Ethernet  HWaddr 02:42:AC:15:00:03
 <ul>
 <li>Within a <code>Dockerfile</code>, with a <code>VOLUME</code> instruction.</li>
 </ul>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb36"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb36-1"><a></a><span class="kw">VOLUME</span> /uploads</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb36"><pre class="sourceCode numberSource dockerfile number-lines code-with-copy"><code class="sourceCode dockerfile"><span id="cb36-1"><a aria-label="1"></a><span class="kw">VOLUME</span> /uploads</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <ul>
 <li>On the command-line, with the <code>-v</code> flag for <code>docker run</code>.</li>
 </ul>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb37"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb37-1"><a></a><span class="ex">$</span> docker run <span class="at">-d</span> <span class="at">-v</span> /uploads myapp</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb37"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb37-1"><a aria-label="1"></a><span class="ex">$</span> docker run <span class="at">-d</span> <span class="at">-v</span> /uploads myapp</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>In both cases, <code>/uploads</code> (inside the container) will be a volume.</p>
 </div>
 </div>
@@ -1740,11 +1746,11 @@ eth0      Link encap:Ethernet  HWaddr 02:42:AC:15:00:03
 </div>
 <div class="callout-content">
 <p>Let’s start a Tomcat container:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb38"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb38-1"><a></a><span class="ex">$</span> docker run <span class="at">--name</span> webapp <span class="at">-d</span> <span class="at">-p</span> 8080:8080 <span class="at">-v</span> /usr/local/tomcat/logs tomcat</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb38"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb38-1"><a aria-label="1"></a><span class="ex">$</span> docker run <span class="at">--name</span> webapp <span class="at">-d</span> <span class="at">-p</span> 8080:8080 <span class="at">-v</span> /usr/local/tomcat/logs tomcat</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Now, start an <code>alpine</code> container accessing the same volume:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb39"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb39-1"><a></a><span class="ex">$</span> docker run <span class="at">--volumes-from</span> webapp alpine sh <span class="at">-c</span> <span class="st">"tail -f /usr/local/tomcat/logs/*"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb39"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb39-1"><a aria-label="1"></a><span class="ex">$</span> docker run <span class="at">--volumes-from</span> webapp alpine sh <span class="at">-c</span> <span class="st">"tail -f /usr/local/tomcat/logs/*"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Then, from another window, send requests to our Tomcat container:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb40"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb40-1"><a></a><span class="ex">$</span> curl localhost:8080</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb40"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb40-1"><a aria-label="1"></a><span class="ex">$</span> curl localhost:8080</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1759,12 +1765,12 @@ eth0      Link encap:Ethernet  HWaddr 02:42:AC:15:00:03
 <div class="callout-content">
 <p>If a container is stopped or removed, its volumes still exist and are available.</p>
 <p>Volumes can be listed and manipulated with <code>docker volume</code> subcommands:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb41"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb41-1"><a></a><span class="ex">$</span> docker volume ls</span>
-<span id="cb41-2"><a></a><span class="ex">DRIVER</span>              VOLUME NAME</span>
-<span id="cb41-3"><a></a><span class="bu">local</span>               5b0b65e4316da67c2d471086640e6005ca2264f3...</span>
-<span id="cb41-4"><a></a><span class="bu">local</span>               <span class="va">pgdata</span>-prod</span>
-<span id="cb41-5"><a></a><span class="bu">local</span>               <span class="va">pgdata</span>-dev</span>
-<span id="cb41-6"><a></a><span class="bu">local</span>               13b59c9936d78d109d094693446e174e5480d973...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb41"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb41-1"><a aria-label="1"></a><span class="ex">$</span> docker volume ls</span>
+<span id="cb41-2"><a aria-label="2"></a><span class="ex">DRIVER</span>              VOLUME NAME</span>
+<span id="cb41-3"><a aria-label="3"></a><span class="bu">local</span>               5b0b65e4316da67c2d471086640e6005ca2264f3...</span>
+<span id="cb41-4"><a aria-label="4"></a><span class="bu">local</span>               <span class="va">pgdata</span>-prod</span>
+<span id="cb41-5"><a aria-label="5"></a><span class="bu">local</span>               <span class="va">pgdata</span>-dev</span>
+<span id="cb41-6"><a aria-label="6"></a><span class="bu">local</span>               13b59c9936d78d109d094693446e174e5480d973...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Some of those volume names were explicit (pgdata-prod, pgdata-dev).</p>
 <p>The others (the hex IDs) were generated automatically by Docker.</p>
 </div>
@@ -1783,10 +1789,10 @@ eth0      Link encap:Ethernet  HWaddr 02:42:AC:15:00:03
 <li>Volumes can be created without a container, then used in multiple containers.</li>
 </ul>
 <p>Let’s create a couple of volumes directly.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb42"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb42-1"><a></a><span class="ex">$</span> docker volume create webapps</span>
-<span id="cb42-2"><a></a><span class="ex">webapps</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb43"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb43-1"><a></a><span class="ex">$</span> docker volume create logs</span>
-<span id="cb43-2"><a></a><span class="ex">logs</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb42"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb42-1"><a aria-label="1"></a><span class="ex">$</span> docker volume create webapps</span>
+<span id="cb42-2"><a aria-label="2"></a><span class="ex">webapps</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb43"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb43-1"><a aria-label="1"></a><span class="ex">$</span> docker volume create logs</span>
+<span id="cb43-2"><a aria-label="2"></a><span class="ex">logs</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Volumes are not anchored to a specific path.</p>
 </div>
 </div>
@@ -1806,7 +1812,7 @@ eth0      Link encap:Ethernet  HWaddr 02:42:AC:15:00:03
 <li><p>Non-empty volumes are always mounted as-is.</p></li>
 </ul>
 <p>Let’s populate the webapps volume with the webapps.dist directory from the Tomcat image.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb44"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb44-1"><a></a><span class="ex">$</span> docker run <span class="at">-v</span> webapps:/usr/local/tomcat/webapps.dist tomcat true</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb44"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb44-1"><a aria-label="1"></a><span class="ex">$</span> docker run <span class="at">-v</span> webapps:/usr/local/tomcat/webapps.dist tomcat true</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1837,13 +1843,13 @@ eth0      Link encap:Ethernet  HWaddr 02:42:AC:15:00:03
 <li><p>When a host path does not contain a <code>/</code>, it is considered a volume name.</p></li>
 </ul>
 <p>Let’s start a web server using the two previous volumes.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb45"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb45-1"><a></a><span class="ex">$</span> docker run <span class="at">-d</span> <span class="at">-p</span> 1234:8080 <span class="dt">\</span></span>
-<span id="cb45-2"><a></a>         <span class="at">-v</span> logs:/usr/local/tomcat/logs <span class="dt">\</span></span>
-<span id="cb45-3"><a></a>         <span class="at">-v</span> webapps:/usr/local/tomcat/webapps <span class="dt">\</span></span>
-<span id="cb45-4"><a></a>         tomcat</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb45"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb45-1"><a aria-label="1"></a><span class="ex">$</span> docker run <span class="at">-d</span> <span class="at">-p</span> 1234:8080 <span class="dt">\</span></span>
+<span id="cb45-2"><a aria-label="2"></a>         <span class="at">-v</span> logs:/usr/local/tomcat/logs <span class="dt">\</span></span>
+<span id="cb45-3"><a aria-label="3"></a>         <span class="at">-v</span> webapps:/usr/local/tomcat/webapps <span class="dt">\</span></span>
+<span id="cb45-4"><a aria-label="4"></a>         tomcat</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Check that it’s running correctly:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb46"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb46-1"><a></a><span class="ex">$</span> curl localhost:1234</span>
-<span id="cb46-2"><a></a><span class="ex">...</span> <span class="er">(</span><span class="ex">Tomcat</span> tells us how happy it is to be up and running<span class="kw">)</span> <span class="ex">...</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb46"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb46-1"><a aria-label="1"></a><span class="ex">$</span> curl localhost:1234</span>
+<span id="cb46-2"><a aria-label="2"></a><span class="ex">...</span> <span class="er">(</span><span class="ex">Tomcat</span> tells us how happy it is to be up and running<span class="kw">)</span> <span class="ex">...</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1862,7 +1868,7 @@ eth0      Link encap:Ethernet  HWaddr 02:42:AC:15:00:03
 <p>(But this could be an FTP server, a WebDAV server, a Git receiver…)</p></li>
 </ul>
 <p>Let’s start another container using the <code>webapps</code> volume.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb47"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb47-1"><a></a><span class="ex">$</span> docker run <span class="at">-v</span> webapps:/webapps <span class="at">-w</span> /webapps <span class="at">-ti</span> alpine vi ROOT/index.jsp</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb47"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb47-1"><a aria-label="1"></a><span class="ex">$</span> docker run <span class="at">-v</span> webapps:/webapps <span class="at">-w</span> /webapps <span class="at">-ti</span> alpine vi ROOT/index.jsp</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Vandalize the page, save, exit.</p>
 <p>Then run <code>curl localhost:1234</code> again to see your changes.</p>
 </div>
@@ -1927,14 +1933,14 @@ $ docker run -d -v /path/on/the/host:/path/in/container image ...
 </div>
 <div class="callout-content">
 <p>Let’s create a Redis container.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb48"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb48-1"><a></a><span class="ex">$</span> docker run <span class="at">-d</span> <span class="at">--name</span> redis28 redis:2.8</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb48"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb48-1"><a aria-label="1"></a><span class="ex">$</span> docker run <span class="at">-d</span> <span class="at">--name</span> redis28 redis:2.8</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Connect to the Redis container and set some data.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb49"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb49-1"><a></a><span class="ex">$</span> docker run <span class="at">-ti</span> <span class="at">--link</span> redis28:redis busybox telnet redis 6379</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb49"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb49-1"><a aria-label="1"></a><span class="ex">$</span> docker run <span class="at">-ti</span> <span class="at">--link</span> redis28:redis busybox telnet redis 6379</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Issue the following commands:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb50"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb50-1"><a></a><span class="ex">SET</span> counter 42</span>
-<span id="cb50-2"><a></a><span class="ex">INFO</span> server</span>
-<span id="cb50-3"><a></a><span class="ex">SAVE</span></span>
-<span id="cb50-4"><a></a><span class="ex">QUIT</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb50"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb50-1"><a aria-label="1"></a><span class="ex">SET</span> counter 42</span>
+<span id="cb50-2"><a aria-label="2"></a><span class="ex">INFO</span> server</span>
+<span id="cb50-3"><a aria-label="3"></a><span class="ex">SAVE</span></span>
+<span id="cb50-4"><a aria-label="4"></a><span class="ex">QUIT</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1948,9 +1954,9 @@ $ docker run -d -v /path/on/the/host:/path/in/container image ...
 </div>
 <div class="callout-content">
 <p>Stop the Redis container.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb51"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb51-1"><a></a><span class="ex">$</span> docker stop redis28</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb51"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb51-1"><a aria-label="1"></a><span class="ex">$</span> docker stop redis28</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Start the new Redis container.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb52"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb52-1"><a></a><span class="ex">$</span> docker run <span class="at">-d</span> <span class="at">--name</span> redis30 <span class="at">--volumes-from</span> redis28 redis:3.0</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb52"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb52-1"><a aria-label="1"></a><span class="ex">$</span> docker run <span class="at">-d</span> <span class="at">--name</span> redis30 <span class="at">--volumes-from</span> redis28 redis:3.0</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1964,11 +1970,11 @@ $ docker run -d -v /path/on/the/host:/path/in/container image ...
 </div>
 <div class="callout-content">
 <p>Connect to the Redis container and see our data.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb53"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb53-1"><a></a><span class="ex">docker</span> run <span class="at">-ti</span> <span class="at">--link</span> redis30:redis busybox telnet redis 6379</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb53"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb53-1"><a aria-label="1"></a><span class="ex">docker</span> run <span class="at">-ti</span> <span class="at">--link</span> redis30:redis busybox telnet redis 6379</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Issue a few commands.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb54"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb54-1"><a></a><span class="ex">GET</span> counter</span>
-<span id="cb54-2"><a></a><span class="ex">INFO</span> server</span>
-<span id="cb54-3"><a></a><span class="ex">QUIT</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb54"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb54-1"><a aria-label="1"></a><span class="ex">GET</span> counter</span>
+<span id="cb54-2"><a aria-label="2"></a><span class="ex">INFO</span> server</span>
+<span id="cb54-3"><a aria-label="3"></a><span class="ex">QUIT</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -2001,15 +2007,15 @@ $ docker run -d -v /path/on/the/host:/path/in/container image ...
 </div>
 <div class="callout-content">
 <p>Wondering if an image has volumes? Just use <code>docker inspect</code>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb55"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb55-1"><a></a><span class="ex">$</span> <span class="co"># docker inspect training/datavol</span></span>
-<span id="cb55-2"><a></a><span class="ex">[{</span></span>
-<span id="cb55-3"><a></a>  <span class="st">"config"</span><span class="ex">:</span> {</span>
-<span id="cb55-4"><a></a>    <span class="bu">.</span> . .</span>
-<span id="cb55-5"><a></a>    <span class="st">"Volumes"</span><span class="ex">:</span> {</span>
-<span id="cb55-6"><a></a>        <span class="st">"/var/webapp"</span><span class="ex">:</span> {}</span>
-<span id="cb55-7"><a></a>    <span class="er">}</span><span class="ex">,</span></span>
-<span id="cb55-8"><a></a>    <span class="bu">.</span> . .</span>
-<span id="cb55-9"><a></a><span class="er">}</span><span class="ex">]</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb55"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb55-1"><a aria-label="1"></a><span class="ex">$</span> <span class="co"># docker inspect training/datavol</span></span>
+<span id="cb55-2"><a aria-label="2"></a><span class="ex">[{</span></span>
+<span id="cb55-3"><a aria-label="3"></a>  <span class="st">"config"</span><span class="ex">:</span> {</span>
+<span id="cb55-4"><a aria-label="4"></a>    <span class="bu">.</span> . .</span>
+<span id="cb55-5"><a aria-label="5"></a>    <span class="st">"Volumes"</span><span class="ex">:</span> {</span>
+<span id="cb55-6"><a aria-label="6"></a>        <span class="st">"/var/webapp"</span><span class="ex">:</span> {}</span>
+<span id="cb55-7"><a aria-label="7"></a>    <span class="er">}</span><span class="ex">,</span></span>
+<span id="cb55-8"><a aria-label="8"></a>    <span class="bu">.</span> . .</span>
+<span id="cb55-9"><a aria-label="9"></a><span class="er">}</span><span class="ex">]</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -2023,17 +2029,17 @@ $ docker run -d -v /path/on/the/host:/path/in/container image ...
 </div>
 <div class="callout-content">
 <p>To look which paths are actually volumes, and to what they are bound, use <code>docker inspect</code> (again):</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb56"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb56-1"><a></a><span class="ex">$</span> docker inspect <span class="op">&lt;</span>yourContainerID<span class="op">&gt;</span></span>
-<span id="cb56-2"><a></a><span class="ex">[{</span></span>
-<span id="cb56-3"><a></a>  <span class="st">"ID"</span><span class="ex">:</span> <span class="st">"&lt;yourContainerID&gt;"</span>,</span>
-<span id="cb56-4"><a></a><span class="bu">.</span> . .</span>
-<span id="cb56-5"><a></a>  <span class="st">"Volumes"</span><span class="ex">:</span> {</span>
-<span id="cb56-6"><a></a>     <span class="st">"/var/webapp"</span><span class="ex">:</span> <span class="st">"/var/lib/docker/vfs/dir/f4280c5b6207ed531efd4cc673ff620cef2a7980f747dbbcca001db61de04468"</span></span>
-<span id="cb56-7"><a></a>  <span class="er">}</span><span class="ex">,</span></span>
-<span id="cb56-8"><a></a>  <span class="st">"VolumesRW"</span><span class="ex">:</span> {</span>
-<span id="cb56-9"><a></a>     <span class="st">"/var/webapp"</span><span class="ex">:</span> true</span>
-<span id="cb56-10"><a></a>  <span class="er">}</span><span class="ex">,</span></span>
-<span id="cb56-11"><a></a><span class="er">}</span><span class="ex">]</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb56"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb56-1"><a aria-label="1"></a><span class="ex">$</span> docker inspect <span class="op">&lt;</span>yourContainerID<span class="op">&gt;</span></span>
+<span id="cb56-2"><a aria-label="2"></a><span class="ex">[{</span></span>
+<span id="cb56-3"><a aria-label="3"></a>  <span class="st">"ID"</span><span class="ex">:</span> <span class="st">"&lt;yourContainerID&gt;"</span>,</span>
+<span id="cb56-4"><a aria-label="4"></a><span class="bu">.</span> . .</span>
+<span id="cb56-5"><a aria-label="5"></a>  <span class="st">"Volumes"</span><span class="ex">:</span> {</span>
+<span id="cb56-6"><a aria-label="6"></a>     <span class="st">"/var/webapp"</span><span class="ex">:</span> <span class="st">"/var/lib/docker/vfs/dir/f4280c5b6207ed531efd4cc673ff620cef2a7980f747dbbcca001db61de04468"</span></span>
+<span id="cb56-7"><a aria-label="7"></a>  <span class="er">}</span><span class="ex">,</span></span>
+<span id="cb56-8"><a aria-label="8"></a>  <span class="st">"VolumesRW"</span><span class="ex">:</span> {</span>
+<span id="cb56-9"><a aria-label="9"></a>     <span class="st">"/var/webapp"</span><span class="ex">:</span> true</span>
+<span id="cb56-10"><a aria-label="10"></a>  <span class="er">}</span><span class="ex">,</span></span>
+<span id="cb56-11"><a aria-label="11"></a><span class="er">}</span><span class="ex">]</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <ul>
 <li>We can see that our volume is present on the file system of the Docker host.</li>
 </ul>
@@ -2051,7 +2057,7 @@ $ docker run -d -v /path/on/the/host:/path/in/container image ...
 <div class="callout-content">
 <p>The same <code>-v</code> flag can be used to share a single file (instead of a directory).</p>
 <p>One of the most interesting examples is to share the Docker control socket.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb57"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb57-1"><a></a><span class="ex">$</span> docker run <span class="at">-it</span> <span class="at">-v</span> /var/run/docker.sock:/var/run/docker.sock docker sh</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb57"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb57-1"><a aria-label="1"></a><span class="ex">$</span> docker run <span class="at">-it</span> <span class="at">-v</span> /var/run/docker.sock:/var/run/docker.sock docker sh</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>From that container, you can now run <code>docker</code> commands communicating with the Docker Engine running on the host. Try <code>docker ps</code>!</p>
 </div>
 </div>
@@ -2121,14 +2127,14 @@ or providing extra features. For instance:
 </div>
 <div class="callout-content">
 <p>Binding a host path to a container path:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb58"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb58-1"><a></a><span class="ex">$</span> docker run <span class="dt">\</span></span>
-<span id="cb58-2"><a></a>  <span class="at">--mount</span> type=bind,source=/path/on/host,target=/path/in/container alpine</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb58"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb58-1"><a aria-label="1"></a><span class="ex">$</span> docker run <span class="dt">\</span></span>
+<span id="cb58-2"><a aria-label="2"></a>  <span class="at">--mount</span> type=bind,source=/path/on/host,target=/path/in/container alpine</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Mounting a volume to a container path:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb59"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb59-1"><a></a><span class="ex">$</span> docker run <span class="dt">\</span></span>
-<span id="cb59-2"><a></a>  <span class="at">--mount</span> source=myvolume,target=/path/in/container alpine</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb59"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb59-1"><a aria-label="1"></a><span class="ex">$</span> docker run <span class="dt">\</span></span>
+<span id="cb59-2"><a aria-label="2"></a>  <span class="at">--mount</span> source=myvolume,target=/path/in/container alpine</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Mounting a tmpfs (in-memory, for temporary files):</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb60"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb60-1"><a></a><span class="ex">$</span> docker run <span class="dt">\</span></span>
-<span id="cb60-2"><a></a>  <span class="at">--mount</span> type=tmpfs,destination=/path/in/container,tmpfs-size=1000000 alpine</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb60"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb60-1"><a aria-label="1"></a><span class="ex">$</span> docker run <span class="dt">\</span></span>
+<span id="cb60-2"><a aria-label="2"></a>  <span class="at">--mount</span> type=tmpfs,destination=/path/in/container,tmpfs-size=1000000 alpine</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>

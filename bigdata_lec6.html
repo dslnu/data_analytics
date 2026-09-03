@@ -6,8 +6,8 @@
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="site_libs/quarto-html/light-border.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-587c61ba64f3a5504c4d52d930310e48.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
-  <meta name="generator" content="quarto-1.8.26">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.10.18">
 
   <meta name="author" content="MSDE">
   <title>Big Data analytics / Applied Data analytics – Big Data: Dask tutorial</title>
@@ -17,10 +17,16 @@
   <link rel="stylesheet" href="site_libs/revealjs/dist/reset.css">
   <link rel="stylesheet" href="site_libs/revealjs/dist/reveal.css">
   <style>
-    code{white-space: pre-wrap;}
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
     span.smallcaps{font-variant: small-caps;}
-    div.columns{display: flex; gap: min(4vw, 1.5em);}
-    div.column{flex: auto; overflow-x: auto;}
+    div.columns{display: flex; gap: 1.5em;}
+    div.column{flex: auto;}
+    @media screen {
+    div.columns{gap: min(4vw, 1.5em);}
+    div.column{overflow-x: auto;}
+    }
     div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
     ul.task-list{list-style: none;}
     ul.task-list li input[type="checkbox"] {
@@ -95,7 +101,7 @@
     code span.vs { color: #20794d; } /* VerbatimString */
     code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   </style>
-  <link rel="stylesheet" href="site_libs/revealjs/dist/theme/quarto-534cd8e3a96973385dffff3f4709048d.css">
+  <link rel="stylesheet" href="site_libs/revealjs/dist/theme/quarto-2740581606dc327e82f18f789b69d8a0.css">
   <link rel="stylesheet" href="custom.css">
   <link href="site_libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
   <link href="site_libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
@@ -199,7 +205,7 @@
 <div class="quarto-title-authors">
 <div class="quarto-title-author">
 <div class="quarto-title-author-name">
-MSDE 
+MSDE
 </div>
         <p class="quarto-title-affiliation">
             Lviv University
@@ -227,9 +233,9 @@ MSDE
 <p><strong>With uv</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a></a><span class="ex">uv</span> add <span class="st">"dask[complete]"</span></span>
-<span id="cb1-2"><a></a><span class="ex">uv</span> add s3fs</span>
-<span id="cb1-3"><a></a><span class="ex">uv</span> add pyarrow</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a aria-label="1"></a><span class="ex">uv</span> add <span class="st">"dask[complete]"</span></span>
+<span id="cb1-2"><a aria-label="2"></a><span class="ex">uv</span> add s3fs</span>
+<span id="cb1-3"><a aria-label="3"></a><span class="ex">uv</span> add pyarrow</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -246,26 +252,26 @@ MSDE
 <ol type="1">
 <li>Import</li>
 </ol>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a></a><span class="im">import</span> dask.dataframe <span class="im">as</span> dd</span>
-<span id="cb2-2"><a></a><span class="im">from</span> dask.distributed <span class="im">import</span> Client</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a aria-label="1"></a><span class="im">import</span> dask.dataframe <span class="im">as</span> dd</span>
+<span id="cb2-2"><a aria-label="2"></a><span class="im">from</span> dask.distributed <span class="im">import</span> Client</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <ol start="2" type="1">
 <li>Create client.</li>
 </ol>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a></a>client <span class="op">=</span> Client()</span>
-<span id="cb3-2"><a></a>client</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a aria-label="1"></a>client <span class="op">=</span> Client()</span>
+<span id="cb3-2"><a aria-label="2"></a>client</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <ol start="3" type="1">
 <li>Read data.</li>
 </ol>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a></a>ddf <span class="op">=</span> dd.read_parquet(</span>
-<span id="cb4-2"><a></a>    <span class="st">"s3://dask-data/nyc-taxi/nyc-2015.parquet/part.*.parquet"</span>,</span>
-<span id="cb4-3"><a></a>    columns<span class="op">=</span>[<span class="st">"passenger_count"</span>, <span class="st">"tip_amount"</span>],</span>
-<span id="cb4-4"><a></a>    storage_options<span class="op">=</span>{<span class="st">"anon"</span>: <span class="va">True</span>},</span>
-<span id="cb4-5"><a></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a aria-label="1"></a>ddf <span class="op">=</span> dd.read_parquet(</span>
+<span id="cb4-2"><a aria-label="2"></a>    <span class="st">"s3://dask-data/nyc-taxi/nyc-2015.parquet/part.*.parquet"</span>,</span>
+<span id="cb4-3"><a aria-label="3"></a>    columns<span class="op">=</span>[<span class="st">"passenger_count"</span>, <span class="st">"tip_amount"</span>],</span>
+<span id="cb4-4"><a aria-label="4"></a>    storage_options<span class="op">=</span>{<span class="st">"anon"</span>: <span class="va">True</span>},</span>
+<span id="cb4-5"><a aria-label="5"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <ol start="4" type="1">
 <li>Groupby and mean</li>
 </ol>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a></a>result <span class="op">=</span> ddf.groupby(<span class="st">"passenger_count"</span>).tip_amount.mean().compute()</span>
-<span id="cb5-2"><a></a>result</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a aria-label="1"></a>result <span class="op">=</span> ddf.groupby(<span class="st">"passenger_count"</span>).tip_amount.mean().compute()</span>
+<span id="cb5-2"><a aria-label="2"></a>result</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -467,7 +473,7 @@ MSDE
 </div>
 <div class="callout-content">
 <p>Create the datasets you will be using in this notebook:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a></a><span class="op">%</span>run prep.py <span class="op">-</span>d flights</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a aria-label="1"></a><span class="op">%</span>run prep.py <span class="op">-</span>d flights</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -478,10 +484,10 @@ MSDE
 </div>
 <div class="callout-content">
 <p>Create a local Dask cluster and connect it to the client.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a></a><span class="im">from</span> dask.distributed <span class="im">import</span> Client</span>
-<span id="cb7-2"><a></a></span>
-<span id="cb7-3"><a></a>client <span class="op">=</span> Client(n_workers<span class="op">=</span><span class="dv">4</span>)</span>
-<span id="cb7-4"><a></a>client</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a aria-label="1"></a><span class="im">from</span> dask.distributed <span class="im">import</span> Client</span>
+<span id="cb7-2"><a aria-label="2"></a></span>
+<span id="cb7-3"><a aria-label="3"></a>client <span class="op">=</span> Client(n_workers<span class="op">=</span><span class="dv">4</span>)</span>
+<span id="cb7-4"><a aria-label="4"></a>client</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -509,8 +515,8 @@ MSDE
 </div>
 <div class="callout-content">
 <p>Let’s read an extract of flights in the USA across several years. This data is specific to flights out of the three airports in the New York City area.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a></a><span class="im">import</span> os</span>
-<span id="cb8-2"><a></a><span class="im">import</span> dask</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a aria-label="1"></a><span class="im">import</span> os</span>
+<span id="cb8-2"><a aria-label="2"></a><span class="im">import</span> dask</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>By convention, we import the module <code>dask.dataframe</code> as <code>dd</code>, and call the corresponding <code>DataFrame</code> object <code>ddf</code>.</p>
 </div>
 </div>
@@ -542,12 +548,12 @@ MSDE
 </div>
 <div class="callout-content">
 <p>The following filename includes a glob pattern <code>*</code>, so all files in the path matching that pattern will be read into the same <code>DataFrame</code>.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a></a><span class="im">import</span> dask.dataframe <span class="im">as</span> dd</span>
-<span id="cb9-2"><a></a></span>
-<span id="cb9-3"><a></a>ddf <span class="op">=</span> dd.read_csv(</span>
-<span id="cb9-4"><a></a>    os.path.join(<span class="st">"data"</span>, <span class="st">"nycflights"</span>, <span class="st">"*.csv"</span>), parse_dates<span class="op">=</span>{<span class="st">"Date"</span>: [<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>]}</span>
-<span id="cb9-5"><a></a>)</span>
-<span id="cb9-6"><a></a>ddf</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a aria-label="1"></a><span class="im">import</span> dask.dataframe <span class="im">as</span> dd</span>
+<span id="cb9-2"><a aria-label="2"></a></span>
+<span id="cb9-3"><a aria-label="3"></a>ddf <span class="op">=</span> dd.read_csv(</span>
+<span id="cb9-4"><a aria-label="4"></a>    os.path.join(<span class="st">"data"</span>, <span class="st">"nycflights"</span>, <span class="st">"*.csv"</span>), parse_dates<span class="op">=</span>{<span class="st">"Date"</span>: [<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>]}</span>
+<span id="cb9-5"><a aria-label="5"></a>)</span>
+<span id="cb9-6"><a aria-label="6"></a>ddf</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -592,7 +598,7 @@ MSDE
 <div class="callout-content">
 <p>Most Dask Collections, including Dask <code>DataFrame</code> are evaluated lazily, which means Dask constructs the logic (called task graph) of your computation immediately but “evaluates” them only when necessary.</p>
 <p>You can view this task graph using <code>.visualize()</code>.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a></a>ddf.visualize()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a aria-label="1"></a>ddf.visualize()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Note that we need to call <code>.compute()</code> to trigger actual computations.</p>
 </div>
 </div>
@@ -612,8 +618,8 @@ MSDE
 <li>then apply the corresponding functions to each pandas DataFrame (also known as a partition)</li>
 <li>combine the subtotals to give you the final grand total</li>
 </ul>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a></a><span class="co"># load and count number of rows</span></span>
-<span id="cb11-2"><a></a><span class="bu">len</span>(ddf)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a aria-label="1"></a><span class="co"># load and count number of rows</span></span>
+<span id="cb11-2"><a aria-label="2"></a><span class="bu">len</span>(ddf)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -627,30 +633,30 @@ MSDE
 </div>
 <div class="callout-content">
 <p>You can view the start and end of the data as you would in pandas:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a></a>ddf.head()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a></a>ddf.tail()</span>
-<span id="cb13-2"><a></a></span>
-<span id="cb13-3"><a></a><span class="co"># ValueError: Mismatched dtypes found in `pd.read_csv`/`pd.read_table`.</span></span>
-<span id="cb13-4"><a></a></span>
-<span id="cb13-5"><a></a><span class="co"># +----------------+---------+----------+</span></span>
-<span id="cb13-6"><a></a><span class="co"># | Column         | Found   | Expected |</span></span>
-<span id="cb13-7"><a></a><span class="co"># +----------------+---------+----------+</span></span>
-<span id="cb13-8"><a></a><span class="co"># | CRSElapsedTime | float64 | int64    |</span></span>
-<span id="cb13-9"><a></a><span class="co"># | TailNum        | object  | float64  |</span></span>
-<span id="cb13-10"><a></a><span class="co"># +----------------+---------+----------+</span></span>
-<span id="cb13-11"><a></a></span>
-<span id="cb13-12"><a></a><span class="co"># The following columns also raised exceptions on conversion:</span></span>
-<span id="cb13-13"><a></a></span>
-<span id="cb13-14"><a></a><span class="co"># - TailNum</span></span>
-<span id="cb13-15"><a></a><span class="co">#   ValueError("could not convert string to float: 'N54711'")</span></span>
-<span id="cb13-16"><a></a></span>
-<span id="cb13-17"><a></a><span class="co"># Usually this is due to dask's dtype inference failing, and</span></span>
-<span id="cb13-18"><a></a><span class="co"># *may* be fixed by specifying dtypes manually by adding:</span></span>
-<span id="cb13-19"><a></a></span>
-<span id="cb13-20"><a></a><span class="co"># dtype={'CRSElapsedTime': 'float64',</span></span>
-<span id="cb13-21"><a></a><span class="co">#        'TailNum': 'object'}</span></span>
-<span id="cb13-22"><a></a></span>
-<span id="cb13-23"><a></a><span class="co"># to the call to `read_csv`/`read_table`.</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a aria-label="1"></a>ddf.head()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a aria-label="1"></a>ddf.tail()</span>
+<span id="cb13-2"><a aria-label="2"></a></span>
+<span id="cb13-3"><a aria-label="3"></a><span class="co"># ValueError: Mismatched dtypes found in `pd.read_csv`/`pd.read_table`.</span></span>
+<span id="cb13-4"><a aria-label="4"></a></span>
+<span id="cb13-5"><a aria-label="5"></a><span class="co"># +----------------+---------+----------+</span></span>
+<span id="cb13-6"><a aria-label="6"></a><span class="co"># | Column         | Found   | Expected |</span></span>
+<span id="cb13-7"><a aria-label="7"></a><span class="co"># +----------------+---------+----------+</span></span>
+<span id="cb13-8"><a aria-label="8"></a><span class="co"># | CRSElapsedTime | float64 | int64    |</span></span>
+<span id="cb13-9"><a aria-label="9"></a><span class="co"># | TailNum        | object  | float64  |</span></span>
+<span id="cb13-10"><a aria-label="10"></a><span class="co"># +----------------+---------+----------+</span></span>
+<span id="cb13-11"><a aria-label="11"></a></span>
+<span id="cb13-12"><a aria-label="12"></a><span class="co"># The following columns also raised exceptions on conversion:</span></span>
+<span id="cb13-13"><a aria-label="13"></a></span>
+<span id="cb13-14"><a aria-label="14"></a><span class="co"># - TailNum</span></span>
+<span id="cb13-15"><a aria-label="15"></a><span class="co">#   ValueError("could not convert string to float: 'N54711'")</span></span>
+<span id="cb13-16"><a aria-label="16"></a></span>
+<span id="cb13-17"><a aria-label="17"></a><span class="co"># Usually this is due to dask's dtype inference failing, and</span></span>
+<span id="cb13-18"><a aria-label="18"></a><span class="co"># *may* be fixed by specifying dtypes manually by adding:</span></span>
+<span id="cb13-19"><a aria-label="19"></a></span>
+<span id="cb13-20"><a aria-label="20"></a><span class="co"># dtype={'CRSElapsedTime': 'float64',</span></span>
+<span id="cb13-21"><a aria-label="21"></a><span class="co">#        'TailNum': 'object'}</span></span>
+<span id="cb13-22"><a aria-label="22"></a></span>
+<span id="cb13-23"><a aria-label="23"></a><span class="co"># to the call to `read_csv`/`read_table`.</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -683,12 +689,12 @@ MSDE
 </div>
 <div class="callout-content">
 <p>In our case we’ll use the first option and directly specify the <code>dtypes</code> of the offending columns.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a></a>ddf <span class="op">=</span> dd.read_csv(</span>
-<span id="cb14-2"><a></a>    os.path.join(<span class="st">"data"</span>, <span class="st">"nycflights"</span>, <span class="st">"*.csv"</span>),</span>
-<span id="cb14-3"><a></a>    parse_dates<span class="op">=</span>{<span class="st">"Date"</span>: [<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>]},</span>
-<span id="cb14-4"><a></a>    dtype<span class="op">=</span>{<span class="st">"TailNum"</span>: <span class="bu">str</span>, <span class="st">"CRSElapsedTime"</span>: <span class="bu">float</span>, <span class="st">"Cancelled"</span>: <span class="bu">bool</span>},</span>
-<span id="cb14-5"><a></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a></a>ddf.tail()  <span class="co"># now works</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a aria-label="1"></a>ddf <span class="op">=</span> dd.read_csv(</span>
+<span id="cb14-2"><a aria-label="2"></a>    os.path.join(<span class="st">"data"</span>, <span class="st">"nycflights"</span>, <span class="st">"*.csv"</span>),</span>
+<span id="cb14-3"><a aria-label="3"></a>    parse_dates<span class="op">=</span>{<span class="st">"Date"</span>: [<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>]},</span>
+<span id="cb14-4"><a aria-label="4"></a>    dtype<span class="op">=</span>{<span class="st">"TailNum"</span>: <span class="bu">str</span>, <span class="st">"CRSElapsedTime"</span>: <span class="bu">float</span>, <span class="st">"Cancelled"</span>: <span class="bu">bool</span>},</span>
+<span id="cb14-5"><a aria-label="5"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a aria-label="1"></a>ddf.tail()  <span class="co"># now works</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -703,9 +709,9 @@ MSDE
 <div class="callout-content">
 <p>If you’re thinking about distributed computing, your data is probably stored remotely on services (like Amazon’s S3 or Google’s cloud storage) and is in a friendlier format (like Parquet). Dask can read data in various formats directly from these remote locations <strong>lazily</strong> and <strong>in parallel</strong>.</p>
 <p>Here’s how you can read the NYC taxi cab data from Amazon S3:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a></a>ddf <span class="op">=</span> dd.read_parquet(</span>
-<span id="cb16-2"><a></a>    <span class="st">"s3://nyc-tlc/trip data/yellow_tripdata_2012-*.parquet"</span>,</span>
-<span id="cb16-3"><a></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a aria-label="1"></a>ddf <span class="op">=</span> dd.read_parquet(</span>
+<span id="cb16-2"><a aria-label="2"></a>    <span class="st">"s3://nyc-tlc/trip data/yellow_tripdata_2012-*.parquet"</span>,</span>
+<span id="cb16-3"><a aria-label="3"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>You can also leverage Parquet-specific optimizations like column selection and metadata handling, learn more in <a href="https://docs.dask.org/en/stable/dataframe-parquet.html">the Dask documentation on working with Parquet files</a>.</p>
 </div>
 </div>
@@ -721,17 +727,17 @@ MSDE
 <div class="callout-content">
 <p>Let’s compute the maximum of the flight delay.</p>
 <p>With just pandas, we would loop over each file to find the individual maximums, then find the final maximum over all the individual maximums.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb17-2"><a></a></span>
-<span id="cb17-3"><a></a>files <span class="op">=</span> os.listdir(os.path.join(<span class="st">'data'</span>, <span class="st">'nycflights'</span>))</span>
-<span id="cb17-4"><a></a></span>
-<span id="cb17-5"><a></a>maxes <span class="op">=</span> []</span>
-<span id="cb17-6"><a></a></span>
-<span id="cb17-7"><a></a><span class="cf">for</span> <span class="bu">file</span> <span class="kw">in</span> files:</span>
-<span id="cb17-8"><a></a>    df <span class="op">=</span> pd.read_csv(os.path.join(<span class="st">'data'</span>, <span class="st">'nycflights'</span>, <span class="bu">file</span>))</span>
-<span id="cb17-9"><a></a>    maxes.append(df.DepDelay.<span class="bu">max</span>())</span>
-<span id="cb17-10"><a></a>    </span>
-<span id="cb17-11"><a></a>final_max <span class="op">=</span> <span class="bu">max</span>(maxes)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a aria-label="1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb17-2"><a aria-label="2"></a></span>
+<span id="cb17-3"><a aria-label="3"></a>files <span class="op">=</span> os.listdir(os.path.join(<span class="st">'data'</span>, <span class="st">'nycflights'</span>))</span>
+<span id="cb17-4"><a aria-label="4"></a></span>
+<span id="cb17-5"><a aria-label="5"></a>maxes <span class="op">=</span> []</span>
+<span id="cb17-6"><a aria-label="6"></a></span>
+<span id="cb17-7"><a aria-label="7"></a><span class="cf">for</span> <span class="bu">file</span> <span class="kw">in</span> files:</span>
+<span id="cb17-8"><a aria-label="8"></a>    df <span class="op">=</span> pd.read_csv(os.path.join(<span class="st">'data'</span>, <span class="st">'nycflights'</span>, <span class="bu">file</span>))</span>
+<span id="cb17-9"><a aria-label="9"></a>    maxes.append(df.DepDelay.<span class="bu">max</span>())</span>
+<span id="cb17-10"><a aria-label="10"></a>    </span>
+<span id="cb17-11"><a aria-label="11"></a>final_max <span class="op">=</span> <span class="bu">max</span>(maxes)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -745,9 +751,9 @@ MSDE
 </div>
 <div class="callout-content">
 <p><code>dask.dataframe</code> lets us write pandas-like code, that operates on larger-than-memory datasets in parallel.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a></a><span class="op">%%</span>time</span>
-<span id="cb18-2"><a></a>result <span class="op">=</span> ddf.DepDelay.<span class="bu">max</span>()</span>
-<span id="cb18-3"><a></a>result.compute()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a aria-label="1"></a><span class="op">%%</span>time</span>
+<span id="cb18-2"><a aria-label="2"></a>result <span class="op">=</span> ddf.DepDelay.<span class="bu">max</span>()</span>
+<span id="cb18-3"><a aria-label="3"></a>result.compute()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>This creates the lazy computation for us and then runs it.</p>
 </div>
 </div>
@@ -766,8 +772,8 @@ MSDE
 <div class="callout-content">
 <p>Dask will delete intermediate results (like the full pandas DataFrame for each file) as soon as possible. This means you can handle datasets that are larger than memory but, repeated computations will have to load all of the data in each time. (Run the code above again, is it faster or slower than you would expect?)</p>
 <p>You can view the underlying task graph using <code>.visualize()</code>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a></a><span class="co"># notice the parallelism</span></span>
-<span id="cb19-2"><a></a>result.visualize()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a aria-label="1"></a><span class="co"># notice the parallelism</span></span>
+<span id="cb19-2"><a aria-label="2"></a>result.visualize()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -783,7 +789,7 @@ MSDE
 <ol type="1">
 <li>How many rows are in our dataset?</li>
 </ol>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a></a><span class="co"># Your code here</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a aria-label="1"></a><span class="co"># Your code here</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <!-- ```python -->
 <!-- #| jupyter: {source_hidden: true} -->
 <!-- #| tags: [] -->
@@ -793,7 +799,7 @@ MSDE
 <li>In total, how many non-canceled flights were taken?</li>
 </ol>
 <p><em>Hint</em>: use <a href="https://pandas.pydata.org/pandas-docs/stable/indexing.html#boolean-indexing">boolean indexing</a>.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a></a><span class="co"># Your code here</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a aria-label="1"></a><span class="co"># Your code here</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <!-- ```python -->
 <!-- #| jupyter: {source_hidden: true} -->
 <!-- #| tags: [] -->
@@ -815,7 +821,7 @@ MSDE
 <li>In total, how many non-canceled flights were taken from each airport?</li>
 </ol>
 <p><em>Hint</em>: use <a href="https://pandas.pydata.org/pandas-docs/stable/groupby.html">groupby</a>.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a></a><span class="co"># Your code here</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a aria-label="1"></a><span class="co"># Your code here</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <!-- ```python -->
 <!-- #| jupyter: {source_hidden: true} -->
 <!-- #| tags: [] -->
@@ -824,7 +830,7 @@ MSDE
 <ol start="4" type="1">
 <li>What was the average departure delay from each airport?</li>
 </ol>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a></a><span class="co"># Your code here</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a aria-label="1"></a><span class="co"># Your code here</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <!-- ```python -->
 <!-- #| jupyter: {source_hidden: true} -->
 <!-- #| tags: [] -->
@@ -845,7 +851,7 @@ MSDE
 <ol start="5" type="1">
 <li>What day of the week has the worst average departure delay?</li>
 </ol>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb24"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a></a><span class="co"># Your code here</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb24"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a aria-label="1"></a><span class="co"># Your code here</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <!-- ```python -->
 <!-- #| jupyter: {source_hidden: true} -->
 <!-- #| tags: [] -->
@@ -854,7 +860,7 @@ MSDE
 <ol start="6" type="1">
 <li>Let’s say the distance column is erroneous and you need to add 1 to all values, how would you do this?</li>
 </ol>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a></a><span class="co"># Your code here</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a aria-label="1"></a><span class="co"># Your code here</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <!-- ```python -->
 <!-- #| jupyter: {source_hidden: true} -->
 <!-- #| tags: [] -->
@@ -879,14 +885,14 @@ MSDE
 <p>When computing all of the above, we sometimes did the same operation more than once. For most operations, <code>dask.dataframe</code> stores the arguments, allowing duplicate computations to be shared and only computed once.</p>
 <p>For example, let’s compute the mean and standard deviation for departure delay of all non-canceled flights.</p>
 <p>If you compute them with two calls to compute, there is no sharing of intermediate computations.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a></a>non_canceled <span class="op">=</span> ddf[<span class="op">~</span>ddf.Cancelled]</span>
-<span id="cb26-2"><a></a>mean_delay <span class="op">=</span> non_canceled.DepDelay.mean()</span>
-<span id="cb26-3"><a></a>std_delay <span class="op">=</span> non_canceled.DepDelay.std()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a></a><span class="co">#| tags: []</span></span>
-<span id="cb27-2"><a></a><span class="op">%%</span>time</span>
-<span id="cb27-3"><a></a></span>
-<span id="cb27-4"><a></a>mean_delay_res <span class="op">=</span> mean_delay.compute()</span>
-<span id="cb27-5"><a></a>std_delay_res <span class="op">=</span> std_delay.compute()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a aria-label="1"></a>non_canceled <span class="op">=</span> ddf[<span class="op">~</span>ddf.Cancelled]</span>
+<span id="cb26-2"><a aria-label="2"></a>mean_delay <span class="op">=</span> non_canceled.DepDelay.mean()</span>
+<span id="cb26-3"><a aria-label="3"></a>std_delay <span class="op">=</span> non_canceled.DepDelay.std()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a aria-label="1"></a><span class="co">#| tags: []</span></span>
+<span id="cb27-2"><a aria-label="2"></a><span class="op">%%</span>time</span>
+<span id="cb27-3"><a aria-label="3"></a></span>
+<span id="cb27-4"><a aria-label="4"></a>mean_delay_res <span class="op">=</span> mean_delay.compute()</span>
+<span id="cb27-5"><a aria-label="5"></a>std_delay_res <span class="op">=</span> std_delay.compute()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -900,10 +906,10 @@ MSDE
 </div>
 <div class="callout-content">
 <p>But let’s try by passing both to a single <code>compute</code> call.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a></a><span class="co">#| tags: []</span></span>
-<span id="cb28-2"><a></a><span class="op">%%</span>time</span>
-<span id="cb28-3"><a></a></span>
-<span id="cb28-4"><a></a>mean_delay_res, std_delay_res <span class="op">=</span> dask.compute(mean_delay, std_delay)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a aria-label="1"></a><span class="co">#| tags: []</span></span>
+<span id="cb28-2"><a aria-label="2"></a><span class="op">%%</span>time</span>
+<span id="cb28-3"><a aria-label="3"></a></span>
+<span id="cb28-4"><a aria-label="4"></a>mean_delay_res, std_delay_res <span class="op">=</span> dask.compute(mean_delay, std_delay)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Using <code>dask.compute</code> takes roughly 1/2 the time. This is because the task graphs for both results are merged when calling <code>dask.compute</code>, allowing shared operations to only be done once instead of twice. In particular, using <code>dask.compute</code> only does the following once:</p>
 <ul>
 <li>the calls to <code>read_csv</code></li>
@@ -926,7 +932,7 @@ MSDE
 <li>To see what the merged task graphs between multiple results look like (and what’s shared), you can use the <code>dask.visualize</code> function</li>
 <li>you might want to use <code>filename='graph.pdf'</code> to save the graph to disk so that you can zoom in more easily</li>
 </ul>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a></a>dask.visualize(mean_delay, std_delay, engine<span class="op">=</span><span class="st">"cytoscape"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a aria-label="1"></a>dask.visualize(mean_delay, std_delay, engine<span class="op">=</span><span class="st">"cytoscape"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -942,11 +948,11 @@ MSDE
 <p>While using a distributed scheduler (you will learn more about schedulers in the upcoming notebooks), you can keep some <em>data that you want to use often</em> in the <em>distributed memory</em>.</p>
 <p><code>persist</code> generates “Futures” (more on this later as well) and stores them in the same structure as your output. You can use <code>persist</code> with any data or computation that fits in memory.</p>
 <p>If you want to analyze data only for non-canceled flights departing from JFK airport, you can either have two compute calls like in the previous section:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a></a>non_cancelled <span class="op">=</span> ddf[<span class="op">~</span>ddf.Cancelled]</span>
-<span id="cb30-2"><a></a>ddf_jfk <span class="op">=</span> non_cancelled[non_cancelled.Origin <span class="op">==</span> <span class="st">"JFK"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a></a><span class="op">%%</span>time</span>
-<span id="cb31-2"><a></a>ddf_jfk.DepDelay.mean().compute()</span>
-<span id="cb31-3"><a></a>ddf_jfk.DepDelay.<span class="bu">sum</span>().compute()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a aria-label="1"></a>non_cancelled <span class="op">=</span> ddf[<span class="op">~</span>ddf.Cancelled]</span>
+<span id="cb30-2"><a aria-label="2"></a>ddf_jfk <span class="op">=</span> non_cancelled[non_cancelled.Origin <span class="op">==</span> <span class="st">"JFK"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a aria-label="1"></a><span class="op">%%</span>time</span>
+<span id="cb31-2"><a aria-label="2"></a>ddf_jfk.DepDelay.mean().compute()</span>
+<span id="cb31-3"><a aria-label="3"></a>ddf_jfk.DepDelay.<span class="bu">sum</span>().compute()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -961,10 +967,10 @@ MSDE
 <div class="callout-content">
 <p>Or, consider persisting that subset of data in memory.</p>
 <p>See the “Graph” dashboard plot, the red squares indicate persisted data stored as Futures in memory. You will also notice an increase in Worker Memory (another dashboard plot) consumption.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb32"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a></a>ddf_jfk <span class="op">=</span> ddf_jfk.persist()  <span class="co"># returns back control immediately</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb33"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a></a><span class="op">%%</span>time</span>
-<span id="cb33-2"><a></a>ddf_jfk.DepDelay.mean().compute()</span>
-<span id="cb33-3"><a></a>ddf_jfk.DepDelay.std().compute()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb32"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a aria-label="1"></a>ddf_jfk <span class="op">=</span> ddf_jfk.persist()  <span class="co"># returns back control immediately</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb33"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a aria-label="1"></a><span class="op">%%</span>time</span>
+<span id="cb33-2"><a aria-label="2"></a>ddf_jfk.DepDelay.mean().compute()</span>
+<span id="cb33-3"><a aria-label="3"></a>ddf_jfk.DepDelay.std().compute()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Analyses on this persisted data is faster because we are not repeating the loading and selecting (non-canceled, JFK departure) operations.</p>
 </div>
 </div>
@@ -1016,20 +1022,20 @@ MSDE
 </div>
 <div class="callout-content">
 <p>Let’s take a quick look at the <code>map_partitions()</code> function:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a></a><span class="co">#| tags: []</span></span>
-<span id="cb34-2"><a></a><span class="bu">help</span>(ddf.map_partitions)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a aria-label="1"></a><span class="co">#| tags: []</span></span>
+<span id="cb34-2"><a aria-label="2"></a><span class="bu">help</span>(ddf.map_partitions)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The “Distance” column in <code>ddf</code> is currently in miles. Let’s say we want to convert the units to kilometers and we have a general helper function as shown below. In this case, we can use <code>map_partitions</code> to apply this function across each of the internal pandas <code>DataFrame</code>s in parallel.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb35"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a></a><span class="kw">def</span> my_custom_converter(df, multiplier<span class="op">=</span><span class="dv">1</span>):</span>
-<span id="cb35-2"><a></a>    <span class="cf">return</span> df <span class="op">*</span> multiplier</span>
-<span id="cb35-3"><a></a></span>
-<span id="cb35-4"><a></a></span>
-<span id="cb35-5"><a></a>meta <span class="op">=</span> pd.Series(name<span class="op">=</span><span class="st">"Distance"</span>, dtype<span class="op">=</span><span class="st">"float64"</span>)</span>
-<span id="cb35-6"><a></a></span>
-<span id="cb35-7"><a></a>distance_km <span class="op">=</span> ddf.Distance.map_partitions(</span>
-<span id="cb35-8"><a></a>    my_custom_converter, multiplier<span class="op">=</span><span class="fl">0.6</span>, meta<span class="op">=</span>meta</span>
-<span id="cb35-9"><a></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb36"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a></a>distance_km.visualize()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb37"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a></a>distance_km.head()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb35"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a aria-label="1"></a><span class="kw">def</span> my_custom_converter(df, multiplier<span class="op">=</span><span class="dv">1</span>):</span>
+<span id="cb35-2"><a aria-label="2"></a>    <span class="cf">return</span> df <span class="op">*</span> multiplier</span>
+<span id="cb35-3"><a aria-label="3"></a></span>
+<span id="cb35-4"><a aria-label="4"></a></span>
+<span id="cb35-5"><a aria-label="5"></a>meta <span class="op">=</span> pd.Series(name<span class="op">=</span><span class="st">"Distance"</span>, dtype<span class="op">=</span><span class="st">"float64"</span>)</span>
+<span id="cb35-6"><a aria-label="6"></a></span>
+<span id="cb35-7"><a aria-label="7"></a>distance_km <span class="op">=</span> ddf.Distance.map_partitions(</span>
+<span id="cb35-8"><a aria-label="8"></a>    my_custom_converter, multiplier<span class="op">=</span><span class="fl">0.6</span>, meta<span class="op">=</span>meta</span>
+<span id="cb35-9"><a aria-label="9"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb36"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a aria-label="1"></a>distance_km.visualize()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb37"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a aria-label="1"></a>distance_km.head()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1061,7 +1067,7 @@ MSDE
 </div>
 <div class="callout-content">
 <p>It’s good practice to always close any Dask cluster you create:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb38"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a></a>client.shutdown()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb38"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a aria-label="1"></a>client.shutdown()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1129,7 +1135,7 @@ MSDE
 </div>
 <div class="callout-content">
 <p>Create the datasets you will be using in this notebook:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb39"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a></a><span class="op">%</span>run prep.py <span class="op">-</span>d random</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb39"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a aria-label="1"></a><span class="op">%</span>run prep.py <span class="op">-</span>d random</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1142,10 +1148,10 @@ MSDE
 <p><strong>Start the Client</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb40"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a></a><span class="im">from</span> dask.distributed <span class="im">import</span> Client</span>
-<span id="cb40-2"><a></a></span>
-<span id="cb40-3"><a></a>client <span class="op">=</span> Client(n_workers<span class="op">=</span><span class="dv">4</span>)</span>
-<span id="cb40-4"><a></a>client</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb40"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a aria-label="1"></a><span class="im">from</span> dask.distributed <span class="im">import</span> Client</span>
+<span id="cb40-2"><a aria-label="2"></a></span>
+<span id="cb40-3"><a aria-label="3"></a>client <span class="op">=</span> Client(n_workers<span class="op">=</span><span class="dv">4</span>)</span>
+<span id="cb40-4"><a aria-label="4"></a>client</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1159,11 +1165,11 @@ MSDE
 </div>
 <div class="callout-content">
 <p>Let’s do side by side the sum of the elements of an array using a NumPy array and a Dask array.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb41"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb41-2"><a></a><span class="im">import</span> dask.array <span class="im">as</span> da</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb42"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a></a><span class="co"># NumPy array</span></span>
-<span id="cb42-2"><a></a>a_np <span class="op">=</span> np.ones(<span class="dv">10</span>)</span>
-<span id="cb42-3"><a></a>a_np</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb41"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a aria-label="1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb41-2"><a aria-label="2"></a><span class="im">import</span> dask.array <span class="im">as</span> da</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb42"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a aria-label="1"></a><span class="co"># NumPy array</span></span>
+<span id="cb42-2"><a aria-label="2"></a>a_np <span class="op">=</span> np.ones(<span class="dv">10</span>)</span>
+<span id="cb42-3"><a aria-label="3"></a>a_np</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1177,11 +1183,11 @@ MSDE
 </div>
 <div class="callout-content">
 <p>We know that we can use <code>sum()</code> to compute the sum of the elements of our array, but to show what a blocksized operation would look like, let’s do:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb43"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a></a>a_np_sum <span class="op">=</span> a_np[:<span class="dv">5</span>].<span class="bu">sum</span>() <span class="op">+</span> a_np[<span class="dv">5</span>:].<span class="bu">sum</span>()</span>
-<span id="cb43-2"><a></a>a_np_sum</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb43"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a aria-label="1"></a>a_np_sum <span class="op">=</span> a_np[:<span class="dv">5</span>].<span class="bu">sum</span>() <span class="op">+</span> a_np[<span class="dv">5</span>:].<span class="bu">sum</span>()</span>
+<span id="cb43-2"><a aria-label="2"></a>a_np_sum</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Now notice that each sum in the computation above is completely independent so they could be done in parallel. To do this with Dask array, we need to define our “slices”, we do this by defining the amount of elements we want per block using the variable <code>chunks</code>.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb44"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a></a>a_da <span class="op">=</span> da.ones(<span class="dv">10</span>, chunks<span class="op">=</span><span class="dv">5</span>)</span>
-<span id="cb44-2"><a></a>a_da</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb44"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a aria-label="1"></a>a_da <span class="op">=</span> da.ones(<span class="dv">10</span>, chunks<span class="op">=</span><span class="dv">5</span>)</span>
+<span id="cb44-2"><a aria-label="2"></a>a_da</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1198,8 +1204,8 @@ MSDE
 </div>
 <div class="callout-content">
 <p>Note here that to get two blocks, we specify <code>chunks=5</code>, in other words, we have 5 elements per block.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb45"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a></a>a_da_sum <span class="op">=</span> a_da.<span class="bu">sum</span>()</span>
-<span id="cb45-2"><a></a>a_da_sum</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb45"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a aria-label="1"></a>a_da_sum <span class="op">=</span> a_da.<span class="bu">sum</span>()</span>
+<span id="cb45-2"><a aria-label="2"></a>a_da_sum</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1212,10 +1218,10 @@ MSDE
 <p><strong>Task Graphs</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb46"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a></a><span class="co"># visualize the low level Dask graph using cytoscape</span></span>
-<span id="cb46-2"><a></a>a_da_sum.visualize(engine<span class="op">=</span><span class="st">"cytoscape"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb46"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a aria-label="1"></a><span class="co"># visualize the low level Dask graph using cytoscape</span></span>
+<span id="cb46-2"><a aria-label="2"></a>a_da_sum.visualize(engine<span class="op">=</span><span class="st">"cytoscape"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>And then compute:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb47"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a></a>a_da_sum.compute()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb47"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a aria-label="1"></a>a_da_sum.compute()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1230,16 +1236,16 @@ MSDE
 <div class="callout-content">
 <p>Let’s try a more interesting example. We will create a 20_000 x 20_000 array with normally distributed values, and take the mean along one of its axis.</p>
 <h4 id="numpy-version">Numpy version</h4>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb48"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a></a><span class="op">%%</span>time</span>
-<span id="cb48-2"><a></a>xn <span class="op">=</span> np.random.normal(<span class="dv">10</span>, <span class="fl">0.1</span>, size<span class="op">=</span>(<span class="dv">30_000</span>, <span class="dv">30_000</span>))</span>
-<span id="cb48-3"><a></a>yn <span class="op">=</span> xn.mean(axis<span class="op">=</span><span class="dv">0</span>)</span>
-<span id="cb48-4"><a></a>yn</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb48"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a aria-label="1"></a><span class="op">%%</span>time</span>
+<span id="cb48-2"><a aria-label="2"></a>xn <span class="op">=</span> np.random.normal(<span class="dv">10</span>, <span class="fl">0.1</span>, size<span class="op">=</span>(<span class="dv">30_000</span>, <span class="dv">30_000</span>))</span>
+<span id="cb48-3"><a aria-label="3"></a>yn <span class="op">=</span> xn.mean(axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb48-4"><a aria-label="4"></a>yn</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <h4 id="dask-array-version">Dask array version</h4>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb49"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a></a>xd <span class="op">=</span> da.random.normal(<span class="dv">10</span>, <span class="fl">0.1</span>, size<span class="op">=</span>(<span class="dv">30_000</span>, <span class="dv">30_000</span>), chunks<span class="op">=</span>(<span class="dv">3000</span>, <span class="dv">3000</span>))</span>
-<span id="cb49-2"><a></a>xd</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb50"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb50-1"><a></a>xd.nbytes <span class="op">/</span> <span class="fl">1e9</span>  <span class="co"># Gigabytes of the input processed lazily</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb51"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb51-1"><a></a>yd <span class="op">=</span> xd.mean(axis<span class="op">=</span><span class="dv">0</span>)</span>
-<span id="cb51-2"><a></a>yd</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb49"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a aria-label="1"></a>xd <span class="op">=</span> da.random.normal(<span class="dv">10</span>, <span class="fl">0.1</span>, size<span class="op">=</span>(<span class="dv">30_000</span>, <span class="dv">30_000</span>), chunks<span class="op">=</span>(<span class="dv">3000</span>, <span class="dv">3000</span>))</span>
+<span id="cb49-2"><a aria-label="2"></a>xd</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb50"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb50-1"><a aria-label="1"></a>xd.nbytes <span class="op">/</span> <span class="fl">1e9</span>  <span class="co"># Gigabytes of the input processed lazily</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb51"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb51-1"><a aria-label="1"></a>yd <span class="op">=</span> xd.mean(axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb51-2"><a aria-label="2"></a>yd</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1252,10 +1258,10 @@ MSDE
 <p><strong>Performance comparison</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb52"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb52-1"><a></a><span class="op">%%</span>time</span>
-<span id="cb52-2"><a></a>xd <span class="op">=</span> da.random.normal(<span class="dv">10</span>, <span class="fl">0.1</span>, size<span class="op">=</span>(<span class="dv">30_000</span>, <span class="dv">30_000</span>), chunks<span class="op">=</span>(<span class="dv">3000</span>, <span class="dv">3000</span>))</span>
-<span id="cb52-3"><a></a>yd <span class="op">=</span> xd.mean(axis<span class="op">=</span><span class="dv">0</span>)</span>
-<span id="cb52-4"><a></a>yd.compute()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb52"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb52-1"><a aria-label="1"></a><span class="op">%%</span>time</span>
+<span id="cb52-2"><a aria-label="2"></a>xd <span class="op">=</span> da.random.normal(<span class="dv">10</span>, <span class="fl">0.1</span>, size<span class="op">=</span>(<span class="dv">30_000</span>, <span class="dv">30_000</span>), chunks<span class="op">=</span>(<span class="dv">3000</span>, <span class="dv">3000</span>))</span>
+<span id="cb52-3"><a aria-label="3"></a>yd <span class="op">=</span> xd.mean(axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb52-4"><a aria-label="4"></a>yd.compute()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1273,7 +1279,7 @@ MSDE
 <li>What happens if the Dask chunks=(30,30)?</li>
 <li>For Dask arrays, compute the mean along <code>axis=1</code> of the sum of the x array and its transpose.</li>
 </ul>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb53"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb53-1"><a></a><span class="co"># Your code here</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb53"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb53-1"><a aria-label="1"></a><span class="co"># Your code here</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <!-- **Solution** -->
 <!-- ```python -->
 <!-- #| jupyter: {source_hidden: true} -->
@@ -1296,8 +1302,8 @@ MSDE
 <div class="callout-content">
 <p>We can think of Dask arrays as a big structure composed by chunks of a smaller size, where these chunks are typically an a single <code>numpy</code> array, and they are all arranged to form a larger Dask array.</p>
 <p>If you have a Dask array and want to know more information about chunks and their size, you can use the <code>chunksize</code> and <code>chunks</code> attributes to access this information. If you are in a jupyter notebook you can also visualize the Dask array via its HTML representation.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb54"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb54-1"><a></a>darr <span class="op">=</span> da.random.random((<span class="dv">1000</span>, <span class="dv">1000</span>, <span class="dv">1000</span>))</span>
-<span id="cb54-2"><a></a>darr</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb54"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb54-1"><a aria-label="1"></a>darr <span class="op">=</span> da.random.random((<span class="dv">1000</span>, <span class="dv">1000</span>, <span class="dv">1000</span>))</span>
+<span id="cb54-2"><a aria-label="2"></a>darr</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1315,8 +1321,8 @@ MSDE
 <li><code>darr.chunksize</code> shows the largest chunk size.</li>
 <li>But if your array have irregular chunks, <code>darr.chunks</code> will show you the explicit sizes of all the chunks along all the dimensions of your dask array.</li>
 </ul>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb55"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb55-1"><a></a>darr.chunksize</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb56"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb56-1"><a></a>darr.chunks</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb55"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb55-1"><a aria-label="1"></a>darr.chunksize</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb56"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb56-1"><a aria-label="1"></a>darr.chunks</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1330,10 +1336,10 @@ MSDE
 </div>
 <div class="callout-content">
 <p>Let’s modify our example to see explore chunking a bit more. We can rechunk our array:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb57"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb57-1"><a></a>darr <span class="op">=</span> darr.rechunk({<span class="dv">0</span>: <span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>: <span class="dv">100</span>, <span class="dv">2</span>: <span class="st">"auto"</span>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb58"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb58-1"><a></a>darr</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb59"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb59-1"><a></a>darr.chunksize</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb60"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb60-1"><a></a>darr.chunks</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb57"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb57-1"><a aria-label="1"></a>darr <span class="op">=</span> darr.rechunk({<span class="dv">0</span>: <span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>: <span class="dv">100</span>, <span class="dv">2</span>: <span class="st">"auto"</span>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb58"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb58-1"><a aria-label="1"></a>darr</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb59"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb59-1"><a aria-label="1"></a>darr.chunksize</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb60"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb60-1"><a aria-label="1"></a>darr.chunks</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1419,9 +1425,9 @@ MSDE
 <p>Zarr is a format for the storage of chunked, compressed, N-dimensional arrays. Zarr provides classes and functions for working with N-dimensional arrays that behave like NumPy arrays (Dask array behave like Numpy arrays) but whose data is divided into chunks and each chunk is compressed. If you are already familiar with HDF5 then Zarr arrays provide similar functionality, but with some additional flexibility.</p>
 <p>For extra material check the <a href="https://zarr.readthedocs.io/en/stable/tutorial.html">Zarr tutorial</a></p>
 <p><strong>Let’s read an array from zarr:</strong></p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb61"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb61-1"><a></a><span class="im">import</span> zarr</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb62"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb62-1"><a></a>a <span class="op">=</span> da.from_zarr(<span class="st">"data/random.zarr"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb63"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb63-1"><a></a>a</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb61"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb61-1"><a aria-label="1"></a><span class="im">import</span> zarr</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb62"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb62-1"><a aria-label="1"></a>a <span class="op">=</span> da.from_zarr(<span class="st">"data/random.zarr"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb63"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb63-1"><a aria-label="1"></a>a</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1435,13 +1441,13 @@ MSDE
 </div>
 <div class="callout-content">
 <p>Notice that the array is already chunked, and we didn’t specify anything when loading it. Now notice that the chunks have a nice chunk size, let’s compute the mean and see how long it takes to run</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb64"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb64-1"><a></a><span class="op">%%</span>time</span>
-<span id="cb64-2"><a></a>a.mean().compute()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb64"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb64-1"><a aria-label="1"></a><span class="op">%%</span>time</span>
+<span id="cb64-2"><a aria-label="2"></a>a.mean().compute()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Let’s load a separate example where the <code>chunksize</code> is much smaller, and see what happen</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb65"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb65-1"><a></a>b <span class="op">=</span> da.from_zarr(<span class="st">"data/random_sc.zarr"</span>)</span>
-<span id="cb65-2"><a></a>b</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb66"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb66-1"><a></a><span class="op">%%</span>time</span>
-<span id="cb66-2"><a></a>b.mean().compute()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb65"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb65-1"><a aria-label="1"></a>b <span class="op">=</span> da.from_zarr(<span class="st">"data/random_sc.zarr"</span>)</span>
+<span id="cb65-2"><a aria-label="2"></a>b</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb66"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb66-1"><a aria-label="1"></a><span class="op">%%</span>time</span>
+<span id="cb66-2"><a aria-label="2"></a>b.mean().compute()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1455,7 +1461,7 @@ MSDE
 </div>
 <div class="callout-content">
 <p>Provide a <code>chunksize</code> when reading <code>b</code> that will improve the time of computation of the mean. Try multiple <code>chunks</code> values and see what happens.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb67"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb67-1"><a></a><span class="co"># Your code here</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb67"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb67-1"><a aria-label="1"></a><span class="co"># Your code here</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <!-- ```python -->
 <!-- #| jupyter: {source_hidden: true} -->
 <!-- #| tags: [] -->
@@ -1463,8 +1469,8 @@ MSDE
 <!-- c = da.from_zarr("data/random_sc.zarr", chunks=(6250000,)) -->
 <!-- c -->
 <!-- ``` -->
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb68"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb68-1"><a></a><span class="op">%%</span>time</span>
-<span id="cb68-2"><a></a>c.mean().compute()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb68"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb68-1"><a aria-label="1"></a><span class="op">%%</span>time</span>
+<span id="cb68-2"><a aria-label="2"></a>c.mean().compute()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1479,22 +1485,22 @@ MSDE
 <div class="callout-content">
 <p>In some applications we have multidimensional data, and sometimes working with all this dimensions can be confusing. Xarray is an open source project and Python package that makes working with labeled multi-dimensional arrays easier.</p>
 <p>Let’s learn how to use xarray and Dask together:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb69"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb69-1"><a></a><span class="im">import</span> xarray <span class="im">as</span> xr</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb70"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb70-1"><a></a>ds <span class="op">=</span> xr.tutorial.open_dataset(</span>
-<span id="cb70-2"><a></a>    <span class="st">"air_temperature"</span>,</span>
-<span id="cb70-3"><a></a>    chunks<span class="op">=</span>{  <span class="co"># this tells xarray to open the dataset as a dask array</span></span>
-<span id="cb70-4"><a></a>        <span class="st">"lat"</span>: <span class="dv">25</span>,</span>
-<span id="cb70-5"><a></a>        <span class="st">"lon"</span>: <span class="dv">25</span>,</span>
-<span id="cb70-6"><a></a>        <span class="st">"time"</span>: <span class="op">-</span><span class="dv">1</span>,</span>
-<span id="cb70-7"><a></a>    },</span>
-<span id="cb70-8"><a></a>)</span>
-<span id="cb70-9"><a></a>ds</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb71"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb71-1"><a></a>ds.air</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb72"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb72-1"><a></a>ds.air.chunks</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb73"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb73-1"><a></a>mean <span class="op">=</span> ds.air.mean(<span class="st">"time"</span>)  <span class="co"># no activity on dashboard</span></span>
-<span id="cb73-2"><a></a>mean  <span class="co"># contains a dask array</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb74"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb74-1"><a></a><span class="co"># we will see dashboard activity</span></span>
-<span id="cb74-2"><a></a>mean.load()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb69"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb69-1"><a aria-label="1"></a><span class="im">import</span> xarray <span class="im">as</span> xr</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb70"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb70-1"><a aria-label="1"></a>ds <span class="op">=</span> xr.tutorial.open_dataset(</span>
+<span id="cb70-2"><a aria-label="2"></a>    <span class="st">"air_temperature"</span>,</span>
+<span id="cb70-3"><a aria-label="3"></a>    chunks<span class="op">=</span>{  <span class="co"># this tells xarray to open the dataset as a dask array</span></span>
+<span id="cb70-4"><a aria-label="4"></a>        <span class="st">"lat"</span>: <span class="dv">25</span>,</span>
+<span id="cb70-5"><a aria-label="5"></a>        <span class="st">"lon"</span>: <span class="dv">25</span>,</span>
+<span id="cb70-6"><a aria-label="6"></a>        <span class="st">"time"</span>: <span class="op">-</span><span class="dv">1</span>,</span>
+<span id="cb70-7"><a aria-label="7"></a>    },</span>
+<span id="cb70-8"><a aria-label="8"></a>)</span>
+<span id="cb70-9"><a aria-label="9"></a>ds</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb71"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb71-1"><a aria-label="1"></a>ds.air</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb72"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb72-1"><a aria-label="1"></a>ds.air.chunks</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb73"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb73-1"><a aria-label="1"></a>mean <span class="op">=</span> ds.air.mean(<span class="st">"time"</span>)  <span class="co"># no activity on dashboard</span></span>
+<span id="cb73-2"><a aria-label="2"></a>mean  <span class="co"># contains a dask array</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb74"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb74-1"><a aria-label="1"></a><span class="co"># we will see dashboard activity</span></span>
+<span id="cb74-2"><a aria-label="2"></a>mean.load()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1508,13 +1514,13 @@ MSDE
 </div>
 <div class="callout-content">
 <p>Let’s grab the air variable and do some operations. Operations using xarray objects are identical, regardless if the underlying data is stored as a Dask array or a NumPy array.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb75"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb75-1"><a></a>dair <span class="op">=</span> ds.air</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb76"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb76-1"><a></a>dair2 <span class="op">=</span> dair.groupby(<span class="st">"time.month"</span>).mean(<span class="st">"time"</span>)</span>
-<span id="cb76-2"><a></a>dair_new <span class="op">=</span> dair <span class="op">-</span> dair2</span>
-<span id="cb76-3"><a></a>dair_new</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb75"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb75-1"><a aria-label="1"></a>dair <span class="op">=</span> ds.air</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb76"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb76-1"><a aria-label="1"></a>dair2 <span class="op">=</span> dair.groupby(<span class="st">"time.month"</span>).mean(<span class="st">"time"</span>)</span>
+<span id="cb76-2"><a aria-label="2"></a>dair_new <span class="op">=</span> dair <span class="op">-</span> dair2</span>
+<span id="cb76-3"><a aria-label="3"></a>dair_new</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Call <code>.compute()</code> or <code>.load()</code> when you want your result as a <code>xarray.DataArray</code> with data stored as NumPy arrays.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb77"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb77-1"><a></a><span class="co"># things happen in the dashboard</span></span>
-<span id="cb77-2"><a></a>dair_new.load()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb77"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb77-1"><a aria-label="1"></a><span class="co"># things happen in the dashboard</span></span>
+<span id="cb77-2"><a aria-label="2"></a>dair_new.load()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1528,8 +1534,8 @@ MSDE
 </div>
 <div class="callout-content">
 <p>Because we have a datetime index time-series operations work efficiently, for example we can do a resample and then plot the result.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb78"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb78-1"><a></a>dair_resample <span class="op">=</span> dair.resample(time<span class="op">=</span><span class="st">"1w"</span>).mean(<span class="st">"time"</span>).std(<span class="st">"time"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb79"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb79-1"><a></a>dair_resample.load().plot(figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">8</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb78"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb78-1"><a aria-label="1"></a>dair_resample <span class="op">=</span> dair.resample(time<span class="op">=</span><span class="st">"1w"</span>).mean(<span class="st">"time"</span>).std(<span class="st">"time"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb79"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb79-1"><a aria-label="1"></a>dair_resample.load().plot(figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">8</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1560,7 +1566,7 @@ MSDE
 </div>
 <div class="callout-content">
 <p>It’s good practice to close any Dask cluster you create:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb80"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb80-1"><a></a>client.shutdown()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb80"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb80-1"><a aria-label="1"></a>client.shutdown()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>

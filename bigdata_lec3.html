@@ -6,8 +6,8 @@
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="site_libs/quarto-html/light-border.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-587c61ba64f3a5504c4d52d930310e48.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
-  <meta name="generator" content="quarto-1.8.26">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.10.18">
 
   <meta name="author" content="MSDE">
   <title>Big Data analytics / Applied Data analytics – Big Data: Speeding up computation</title>
@@ -17,10 +17,16 @@
   <link rel="stylesheet" href="site_libs/revealjs/dist/reset.css">
   <link rel="stylesheet" href="site_libs/revealjs/dist/reveal.css">
   <style>
-    code{white-space: pre-wrap;}
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
     span.smallcaps{font-variant: small-caps;}
-    div.columns{display: flex; gap: min(4vw, 1.5em);}
-    div.column{flex: auto; overflow-x: auto;}
+    div.columns{display: flex; gap: 1.5em;}
+    div.column{flex: auto;}
+    @media screen {
+    div.columns{gap: min(4vw, 1.5em);}
+    div.column{overflow-x: auto;}
+    }
     div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
     ul.task-list{list-style: none;}
     ul.task-list li input[type="checkbox"] {
@@ -95,7 +101,7 @@
     code span.vs { color: #20794d; } /* VerbatimString */
     code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   </style>
-  <link rel="stylesheet" href="site_libs/revealjs/dist/theme/quarto-534cd8e3a96973385dffff3f4709048d.css">
+  <link rel="stylesheet" href="site_libs/revealjs/dist/theme/quarto-2740581606dc327e82f18f789b69d8a0.css">
   <link href="site_libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
   <link href="site_libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
   <link href="site_libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
@@ -198,7 +204,7 @@
 <div class="quarto-title-authors">
 <div class="quarto-title-author">
 <div class="quarto-title-author-name">
-MSDE 
+MSDE
 </div>
         <p class="quarto-title-affiliation">
             Lviv University
@@ -254,22 +260,22 @@ MSDE
 <p><strong>Code</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a></a><span class="im">import</span> os</span>
-<span id="cb1-2"><a></a><span class="im">import</span> gc</span>
-<span id="cb1-3"><a></a><span class="im">import</span> psutil</span>
-<span id="cb1-4"><a></a></span>
-<span id="cb1-5"><a></a>proc <span class="op">=</span> psutil.Process(os.getpid())</span>
-<span id="cb1-6"><a></a>gc.collect()</span>
-<span id="cb1-7"><a></a>initial_memory <span class="op">=</span> proc.memory_info().rss</span>
-<span id="cb1-8"><a></a></span>
-<span id="cb1-9"><a></a><span class="co">## Allocate memory by creating large lists</span></span>
-<span id="cb1-10"><a></a>foo <span class="op">=</span> [<span class="st">'abc'</span> <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">10</span><span class="op">**</span><span class="dv">7</span>)]</span>
-<span id="cb1-11"><a></a>allocated_memory <span class="op">=</span> proc.memory_info().rss</span>
-<span id="cb1-12"><a></a></span>
-<span id="cb1-13"><a></a><span class="co">## Deallocate memory</span></span>
-<span id="cb1-14"><a></a><span class="kw">del</span> foo</span>
-<span id="cb1-15"><a></a>gc.collect()</span>
-<span id="cb1-16"><a></a>final_memory <span class="op">=</span> proc.memory_info().rss</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a aria-label="1"></a><span class="im">import</span> os</span>
+<span id="cb1-2"><a aria-label="2"></a><span class="im">import</span> gc</span>
+<span id="cb1-3"><a aria-label="3"></a><span class="im">import</span> psutil</span>
+<span id="cb1-4"><a aria-label="4"></a></span>
+<span id="cb1-5"><a aria-label="5"></a>proc <span class="op">=</span> psutil.Process(os.getpid())</span>
+<span id="cb1-6"><a aria-label="6"></a>gc.collect()</span>
+<span id="cb1-7"><a aria-label="7"></a>initial_memory <span class="op">=</span> proc.memory_info().rss</span>
+<span id="cb1-8"><a aria-label="8"></a></span>
+<span id="cb1-9"><a aria-label="9"></a><span class="co">## Allocate memory by creating large lists</span></span>
+<span id="cb1-10"><a aria-label="10"></a>foo <span class="op">=</span> [<span class="st">'abc'</span> <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">10</span><span class="op">**</span><span class="dv">7</span>)]</span>
+<span id="cb1-11"><a aria-label="11"></a>allocated_memory <span class="op">=</span> proc.memory_info().rss</span>
+<span id="cb1-12"><a aria-label="12"></a></span>
+<span id="cb1-13"><a aria-label="13"></a><span class="co">## Deallocate memory</span></span>
+<span id="cb1-14"><a aria-label="14"></a><span class="kw">del</span> foo</span>
+<span id="cb1-15"><a aria-label="15"></a>gc.collect()</span>
+<span id="cb1-16"><a aria-label="16"></a>final_memory <span class="op">=</span> proc.memory_info().rss</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -282,12 +288,12 @@ MSDE
 <p><strong>Print memory statistics</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a></a>increase <span class="op">=</span> <span class="kw">lambda</span> x2, x1: <span class="fl">100.0</span> <span class="op">*</span> (x2 <span class="op">-</span> x1) <span class="op">/</span> initial_memory</span>
-<span id="cb2-2"><a></a><span class="bu">print</span>(<span class="st">"Allocated Memory Increase: </span><span class="sc">%0.2f%%</span><span class="st">"</span> <span class="op">%</span> increase(allocated_memory, initial_memory))</span>
-<span id="cb2-3"><a></a><span class="bu">print</span>(<span class="st">"Memory After Deletion: </span><span class="sc">%0.2f%%</span><span class="st">"</span> <span class="op">%</span> increase(final_memory, allocated_memory))</span>
-<span id="cb2-4"><a></a></span>
-<span id="cb2-5"><a></a><span class="op">&gt;&gt;&gt;</span> Allocated Memory Increase: <span class="fl">23.35</span><span class="op">%</span></span>
-<span id="cb2-6"><a></a><span class="op">&gt;&gt;&gt;</span> Memory After Deletion: <span class="op">-</span><span class="fl">10.78</span><span class="op">%</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a aria-label="1"></a>increase <span class="op">=</span> <span class="kw">lambda</span> x2, x1: <span class="fl">100.0</span> <span class="op">*</span> (x2 <span class="op">-</span> x1) <span class="op">/</span> initial_memory</span>
+<span id="cb2-2"><a aria-label="2"></a><span class="bu">print</span>(<span class="st">"Allocated Memory Increase: </span><span class="sc">%0.2f%%</span><span class="st">"</span> <span class="op">%</span> increase(allocated_memory, initial_memory))</span>
+<span id="cb2-3"><a aria-label="3"></a><span class="bu">print</span>(<span class="st">"Memory After Deletion: </span><span class="sc">%0.2f%%</span><span class="st">"</span> <span class="op">%</span> increase(final_memory, allocated_memory))</span>
+<span id="cb2-4"><a aria-label="4"></a></span>
+<span id="cb2-5"><a aria-label="5"></a><span class="op">&gt;&gt;&gt;</span> Allocated Memory Increase: <span class="fl">23.35</span><span class="op">%</span></span>
+<span id="cb2-6"><a aria-label="6"></a><span class="op">&gt;&gt;&gt;</span> Memory After Deletion: <span class="op">-</span><span class="fl">10.78</span><span class="op">%</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -761,7 +767,9 @@ f: \mathcal{K}\times\mathcal{D} \rightarrow C
 <div class="callout-content">
 <p>A <strong>Shannon cipher</strong> is a pair <span class="math inline">\(\mathcal{E} = (E,D)\)</span> of functions:</p>
 <ul>
-<li>The function <span class="math inline">\(E\)</span> (the <strong>encryption function</strong>) takes as input a <strong>key</strong> <span class="math inline">\(k\)</span> and <strong>message</strong> <span class="math inline">\(m\)</span> (also called <strong>plaintext</strong>) and produces as output a <strong>ciphertext</strong> <span class="math inline">\(c):\)</span>$ c = E(k,m) $$</li>
+<li>The function <span class="math inline">\(E\)</span> (the <strong>encryption function</strong>) takes as input a <strong>key</strong> <span class="math inline">\(k\)</span> and <strong>message</strong> <span class="math inline">\(m\)</span> (also called <strong>plaintext</strong>) and produces as output a <strong>ciphertext</strong> $c): <span class="math display">\[
+c = E(k,m)
+\]</span></li>
 </ul>
 <p><span class="math inline">\(c\)</span> is the <strong>encryption</strong> of <span class="math inline">\(m\)</span> <strong>under</strong> <span class="math inline">\(k\)</span>.</p>
 <ul>
@@ -917,13 +925,13 @@ z_i = x_i - y_i \; (\mod L)
 <p><strong>Rust wrapper</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode numberSource rust number-lines code-with-copy"><code class="sourceCode rust"><span id="cb3-1"><a></a><span class="co">/// A Python module implemented in Rust.</span></span>
-<span id="cb3-2"><a></a><span class="at">#[</span>pymodule<span class="at">]</span></span>
-<span id="cb3-3"><a></a><span class="kw">fn</span> cipher(m<span class="op">:</span> <span class="op">&amp;</span>Bound<span class="op">&lt;</span><span class="ot">'_</span><span class="op">,</span> PyModule<span class="op">&gt;</span>) <span class="op">-&gt;</span> PyResult<span class="op">&lt;</span>()<span class="op">&gt;</span> <span class="op">{</span></span>
-<span id="cb3-4"><a></a>    m<span class="op">.</span>add_function(<span class="pp">wrap_pyfunction!</span>(encode<span class="op">,</span> m)<span class="op">?</span>)<span class="op">?;</span></span>
-<span id="cb3-5"><a></a>    m<span class="op">.</span>add_function(<span class="pp">wrap_pyfunction!</span>(decode<span class="op">,</span> m)<span class="op">?</span>)<span class="op">?;</span></span>
-<span id="cb3-6"><a></a>    <span class="cn">Ok</span>(())</span>
-<span id="cb3-7"><a></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode numberSource rust number-lines code-with-copy"><code class="sourceCode rust"><span id="cb3-1"><a aria-label="1"></a><span class="co">/// A Python module implemented in Rust.</span></span>
+<span id="cb3-2"><a aria-label="2"></a><span class="at">#[</span>pymodule<span class="at">]</span></span>
+<span id="cb3-3"><a aria-label="3"></a><span class="kw">fn</span> cipher(m<span class="op">:</span> <span class="op">&amp;</span>Bound<span class="op">&lt;</span><span class="ot">'_</span><span class="op">,</span> PyModule<span class="op">&gt;</span>) <span class="op">-&gt;</span> PyResult<span class="op">&lt;</span>()<span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb3-4"><a aria-label="4"></a>    m<span class="op">.</span>add_function(<span class="pp">wrap_pyfunction!</span>(encode<span class="op">,</span> m)<span class="op">?</span>)<span class="op">?;</span></span>
+<span id="cb3-5"><a aria-label="5"></a>    m<span class="op">.</span>add_function(<span class="pp">wrap_pyfunction!</span>(decode<span class="op">,</span> m)<span class="op">?</span>)<span class="op">?;</span></span>
+<span id="cb3-6"><a aria-label="6"></a>    <span class="cn">Ok</span>(())</span>
+<span id="cb3-7"><a aria-label="7"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -936,29 +944,29 @@ z_i = x_i - y_i \; (\mod L)
 <p><strong>Encoding</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource rust number-lines code-with-copy"><code class="sourceCode rust"><span id="cb4-1"><a></a><span class="co">// Generate random permutation of N integers</span></span>
-<span id="cb4-2"><a></a><span class="kw">let</span> <span class="kw">mut</span> numbers<span class="op">:</span> <span class="dt">Vec</span><span class="op">&lt;</span><span class="dt">usize</span><span class="op">&gt;</span> <span class="op">=</span> (<span class="dv">0</span><span class="op">..</span>N)<span class="op">.</span>collect()<span class="op">;</span></span>
-<span id="cb4-3"><a></a><span class="kw">let</span> <span class="kw">mut</span> rng <span class="op">=</span> thread_rng()<span class="op">;</span></span>
-<span id="cb4-4"><a></a>numbers<span class="op">.</span>shuffle(<span class="op">&amp;</span><span class="kw">mut</span> rng)<span class="op">;</span></span>
-<span id="cb4-5"><a></a><span class="kw">let</span> permutation <span class="op">=</span> numbers<span class="op">;</span></span>
-<span id="cb4-6"><a></a></span>
-<span id="cb4-7"><a></a><span class="co">// Generate pairs for each z</span></span>
-<span id="cb4-8"><a></a><span class="kw">let</span> <span class="kw">mut</span> pairs <span class="op">=</span> <span class="dt">Vec</span><span class="pp">::</span>with_capacity(zs<span class="op">.</span>len())<span class="op">;</span></span>
-<span id="cb4-9"><a></a><span class="cf">for</span> <span class="op">&amp;</span>z <span class="kw">in</span> <span class="op">&amp;</span>zs <span class="op">{</span></span>
-<span id="cb4-10"><a></a>    <span class="co">// Generate random x between 0 and N-1</span></span>
-<span id="cb4-11"><a></a>    <span class="kw">let</span> x <span class="op">=</span> rng<span class="op">.</span>gen_range(<span class="dv">0</span><span class="op">..</span>N)<span class="op">;</span></span>
-<span id="cb4-12"><a></a></span>
-<span id="cb4-13"><a></a>    <span class="co">// Compute y such that x - y = z (mod L)</span></span>
-<span id="cb4-14"><a></a>    <span class="kw">let</span> y <span class="op">=</span> <span class="cf">if</span> x <span class="op">&gt;=</span> z <span class="op">{</span></span>
-<span id="cb4-15"><a></a>        (x <span class="op">-</span> z) <span class="op">%</span> L</span>
-<span id="cb4-16"><a></a>    <span class="op">}</span> <span class="cf">else</span> <span class="op">{</span></span>
-<span id="cb4-17"><a></a>        ((x <span class="op">+</span> L) <span class="op">-</span> z) <span class="op">%</span> L</span>
-<span id="cb4-18"><a></a>    <span class="op">};</span></span>
-<span id="cb4-19"><a></a></span>
-<span id="cb4-20"><a></a>    <span class="co">// Apply permutation to x and y</span></span>
-<span id="cb4-21"><a></a>    <span class="kw">let</span> px <span class="op">=</span> permutation[x]<span class="op">;</span></span>
-<span id="cb4-22"><a></a>    <span class="kw">let</span> py <span class="op">=</span> permutation[y]<span class="op">;</span></span>
-<span id="cb4-23"><a></a>    pairs<span class="op">.</span>push((px<span class="op">,</span> py))<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource rust number-lines code-with-copy"><code class="sourceCode rust"><span id="cb4-1"><a aria-label="1"></a><span class="co">// Generate random permutation of N integers</span></span>
+<span id="cb4-2"><a aria-label="2"></a><span class="kw">let</span> <span class="kw">mut</span> numbers<span class="op">:</span> <span class="dt">Vec</span><span class="op">&lt;</span><span class="dt">usize</span><span class="op">&gt;</span> <span class="op">=</span> (<span class="dv">0</span><span class="op">..</span>N)<span class="op">.</span>collect()<span class="op">;</span></span>
+<span id="cb4-3"><a aria-label="3"></a><span class="kw">let</span> <span class="kw">mut</span> rng <span class="op">=</span> thread_rng()<span class="op">;</span></span>
+<span id="cb4-4"><a aria-label="4"></a>numbers<span class="op">.</span>shuffle(<span class="op">&amp;</span><span class="kw">mut</span> rng)<span class="op">;</span></span>
+<span id="cb4-5"><a aria-label="5"></a><span class="kw">let</span> permutation <span class="op">=</span> numbers<span class="op">;</span></span>
+<span id="cb4-6"><a aria-label="6"></a></span>
+<span id="cb4-7"><a aria-label="7"></a><span class="co">// Generate pairs for each z</span></span>
+<span id="cb4-8"><a aria-label="8"></a><span class="kw">let</span> <span class="kw">mut</span> pairs <span class="op">=</span> <span class="dt">Vec</span><span class="pp">::</span>with_capacity(zs<span class="op">.</span>len())<span class="op">;</span></span>
+<span id="cb4-9"><a aria-label="9"></a><span class="cf">for</span> <span class="op">&amp;</span>z <span class="kw">in</span> <span class="op">&amp;</span>zs <span class="op">{</span></span>
+<span id="cb4-10"><a aria-label="10"></a>    <span class="co">// Generate random x between 0 and N-1</span></span>
+<span id="cb4-11"><a aria-label="11"></a>    <span class="kw">let</span> x <span class="op">=</span> rng<span class="op">.</span>gen_range(<span class="dv">0</span><span class="op">..</span>N)<span class="op">;</span></span>
+<span id="cb4-12"><a aria-label="12"></a></span>
+<span id="cb4-13"><a aria-label="13"></a>    <span class="co">// Compute y such that x - y = z (mod L)</span></span>
+<span id="cb4-14"><a aria-label="14"></a>    <span class="kw">let</span> y <span class="op">=</span> <span class="cf">if</span> x <span class="op">&gt;=</span> z <span class="op">{</span></span>
+<span id="cb4-15"><a aria-label="15"></a>        (x <span class="op">-</span> z) <span class="op">%</span> L</span>
+<span id="cb4-16"><a aria-label="16"></a>    <span class="op">}</span> <span class="cf">else</span> <span class="op">{</span></span>
+<span id="cb4-17"><a aria-label="17"></a>        ((x <span class="op">+</span> L) <span class="op">-</span> z) <span class="op">%</span> L</span>
+<span id="cb4-18"><a aria-label="18"></a>    <span class="op">};</span></span>
+<span id="cb4-19"><a aria-label="19"></a></span>
+<span id="cb4-20"><a aria-label="20"></a>    <span class="co">// Apply permutation to x and y</span></span>
+<span id="cb4-21"><a aria-label="21"></a>    <span class="kw">let</span> px <span class="op">=</span> permutation[x]<span class="op">;</span></span>
+<span id="cb4-22"><a aria-label="22"></a>    <span class="kw">let</span> py <span class="op">=</span> permutation[y]<span class="op">;</span></span>
+<span id="cb4-23"><a aria-label="23"></a>    pairs<span class="op">.</span>push((px<span class="op">,</span> py))<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -971,27 +979,27 @@ z_i = x_i - y_i \; (\mod L)
 <p><strong>Decoding</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource rust number-lines code-with-copy"><code class="sourceCode rust"><span id="cb5-1"><a></a><span class="co">// Create inverse permutation</span></span>
-<span id="cb5-2"><a></a><span class="kw">let</span> <span class="kw">mut</span> inverse <span class="op">=</span> <span class="pp">vec!</span>[<span class="dv">0</span><span class="op">;</span> N]<span class="op">;</span></span>
-<span id="cb5-3"><a></a><span class="cf">for</span> (i<span class="op">,</span> <span class="op">&amp;</span>p) <span class="kw">in</span> permutation<span class="op">.</span>iter()<span class="op">.</span>enumerate() <span class="op">{</span></span>
-<span id="cb5-4"><a></a>    inverse[p] <span class="op">=</span> i<span class="op">;</span></span>
-<span id="cb5-5"><a></a><span class="op">}</span></span>
-<span id="cb5-6"><a></a></span>
-<span id="cb5-7"><a></a><span class="co">// Recover z for each pair</span></span>
-<span id="cb5-8"><a></a><span class="kw">let</span> <span class="kw">mut</span> zs <span class="op">=</span> <span class="dt">Vec</span><span class="pp">::</span>with_capacity(pairs<span class="op">.</span>len())<span class="op">;</span></span>
-<span id="cb5-9"><a></a><span class="cf">for</span> <span class="op">&amp;</span>(px<span class="op">,</span> py) <span class="kw">in</span> pairs <span class="op">{</span></span>
-<span id="cb5-10"><a></a>    <span class="co">// Apply inverse permutation to get x and y</span></span>
-<span id="cb5-11"><a></a>    <span class="kw">let</span> x <span class="op">=</span> inverse[px]<span class="op">;</span></span>
-<span id="cb5-12"><a></a>    <span class="kw">let</span> y <span class="op">=</span> inverse[py]<span class="op">;</span></span>
-<span id="cb5-13"><a></a></span>
-<span id="cb5-14"><a></a>    <span class="co">// Compute z = x - y (mod L)</span></span>
-<span id="cb5-15"><a></a>    <span class="kw">let</span> z <span class="op">=</span> <span class="cf">if</span> x <span class="op">&gt;=</span> y <span class="op">{</span></span>
-<span id="cb5-16"><a></a>        (x <span class="op">-</span> y) <span class="op">%</span> L</span>
-<span id="cb5-17"><a></a>    <span class="op">}</span> <span class="cf">else</span> <span class="op">{</span></span>
-<span id="cb5-18"><a></a>        ((x <span class="op">+</span> L) <span class="op">-</span> y) <span class="op">%</span> L</span>
-<span id="cb5-19"><a></a>    <span class="op">};</span></span>
-<span id="cb5-20"><a></a>    zs<span class="op">.</span>push(z)<span class="op">;</span></span>
-<span id="cb5-21"><a></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource rust number-lines code-with-copy"><code class="sourceCode rust"><span id="cb5-1"><a aria-label="1"></a><span class="co">// Create inverse permutation</span></span>
+<span id="cb5-2"><a aria-label="2"></a><span class="kw">let</span> <span class="kw">mut</span> inverse <span class="op">=</span> <span class="pp">vec!</span>[<span class="dv">0</span><span class="op">;</span> N]<span class="op">;</span></span>
+<span id="cb5-3"><a aria-label="3"></a><span class="cf">for</span> (i<span class="op">,</span> <span class="op">&amp;</span>p) <span class="kw">in</span> permutation<span class="op">.</span>iter()<span class="op">.</span>enumerate() <span class="op">{</span></span>
+<span id="cb5-4"><a aria-label="4"></a>    inverse[p] <span class="op">=</span> i<span class="op">;</span></span>
+<span id="cb5-5"><a aria-label="5"></a><span class="op">}</span></span>
+<span id="cb5-6"><a aria-label="6"></a></span>
+<span id="cb5-7"><a aria-label="7"></a><span class="co">// Recover z for each pair</span></span>
+<span id="cb5-8"><a aria-label="8"></a><span class="kw">let</span> <span class="kw">mut</span> zs <span class="op">=</span> <span class="dt">Vec</span><span class="pp">::</span>with_capacity(pairs<span class="op">.</span>len())<span class="op">;</span></span>
+<span id="cb5-9"><a aria-label="9"></a><span class="cf">for</span> <span class="op">&amp;</span>(px<span class="op">,</span> py) <span class="kw">in</span> pairs <span class="op">{</span></span>
+<span id="cb5-10"><a aria-label="10"></a>    <span class="co">// Apply inverse permutation to get x and y</span></span>
+<span id="cb5-11"><a aria-label="11"></a>    <span class="kw">let</span> x <span class="op">=</span> inverse[px]<span class="op">;</span></span>
+<span id="cb5-12"><a aria-label="12"></a>    <span class="kw">let</span> y <span class="op">=</span> inverse[py]<span class="op">;</span></span>
+<span id="cb5-13"><a aria-label="13"></a></span>
+<span id="cb5-14"><a aria-label="14"></a>    <span class="co">// Compute z = x - y (mod L)</span></span>
+<span id="cb5-15"><a aria-label="15"></a>    <span class="kw">let</span> z <span class="op">=</span> <span class="cf">if</span> x <span class="op">&gt;=</span> y <span class="op">{</span></span>
+<span id="cb5-16"><a aria-label="16"></a>        (x <span class="op">-</span> y) <span class="op">%</span> L</span>
+<span id="cb5-17"><a aria-label="17"></a>    <span class="op">}</span> <span class="cf">else</span> <span class="op">{</span></span>
+<span id="cb5-18"><a aria-label="18"></a>        ((x <span class="op">+</span> L) <span class="op">-</span> y) <span class="op">%</span> L</span>
+<span id="cb5-19"><a aria-label="19"></a>    <span class="op">};</span></span>
+<span id="cb5-20"><a aria-label="20"></a>    zs<span class="op">.</span>push(z)<span class="op">;</span></span>
+<span id="cb5-21"><a aria-label="21"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1004,12 +1012,12 @@ z_i = x_i - y_i \; (\mod L)
 <p><strong>Python</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a></a>mkdir cipher<span class="op">;</span> cd cipher</span>
-<span id="cb6-2"><a></a>python <span class="op">-</span>m venv venv</span>
-<span id="cb6-3"><a></a>. venv<span class="op">/</span><span class="bu">bin</span><span class="op">/</span>activate</span>
-<span id="cb6-4"><a></a><span class="op">!</span>pip install maturin</span>
-<span id="cb6-5"><a></a>maturin init</span>
-<span id="cb6-6"><a></a>maturin develop</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a aria-label="1"></a>mkdir cipher<span class="op">;</span> cd cipher</span>
+<span id="cb6-2"><a aria-label="2"></a>python <span class="op">-</span>m venv venv</span>
+<span id="cb6-3"><a aria-label="3"></a>. venv<span class="op">/</span><span class="bu">bin</span><span class="op">/</span>activate</span>
+<span id="cb6-4"><a aria-label="4"></a><span class="op">!</span>pip install maturin</span>
+<span id="cb6-5"><a aria-label="5"></a>maturin init</span>
+<span id="cb6-6"><a aria-label="6"></a>maturin develop</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1019,9 +1027,9 @@ z_i = x_i - y_i \; (\mod L)
 <p><strong>Usage</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a></a><span class="im">import</span> cipher</span>
-<span id="cb7-2"><a></a>encoded <span class="op">=</span> cipher.encode(<span class="st">"Whazzuuupppp??!!"</span>)</span>
-<span id="cb7-3"><a></a>decoded <span class="op">=</span> cipher.decode(encoded)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a aria-label="1"></a><span class="im">import</span> cipher</span>
+<span id="cb7-2"><a aria-label="2"></a>encoded <span class="op">=</span> cipher.encode(<span class="st">"Whazzuuupppp??!!"</span>)</span>
+<span id="cb7-3"><a aria-label="3"></a>decoded <span class="op">=</span> cipher.decode(encoded)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
