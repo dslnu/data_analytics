@@ -1,0 +1,328 @@
+---
+title: "Big Data: The Modern Data Landscape"
+author:
+  - name: MSDE
+    affiliation: Lviv University
+code-fold: false
+execute:
+  enabled: false
+  cache: true
+diagram:
+  cache: true
+  cache-dir: ./cache
+  engine:
+    tikz:
+      execpath: lualatex
+      additional-packages: |
+        \usetikzlibrary{arrows.meta}
+        \usetikzlibrary{positioning}
+        \usetikzlibrary{decorations.pathreplacing}
+filters:
+  - diagram
+format:
+  revealjs:
+    preview-links: auto
+    slide-number: true
+    theme: default
+    multiplex:
+      url: 'https://mplex.vitv.ly'
+      secret: '68cae3300cbb0c85a646852cc93a67ca'
+      id: '1cb4eaabef49bfa2c96445672a224aa4a43bdfc0ac952c4395a566f43baef8cf'
+---
+
+# The Modern Data Landscape
+
+## Why this deck?
+:::{.callout-note icon=false}
+## Scope
+The Intro lecture's Big Data ecosystem tour covered storage, compute, and core query tooling: columnar formats, Arrow, Polars/DuckDB, table formats, query engines, and warehouses.
+
+This deck fills in the layers **around** that core: how data gets in, how it's governed, and how it's consumed.
+:::
+
+# Who works with data?
+
+## Four data professions
+:::{.callout-tip icon=false}
+## Roughly four types
+- **Analytical**: interprets data, builds dashboards, presents insights.
+- **Scientific**: applies statistics, builds models, runs experiments.
+- **Engineering**: builds and maintains the pipelines and infrastructure.
+- **Machine learning**: builds and deploys AI/ML models in production.
+
+Lines are blurry, especially at smaller companies -- but the distinction helps explain why "the data team" often means very different things.
+:::
+
+## Analytical type
+:::{.callout-note icon=false}
+## Profile
+- Skilled in **SQL** and spreadsheets.
+- Works with BI tools (Tableau, Power BI, Metabase).
+- *Example task*: calculate churn by region, build a dashboard, present findings to marketing.
+:::
+
+## Scientific type
+:::{.callout-important icon=false}
+## Profile
+- Skilled in **Python**'s scientific stack (pandas, scikit-learn) and notebooks.
+- *Example task*: explore which factors correlate with churn, build a statistical model, run an A/B test.
+:::
+
+## Engineering type
+:::{.callout-tip icon=false}
+## Profile
+- Builds and maintains **pipelines**: pulling, cleaning, and loading data so others can use it.
+- Uses Python, Spark, databases, and cloud infrastructure.
+- *Example task*: maintain an ingestion pipeline, optimize queries, add data quality checks.
+:::
+
+## Machine learning type
+:::{.callout-note icon=false}
+## Profile
+- Builds and deploys models: from small classifiers to large language models.
+- A distinct toolset: feature stores, training/tracking/serving infrastructure.
+- *Example task*: train a recommendation model, deploy it behind an API, monitor and retrain it.
+:::
+
+# How data moves: ETL vs. ELT
+
+## ETL vs. ELT
+:::{.callout-important icon=false}
+## ETL: Extract, Transform, Load
+Raw data is extracted from the source, **transformed** (cleaned, joined), and only then loaded into its final destination.
+:::
+
+:::{.callout-tip icon=false}
+## ELT: Extract, Load, Transform
+Raw data is extracted and loaded **as-is** into the warehouse/lake first, then transformed there, with results stored in a separate set of tables.
+:::
+
+## Which to choose?
+:::{.callout-note icon=false}
+## Trade-offs
+- **ETL**: less storage/compute overhead, but you lose the raw data unless you keep a separate copy.
+- **ELT**: costs more (extra storage and compute), but keeps raw data around for reprocessing if requirements change later.
+- Cheap object storage plus powerful warehouses have pushed most modern teams toward **ELT**.
+:::
+
+# Getting data in: ingestion & CDC
+
+## Ingestion tools
+:::{.callout-tip icon=false}
+## Why not just write scripts?
+Bespoke scripts pulling from an API or database work, but the same auth, pagination, and error-handling code gets rewritten over and over.
+
+- **Fivetran**, **Airbyte**, **dlt**: pre-built connectors for common sources and destinations.
+- You configure a source and a destination; the tool handles the rest.
+- This naturally pushes teams toward **ELT** -- data lands first, then gets transformed.
+:::
+
+## Change data capture (CDC)
+:::{.callout-important icon=false}
+## The idea
+Instead of repeatedly querying a database for "what changed", CDC reads the database's **replication log** directly and captures inserts, updates, and deletes as they happen.
+
+- Much lower load on the source database than polling it.
+- **Debezium** is a popular open-source, standalone CDC tool.
+- Ingestion tools use CDC under the hood for database sources.
+:::
+
+# Medallion architecture
+
+## Bronze, Silver, Gold
+:::{.callout-note icon=false}
+## Three layers, same storage
+Raw and processed data often live in the **same** lake/lakehouse, just at different levels of refinement:
+
+- **Bronze**: raw data, straight from the source.
+- **Silver**: cleaned and conformed -- fixed types, deduplicated, joined.
+- **Gold**: aggregated and shaped for a specific use case, like a dashboard.
+:::
+
+## Who queries what?
+:::{.callout-tip icon=false}
+## In practice
+- An **analyst** usually queries **gold** tables.
+- An **engineer** debugging a pipeline digs into **bronze** or **silver**.
+- Each layer is a checkpoint: reprocessing from silver is cheaper than reprocessing from the raw source.
+:::
+
+# Metastore vs. data catalog
+
+## Metadata catalog (metastore)
+:::{.callout-important icon=false}
+## Machine-facing
+Describes which data exists so a **query engine** can use it: table names, schemas, and how they map to files.
+
+- **Hive Metastore**, **AWS Glue Data Catalog**, **Unity Catalog** (Databricks).
+- Without it, a query engine can't find or interpret your files.
+:::
+
+## Data catalog
+:::{.callout-tip icon=false}
+## Human-facing
+Documentation and business context for **people**: where data comes from, who owns it, what the access policies are -- makes data searchable.
+
+- **DataHub**, **OpenMetadata**, and (again) **Unity Catalog** -- which does both jobs.
+- Same underlying idea as a metastore, different audience.
+:::
+
+# The semantic layer
+
+## Why do we need one?
+:::{.callout-warning icon=false}
+## The problem
+"Prepare a revenue report by region." Simple -- until you find 4 order tables, 3 customer tables, and no agreement on what "region" even means.
+:::
+
+## The semantic layer
+:::{.callout-tip icon=false}
+## The fix
+A shared, canonical definition of business entities, metrics, and relationships -- defined once, used everywhere.
+
+- **Cube**, **LookML** (Looker), **dbt Semantic Layer**.
+- Integrates with BI tools and (increasingly) AI agents, so everyone queries the same definition of "revenue."
+:::
+
+# Data lineage
+
+## What is lineage?
+:::{.callout-note icon=false}
+## Definition
+Tracks **how data is transformed** as it flows through the pipeline -- as opposed to a catalog, which just describes what data you have.
+:::
+
+## Table-level vs. column-level
+:::{.callout-tip icon=false}
+## Granularity
+- **Table-level**: `gold.orders` is built from `silver.orders` and `silver.customers`.
+- **Column-level**: `customers.lifetime_value` is calculated from `orders.total` and `payments.amount`.
+- Column-level is more precise, but harder to collect automatically.
+:::
+
+## Why it matters
+:::{.callout-important icon=false}
+## Use cases
+- **Impact analysis**: will anything break if I drop this column?
+- **Root-cause analysis**: what feeds this metric that suddenly looks wrong?
+- **Compliance**: which pipelines touch personally identifiable data?
+:::
+
+::: aside
+**OpenLineage** is an emerging open standard for lineage metadata, supported by many catalogs and processing tools.
+:::
+
+# Data observability & monitoring
+
+## Two kinds of monitoring
+:::{.callout-note icon=false}
+## Pipeline vs. data
+- **Pipeline monitoring**: did the job run? did it fail? how long did it take?
+- **Data monitoring**: is the data fresh? any volume anomalies? did the schema change silently?
+:::
+
+## Pipeline monitoring
+:::{.callout-tip icon=false}
+## Familiar tools
+The stack looks a lot like general software monitoring: **Prometheus**, **Grafana**, the **ELK** stack -- plus whatever the orchestrator surfaces natively.
+:::
+
+## Data quality: manual and automated
+:::{.callout-important icon=false}
+## Two approaches
+- **Manual**: you define expectations yourself -- **Great Expectations**, **dbt tests**.
+- **Automated**: the tool learns what "normal" looks like and flags anomalies -- **Monte Carlo**, **Bigeye**, **Metaplane**.
+:::
+
+# Real-time OLAP & OSS warehouses
+
+## Real-time OLAP databases
+:::{.callout-tip icon=false}
+## When a warehouse is too slow
+Warehouses are great for internal dashboards, but too slow or costly for **user-facing** analytics that need sub-second responses at high concurrency.
+
+- **Apache Druid**, **Apache Pinot**: purpose-built for this.
+- *Example*: an in-app "trending now" widget, or a live leaderboard.
+:::
+
+## Open-source / self-hosted warehouses
+:::{.callout-note icon=false}
+## Alternatives to the managed giants
+Beyond Snowflake/BigQuery/Redshift, popular self-hosted OLAP options include:
+
+- **ClickHouse** -- also very popular as a real-time serving database.
+- **Apache Doris**, **StarRocks**.
+:::
+
+# Reverse ETL & operational analytics
+
+## Reverse ETL
+:::{.callout-important icon=false}
+## Flipping the flow
+Usually data flows **into** the warehouse. Reverse ETL pushes processed data **back out** to the operational tools people actually use day to day.
+
+- *Example*: compute customer lifetime value in the warehouse, sync it into a CRM for sales.
+- Tools: **Hightouch**, **RudderStack**, plus reverse-ETL features from Airbyte and Fivetran.
+:::
+
+## Operational analytics
+:::{.callout-tip icon=false}
+## The bigger idea
+Bringing data into the tools non-analysts already use, instead of a report for a higher-up:
+
+- Usage data synced into a CRM so sales can prioritize the right accounts.
+- Support tickets and plan info synced into a helpdesk tool.
+:::
+
+# Naming names: BI tools & notebooks
+
+## BI tools
+:::{.callout-note icon=false}
+## Self-service dashboards
+Connect to a warehouse and let people build charts without writing SQL:
+
+- **Tableau**, **Power BI**: powerful, flexible, popular in large enterprises.
+- **Looker**: built around its own semantic layer (LookML).
+- **Metabase**: quick to set up, approachable for non-technical users.
+:::
+
+## Notebooks
+:::{.callout-tip icon=false}
+## Code + narrative + output
+Combine markdown, code, and rich output (charts, tables) in one document -- ideal for exploratory analysis.
+
+- **Jupyter**: the original, still the most popular.
+- **Google Colab**, **Deepnote**, **marimo**.
+:::
+
+# Putting it together
+
+## The full picture
+:::{.callout-tip icon=false}
+## From source to screen
+1. **Ingest** (Fivetran / Airbyte / CDC) →
+2. **Land raw** (Bronze) →
+3. **Transform** (dbt / SQLMesh) →
+4. **Refine** (Silver / Gold) →
+5. **Govern** (catalog, lineage, semantic layer, observability) →
+6. **Consume** (BI, reverse ETL, notebooks, ML)
+:::
+
+## Where this fits
+:::{.callout-note icon=false}
+## Recap
+This deck filled the gaps around the Big Data Intro lecture's ecosystem tour: ingestion, governance, and consumption. Together, the two decks cover the full lifecycle -- source, storage, processing, and use.
+:::
+
+::: aside
+See `bigdata_lec1.qmd` for storage/compute/table-format coverage, and `bigdata.qmd` for the full lecture and lab list.
+:::
+
+## Further reading
+:::{.callout-tip icon=false}
+## Landscape guides
+- Oleh (sinja.io), *Guide to data tools landscape for developers* -- the article this deck was built to complement.
+- Matt Turck, *The MAD (Machine Learning, AI & Data) Landscape* -- an annual "map with logos" view, running since 2012.
+- a16z, *Emerging Architectures for Modern Data Infrastructure* -- an opinionated reference-stack view.
+- Metabase, *A Guide to the Data Landscape* -- another accessible newcomer-oriented overview.
+:::
