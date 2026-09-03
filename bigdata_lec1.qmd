@@ -63,9 +63,8 @@ format:
 
 :::{.callout-note icon=false}
 ## Hadoop (open-source)
-- Doug Cutting and Mike Cafarella build **Hadoop** at Yahoo!, implementing GFS and MapReduce ideas in the open.
+- Doug Cutting and Mike Cafarella build **Hadoop** at Yahoo!
 - 2008: Hadoop becomes a top-level Apache project.
-- The term "Big Data" starts appearing regularly in industry press.
 :::
 
 ## Origins
@@ -78,13 +77,13 @@ format:
 :::
 
 :::{.callout-note icon=false}
-## streaming and the lakehouse
+## Streaming and the lakehouse
 - Real-time streaming platforms (Kafka, Flink) become standard for continuously arriving data.
 - The **lakehouse** pattern blends data lake flexibility with data warehouse guarantees (e.g. Delta Lake, Iceberg).
-- Big Data infrastructure increasingly underpins machine learning and AI pipelines.
+- ML/AI start relying on Big Data infrastructure
 :::
 
-## Timeline, at a glance
+## Timeline
 
 ```{.tikz}
 \usetikzlibrary{arrows.meta}
@@ -400,6 +399,7 @@ An approach to load handling whereby a system automatically adds resources in ca
 :::{.callout-important icon=false}
 ## CAP theorem (Brewer, 2000; Gilbert & Lynch, 2002)
 Given the following definitions:
+
 - **Consistency (C)**: every read receives the most recent write, or an error.
 - **Availability (A)**: every request receives a (non-error) response, without guarantee it contains the most recent write.
 - **Partition tolerance (P)**: the system continues to operate despite an arbitrary number of dropped or delayed messages between nodes.
@@ -561,26 +561,10 @@ However, keep in mind the following:
 :::{.callout-important icon=false}
 ## Types
 
-- Prescriptive
-- Diagnostic
 - Descriptive
+- Diagnostic
 - Predictive
-:::
-
-## Types: Prescriptive
-:::{.callout-important icon=false}
-## Prescriptive
-
-- Forward looking
-- Optimal decisions for future situations
-:::
-
-## Types: Diagnostic
-:::{.callout-important icon=false}
-## Diagnostic
-
-- Backward looking
-- Focused on causal relationships 
+- Prescriptive
 :::
 
 ## Types: Descriptive
@@ -591,13 +575,60 @@ However, keep in mind the following:
 - Focused on descriptions and comparisons
 :::
 
-## Types: Descriptive
+:::{.callout-note icon=false}
+## Examples
+- monthly sales dashboards
+- website traffic reports
+- "what happened last quarter" summaries
+:::
+
+## Types: Diagnostic
+:::{.callout-important icon=false}
+## Diagnostic
+
+- Backward looking
+- Focused on causal relationships
+:::
+
+:::{.callout-note icon=false}
+## Examples
+- root-cause analysis of a revenue drop
+- A/B test result breakdowns
+- drill-down / OLAP slice-and-dice analysis
+:::
+
+## Types: Predictive
 :::{.callout-note icon=false}
 ## Predictive
 
 - Forward looking
 - Focused on the prediction of future states, relationship, and patterns
 :::
+
+:::{.callout-tip icon=false}
+## Examples
+- churn prediction models
+- demand forecasting
+- credit risk scoring
+:::
+
+## Types: Prescriptive
+:::{.callout-important icon=false}
+## Prescriptive
+
+- Forward looking
+- Optimal decisions for future situations
+:::
+
+:::{.callout-tip icon=false}
+## Examples
+- dynamic pricing engines
+- supply-chain / route optimization
+- next-best-action recommendation systems
+:::
+
+## Analytics ascendancy model
+![](img/analytic_ascendancy_model.jpg)
 
 # Processing paradigms
 
@@ -678,14 +709,58 @@ Treat **everything as a stream**, including historical data (replayed through th
 ![](img/lambda_vs_kappa)
 
 ## Challenges
-
-There are 2 main challenges associated with Big Data.
-
-:::{.callout-important icon=false}
+:::{.callout-important}
 ## Challenges
 
 - how do we store and manage such a **huge volume of data** efficiently?
 - how do we process and extract valuable information from the data within the given **time frame**?
+:::
+
+## Storage & management
+:::{.callout-important icon=false}
+## What makes it hard?
+- data volume **outpaces** the growth of storage capacity per node
+- redundancy needed for fault tolerance **multiplies** storage cost
+- choosing the wrong format or layout wastes both space and query performance
+:::
+
+## Processing within a time frame
+:::{.callout-important icon=false}
+## What makes it hard?
+- some questions need answers in **milliseconds**, others can wait **hours**
+- picking the wrong paradigm (batch vs. stream) wastes either latency or resources
+- computation itself has a **cost**
+:::
+
+## Data quality & integration
+:::{.callout-warning icon=false}
+## What makes it hard?
+- combining sources with different schemas, units, and conventions
+- missing, duplicate, or inconsistent records (**Veracity**, revisited)
+- "garbage in, garbage out" applies at any scale
+:::
+
+## Skills & organization
+:::{.callout-note icon=false}
+## What makes it hard?
+- demand for skilled data engineers and scientists has long outpaced supply
+- **Maintainability** (from earlier) is a people problem as much as a technical one
+- engineering, analytics, and ML teams often want different things from the same data
+:::
+
+## Cost management
+:::{.callout-tip icon=false}
+## What makes it hard?
+- cloud storage/compute bills scale with data volume -- easy to underestimate
+- **Value** (one of the extended Vs) has to justify that cost, or the pipeline isn't worth running
+- over-provisioning "just in case" is a common and expensive habit
+:::
+
+## Security & privacy
+:::{.callout-warning icon=false}
+## What makes it hard?
+- more data concentrated in one place is a **bigger target**
+- access control gets harder as more teams need access to the same data
 :::
 
 # Use cases
@@ -740,9 +815,13 @@ There are 2 main challenges associated with Big Data.
 
 # The Big Data ecosystem
 
-## A landscape, by category
+## Ecosystem
+
+![](img/landscape.svg)
+
+## Ecosystem
 :::{.callout-note icon=false}
-## Rough map
+## Categories
 - **Compute & scaling**: multi-core, GPU, and cluster techniques for speeding up computation.
 - **Fast dataframes**: single-node engines that outrun pandas without going distributed.
 - **Distributed/parallel processing frameworks**: tools like Dask that spread work across cores and machines.
@@ -758,10 +837,6 @@ There are 2 main challenges associated with Big Data.
 - Row-oriented formats (CSV, JSON) store a record's fields together -- good for reading whole rows.
 - **Columnar** formats (**Parquet**, **ORC**) store each column together -- good for reading a few columns out of many, and for compression.
 - Analytical ("OLAP") workloads scan a handful of columns over huge tables, so columnar storage dominates the Big Data world.
-:::
-
-::: aside
-Parquet is covered in depth in the Data Formats lecture later in the course.
 :::
 
 ## Apache Arrow
@@ -841,41 +916,6 @@ A folder of Parquet files on cheap storage is fast and cheap -- but has no trans
 The result is called a **lakehouse**: warehouse-style guarantees on lake-style storage.
 :::
 
-::: aside
-Table formats and the lakehouse pattern are covered in more depth in the Databases and Data Formats lectures.
-:::
-
-## Lakehouse stack, visualized
-
-```{.tikz}
-\usetikzlibrary{arrows.meta}
-\begin{tikzpicture}[
-  layer/.style={draw, very thick, rounded corners, minimum width=9cm, minimum height=1.8cm, align=center},
-  arr/.style={-{Latex[length=3mm]}, very thick},
-  consumer/.style={draw, thick, rounded corners, minimum width=2.4cm, minimum height=0.9cm, align=center, font=\small}
-]
-  \node[layer, fill=gray!10] (storage) at (0,0)
-    {\textbf{Storage}\\[2pt]\small object storage (S3, GCS, \dots) --- Parquet / ORC files};
-
-  \node[layer, fill=gray!20] (table) at (0,2.9)
-    {\textbf{Table format}\\[2pt]\small Iceberg / Delta Lake / Hudi --- ACID, schema evolution, time travel};
-
-  \node[layer, fill=gray!30] (engine) at (0,5.8)
-    {\textbf{Query engine}\\[2pt]\small Trino / Spark SQL / DuckDB};
-
-  \draw[arr] (storage.north) -- (table.south);
-  \draw[arr] (table.north) -- (engine.south);
-
-  \node[consumer] (bi) at (-2.8,8.3) {BI\\dashboards};
-  \node[consumer] (sql) at (0,8.3) {Ad-hoc\\SQL};
-  \node[consumer] (ml) at (2.8,8.3) {ML\\training};
-
-  \draw[arr] (engine.north) -- (bi.south);
-  \draw[arr] (engine.north) -- (sql.south);
-  \draw[arr] (engine.north) -- (ml.south);
-\end{tikzpicture}
-```
-
 ## Query engines
 :::{.callout-tip icon=false}
 ## Reading it all back
@@ -909,10 +949,6 @@ Instead of hand-writing pipeline code, describe transformations as **SQL `select
 - Trade some control and portability for far less operational overhead than running your own cluster.
 :::
 
-::: aside
-These are covered further in the DBs for Analytics lecture.
-:::
-
 ## Orchestration & pipelines
 :::{.callout-tip icon=false}
 ## Who runs all this, and when?
@@ -922,23 +958,10 @@ These are covered further in the DBs for Analytics lecture.
 
 ## Streaming platforms
 :::{.callout-important icon=false}
-## Handling data that never stops
+## Tools
 - **Kafka**: a distributed log -- the most common backbone for streaming pipelines.
 - **Flink**, **Spark Structured Streaming**: stream-processing engines that consume from logs like Kafka.
 - Ties back to the **Stream processing** and **Kappa architecture** ideas covered earlier in this lecture.
-:::
-
-## ML tooling on Big Data
-:::{.callout-note icon=false}
-## The last mile
-Once data is stored, queried, and streaming, machine learning tooling takes over: preparing features, tracking experiments, and serving models at scale.
-:::
-
-## Feature stores & experiment tracking
-:::{.callout-tip icon=false}
-## Keeping ML pipelines sane
-- **Feature stores** (e.g. Feast): a shared, versioned source of ML features for both training and serving, so the two don't drift apart.
-- **Experiment tracking** (e.g. MLflow): logs parameters, metrics, and model artifacts across many training runs.
 :::
 
 ## Distributed ML
@@ -947,17 +970,6 @@ Once data is stored, queried, and streaming, machine learning tooling takes over
 - **Ray**: a general-purpose framework for distributing Python compute, popular for ML training and serving.
 - **Spark MLlib**: machine learning algorithms built on top of Spark's distributed engine.
 - **Dask-ML**: scales familiar scikit-learn-style workflows using Dask.
-:::
-
-## How to choose
-:::{.callout-note icon=false}
-## Quick heuristics
-- Fits on one machine? Don't distribute it -- see **Common wisdom** under Scalability.
-- Ad-hoc SQL over some Parquet/CSV files? Reach for **DuckDB** before spinning up a cluster.
-- pandas too slow, but data still fits on one machine? Try **Polars** first.
-- Need ad-hoc queries over structured data at scale? Look at the Databases lectures.
-- Need to process more data than fits in memory, across many machines, in Python? That's what Dask is for.
-- Need geospatial-specific tooling? That's a whole unit of its own.
 :::
 
 # References
