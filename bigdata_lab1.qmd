@@ -179,14 +179,251 @@ We should only convert objects to categoricals if most values are repeated. We h
 
 Converting all object columns and creating a new optimized DataFrame is left as part of **Exercise 1**.
 
+## Vectorization & query performance
+
+We can also optimize by modifying the actual operation. Let's derive a simple "risk score" from `Age`, `Income`, and `Number of Children` four different ways, and time each.
+
+```{python}
+import numpy as np
+
+def risk_score(age, income, children):
+    return age * 0.5 - income / 10_000 + children * 2
+```
+
+**`.apply(axis=1)`** -- calls a Python function once per row:
+```{python}
+%timeit dd.apply(lambda row: risk_score(row["Age"], row["Income"], row["Number of Children"]), axis=1)
+```
+
+**`.iterrows()`** -- iterates row by row, unpacking into a `Series` each time (notoriously slow):
+```{python}
+def with_iterrows(df):
+    out = []
+    for _, row in df.iterrows():
+        out.append(risk_score(row["Age"], row["Income"], row["Number of Children"]))
+    return out
+
+%timeit with_iterrows(dd)
+```
+
+**`.itertuples()`** -- same idea, but yields lightweight namedtuples instead of `Series`:
+```{python}
+def with_itertuples(df):
+    out = []
+    for row in df.itertuples():
+        out.append(risk_score(row.Age, row.Income, row._5))  # "Number of Children" -> _5 (spaces aren't valid attribute names)
+    return out
+
+%timeit with_itertuples(dd)
+```
+
+**Vectorized** -- no Python-level loop at all, the whole computation runs in C/numpy:
+```{python}
+%timeit risk_score(dd["Age"], dd["Income"], dd["Number of Children"])
+```
+
+Let's tabulate and plot the four timings:
+```{python}
+import matplotlib.pyplot as plt
+import time
+
+def time_it(fn, n=5):
+    start = time.perf_counter()
+    for _ in range(n):
+        fn()
+    return (time.perf_counter() - start) / n
+
+timings = {
+    ".apply(axis=1)": time_it(lambda: dd.apply(lambda row: risk_score(row["Age"], row["Income"], row["Number of Children"]), axis=1), n=3),
+    ".iterrows()": time_it(lambda: with_iterrows(dd), n=3),
+    ".itertuples()": time_it(lambda: with_itertuples(dd), n=3),
+    "vectorized": time_it(lambda: risk_score(dd["Age"], dd["Income"], dd["Number of Children"])),
+}
+
+plt.figure(figsize=(6, 4))
+plt.barh(list(timings.keys()), list(timings.values()))
+plt.xlabel("seconds (lower is better)")
+plt.title("Row-wise computation: four approaches")
+plt.tight_layout()
+plt.show()
+```
+
+### Filtering: `.query()` / `.eval()` vs. boolean masks
+
+```{python}
+%timeit dd[(dd["Income"] < 30000) & (dd["Age"] > 50)]
+```
+
+```{python}
+%timeit dd.query("Income < 30000 and Age > 50")
+```
+
+`.query()`/`.eval()` parse the expression and can use the `numexpr` engine under the hood (one of pandas' "recommended performance dependencies").
+
+## Chunked processing
+
+`depression_data.csv` is small enough (47MB) - let's generate a synthetic dataset. 
+
+```{python}
+import pandas as pd
+import numpy as np
+
+def make_transactions(n_rows=5_000_000, seed=0):
+    rng = np.random.default_rng(seed)
+    categories = ["electronics", "grocery", "apparel", "home", "toys", "books"]
+    return pd.DataFrame({
+        "transaction_id": np.arange(n_rows),
+        "customer_id": rng.integers(0, 200_000, n_rows),
+        "product_category": rng.choice(categories, n_rows),
+        "amount": rng.gamma(2.0, 25.0, n_rows).round(2),
+        "timestamp": pd.date_range("2023-01-01", periods=n_rows, freq="s"),
+        "is_fraud": rng.random(n_rows) < 0.01,
+    })
+```
+
+Store it to file:
+
+```{python}
+transactions = make_transactions()
+transactions.to_csv("_files/transactions.csv", index=False)
+print(mem_usage(transactions))
+```
+
+Now let's load.
+
+**Naive approach** -- load everything, then aggregate:
+```{python}
+%load_ext memory_profiler
+```
+
+```{python}
+%%memit
+whole = pd.read_csv("_files/transactions.csv")
+naive_totals = whole.groupby("product_category")["amount"].sum()
+del whole
+```
+
+**Chunked approach** -- read and aggregate incrementally, never holding the full file in memory at once:
+```{python}
+%%memit
+partial_totals = pd.Series(dtype="float64")
+for chunk in pd.read_csv("_files/transactions.csv", chunksize=500_000):
+    chunk_totals = chunk.groupby("product_category")["amount"].sum()
+    partial_totals = partial_totals.add(chunk_totals, fill_value=0)
+```
+
+```{python}
+partial_totals.sort_index().equals(naive_totals.sort_index())
+```
+
+`%%memit` (from `memory_profiler`, already installed) reports **peak** memory for each cell -- compare the two numbers above. The chunked version trades a bit of extra bookkeeping code for a peak memory footprint that no longer scales with total file size, only with `chunksize`.
+
+## Polars
+
+[Polars](https://pola.rs) is a newer, Rust-based dataframe library: multi-threaded by default, built on the Arrow memory format, and offering both an eager and a **lazy** API. Install it:
+
+```bash
+uv add polars
+```
+
+```{python}
+import polars as pl
+```
+
+**Eager API** -- looks a lot like pandas:
+```{python}
+pl_transactions = pl.read_csv("_files/transactions.csv", try_parse_dates=True)
+pl_transactions.head()
+```
+
+```{python}
+print(f"{pl_transactions.estimated_size('mb'):.2f} MB")
+```
+
+Compare that against `mem_usage(transactions)` from the pandas load above -- Polars tends to infer tighter default dtypes out of the box, without any manual downcasting step.
+
+**Lazy API** -- instead of executing immediately, build a query plan and only run it when you call `.collect()`:
+```{python}
+query = (
+    pl.scan_csv("_files/transactions.csv", try_parse_dates=True)
+    .filter(pl.col("is_fraud"))
+    .group_by("product_category")
+    .agg(pl.col("amount").sum().alias("total_amount"))
+)
+print(query.explain())
+```
+
+```{python}
+query.collect()
+```
+
+`.explain()` prints the *optimized* query plan, with no execution yet.
+
+## Pandas vs. Polars
+
+Let's compare. First, three functions:
+```{python}
+def pandas_task():
+    df = pd.read_csv("_files/transactions.csv")
+    return df[df["is_fraud"]].groupby("product_category")["amount"].sum()
+
+def polars_eager_task():
+    df = pl.read_csv("_files/transactions.csv")
+    return df.filter(pl.col("is_fraud")).group_by("product_category").agg(pl.col("amount").sum())
+
+def polars_lazy_task():
+    return (
+        pl.scan_csv("_files/transactions.csv")
+        .filter(pl.col("is_fraud"))
+        .group_by("product_category")
+        .agg(pl.col("amount").sum())
+        .collect()
+    )
+
+```
+
+Run benchmark:
+
+```{python}
+from memory_profiler import memory_usage as _memory_usage
+
+def benchmark(fn, n=3):
+    times = []
+    peak_mems = []
+    for _ in range(n):
+        start = time.perf_counter()
+        mem_trace = _memory_usage((fn,), interval=0.01, max_usage=True)
+        times.append(time.perf_counter() - start)
+        peak_mems.append(mem_trace if isinstance(mem_trace, float) else mem_trace[0])
+    return {"seconds": sum(times) / len(times), "peak_mb": max(peak_mems)}
+
+results = {
+    "pandas": benchmark(pandas_task),
+    "polars (eager)": benchmark(polars_eager_task),
+    "polars (lazy)": benchmark(polars_lazy_task),
+}
+results
+```
+
+```{python}
+fig, axes = plt.subplots(1, 2, figsize=(10, 4))
+names = list(results.keys())
+axes[0].bar(names, [results[n]["seconds"] for n in names])
+axes[0].set_title("Time (s, lower is better)")
+axes[1].bar(names, [results[n]["peak_mb"] for n in names])
+axes[1].set_title("Peak memory (MB, lower is better)")
+for ax in axes:
+    ax.tick_params(axis="x", rotation=20)
+plt.tight_layout()
+plt.show()
+```
+
 ## Exercises
 
 1. Pick your own dataset from 
   - Kaggle 
   - HuggingFace
   - or <https://archive.ics.uci.edu>.
-
-2. Use Dora library installed in [Applied lab1](./applied_lab1.qmd) for data cleaning.
 
 <!-- 3. Create a data type describing the data structures you're working with in your Pandas DataFrame. -->
 <!--    Use mypy for type annotations. -->
@@ -195,7 +432,9 @@ Converting all object columns and creating a new optimized DataFrame is left as 
 <!-- mypy does not improve performance. However, it makes the code easier to understand. -->
 <!-- ::: -->
 
-3. Perform numerical and object types conversions aimed at minimizing storage space, as outlined above.
+2. Perform numerical and object types conversions aimed at minimizing storage space, as outlined above.
 
-4. Measure performance impact and plot it via e.g. `matplotlib`.
+3. Measure performance impact and plot it via e.g. `matplotlib`.
+
+4. Compare Pandas against Polars for at least one filter and one group-by operation. Plot and briefly discuss the results -- where did Polars win, where didn't it, and why?
 
