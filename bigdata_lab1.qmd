@@ -359,6 +359,66 @@ query.collect()
 
 `.explain()` prints the *optimized* query plan, with no execution yet.
 
+### Streaming / larger-than-RAM
+
+Everything above still comfortably fits in memory. `bigdata_lec1.qmd`'s "Dataframe libraries, compared" table describes Polars as scaling beyond RAM only "**partially**" -- let's see what that means in practice, using a file deliberately built to be too big to casually load whole.
+
+Rather than materializing one huge pandas `DataFrame`, we build the file the same way `## Chunked processing` taught us to *read* one -- just applied to writing instead, reusing `make_transactions()` chunk by chunk:
+
+```{python}
+def write_transactions_chunked(path, total_rows=40_000_000, chunk_rows=5_000_000, seed=0):
+    for i, start in enumerate(range(0, total_rows, chunk_rows)):
+        n = min(chunk_rows, total_rows - start)
+        chunk = make_transactions(n_rows=n, seed=seed + i)
+        chunk["transaction_id"] += start  # keep IDs unique across chunks
+        chunk.to_csv(path, mode="w" if i == 0 else "a", header=(i == 0), index=False)
+        del chunk
+
+write_transactions_chunked("_files/transactions_large.csv")
+```
+
+```{python}
+import os
+print(f"{os.path.getsize('_files/transactions_large.csv') / 1024**3:.2f} GB on disk")
+```
+
+**We deliberately do not run `pd.read_csv()` on this file.** This is exactly the case where an eager load starts to strain a laptop -- `## Chunked processing` already showed the pandas-side answer (`chunksize`); here's the Polars-side one.
+
+Polars' lazy `.collect()` now takes an `engine` argument -- `engine="streaming"` processes the query in bounded chunks instead of loading everything up front, `engine="in-memory"` is the regular fully-materialized path:
+
+```{python}
+%%memit
+streaming_result = (
+    pl.scan_csv("_files/transactions_large.csv")
+    .filter(pl.col("is_fraud"))
+    .group_by("product_category")
+    .agg(pl.col("amount").sum())
+    .collect(engine="streaming")
+)
+```
+
+```{python}
+%%memit
+in_memory_result = (
+    pl.scan_csv("_files/transactions_large.csv")
+    .filter(pl.col("is_fraud"))
+    .group_by("product_category")
+    .agg(pl.col("amount").sum())
+    .collect(engine="in-memory")
+)
+```
+
+```{python}
+a = streaming_result.sort("product_category")["amount"]
+b = in_memory_result.sort("product_category")["amount"]
+print("exact .equals():", streaming_result.sort("product_category").equals(in_memory_result.sort("product_category")))
+print("max abs difference:", (a - b).abs().max())
+```
+
+`.equals()` reports `False` -- don't panic, this isn't a bug. The streaming engine sums `amount` in a different chunk order than the in-memory engine, and floating-point addition isn't associative: `(a + b) + c` and `a + (b + c)` can differ in their last bit. The max absolute difference above (a few billionths, against sums in the millions) shows exactly how small that gap is. It's a good reminder that "same result" in chunked/distributed aggregation usually means *numerically equivalent*, not *bit-identical* -- worth remembering once you get to Dask or Spark later in the course.
+
+Meanwhile, look at the two `%%memit` peak-memory readings above -- and don't be surprised if the gap is small, inconsistent, or even reversed from one run to the next. At ~3GB, this file comfortably fits in most development machines' RAM, so neither engine is under real memory pressure yet, and `%%memit`'s sampling adds its own noise on top. That's the honest content of "partially" in lec1's comparison table: streaming *processes data in bounded chunks rather than loading it all at once*, which is a real, structural difference -- but it only translates into a clean peak-memory win once your data genuinely doesn't fit comfortably in RAM. Push `total_rows` in `write_transactions_chunked` up until `engine="in-memory"` visibly struggles on your machine to see it decisively -- which is exactly what Exercise 6 below asks you to do.
+
 ## Pandas vs. Polars
 
 Let's compare. First, three functions:
@@ -437,4 +497,8 @@ plt.show()
 3. Measure performance impact and plot it via e.g. `matplotlib`.
 
 4. Compare Pandas against Polars for at least one filter and one group-by operation. Plot and briefly discuss the results -- where did Polars win, where didn't it, and why?
+
+5. Re-implement `risk_score` (from `## Vectorization & query performance`) using Polars expressions (`.with_columns()` + `pl.col(...)` arithmetic) instead of the pandas/numpy version. Benchmark it with `time_it()` against your fastest pandas result from that section -- does the ranking change?
+
+6. `transactions_large.csv` was likely too small relative to your machine's RAM to show a clean memory-usage gap between `engine="streaming"` and `engine="in-memory"`. Using `write_transactions_chunked`, generate a noticeably bigger file -- push `total_rows` up (watch your free disk space) until you can see `engine="in-memory"`'s peak memory climb well past `engine="streaming"`'s, or until the in-memory path starts to visibly struggle. Report the sizes and readings where the gap finally becomes clear on your machine, and explain in a sentence or two what would likely happen if you tried to load that same file eagerly with `pd.read_csv()` instead -- you don't need to actually run that if your machine can't spare the memory.
 
