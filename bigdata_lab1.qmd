@@ -415,9 +415,8 @@ print("exact .equals():", streaming_result.sort("product_category").equals(in_me
 print("max abs difference:", (a - b).abs().max())
 ```
 
-`.equals()` reports `False` -- don't panic, this isn't a bug. The streaming engine sums `amount` in a different chunk order than the in-memory engine, and floating-point addition isn't associative: `(a + b) + c` and `a + (b + c)` can differ in their last bit. The max absolute difference above (a few billionths, against sums in the millions) shows exactly how small that gap is. It's a good reminder that "same result" in chunked/distributed aggregation usually means *numerically equivalent*, not *bit-identical* -- worth remembering once you get to Dask or Spark later in the course.
+`.equals()` reports `False` - the streaming engine sums `amount` in a different chunk order than the in-memory engine, and floating-point addition isn't associative: `(a + b) + c` and `a + (b + c)` can differ in their last bit. 
 
-Meanwhile, look at the two `%%memit` peak-memory readings above -- and don't be surprised if the gap is small, inconsistent, or even reversed from one run to the next. At ~3GB, this file comfortably fits in most development machines' RAM, so neither engine is under real memory pressure yet, and `%%memit`'s sampling adds its own noise on top. That's the honest content of "partially" in lec1's comparison table: streaming *processes data in bounded chunks rather than loading it all at once*, which is a real, structural difference -- but it only translates into a clean peak-memory win once your data genuinely doesn't fit comfortably in RAM. Push `total_rows` in `write_transactions_chunked` up until `engine="in-memory"` visibly struggles on your machine to see it decisively -- which is exactly what Exercise 6 below asks you to do.
 
 ## Pandas vs. Polars
 

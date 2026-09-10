@@ -315,6 +315,262 @@ def compute_numba(df):
 :::
 
 
+## Concurrency
+
+Cython and Numba make a *single* thread of computation faster. The other lever is doing more than one thing at once. In CPython that runs straight into the **GIL**: only one thread executes Python bytecode at a time. Let's measure what that actually means.
+
+A tiny timing helper (best of a few runs):
+
+```{python}
+import time
+
+def bench(fn, repeat=2):
+    best = float("inf")
+    for _ in range(repeat):
+        t0 = time.perf_counter()
+        fn()
+        best = min(best, time.perf_counter() - t0)
+    return best
+```
+
+### CPU-bound pure Python: threads don't help
+
+Our workload counts primes by trial division. It lives in `_files/parallel_tasks.py` -- an importable module, not a notebook cell -- because the default multiprocessing start method here is `spawn`, and spawned workers re-import the target function by name.
+
+```{python}
+from _files.parallel_tasks import count_primes_in
+
+LO, HI, N_WORKERS = 2, 250_000, 4
+step = (HI - LO) // N_WORKERS
+chunks = [(LO + i * step, LO + (i + 1) * step) for i in range(N_WORKERS)]
+
+serial = bench(lambda: count_primes_in((LO, HI)))
+serial
+```
+
+:::{.callout-important icon=false}
+## Threads
+```{python}
+from concurrent.futures import ThreadPoolExecutor
+
+def run_threads():
+    with ThreadPoolExecutor(max_workers=N_WORKERS) as ex:
+        return sum(ex.map(count_primes_in, chunks))
+
+threaded = bench(run_threads)
+print(f"serial {serial:.3f}s   threaded {threaded:.3f}s   speedup {serial / threaded:.2f}x")
+```
+:::
+
+The speedup is roughly **1x** (often slightly *worse*, from lock contention and thread overhead). Four threads, one interpreter lock -- the CPU work is still serialised.
+
+Is the GIL actually active? Ask the interpreter:
+
+```{python}
+import sys
+print("GIL active:", sys._is_gil_enabled())
+```
+
+On the default build this is `True`. On a **free-threaded build** (`python3.14t`, officially supported since 3.14) it is `False`, and the threaded run above turns into a real speedup:
+
+```python
+# one-off, no project env needed:
+uv python install 3.14t
+
+uv run --python 3.14t --no-project python - <<'PY'
+import time
+from concurrent.futures import ThreadPoolExecutor
+
+def count_primes_in(bounds):
+    lo, hi = bounds
+    c = 0
+    for n in range(max(lo, 2), hi):
+        i, prime = 2, True
+        while i * i <= n:
+            if n % i == 0:
+                prime = False; break
+            i += 1
+        c += prime
+    return c
+
+LO, HI, W = 2, 250_000, 4
+step = (HI - LO) // W
+chunks = [(LO + i*step, LO + (i+1)*step) for i in range(W)]
+
+t0 = time.perf_counter(); count_primes_in((LO, HI)); serial = time.perf_counter() - t0
+with ThreadPoolExecutor(max_workers=W) as ex:
+    t0 = time.perf_counter(); sum(ex.map(count_primes_in, chunks)); threaded = time.perf_counter() - t0
+print(f"serial {serial:.3f}s  threaded {threaded:.3f}s  speedup {serial/threaded:.2f}x")
+PY
+```
+
+Expect roughly a `W`x speedup, with a single-threaded overhead of well under 10% versus the GIL build (it was ~40% back in 3.13).
+
+:::{.callout-tip icon=false}
+## Processes
+```{python}
+from concurrent.futures import ProcessPoolExecutor
+
+def run_processes():
+    with ProcessPoolExecutor(max_workers=N_WORKERS) as ex:
+        return sum(ex.map(count_primes_in, chunks))
+
+proc = bench(run_processes)
+print(f"serial {serial:.3f}s   processes {proc:.3f}s   speedup {serial / proc:.2f}x")
+```
+:::
+
+Now we get real parallelism -- each process has its own interpreter and its own GIL. The speedup is below `N_WORKERS` because of process startup and because arguments and results are **pickled** across the process boundary.
+
+### GIL-releasing work: threads *do* help
+
+The GIL is dropped while C extensions do their heavy lifting. `np.linalg.svd` (BLAS) is one such case.
+
+```{python}
+import numpy as np
+
+def svd_once(seed):
+    rng = np.random.default_rng(seed)
+    return float(np.linalg.svd(rng.standard_normal((700, 700)), compute_uv=False)[0])
+
+seeds = list(range(8))
+svd_serial = bench(lambda: [svd_once(s) for s in seeds])
+
+def svd_threads():
+    with ThreadPoolExecutor(max_workers=4) as ex:
+        return list(ex.map(svd_once, seeds))
+
+svd_threaded = bench(svd_threads)
+print(f"serial {svd_serial:.3f}s   threaded {svd_threaded:.3f}s   speedup {svd_serial / svd_threaded:.2f}x")
+```
+
+:::{.callout-note icon=false}
+## Why this one speeds up
+`svd` releases the GIL for the duration of the factorisation, so worker threads genuinely run in parallel -- no pickling, shared memory. This is why NumPy / pandas / scikit-learn code can scale on threads even though pure Python can't.
+:::
+
+### I/O-bound: threads and asyncio
+
+When a task spends its time *waiting* (network, disk, database), the GIL is released during the wait.
+
+```{python}
+def blocking_call(x):
+    time.sleep(0.1)          # stand-in for a network / DB round-trip
+    return x * x
+
+TASKS = list(range(16))
+io_serial = bench(lambda: [blocking_call(x) for x in TASKS])
+
+def io_threads():
+    with ThreadPoolExecutor(max_workers=8) as ex:
+        return list(ex.map(blocking_call, TASKS))
+
+io_threaded = bench(io_threads)
+print(f"serial {io_serial:.3f}s   threaded {io_threaded:.3f}s")
+```
+
+`asyncio` reaches the same result on a *single* thread, with far less per-task overhead:
+
+```{python}
+import asyncio, threading
+
+async def async_call(x):
+    await asyncio.sleep(0.1)
+    return x * x
+
+async def gather_all():
+    return await asyncio.gather(*(async_call(x) for x in TASKS))
+
+def run_in_fresh_loop(coro_factory):
+    box = {}
+    def _worker():
+        box["result"] = asyncio.run(coro_factory())
+    t = threading.Thread(target=_worker)
+    t.start(); t.join()
+    return box["result"]
+
+io_async = bench(lambda: run_in_fresh_loop(gather_all))
+print(f"asyncio {io_async:.3f}s")
+```
+
+:::{.callout-note icon=false}
+## Why the thread wrapper?
+Jupyter already runs an event loop, so a bare `asyncio.run()` in a cell raises *"cannot be called from a running event loop"*. Running it inside a short-lived helper thread gives it a fresh loop. In a plain `.py` script you would just call `asyncio.run(gather_all())`.
+:::
+
+:::{.callout-tip icon=false}
+## Rule of thumb
+- CPU-bound **pure Python** -> processes (`ProcessPoolExecutor`, `multiprocessing`, `joblib`)
+- CPU-bound **in NumPy / native code** -> threads often suffice (BLAS, joblib, Polars/DuckDB already do this)
+- **I/O-bound** -> threads, or `asyncio` for high fan-out
+:::
+
+## Profiling
+
+You should really profile *before* optimising -- here it comes after only because you have now seen the code. Profiling answers "where does the time (or memory) actually go?", which is usually not where you would guess.
+
+### cProfile -- function-level
+
+```{python}
+import cProfile, pstats, io
+
+pr = cProfile.Profile()
+pr.enable()
+primes1(200)
+pr.disable()
+
+buf = io.StringIO()
+pstats.Stats(pr, stream=buf).sort_stats("cumulative").print_stats(6)
+print(buf.getvalue())
+```
+
+Top of the list is where the cumulative time sits. Interactively you would just write `%prun primes1(200)`; the explicit form above is used here because `%prun` sends its report to a pager that a non-interactive render swallows.
+
+### line_profiler -- line-by-line
+
+```python
+uv add line_profiler
+```
+
+```{python}
+from line_profiler import LineProfiler
+
+lp = LineProfiler()
+lp.add_function(integrate_f)
+lp.runcall(lambda: df.apply(lambda r: integrate_f(r["a"], r["b"], r["N"]), axis=1))
+
+buf = io.StringIO()
+lp.print_stats(stream=buf)
+print(buf.getvalue())
+```
+
+The `% Time` column pins the cost to a single line -- the `for i in range(N)` loop -- which is exactly what the Cython / Numba versions target. Interactively this is `%load_ext line_profiler` then `%lprun -f integrate_f ...`.
+
+### `%memit` -- peak memory of an expression
+
+```python
+uv add memory_profiler
+```
+
+```{python}
+import sys
+%load_ext memory_profiler
+%memit big_list = [0] * 10_000_000
+print("list overhead :", sys.getsizeof(big_list) / 1e6, "MB of pointers")
+print("ndarray nbytes:", np.zeros(10_000_000, dtype="int64").nbytes / 1e6, "MB, contiguous")
+```
+
+`%memit` reports the peak memory of the expression: ~76 MiB just to hold 10 million pointers to the same cached `0`. The equivalent `int64` array is 80 MB in one contiguous block -- same element count, but the cache can stream it.
+
+:::{.callout-note icon=false}
+## More tools
+- `%mprun` -- line-by-line *memory* (needs the function in an importable file)
+- **`scalene`** -- CPU + GPU + memory, line level, low overhead: `scalene script.py`
+- **`py-spy`** -- sampling profiler that attaches to an already-running process: `py-spy top --pid <PID>`
+- **`snakeviz`** -- browser flame-graph view of a saved cProfile run
+:::
+
+
 ## Exercises
 
 1. Apply Cython/Numba optimizations to some computations on your dataframe from Lab 1.
@@ -323,9 +579,17 @@ def compute_numba(df):
   - has 2 versions: using Cython and Numba
   - measure results
 
+3. Take the embarrassingly-parallel part of your Lab 1 computation (or the Black-Scholes code) and parallelise it with `ProcessPoolExecutor`. Plot speedup vs. worker count. Then try `ThreadPoolExecutor` instead -- does it help? Explain why or why not in terms of where the work happens (pure Python vs. NumPy).
+4. Profile `primes1` (or your own slow function) with `%prun` and `%lprun`. Identify the single hottest line, write a faster version, and confirm with the profiler that the hotspot moved.
+5. Install a free-threaded build (`uv python install 3.14t`) and re-run the pure-Python threading benchmark on it (see the snippet in the Concurrency section). Report the thread speedup, and estimate the single-threaded overhead by comparing `serial` against the GIL build's `serial`.
+
 ## References
 
 1. [Cython tutorial](https://docs.cython.org/en/latest/src/tutorial/cython_tutorial.html)
 2. [Cython build instructions](https://cython.readthedocs.io/en/latest/src/quickstart/build.html)
 3. [Cython language](https://cython.readthedocs.io/en/latest/src/userguide/language_basics.html)
 4. [Pandas optimization](https://pandas.pydata.org/pandas-docs/stable/user_guide/enhancingperf.html)
+5. [`concurrent.futures`](https://docs.python.org/3/library/concurrent.futures.html) and [`asyncio`](https://docs.python.org/3/library/asyncio.html) docs
+6. David Beazley, ["Understanding the Python GIL"](https://www.dabeaz.com/GIL/)
+7. [line_profiler](https://github.com/pyutils/line_profiler), [scalene](https://github.com/plasma-umass/scalene), [py-spy](https://github.com/benfred/py-spy)
+8. [Python free-threading HOWTO](https://docs.python.org/3/howto/free-threading-python.html), [PEP 703](https://peps.python.org/pep-0703/), [`concurrent.interpreters`](https://docs.python.org/3/library/concurrent.interpreters.html) (PEP 734)

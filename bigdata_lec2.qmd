@@ -87,6 +87,70 @@ Number of transistors in an integrated circuit (IC) doubles about every two year
 :::
 
 
+## Dennard scaling
+:::{.callout-important icon=false}
+## Definition (Robert Dennard, 1974)
+As transistors get smaller, their power density stays roughly **constant** -- smaller transistors run at proportionally lower voltage and current.
+:::
+
+:::{.callout-tip icon=false}
+## Why it mattered
+For ~30 years this is what let clock speeds climb *alongside* Moore's Law: each new process node gave you more transistors **and** a higher safe clock at the same power budget. Software got faster for free.
+:::
+
+## The power wall
+:::{.callout-important icon=false}
+## Dennard scaling broke down (~2006)
+Below roughly 65 nm, leakage current and heat stopped shrinking with the transistors. More switching in the same area now means more power and more heat than the chip can dissipate.
+:::
+
+:::{.callout-warning icon=false}
+## Consequence
+Clock speed hit a ceiling. The Pentium 4 reached ~3.8 GHz in 2004; twenty years later, mainstream CPUs still run at ~3--5 GHz.
+:::
+
+:::{.callout-note icon=false}
+## "The Free Lunch Is Over" -- Herb Sutter, 2005
+Single-thread performance now grows only a few percent per year. Making code faster became a **parallelism** problem, not a "wait for next year's CPU" problem.
+:::
+
+## The multicore pivot
+:::{.callout-tip icon=false}
+## Same transistors, spent differently
+Moore's Law kept delivering transistors -- vendors just stopped spending them on *faster* cores and started spending them on *more* cores.
+
+- 2005: first mainstream dual-core desktop chips (Athlon 64 X2, Pentium D)
+- today: 8--16 cores on a laptop, 64--192 in a server socket
+:::
+
+## Beyond more cores
+:::{.callout-note icon=false}
+## Data-level parallelism: SIMD
+One instruction, many elements:
+
+- SSE (128-bit) 
+- AVX2 (256)
+- AVX-512 (512)
+- ARM NEON / SVE 
+:::
+
+:::{.callout-tip icon=false}
+## Domain-specific hardware:
+
+- **GPUs** (thousands of simple cores, huge memory bandwidth)
+- **TPUs** (matrix-multiply units)
+- **FPGAs**.
+:::
+
+## What to do now?
+:::{.callout-important icon=false}
+## Choices
+1. **Use all the cores** -- threads / processes *(next section)*
+2. **Use SIMD** -- via vectorised libraries: NumPy, Polars, DuckDB
+3. **Use accelerators** -- GPUs for the right workloads
+4. **Be smart** -- better algorithms, cache-friendly data layout, better data formats
+:::
+
 # Multithreading vs multiprocessing
 
 ## Core counts
@@ -99,7 +163,7 @@ Number of transistors in an integrated circuit (IC) doubles about every two year
 
 ::: {.column width="50%" background-color="lightgray"}
 :::{.callout-tip icon=false}
-## Concurrency Parallelism
+## Concurrency
 Individual steps of both tasks are executed in an *interleaved* fashion
 :::
 
@@ -146,6 +210,9 @@ Managed with help of **thread context**, which consists of processor context and
 ## Threads
 ![](img/thread_diagram)
 
+## Comparison table
+![](img/threads_vs_processes.jpg)
+
 ## Green threads/Coroutines
 :::{.callout-tip icon=false}
 ## Definition
@@ -153,10 +220,179 @@ These are threads managed by the process runtime, *multiplexed* onto OS threads.
 :::
 
 <!-- ![](img/goroutines) -->
+![](img/green_threads)
 
-## Comparison table
-![](img/threads_vs_processes.jpg)
 
+## The GIL
+:::{.callout-important icon=false}
+## Global Interpreter Lock
+CPython uses one lock that a thread must hold to execute Python bytecode.
+
+- protects reference counts and interpreter state from data races
+- **consequence:** only *one* thread runs Python bytecode at a time (in the default build)
+:::
+
+:::{.callout-note icon=false}
+## So what does `threading` give you?
+**Concurrency**, not CPU **parallelism**, for *pure Python* code -- unless you run a **free-threaded build** (below).
+:::
+
+## When threads still help
+:::{.callout-tip icon=false}
+## The GIL is released...
+- during blocking **I/O** (network, disk, database) -- so I/O-bound work does scale on threads
+- inside C extensions that explicitly drop it: **NumPy**, parts of **pandas**, **scikit-learn**, `zlib`, Numba `nogil=True`
+:::
+
+:::{.callout-important icon=false}
+## Data-science nuance
+A NumPy/BLAS-heavy workload *can* get real speedup from `threading` -- the heavy lifting runs with the GIL released.
+:::
+
+## multiprocessing
+:::{.callout-tip icon=false}
+## Real parallelism for pure-Python CPU work
+Each process gets its own interpreter and its own GIL.
+:::
+
+:::{.callout-important icon=false}
+## ...but it isn't free
+- process **startup** cost
+- **everything crossing the boundary is pickled** -- expensive for large arrays / DataFrames
+:::
+
+![](img/pickle.jpg)
+
+## concurrent.futures & asyncio
+:::{.callout-note icon=false}
+## `concurrent.futures` -- one API, two backends
+```python
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
+
+# ThreadPoolExecutor  -> I/O-bound, or GIL-releasing native code
+# ProcessPoolExecutor -> CPU-bound pure Python
+with ProcessPoolExecutor() as ex:
+    results = list(ex.map(work, tasks, chunksize=100))
+```
+:::
+
+:::{.callout-tip icon=false}
+## `asyncio`
+Single thread, cooperative multitasking. Built for **thousands of concurrent I/O calls** (HTTP, DB). Never for CPU-bound work.
+:::
+
+## Amdahl's law
+:::{.callout-important icon=false}
+## The ceiling on speedup
+If a fraction $p$ of the work is parallelisable (and $1-p$ is serial), then with $n$ workers:
+$$ S(n) = \frac{1}{(1-p) + \dfrac{p}{n}} $$
+
+Even with infinite cores, $S \le \dfrac{1}{1-p}$. A **5% serial fraction caps you at 20x**, no matter the hardware.
+:::
+
+## Amdahl's law
+
+```{.tikz}
+\usetikzlibrary{arrows.meta}
+\begin{tikzpicture}[scale=1.4, every node/.style={scale=1.4}]
+  % axes
+  \draw[very thick,-{Latex[length=3mm]}] (0,0) -- (11,0) node[right]{cores};
+  \draw[very thick,-{Latex[length=3mm]}] (0,0) -- (0,7.6) node[above]{speedup};
+  % x ticks (cores 4,8,12,16 -> x = cores*0.625)
+  \foreach \c/\x in {4/2.5, 8/5.0, 12/7.5, 16/10.0}{
+    \draw (\x,0.1) -- (\x,-0.1) node[below]{\c};}
+  % y ticks (speedup 2,4,6,8,10 -> y = spd*0.7)
+  \foreach \s/\y in {2/1.4, 4/2.8, 6/4.2, 8/5.6, 10/7.0}{
+    \draw (0.1,\y) -- (-0.1,\y) node[left]{\s};}
+  % ideal / linear
+  \draw[dashed] (0,0) -- (6.25,7) node[above left,font=\small]{linear (ideal)};
+  % p = 0.9  -> ceiling 10
+  \draw[very thick] (0.625,0.7) -- (1.25,1.27) -- (2.5,2.16) -- (5.0,3.30) -- (10.0,4.48)
+    node[right,font=\small]{90\% parallel ($\to$ 10x)};
+  % p = 0.75 -> ceiling 4
+  \draw[very thick] (0.625,0.7) -- (1.25,1.12) -- (2.5,1.60) -- (5.0,2.04) -- (10.0,2.36)
+    node[right,font=\small]{75\% ($\to$ 4x)};
+  % p = 0.5  -> ceiling 2
+  \draw[very thick] (0.625,0.7) -- (1.25,0.93) -- (2.5,1.12) -- (5.0,1.25) -- (10.0,1.32)
+    node[right,font=\small]{50\% ($\to$ 2x)};
+\end{tikzpicture}
+```
+
+## Gustafson's law 
+
+:::{.callout-tip icon=false}
+## Optimistic counterpart
+As you add cores you usually also grow the *problem size*, while the serial part stays roughly fixed.
+
+Real-world scaling is often better than Amdahl's fixed-size view predicts.
+:::
+
+## Sharing data without pickling
+:::{.callout-tip icon=false}
+## Zero-copy between processes
+- `multiprocessing.shared_memory.SharedMemory` -- back a NumPy array with a shared buffer
+- **Arrow IPC** -- the on-wire format *is* the in-memory format, so no serialization step
+- memory-mapped files (`np.memmap`)
+
+This is how Dask and Ray move large arrays between workers cheaply.
+:::
+
+## Removing the GIL: free threading
+:::{.callout-note icon=false}
+## Free-threaded CPython (PEP 703)
+A build with the GIL compiled out.
+
+- **experimental in 3.13**, **officially supported in 3.14** (PEP 779)
+- still opt-in (`python3.14t`); the GIL build stays the default
+- single-threaded overhead: ~40% in 3.13 -> under ~10% in 3.14
+- pure-Python threads finally run in parallel
+:::
+
+:::{.callout-tip icon=false}
+## How to check if present?
+`sys._is_gil_enabled()`
+:::
+
+## Removing the GIL: sub-interpreters
+:::{.callout-note icon=false}
+## Multiple interpreters, one process (PEP 684, PEP 734)
+Each interpreter gets its **own** GIL, so several can run Python bytecode at once -- without the cost of separate OS processes.
+
+- per-interpreter GIL: C-API since 3.12 (PEP 684)
+- `concurrent.interpreters` -- a pure-Python API, **new in 3.14** (PEP 734)
+- talk over channels / shared `memoryview`; no pickling on the fast path
+:::
+
+## Which approach?
+
+```{.tikz}
+\usetikzlibrary{arrows.meta}
+\begin{tikzpicture}[
+  scale=1.4, every node/.style={scale=1.4},
+  qbox/.style={draw, very thick, rounded corners, align=center, font=\small, minimum width=3.6cm, minimum height=1.0cm, fill=gray!12},
+  abox/.style={draw, very thick, rounded corners, align=center, font=\small, minimum width=3.8cm, minimum height=1.0cm, fill=gray!25},
+  arr/.style={-{Latex[length=2.5mm]}, thick}
+]
+  \node[qbox] (n2)  at (0,9)    {hot path is\\CPU-bound?};
+  \node[abox] (n3)  at (5.8,9)  {I/O-bound:\\\texttt{threading} / \texttt{asyncio}};
+  \node[qbox] (n4)  at (0,6.9)  {work is in NumPy /\\GIL-releasing native code?};
+  \node[abox] (n5)  at (5.8,6.9) {\texttt{threading} may suffice\\(BLAS, joblib already do this)};
+  \node[qbox] (n4b) at (0,4.8)  {free-threaded build?\\(\texttt{python3.14t})};
+  \node[abox] (n5b) at (5.8,4.8) {\texttt{threading} now works\\for pure Python too};
+  \node[qbox] (n6)  at (0,2.7)  {fits on one machine?};
+  \node[abox] (n7)  at (-3.6,0.4) {\texttt{multiprocessing} /\\\texttt{ProcessPoolExecutor}\\(mind pickling)};
+  \node[abox] (n8)  at (3.6,0.4)  {Dask / Ray / Spark};
+
+  \draw[arr] (n2)  -- (n3)  node[midway,above,font=\scriptsize]{no};
+  \draw[arr] (n2)  -- (n4)  node[midway,left,font=\scriptsize]{yes};
+  \draw[arr] (n4)  -- (n5)  node[midway,above,font=\scriptsize]{yes};
+  \draw[arr] (n4)  -- (n4b) node[midway,left,font=\scriptsize]{no};
+  \draw[arr] (n4b) -- (n5b) node[midway,above,font=\scriptsize]{yes};
+  \draw[arr] (n4b) -- (n6)  node[midway,left,font=\scriptsize]{no};
+  \draw[arr] (n6)  -- (n7)  node[midway,left,font=\scriptsize]{yes};
+  \draw[arr] (n6)  -- (n8)  node[midway,right,font=\scriptsize]{no};
+\end{tikzpicture}
+```
 
 # Programming paradigms
 
@@ -243,6 +479,11 @@ A programming paradigm based on the concept of objects, which can contain data a
 ![](img/uml)
 
 ## Object-oriented
+
+
+:::: {.columns}
+
+::: {.column width="50%" background-color="lightgray"}
 :::{.callout-important icon=false}
 ## Cons
 
@@ -250,11 +491,22 @@ A programming paradigm based on the concept of objects, which can contain data a
 - Lots of state management
 :::
 
+:::
+
+::: {.column width="50%" background-color="lightgray"}
 :::{.callout-tip icon=false}
 ## Pros
 
 - Intuitively easy to grasp, as human thinking is largely **noun**-oriented
 - Useful for UIs
+:::
+:::
+::::
+
+![](img/execution-kingdom-of-nouns){height=250}
+
+::: aside
+https://yegge.ai/essays/execution-kingdom-of-nouns/
 :::
 
 ## Symbolic
@@ -387,6 +639,103 @@ print("Memory After Deletion: %0.2f%%" % increase(final_memory, allocated_memory
 ## Memory management
 ![](img/python_mem)
 <!-- mage from: https://www.honeybadger.io/blog/memory-management-in-python/ -->
+
+# The memory hierarchy
+
+## The memory wall
+:::{.callout-important icon=false}
+## Why caches exist
+For decades CPU throughput grew far faster than DRAM *latency*. That widening gap -- the **memory wall** -- is why modern chips spend most of their transistors on cache.
+:::
+
+:::{.callout-tip icon=false}
+## Consequence
+"Speeding up single-node computation" is very often really: **stop waiting on memory.**
+:::
+
+## The hierarchy
+:::{.callout-note icon=false}
+## Latency ladder (rough, modern x86)
+| Level | Size | Latency |
+|---|---|---|
+| register | ~KB | < 1 ns |
+| L1 cache | ~32-64 KB | ~1 ns (~4 cycles) |
+| L2 cache | ~256 KB - 2 MB | ~4 ns |
+| L3 cache | ~8-64 MB | ~15 ns |
+| DRAM | GBs | ~80-100 ns |
+| NVMe SSD | TBs | ~100 us |
+| network / spinning disk | -- | ms+ |
+:::
+
+::: aside
+"If an L1 hit took 1 second, a DRAM access would take ~1.5 minutes and an SSD read ~1 day."
+:::
+
+## Latency ladder {.scrollable}
+![](img/latency_ladder)
+
+::: aside
+https://cs.brown.edu/courses/csci1310/2020/assign/labs/lab4.html
+:::
+
+## Cache lines
+:::{.callout-important icon=false}
+## Memory moves in blocks
+The CPU never fetches a single byte -- it pulls in a **cache line** (64 bytes) at a time.
+:::
+
+:::{.callout-tip icon=false}
+## Locality
+- **spatial** -- touch an address and you'll likely touch its neighbours: lay data out contiguously, walk it in order
+- **temporal** -- touch an address and you'll likely touch it again soon: reuse before it's evicted
+:::
+
+## Sequential vs strided
+:::{.callout-note icon=false}
+## Same element count, very different speed
+```python
+a = np.zeros((10_000, 10_000))   # C-contiguous: row-major
+a.sum(axis=1)   # walks each row contiguously  -- cache-friendly
+a.sum(axis=0)   # jumps 10_000 floats per step -- a new cache line every access
+```
+Summing *down columns* of a row-major array can be several times slower, purely from cache misses -- the arithmetic is identical.
+:::
+
+## Row-major vs column-major
+:::{.callout-tip icon=false}
+## It's a layout question, everywhere
+- NumPy: `order='C'` (row-major) vs `order='F'` (column-major) -- iterate along the contiguous axis
+- **array-of-structs vs struct-of-arrays** -- SoA keeps each field contiguous
+- columnar formats (Parquet, Arrow -- Lec 1) are SoA on disk: analytics scans touch a few columns over many rows, so column layout means fewer cache lines read
+:::
+
+## Python object overhead
+:::{.callout-important icon=false}
+## Why a plain `list` is the slow default
+- a Python `int` is a heap object: ~28 bytes, not 8
+- a `list` of ${10}^7$ ints is ${10}^7$ *pointers*, each to a boxed int scattered across the heap -- terrible locality
+- a NumPy `int64` array is 8 bytes/element in one contiguous block
+:::
+
+```python
+sys.getsizeof(10**6)                   # ~28   (the int object alone)
+sys.getsizeof([0] * 1_000_000)         # ~8 MB of pointers
+np.zeros(1_000_000, np.int64).nbytes   # 8 MB, contiguous and unboxed
+```
+
+:::{.callout-note}
+## The general lesson
+Vectorised NumPy/pandas isn't just "C is fast" -- it's **contiguous, unboxed data that the cache can stream.**
+:::
+
+## Views vs copies
+:::{.callout-important icon=false}
+## Allocation is not free
+- NumPy **slicing returns a view** -- no copy, no allocation
+- `.copy()`, fancy / boolean indexing, `astype`, most reshapes that can't alias -> a new allocation
+- `np.shares_memory(a, b)` to check
+- pandas' `SettingWithCopyWarning` is exactly this distinction leaking through
+:::
 
 # Code execution
 
