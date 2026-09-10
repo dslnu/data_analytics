@@ -194,7 +194,16 @@ window.Quarto = {
   <li><a href="#cython" id="toc-cython" class="nav-link active" data-scroll-target="#cython">Cython</a></li>
   <li><a href="#using-cython-in-pandas" id="toc-using-cython-in-pandas" class="nav-link" data-scroll-target="#using-cython-in-pandas">Using Cython in Pandas</a></li>
   <li><a href="#numba" id="toc-numba" class="nav-link" data-scroll-target="#numba">Numba</a></li>
+  <li><a href="#pyo3-rust" id="toc-pyo3-rust" class="nav-link" data-scroll-target="#pyo3-rust">PyO3 (Rust)</a></li>
+  <li><a href="#profiling" id="toc-profiling" class="nav-link" data-scroll-target="#profiling">Profiling</a>
+  <ul class="collapse">
+  <li><a href="#cprofile-function-level" id="toc-cprofile-function-level" class="nav-link" data-scroll-target="#cprofile-function-level">cProfile – function-level</a></li>
+  <li><a href="#line_profiler-line-by-line" id="toc-line_profiler-line-by-line" class="nav-link" data-scroll-target="#line_profiler-line-by-line">line_profiler – line-by-line</a></li>
+  <li><a href="#memit-peak-memory-of-an-expression" id="toc-memit-peak-memory-of-an-expression" class="nav-link" data-scroll-target="#memit-peak-memory-of-an-expression"><code>%memit</code> – peak memory of an expression</a></li>
+  <li><a href="#scalene-cpu-gpu-memory-and-where-the-time-goes" id="toc-scalene-cpu-gpu-memory-and-where-the-time-goes" class="nav-link" data-scroll-target="#scalene-cpu-gpu-memory-and-where-the-time-goes">scalene – CPU + GPU + memory, and <em>where</em> the time goes</a></li>
+  </ul></li>
   <li><a href="#exercises" id="toc-exercises" class="nav-link" data-scroll-target="#exercises">Exercises</a></li>
+  <li><a href="#project-ideas" id="toc-project-ideas" class="nav-link" data-scroll-target="#project-ideas">Project ideas</a></li>
   <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
   </ul>
 </nav>
@@ -227,7 +236,7 @@ window.Quarto = {
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>uv add cython</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>uv add numba</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Then we can load Cython extension in Jupyter:</p>
-<div id="c578b17a" class="cell" data-execution_count="2">
+<div id="03f497f9" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>load_ext Cython</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Define a function that generates a list of first <span class="math inline">\(n\)</span> primes:</p>
@@ -241,7 +250,7 @@ window.Quarto = {
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<div id="81a0d471" class="cell" data-execution_count="3">
+<div id="b0ff1389" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> primes1(nb_primes):</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    p <span class="op">=</span> [<span class="dv">0</span>] <span class="op">*</span> <span class="dv">1000</span></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> nb_primes <span class="op">&gt;</span> <span class="dv">1000</span>:</span>
@@ -278,10 +287,10 @@ window.Quarto = {
 </div>
 <div class="callout-body-container callout-body">
 <p>We can measure its execution time:</p>
-<div id="e5a42580" class="cell" data-execution_count="4">
+<div id="24ed8775" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>timeit primes1(<span class="dv">100</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>207 μs ± 2.32 μs per loop (mean ± std. dev. of 7 runs, 1,000 loops each)</code></pre>
+<pre><code>154 μs ± 953 ns per loop (mean ± std. dev. of 7 runs, 10,000 loops each)</code></pre>
 </div>
 </div>
 </div>
@@ -297,7 +306,7 @@ window.Quarto = {
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<div id="a389bdb7" class="cell" data-execution_count="5">
+<div id="fbe315b4" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>cython</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> primes2(nb_primes: cython.<span class="bu">int</span>):</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    i: cython.<span class="bu">int</span></span>
@@ -323,28 +332,6 @@ window.Quarto = {
 <span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Let's copy the result into a Python list:</span></span>
 <span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>    result_as_list <span class="op">=</span> [prime <span class="cf">for</span> prime <span class="kw">in</span> p[:len_p]]</span>
 <span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> result_as_list</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>warning: /Users/vitvly/.cache/ipython/cython/_cython_magic_4f815525979b166b54a9750b1610c31016b8f295cad980c1041cf73b1775d7d8.pyx:1:29: Unknown type declaration 'cython.int' in annotation, ignoring
-warning: /Users/vitvly/.cache/ipython/cython/_cython_magic_4f815525979b166b54a9750b1610c31016b8f295cad980c1041cf73b1775d7d8.pyx:2:13: Unknown type declaration 'cython.int' in annotation, ignoring
-warning: /Users/vitvly/.cache/ipython/cython/_cython_magic_4f815525979b166b54a9750b1610c31016b8f295cad980c1041cf73b1775d7d8.pyx:8:17: Unknown type declaration 'cython.int' in annotation, ignoring
-warning: /Users/vitvly/.cache/ipython/cython/_cython_magic_4f815525979b166b54a9750b1610c31016b8f295cad980c1041cf73b1775d7d8.pyx:9:13: Unknown type declaration 'cython.int' in annotation, ignoring</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Content of stderr:
-/Users/vitvly/.cache/ipython/cython/_cython_magic_4f815525979b166b54a9750b1610c31016b8f295cad980c1041cf73b1775d7d8.c:4550:17: warning: fallthrough annotation in unreachable code [-Wunreachable-code-fallthrough]
- 4550 |                 CYTHON_FALLTHROUGH;
-      |                 ^
-/Users/vitvly/.cache/ipython/cython/_cython_magic_4f815525979b166b54a9750b1610c31016b8f295cad980c1041cf73b1775d7d8.c:512:34: note: expanded from macro 'CYTHON_FALLTHROUGH'
-  512 |       #define CYTHON_FALLTHROUGH __attribute__((fallthrough))
-      |                                  ^
-/Users/vitvly/.cache/ipython/cython/_cython_magic_4f815525979b166b54a9750b1610c31016b8f295cad980c1041cf73b1775d7d8.c:4561:17: warning: fallthrough annotation in unreachable code [-Wunreachable-code-fallthrough]
- 4561 |                 CYTHON_FALLTHROUGH;
-      |                 ^
-/Users/vitvly/.cache/ipython/cython/_cython_magic_4f815525979b166b54a9750b1610c31016b8f295cad980c1041cf73b1775d7d8.c:512:34: note: expanded from macro 'CYTHON_FALLTHROUGH'
-  512 |       #define CYTHON_FALLTHROUGH __attribute__((fallthrough))
-      |                                  ^
-2 warnings generated.</code></pre>
-</div>
 </div>
 </div>
 </div>
@@ -359,10 +346,10 @@ warning: /Users/vitvly/.cache/ipython/cython/_cython_magic_4f815525979b166b54a97
 </div>
 <div class="callout-body-container callout-body">
 <p>We measure its execution time:</p>
-<div id="e07e1944" class="cell" data-execution_count="6">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>timeit primes2(<span class="dv">100</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="819c2a03" class="cell" data-execution_count="6">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>timeit primes2(<span class="dv">100</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>74 μs ± 271 ns per loop (mean ± std. dev. of 7 runs, 10,000 loops each)</code></pre>
+<pre><code>84.2 μs ± 507 ns per loop (mean ± std. dev. of 7 runs, 10,000 loops each)</code></pre>
 </div>
 </div>
 </div>
@@ -378,32 +365,32 @@ warning: /Users/vitvly/.cache/ipython/cython/_cython_magic_4f815525979b166b54a97
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<div id="a5791726" class="cell" data-execution_count="7">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>cython</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> primes3(<span class="bu">int</span> nb_primes):</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    cdef <span class="bu">int</span> n, i, len_p</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    cdef <span class="bu">int</span>[<span class="dv">1000</span>] p</span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> nb_primes <span class="op">&gt;</span> <span class="dv">1000</span>:</span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>        nb_primes <span class="op">=</span> <span class="dv">1000</span></span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>    len_p <span class="op">=</span> <span class="dv">0</span>  <span class="co"># The current number of elements in p.</span></span>
-<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> <span class="dv">2</span></span>
-<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> len_p <span class="op">&lt;</span> nb_primes:</span>
-<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Is n prime?</span></span>
-<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> i <span class="kw">in</span> p[:len_p]:</span>
-<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> n <span class="op">%</span> i <span class="op">==</span> <span class="dv">0</span>:</span>
-<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>                <span class="cf">break</span></span>
-<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>        <span class="co"># If no break occurred in the loop, we have a prime.</span></span>
-<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
-<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>            p[len_p] <span class="op">=</span> n</span>
-<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>            len_p <span class="op">+=</span> <span class="dv">1</span></span>
-<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>        n <span class="op">+=</span> <span class="dv">1</span></span>
-<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Let's copy the result into a Python list:</span></span>
-<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>    result_as_list <span class="op">=</span> [prime <span class="cf">for</span> prime <span class="kw">in</span> p[:len_p]]</span>
-<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> result_as_list</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="d091b0fc" class="cell" data-execution_count="7">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>cython</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> primes3(<span class="bu">int</span> nb_primes):</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    cdef <span class="bu">int</span> n, i, len_p</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    cdef <span class="bu">int</span>[<span class="dv">1000</span>] p</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> nb_primes <span class="op">&gt;</span> <span class="dv">1000</span>:</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>        nb_primes <span class="op">=</span> <span class="dv">1000</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    len_p <span class="op">=</span> <span class="dv">0</span>  <span class="co"># The current number of elements in p.</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> <span class="dv">2</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> len_p <span class="op">&lt;</span> nb_primes:</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Is n prime?</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> i <span class="kw">in</span> p[:len_p]:</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> n <span class="op">%</span> i <span class="op">==</span> <span class="dv">0</span>:</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>                <span class="cf">break</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>        <span class="co"># If no break occurred in the loop, we have a prime.</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>            p[len_p] <span class="op">=</span> n</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>            len_p <span class="op">+=</span> <span class="dv">1</span></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>        n <span class="op">+=</span> <span class="dv">1</span></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Let's copy the result into a Python list:</span></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>    result_as_list <span class="op">=</span> [prime <span class="cf">for</span> prime <span class="kw">in</span> p[:len_p]]</span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> result_as_list</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -418,10 +405,10 @@ warning: /Users/vitvly/.cache/ipython/cython/_cython_magic_4f815525979b166b54a97
 </div>
 <div class="callout-body-container callout-body">
 <p>We measure its execution time:</p>
-<div id="0a1762ca" class="cell" data-execution_count="8">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>timeit primes3(<span class="dv">100</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="864e7625" class="cell" data-execution_count="8">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>timeit primes3(<span class="dv">100</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>4.39 μs ± 58.9 ns per loop (mean ± std. dev. of 7 runs, 100,000 loops each)</code></pre>
+<pre><code>4.3 μs ± 11.2 ns per loop (mean ± std. dev. of 7 runs, 100,000 loops each)</code></pre>
 </div>
 </div>
 </div>
@@ -443,18 +430,18 @@ Note
 <section id="using-cython-in-pandas" class="level2">
 <h2 class="anchored" data-anchor-id="using-cython-in-pandas">Using Cython in Pandas</h2>
 <p>Define a random DataFrame:</p>
-<div id="255e1a79" class="cell" data-execution_count="9">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.DataFrame(</span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    {</span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>        <span class="st">"a"</span>: np.random.randn(<span class="dv">1000</span>),</span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>        <span class="st">"b"</span>: np.random.randn(<span class="dv">1000</span>),</span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>        <span class="st">"N"</span>: np.random.randint(<span class="dv">100</span>, <span class="dv">1000</span>, (<span class="dv">1000</span>)),</span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>        <span class="st">"x"</span>: <span class="st">"x"</span>,</span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="16138c35" class="cell" data-execution_count="9">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.DataFrame(</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    {</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>        <span class="st">"a"</span>: np.random.randn(<span class="dv">1000</span>),</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>        <span class="st">"b"</span>: np.random.randn(<span class="dv">1000</span>),</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>        <span class="st">"N"</span>: np.random.randint(<span class="dv">100</span>, <span class="dv">1000</span>, (<span class="dv">1000</span>)),</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>        <span class="st">"x"</span>: <span class="st">"x"</span>,</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Define functions that will be applied to the DataFrame:</p>
 <div class="callout callout-style-default callout-important no-icon callout-titled">
@@ -467,17 +454,17 @@ Note
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<div id="220718f9" class="cell" data-execution_count="10">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> f(x):</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> x <span class="op">*</span> (x <span class="op">-</span> <span class="dv">1</span>)</span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> integrate_f(a, b, N):</span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> <span class="dv">0</span></span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>    dx <span class="op">=</span> (b <span class="op">-</span> a) <span class="op">/</span> N</span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(N):</span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>        s <span class="op">+=</span> f(a <span class="op">+</span> i <span class="op">*</span> dx)</span>
-<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> s <span class="op">*</span> dx</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="1634164c" class="cell" data-execution_count="10">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> f(x):</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> x <span class="op">*</span> (x <span class="op">-</span> <span class="dv">1</span>)</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> integrate_f(a, b, N):</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    dx <span class="op">=</span> (b <span class="op">-</span> a) <span class="op">/</span> N</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(N):</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>        s <span class="op">+=</span> f(a <span class="op">+</span> i <span class="op">*</span> dx)</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> s <span class="op">*</span> dx</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -492,10 +479,10 @@ Note
 </div>
 <div class="callout-body-container callout-body">
 <p>Apply functions to DataFrame:</p>
-<div id="b9f992dc" class="cell" data-execution_count="11">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>timeit df.<span class="bu">apply</span>(<span class="kw">lambda</span> x: integrate_f(x[<span class="st">"a"</span>], x[<span class="st">"b"</span>], x[<span class="st">"N"</span>]), axis<span class="op">=</span><span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="b2c018cc" class="cell" data-execution_count="11">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>timeit df.<span class="bu">apply</span>(<span class="kw">lambda</span> x: integrate_f(x[<span class="st">"a"</span>], x[<span class="st">"b"</span>], x[<span class="st">"N"</span>]), axis<span class="op">=</span><span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>32.8 ms ± 182 μs per loop (mean ± std. dev. of 7 runs, 10 loops each)</code></pre>
+<pre><code>28.7 ms ± 66.3 μs per loop (mean ± std. dev. of 7 runs, 10 loops each)</code></pre>
 </div>
 </div>
 </div>
@@ -511,47 +498,20 @@ Note
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<div id="9d521136" class="cell" data-execution_count="12">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>cython</span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> f_typed2(x: cython.double) <span class="op">-&gt;</span> cython.double:</span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> x <span class="op">*</span> (x <span class="op">-</span> <span class="dv">1</span>)</span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> integrate_f_typed2(a: cython.double, b: cython.double, N: cython.<span class="bu">int</span>) <span class="op">-&gt;</span> cython.double:</span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>    i: cython.<span class="bu">int</span></span>
-<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>    s: cython.double</span>
-<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>    dx: cython.double</span>
-<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> <span class="dv">0</span></span>
-<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>    dx <span class="op">=</span> (b <span class="op">-</span> a) <span class="op">/</span> N</span>
-<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(N):</span>
-<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>        s <span class="op">+=</span> f_typed2(a <span class="op">+</span> i <span class="op">*</span> dx)</span>
-<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> s <span class="op">*</span> dx</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>warning: /Users/vitvly/.cache/ipython/cython/_cython_magic_c85ffb7e51b9b6e577272e75c5e5f201d7fdc55e07ff9bd38d2ea85dda8eb51e.pyx:1:22: Unknown type declaration 'cython.double' in annotation, ignoring
-warning: /Users/vitvly/.cache/ipython/cython/_cython_magic_c85ffb7e51b9b6e577272e75c5e5f201d7fdc55e07ff9bd38d2ea85dda8eb51e.pyx:1:40: Unknown type declaration 'cython.double' in annotation, ignoring
-warning: /Users/vitvly/.cache/ipython/cython/_cython_magic_c85ffb7e51b9b6e577272e75c5e5f201d7fdc55e07ff9bd38d2ea85dda8eb51e.pyx:4:32: Unknown type declaration 'cython.double' in annotation, ignoring
-warning: /Users/vitvly/.cache/ipython/cython/_cython_magic_c85ffb7e51b9b6e577272e75c5e5f201d7fdc55e07ff9bd38d2ea85dda8eb51e.pyx:4:50: Unknown type declaration 'cython.double' in annotation, ignoring
-warning: /Users/vitvly/.cache/ipython/cython/_cython_magic_c85ffb7e51b9b6e577272e75c5e5f201d7fdc55e07ff9bd38d2ea85dda8eb51e.pyx:4:68: Unknown type declaration 'cython.int' in annotation, ignoring
-warning: /Users/vitvly/.cache/ipython/cython/_cython_magic_c85ffb7e51b9b6e577272e75c5e5f201d7fdc55e07ff9bd38d2ea85dda8eb51e.pyx:4:83: Unknown type declaration 'cython.double' in annotation, ignoring
-warning: /Users/vitvly/.cache/ipython/cython/_cython_magic_c85ffb7e51b9b6e577272e75c5e5f201d7fdc55e07ff9bd38d2ea85dda8eb51e.pyx:5:13: Unknown type declaration 'cython.int' in annotation, ignoring
-warning: /Users/vitvly/.cache/ipython/cython/_cython_magic_c85ffb7e51b9b6e577272e75c5e5f201d7fdc55e07ff9bd38d2ea85dda8eb51e.pyx:6:13: Unknown type declaration 'cython.double' in annotation, ignoring
-warning: /Users/vitvly/.cache/ipython/cython/_cython_magic_c85ffb7e51b9b6e577272e75c5e5f201d7fdc55e07ff9bd38d2ea85dda8eb51e.pyx:7:14: Unknown type declaration 'cython.double' in annotation, ignoring</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Content of stderr:
-/Users/vitvly/.cache/ipython/cython/_cython_magic_c85ffb7e51b9b6e577272e75c5e5f201d7fdc55e07ff9bd38d2ea85dda8eb51e.c:4668:17: warning: fallthrough annotation in unreachable code [-Wunreachable-code-fallthrough]
- 4668 |                 CYTHON_FALLTHROUGH;
-      |                 ^
-/Users/vitvly/.cache/ipython/cython/_cython_magic_c85ffb7e51b9b6e577272e75c5e5f201d7fdc55e07ff9bd38d2ea85dda8eb51e.c:512:34: note: expanded from macro 'CYTHON_FALLTHROUGH'
-  512 |       #define CYTHON_FALLTHROUGH __attribute__((fallthrough))
-      |                                  ^
-/Users/vitvly/.cache/ipython/cython/_cython_magic_c85ffb7e51b9b6e577272e75c5e5f201d7fdc55e07ff9bd38d2ea85dda8eb51e.c:4679:17: warning: fallthrough annotation in unreachable code [-Wunreachable-code-fallthrough]
- 4679 |                 CYTHON_FALLTHROUGH;
-      |                 ^
-/Users/vitvly/.cache/ipython/cython/_cython_magic_c85ffb7e51b9b6e577272e75c5e5f201d7fdc55e07ff9bd38d2ea85dda8eb51e.c:512:34: note: expanded from macro 'CYTHON_FALLTHROUGH'
-  512 |       #define CYTHON_FALLTHROUGH __attribute__((fallthrough))
-      |                                  ^
-2 warnings generated.</code></pre>
-</div>
+<div id="aab838a1" class="cell" data-execution_count="12">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>cython</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> f_typed2(x: cython.double) <span class="op">-&gt;</span> cython.double:</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> x <span class="op">*</span> (x <span class="op">-</span> <span class="dv">1</span>)</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> integrate_f_typed2(a: cython.double, b: cython.double, N: cython.<span class="bu">int</span>) <span class="op">-&gt;</span> cython.double:</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    i: cython.<span class="bu">int</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>    s: cython.double</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>    dx: cython.double</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>    dx <span class="op">=</span> (b <span class="op">-</span> a) <span class="op">/</span> N</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(N):</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>        s <span class="op">+=</span> f_typed2(a <span class="op">+</span> i <span class="op">*</span> dx)</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> s <span class="op">*</span> dx</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -566,10 +526,10 @@ warning: /Users/vitvly/.cache/ipython/cython/_cython_magic_c85ffb7e51b9b6e577272
 </div>
 <div class="callout-body-container callout-body">
 <p>Apply annotated functions to DataFrame:</p>
-<div id="24975a2d" class="cell" data-execution_count="13">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>timeit df.<span class="bu">apply</span>(<span class="kw">lambda</span> x: integrate_f_typed2(x[<span class="st">"a"</span>], x[<span class="st">"b"</span>], x[<span class="st">"N"</span>]), axis<span class="op">=</span><span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="12312e3e" class="cell" data-execution_count="13">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>timeit df.<span class="bu">apply</span>(<span class="kw">lambda</span> x: integrate_f_typed2(x[<span class="st">"a"</span>], x[<span class="st">"b"</span>], x[<span class="st">"N"</span>]), axis<span class="op">=</span><span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>26.3 ms ± 196 μs per loop (mean ± std. dev. of 7 runs, 10 loops each)</code></pre>
+<pre><code>25.3 ms ± 132 μs per loop (mean ± std. dev. of 7 runs, 10 loops each)</code></pre>
 </div>
 </div>
 </div>
@@ -585,18 +545,18 @@ warning: /Users/vitvly/.cache/ipython/cython/_cython_magic_c85ffb7e51b9b6e577272
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<div id="379a036b" class="cell" data-execution_count="14">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>cython</span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>cdef double f_typed(double x) <span class="cf">except</span>? <span class="op">-</span><span class="dv">2</span>:</span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>   <span class="cf">return</span> x <span class="op">*</span> (x <span class="op">-</span> <span class="dv">1</span>)</span>
-<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>cpdef double integrate_f_typed(double a, double b, <span class="bu">int</span> N):</span>
-<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>   cdef <span class="bu">int</span> i</span>
-<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>   cdef double s, dx</span>
-<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>   s <span class="op">=</span> <span class="dv">0</span></span>
-<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>   dx <span class="op">=</span> (b <span class="op">-</span> a) <span class="op">/</span> N</span>
-<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>   <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(N):</span>
-<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>       s <span class="op">+=</span> f_typed(a <span class="op">+</span> i <span class="op">*</span> dx)</span>
-<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>   <span class="cf">return</span> s <span class="op">*</span> dx</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="58b04869" class="cell" data-execution_count="14">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>cython</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>cdef double f_typed(double x) <span class="cf">except</span>? <span class="op">-</span><span class="dv">2</span>:</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>   <span class="cf">return</span> x <span class="op">*</span> (x <span class="op">-</span> <span class="dv">1</span>)</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>cpdef double integrate_f_typed(double a, double b, <span class="bu">int</span> N):</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>   cdef <span class="bu">int</span> i</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>   cdef double s, dx</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>   s <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>   dx <span class="op">=</span> (b <span class="op">-</span> a) <span class="op">/</span> N</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>   <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(N):</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>       s <span class="op">+=</span> f_typed(a <span class="op">+</span> i <span class="op">*</span> dx)</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>   <span class="cf">return</span> s <span class="op">*</span> dx</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -610,10 +570,10 @@ warning: /Users/vitvly/.cache/ipython/cython/_cython_magic_c85ffb7e51b9b6e577272
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<div id="232f3055" class="cell" data-execution_count="15">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>timeit df.<span class="bu">apply</span>(<span class="kw">lambda</span> x: integrate_f_typed(x[<span class="st">"a"</span>], x[<span class="st">"b"</span>], x[<span class="st">"N"</span>]), axis<span class="op">=</span><span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="a1720062" class="cell" data-execution_count="15">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>timeit df.<span class="bu">apply</span>(<span class="kw">lambda</span> x: integrate_f_typed(x[<span class="st">"a"</span>], x[<span class="st">"b"</span>], x[<span class="st">"N"</span>]), axis<span class="op">=</span><span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>3.37 ms ± 184 μs per loop (mean ± std. dev. of 7 runs, 100 loops each)</code></pre>
+<pre><code>3.4 ms ± 53.3 μs per loop (mean ± std. dev. of 7 runs, 100 loops each)</code></pre>
 </div>
 </div>
 </div>
@@ -645,39 +605,39 @@ warning: /Users/vitvly/.cache/ipython/cython/_cython_magic_c85ffb7e51b9b6e577272
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<div id="21076f76" class="cell" data-execution_count="16">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numba</span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a><span class="at">@numba.jit</span></span>
-<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> f_numba(x):</span>
-<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> x <span class="op">*</span> (x <span class="op">-</span> <span class="dv">1</span>)</span>
-<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a><span class="at">@numba.jit</span></span>
-<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> integrate_f_numba(a, b, N):</span>
-<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> <span class="dv">0</span></span>
-<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>    dx <span class="op">=</span> (b <span class="op">-</span> a) <span class="op">/</span> N</span>
-<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(N):</span>
-<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a>        s <span class="op">+=</span> f_numba(a <span class="op">+</span> i <span class="op">*</span> dx)</span>
-<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> s <span class="op">*</span> dx</span>
-<span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-17"><a href="#cb26-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-18"><a href="#cb26-18" aria-hidden="true" tabindex="-1"></a><span class="at">@numba.jit</span></span>
-<span id="cb26-19"><a href="#cb26-19" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> apply_integrate_f_numba(col_a, col_b, col_N):</span>
-<span id="cb26-20"><a href="#cb26-20" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> <span class="bu">len</span>(col_N)</span>
-<span id="cb26-21"><a href="#cb26-21" aria-hidden="true" tabindex="-1"></a>    result <span class="op">=</span> np.empty(n, dtype<span class="op">=</span><span class="st">"float64"</span>)</span>
-<span id="cb26-22"><a href="#cb26-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> <span class="bu">len</span>(col_a) <span class="op">==</span> <span class="bu">len</span>(col_b) <span class="op">==</span> n</span>
-<span id="cb26-23"><a href="#cb26-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(n):</span>
-<span id="cb26-24"><a href="#cb26-24" aria-hidden="true" tabindex="-1"></a>        result[i] <span class="op">=</span> integrate_f_numba(col_a[i], col_b[i], col_N[i])</span>
-<span id="cb26-25"><a href="#cb26-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> result</span>
-<span id="cb26-26"><a href="#cb26-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-27"><a href="#cb26-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-28"><a href="#cb26-28" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> compute_numba(df):</span>
-<span id="cb26-29"><a href="#cb26-29" aria-hidden="true" tabindex="-1"></a>    result <span class="op">=</span> apply_integrate_f_numba(</span>
-<span id="cb26-30"><a href="#cb26-30" aria-hidden="true" tabindex="-1"></a>        df[<span class="st">"a"</span>].to_numpy(), df[<span class="st">"b"</span>].to_numpy(), df[<span class="st">"N"</span>].to_numpy()</span>
-<span id="cb26-31"><a href="#cb26-31" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb26-32"><a href="#cb26-32" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.Series(result, index<span class="op">=</span>df.index, name<span class="op">=</span><span class="st">"result"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="e070e844" class="cell" data-execution_count="16">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numba</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="at">@numba.jit</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> f_numba(x):</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> x <span class="op">*</span> (x <span class="op">-</span> <span class="dv">1</span>)</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a><span class="at">@numba.jit</span></span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> integrate_f_numba(a, b, N):</span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>    dx <span class="op">=</span> (b <span class="op">-</span> a) <span class="op">/</span> N</span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(N):</span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>        s <span class="op">+=</span> f_numba(a <span class="op">+</span> i <span class="op">*</span> dx)</span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> s <span class="op">*</span> dx</span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a><span class="at">@numba.jit</span></span>
+<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> apply_integrate_f_numba(col_a, col_b, col_N):</span>
+<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> <span class="bu">len</span>(col_N)</span>
+<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a>    result <span class="op">=</span> np.empty(n, dtype<span class="op">=</span><span class="st">"float64"</span>)</span>
+<span id="cb22-22"><a href="#cb22-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> <span class="bu">len</span>(col_a) <span class="op">==</span> <span class="bu">len</span>(col_b) <span class="op">==</span> n</span>
+<span id="cb22-23"><a href="#cb22-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(n):</span>
+<span id="cb22-24"><a href="#cb22-24" aria-hidden="true" tabindex="-1"></a>        result[i] <span class="op">=</span> integrate_f_numba(col_a[i], col_b[i], col_N[i])</span>
+<span id="cb22-25"><a href="#cb22-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> result</span>
+<span id="cb22-26"><a href="#cb22-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-27"><a href="#cb22-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-28"><a href="#cb22-28" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> compute_numba(df):</span>
+<span id="cb22-29"><a href="#cb22-29" aria-hidden="true" tabindex="-1"></a>    result <span class="op">=</span> apply_integrate_f_numba(</span>
+<span id="cb22-30"><a href="#cb22-30" aria-hidden="true" tabindex="-1"></a>        df[<span class="st">"a"</span>].to_numpy(), df[<span class="st">"b"</span>].to_numpy(), df[<span class="st">"N"</span>].to_numpy()</span>
+<span id="cb22-31"><a href="#cb22-31" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb22-32"><a href="#cb22-32" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.Series(result, index<span class="op">=</span>df.index, name<span class="op">=</span><span class="st">"result"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -691,26 +651,353 @@ warning: /Users/vitvly/.cache/ipython/cython/_cython_magic_c85ffb7e51b9b6e577272
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<div id="b6bbba2b" class="cell" data-execution_count="17">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>timeit compute_numba(df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="9ef3d4be" class="cell" data-execution_count="17">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>timeit compute_numba(df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>396 μs ± 41.3 μs per loop (mean ± std. dev. of 7 runs, 1 loop each)</code></pre>
+<pre><code>409 μs ± 88.6 μs per loop (mean ± std. dev. of 7 runs, 1 loop each)</code></pre>
 </div>
 </div>
 </div>
 </div>
 </section>
+<section id="pyo3-rust" class="level2">
+<h2 class="anchored" data-anchor-id="pyo3-rust">PyO3 (Rust)</h2>
+<p>Cython is a <em>dialect</em> – Python plus C type declarations, compiled through C. <strong>PyO3</strong> takes a different route: write the extension in <strong>Rust</strong>, a real systems language, and expose functions to Python. You get memory safety, <code>cargo</code>’s package ecosystem, and modern tooling – at the cost of learning Rust and a heavier build step. It has become the default way to write Rust extensions for Python (used by <code>pydantic-core</code>, <code>polars</code>, <code>cryptography</code>, <code>ruff</code>, …).</p>
+<p>Prerequisites: a Rust toolchain (<code>rustup</code> / <code>cargo</code>) and the <code>maturin</code> build tool:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>uv add <span class="op">--</span>dev maturin</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The crate lives in <code>_files/integ_rs/</code> and has three files:</p>
+<p><strong><code>_files/integ_rs/Cargo.toml</code></strong></p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode toml code-with-copy"><code class="sourceCode toml"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="kw">[package]</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="dt">name</span> <span class="op">=</span> <span class="st">"integ_rs"</span></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="dt">version</span> <span class="op">=</span> <span class="st">"0.1.0"</span></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a><span class="dt">edition</span> <span class="op">=</span> <span class="st">"2021"</span></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a><span class="kw">[lib]</span></span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a><span class="dt">name</span> <span class="op">=</span> <span class="st">"integ_rs"</span></span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a><span class="dt">crate-type</span> <span class="op">=</span> <span class="op">[</span><span class="st">"cdylib"</span><span class="op">]</span></span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a><span class="kw">[dependencies]</span></span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a><span class="dt">pyo3</span> <span class="op">=</span> <span class="op">{ </span><span class="dt">version</span><span class="op"> =</span> <span class="st">"0.27"</span><span class="op">, </span><span class="dt">features</span><span class="op"> =</span> <span class="op">[</span><span class="st">"extension-module"</span><span class="op">] }</span></span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a><span class="kw">[profile.release]</span></span>
+<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a><span class="dt">opt-level</span> <span class="op">=</span> <span class="dv">3</span></span>
+<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a><span class="dt">lto</span> <span class="op">=</span> <span class="cn">true</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong><code>_files/integ_rs/pyproject.toml</code></strong> – tells <code>maturin</code> how to build:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode toml code-with-copy"><code class="sourceCode toml"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="kw">[build-system]</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="dt">requires</span> <span class="op">=</span> <span class="op">[</span><span class="st">"maturin&gt;=1.7,&lt;2.0"</span><span class="op">]</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="dt">build-backend</span> <span class="op">=</span> <span class="st">"maturin"</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a><span class="kw">[project]</span></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a><span class="dt">name</span> <span class="op">=</span> <span class="st">"integ_rs"</span></span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a><span class="dt">version</span> <span class="op">=</span> <span class="st">"0.1.0"</span></span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a><span class="dt">requires-python</span> <span class="op">=</span> <span class="st">"&gt;=3.14"</span></span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a><span class="kw">[tool.maturin]</span></span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a><span class="dt">bindings</span> <span class="op">=</span> <span class="st">"pyo3"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong><code>_files/integ_rs/src/lib.rs</code></strong> – the same <code>integrate_f</code> as before, in Rust:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">pyo3::prelude::</span><span class="op">*;</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>inline<span class="at">]</span></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> f(x<span class="op">:</span> <span class="dt">f64</span>) <span class="op">-&gt;</span> <span class="dt">f64</span> <span class="op">{</span></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>    x <span class="op">*</span> (x <span class="op">-</span> <span class="dv">1.0</span>)</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a><span class="co">/// Numeric integration of f from a to b using n rectangles.</span></span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>pyfunction<span class="at">]</span></span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> integrate_f(a<span class="op">:</span> <span class="dt">f64</span><span class="op">,</span> b<span class="op">:</span> <span class="dt">f64</span><span class="op">,</span> n<span class="op">:</span> <span class="dt">i64</span>) <span class="op">-&gt;</span> <span class="dt">f64</span> <span class="op">{</span></span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> dx <span class="op">=</span> (b <span class="op">-</span> a) <span class="op">/</span> n <span class="kw">as</span> <span class="dt">f64</span><span class="op">;</span></span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> <span class="kw">mut</span> s <span class="op">=</span> <span class="dv">0.0</span><span class="op">;</span></span>
+<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="dv">0</span><span class="op">..</span>n <span class="op">{</span></span>
+<span id="cb28-14"><a href="#cb28-14" aria-hidden="true" tabindex="-1"></a>        s <span class="op">+=</span> f(a <span class="op">+</span> i <span class="kw">as</span> <span class="dt">f64</span> <span class="op">*</span> dx)<span class="op">;</span></span>
+<span id="cb28-15"><a href="#cb28-15" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb28-16"><a href="#cb28-16" aria-hidden="true" tabindex="-1"></a>    s <span class="op">*</span> dx</span>
+<span id="cb28-17"><a href="#cb28-17" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb28-18"><a href="#cb28-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-19"><a href="#cb28-19" aria-hidden="true" tabindex="-1"></a><span class="co">/// Apply integrate_f over whole columns in one call.</span></span>
+<span id="cb28-20"><a href="#cb28-20" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>pyfunction<span class="at">]</span></span>
+<span id="cb28-21"><a href="#cb28-21" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> apply_integrate_f(a<span class="op">:</span> <span class="dt">Vec</span><span class="op">&lt;</span><span class="dt">f64</span><span class="op">&gt;,</span> b<span class="op">:</span> <span class="dt">Vec</span><span class="op">&lt;</span><span class="dt">f64</span><span class="op">&gt;,</span> n<span class="op">:</span> <span class="dt">Vec</span><span class="op">&lt;</span><span class="dt">i64</span><span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="dt">Vec</span><span class="op">&lt;</span><span class="dt">f64</span><span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb28-22"><a href="#cb28-22" aria-hidden="true" tabindex="-1"></a>    a<span class="op">.</span>iter()</span>
+<span id="cb28-23"><a href="#cb28-23" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>zip(b<span class="op">.</span>iter())</span>
+<span id="cb28-24"><a href="#cb28-24" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>zip(n<span class="op">.</span>iter())</span>
+<span id="cb28-25"><a href="#cb28-25" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>map(<span class="op">|</span>((<span class="op">&amp;</span>ai<span class="op">,</span> <span class="op">&amp;</span>bi)<span class="op">,</span> <span class="op">&amp;</span>ni)<span class="op">|</span> integrate_f(ai<span class="op">,</span> bi<span class="op">,</span> ni))</span>
+<span id="cb28-26"><a href="#cb28-26" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>collect()</span>
+<span id="cb28-27"><a href="#cb28-27" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb28-28"><a href="#cb28-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-29"><a href="#cb28-29" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>pymodule<span class="at">]</span></span>
+<span id="cb28-30"><a href="#cb28-30" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> integ_rs(m<span class="op">:</span> <span class="op">&amp;</span>Bound<span class="op">&lt;</span><span class="ot">'_</span><span class="op">,</span> PyModule<span class="op">&gt;</span>) <span class="op">-&gt;</span> PyResult<span class="op">&lt;</span>()<span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb28-31"><a href="#cb28-31" aria-hidden="true" tabindex="-1"></a>    m<span class="op">.</span>add_function(<span class="pp">wrap_pyfunction!</span>(integrate_f<span class="op">,</span> m)<span class="op">?</span>)<span class="op">?;</span></span>
+<span id="cb28-32"><a href="#cb28-32" aria-hidden="true" tabindex="-1"></a>    m<span class="op">.</span>add_function(<span class="pp">wrap_pyfunction!</span>(apply_integrate_f<span class="op">,</span> m)<span class="op">?</span>)<span class="op">?;</span></span>
+<span id="cb28-33"><a href="#cb28-33" aria-hidden="true" tabindex="-1"></a>    <span class="cn">Ok</span>(())</span>
+<span id="cb28-34"><a href="#cb28-34" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Build it into the current environment (<code>--release</code> for optimisations; the first build compiles PyO3 too, ~10 s):</p>
+<div id="4e5c5142" class="cell" data-execution_count="18">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> subprocess</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>out <span class="op">=</span> subprocess.run(</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>    [<span class="st">"maturin"</span>, <span class="st">"develop"</span>, <span class="st">"--release"</span>, <span class="st">"--manifest-path"</span>, <span class="st">"_files/integ_rs/Cargo.toml"</span>],</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>    capture_output<span class="op">=</span><span class="va">True</span>, text<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>((out.stderr <span class="kw">or</span> out.stdout)[<span class="op">-</span><span class="dv">400</span>:])</span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>out.check_returncode()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<div class="ansi-escaped-output">
+<pre>🐍 Found CPython 3.14 at /Users/vitvly/c/lnu/md/data_analytics/.venv/bin/python
+
+🔗 Found pyo3 bindings
+
+📡 Using build options bindings from pyproject.toml
+
+<span class="ansi-bright-green-fg ansi-bold">    Finished</span> `release` profile [optimized] target(s) in 0.02s
+
+📦 Built wheel for CPython 3.14 to /var/folders/d4/0b32xzkd12gcwpwf2dqwdht80000gn/T/.tmp5G1Kf4/integ_rs-0.1.0-cp314-cp314-macosx_11_0_arm64.whl
+
+🛠 Installed integ_rs-0.1.0
+
+
+</pre>
+</div>
+</div>
+</div>
+<p>Import it and compare against the pure-Python <code>apply</code> from earlier:</p>
+<div id="ba06c9c7" class="cell" data-execution_count="19">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> integ_rs</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>timeit df.<span class="bu">apply</span>(<span class="kw">lambda</span> r: integrate_f(r[<span class="st">"a"</span>], r[<span class="st">"b"</span>], r[<span class="st">"N"</span>]), axis<span class="op">=</span><span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>28.2 ms ± 160 μs per loop (mean ± std. dev. of 7 runs, 10 loops each)</code></pre>
+</div>
+</div>
+<div id="9b26d0b5" class="cell" data-execution_count="20">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>timeit integ_rs.apply_integrate_f(df[<span class="st">"a"</span>].tolist(), df[<span class="st">"b"</span>].tolist(), df[<span class="st">"N"</span>].tolist())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>411 μs ± 3.02 μs per loop (mean ± std. dev. of 7 runs, 1,000 loops each)</code></pre>
+</div>
+</div>
+<p>(The <code>.tolist()</code> copy is included in the timing; production code would take NumPy arrays directly via the <code>numpy</code> crate for zero-copy.)</p>
+<div class="callout callout-style-default callout-note no-icon callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Cython vs PyO3
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th>Cython</th>
+<th>PyO3</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>language</td>
+<td>Python + C type hints</td>
+<td>Rust</td>
+</tr>
+<tr class="even">
+<td>safety</td>
+<td>manual (C rules)</td>
+<td>borrow checker</td>
+</tr>
+<tr class="odd">
+<td>build</td>
+<td><code>%%cython</code> / <code>setuptools</code></td>
+<td><code>cargo</code> / <code>maturin</code></td>
+</tr>
+<tr class="even">
+<td>notebook iteration</td>
+<td>instant (<code>%%cython</code> cell)</td>
+<td>rebuild step (<code>maturin develop</code>)</td>
+</tr>
+<tr class="odd">
+<td>ecosystem</td>
+<td>C libraries</td>
+<td><code>crates.io</code></td>
+</tr>
+<tr class="even">
+<td>best when</td>
+<td>incrementally typing hot Python</td>
+<td>a self-contained, reusable, safe kernel</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="profiling" class="level2">
+<h2 class="anchored" data-anchor-id="profiling">Profiling</h2>
+<p>You should really profile <em>before</em> optimising – here it comes after only because you have now seen the code. Profiling answers “where does the time (or memory) actually go?”, which is usually not where you would guess.</p>
+<section id="cprofile-function-level" class="level3">
+<h3 class="anchored" data-anchor-id="cprofile-function-level">cProfile – function-level</h3>
+<div id="ea3ee8fe" class="cell" data-execution_count="21">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> cProfile, pstats, io</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>pr <span class="op">=</span> cProfile.Profile()</span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>pr.enable()</span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>primes1(<span class="dv">200</span>)</span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>pr.disable()</span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>buf <span class="op">=</span> io.StringIO()</span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>pstats.Stats(pr, stream<span class="op">=</span>buf).sort_stats(<span class="st">"cumulative"</span>).print_stats(<span class="dv">6</span>)</span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(buf.getvalue())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>         43 function calls in 0.001 seconds
+
+   Ordered by: cumulative time
+   List reduced from 20 to 6 due to restriction &lt;6&gt;
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        2    0.000    0.000    0.001    0.000 /Users/vitvly/c/lnu/md/data_analytics/.venv/lib/python3.14/site-packages/IPython/core/interactiveshell.py:3786(run_code)
+        2    0.000    0.000    0.001    0.000 {built-in method builtins.exec}
+        1    0.001    0.001    0.001    0.001 /var/folders/d4/0b32xzkd12gcwpwf2dqwdht80000gn/T/ipykernel_36919/2011623162.py:1(primes1)
+        1    0.000    0.000    0.000    0.000 /var/folders/d4/0b32xzkd12gcwpwf2dqwdht80000gn/T/ipykernel_36919/3079768346.py:1(&lt;module&gt;)
+        1    0.000    0.000    0.000    0.000 {method 'disable' of '_lsprof.Profiler' objects}
+        2    0.000    0.000    0.000    0.000 /opt/homebrew/Cellar/python@3.14/3.14.7/Frameworks/Python.framework/Versions/3.14/lib/python3.14/codeop.py:112(__call__)
+
+
+</code></pre>
+</div>
+</div>
+<p>Top of the list is where the cumulative time sits. Interactively you would just write <code>%prun primes1(200)</code>; the explicit form above is used here because <code>%prun</code> sends its report to a pager that a non-interactive render swallows.</p>
+</section>
+<section id="line_profiler-line-by-line" class="level3">
+<h3 class="anchored" data-anchor-id="line_profiler-line-by-line">line_profiler – line-by-line</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>uv add line_profiler</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="f0115814" class="cell" data-execution_count="22">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> line_profiler <span class="im">import</span> LineProfiler</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>lp <span class="op">=</span> LineProfiler()</span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>lp.add_function(integrate_f)</span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>lp.runcall(<span class="kw">lambda</span>: df.<span class="bu">apply</span>(<span class="kw">lambda</span> r: integrate_f(r[<span class="st">"a"</span>], r[<span class="st">"b"</span>], r[<span class="st">"N"</span>]), axis<span class="op">=</span><span class="dv">1</span>))</span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>buf <span class="op">=</span> io.StringIO()</span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>lp.print_stats(stream<span class="op">=</span>buf)</span>
+<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(buf.getvalue())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Timer unit: 1e-09 s
+
+Total time: 0.298537 s
+File: /var/folders/d4/0b32xzkd12gcwpwf2dqwdht80000gn/T/ipykernel_36919/732619065.py
+Function: integrate_f at line 5
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+     5                                           def integrate_f(a, b, N):
+     6      1000     190000.0    190.0      0.1      s = 0
+     7      1000     196000.0    196.0      0.1      dx = (b - a) / N
+     8    541117   72084000.0    133.2     24.1      for i in range(N):
+     9    540117  225921000.0    418.3     75.7          s += f(a + i * dx)
+    10      1000     146000.0    146.0      0.0      return s * dx
+
+</code></pre>
+</div>
+</div>
+<p>The <code>% Time</code> column pins the cost to a single line – the <code>for i in range(N)</code> loop – which is exactly what the Cython / Numba versions target. Interactively this is <code>%load_ext line_profiler</code> then <code>%lprun -f integrate_f ...</code>.</p>
+</section>
+<section id="memit-peak-memory-of-an-expression" class="level3">
+<h3 class="anchored" data-anchor-id="memit-peak-memory-of-an-expression"><code>%memit</code> – peak memory of an expression</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>uv add memory_profiler</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="4e9cc59c" class="cell" data-execution_count="23">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys</span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>load_ext memory_profiler</span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>memit big_list <span class="op">=</span> [<span class="dv">0</span>] <span class="op">*</span> <span class="dv">10_000_000</span></span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"list overhead :"</span>, sys.getsizeof(big_list) <span class="op">/</span> <span class="fl">1e6</span>, <span class="st">"MB of pointers"</span>)</span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"ndarray nbytes:"</span>, np.zeros(<span class="dv">10_000_000</span>, dtype<span class="op">=</span><span class="st">"int64"</span>).nbytes <span class="op">/</span> <span class="fl">1e6</span>, <span class="st">"MB, contiguous"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>peak memory: 361.58 MiB, increment: 76.75 MiB
+list overhead : 80.000056 MB of pointers
+ndarray nbytes: 80.0 MB, contiguous</code></pre>
+</div>
+</div>
+<p><code>%memit</code> reports the peak memory of the expression: ~76 MiB just to hold 10 million pointers to the same cached <code>0</code>. The equivalent <code>int64</code> array is 80 MB in one contiguous block – same element count, but the cache can stream it.</p>
+</section>
+<section id="scalene-cpu-gpu-memory-and-where-the-time-goes" class="level3">
+<h3 class="anchored" data-anchor-id="scalene-cpu-gpu-memory-and-where-the-time-goes">scalene – CPU + GPU + memory, and <em>where</em> the time goes</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>uv add scalene</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>scalene</code> is a sampling profiler with low overhead (~10–20%). Its report is a browser UI, or a terminal table with <code>--cli</code>, so it does not render usefully inside a notebook – run it on a script:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb43"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="ex">scalene</span> <span class="at">--cli</span> <span class="at">--reduced-profile</span> myscript.py     <span class="co"># terminal, significant lines only</span></span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a><span class="ex">scalene</span> myscript.py                             <span class="co"># interactive HTML report</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>What makes it worth learning for <em>this</em> lab: for every line it splits the time into</p>
+<ul>
+<li><strong>Python time</strong> – interpreter overhead; the part Cython / Numba / PyO3 can remove</li>
+<li><strong>native time</strong> – already inside compiled C (NumPy, BLAS, …); rewriting this line will not help</li>
+<li><strong>system time</strong> – I/O and waiting</li>
+</ul>
+<p>and alongside CPU it tracks <strong>memory over time</strong> and <strong>copy volume</strong> (MB/s copied), which catches accidental copies – <code>np.array(some_list)</code> in a loop, a pandas <code>.copy()</code> you did not mean, <code>df[mask]</code> in a hot path.</p>
+<div class="callout callout-style-default callout-tip no-icon callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Reading it
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li>a line that is ~95% <em>native time</em> is not your problem – it is already fast C</li>
+<li>a line that is ~90% <em>Python time</em> inside a loop is exactly what you port to Cython / Numba / Rust</li>
+<li>a line with high <em>copy volume</em> is an allocation to hoist out of the loop</li>
+</ul>
+</div>
+</div>
+<div class="callout callout-style-default callout-note no-icon callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Other tools
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li><code>%mprun</code> – line-by-line <em>memory</em> (needs the function in an importable file)</li>
+<li><strong><code>py-spy</code></strong> – sampling profiler that attaches to an already-running process, no code changes: <code>py-spy top --pid &lt;PID&gt;</code>, <code>py-spy dump --pid &lt;PID&gt;</code></li>
+<li><strong><code>snakeviz</code></strong> – browser icicle/flame view of a saved run: <code>python -m cProfile -o out.prof script.py &amp;&amp; snakeviz out.prof</code></li>
+<li><strong><code>viztracer</code></strong> – full execution timeline, viewable in Perfetto / <code>chrome://tracing</code></li>
+</ul>
+</div>
+</div>
+</section>
+</section>
 <section id="exercises" class="level2">
 <h2 class="anchored" data-anchor-id="exercises">Exercises</h2>
 <ol type="1">
-<li>Apply Cython/Numba optimizations to some computations on your dataframe from Lab 1.</li>
+<li>Apply Cython / Numba optimizations to some computations on your dataframe from Lab 1.</li>
 <li>Go through the tutorial on Black-Scholes option pricing (<a href="https://louis-finegan.github.io/2024/10/10/Black-Scholes.html" class="uri">https://louis-finegan.github.io/2024/10/10/Black-Scholes.html</a>). Modify the code so that:</li>
 </ol>
 <ul>
 <li>it works for some different company</li>
-<li>has 2 versions: using Cython and Numba</li>
-<li>measure results</li>
+<li>has three versions: Cython, Numba, and PyO3</li>
+<li>measure and compare the results</li>
 </ul>
+<ol start="3" type="1">
+<li>Profile <code>primes1</code> (or your own slow function) with <code>cProfile</code> and <code>line_profiler</code>. Identify the single hottest line, write a faster version, and confirm with the profiler that the hotspot moved.</li>
+<li>Add a third function to <code>_files/integ_rs</code> (for example the Black-Scholes formula, or a prime sieve), rebuild with <code>maturin develop</code>, and benchmark it against the Cython and Numba equivalents. Note how the edit/build/measure loop differs from <code>%%cython</code>.</li>
+</ol>
+</section>
+<section id="project-ideas" class="level2">
+<h2 class="anchored" data-anchor-id="project-ideas">Project ideas</h2>
+<p>Data-science flavoured. Pick one. In each case: start from the natural slow version (a <code>df.apply(..., axis=1)</code>, a <code>groupby().apply()</code>, a <code>rolling().apply()</code>, or a plain Python loop), then produce <strong>at least three</strong> faster variants (NumPy-vectorised, Numba, Cython, PyO3), profile with <code>line_profiler</code> / <code>scalene</code> at each step to confirm <em>where</em> the time goes, and finish with a speedup table plus a paragraph on which approach was the least effort for the most gain. Reuse <code>_files/transactions.csv</code> and <code>_files/depression_data.csv</code> from Lab 1 where possible.</p>
+<ol type="1">
+<li><strong>Row-wise feature engineering / business rules.</strong> Build a customer “risk score” or segment label from 10+ nested <code>if/else</code> rules with lookups and date arithmetic over <code>transactions.csv</code>. Baseline: <code>df.apply(fn, axis=1)</code>. Variants: vectorised <code>np.select</code> / <code>np.where</code>; a Numba kernel over the raw column arrays; a PyO3 function taking the columns. The single most common real-world “my pandas is slow” case.</li>
+<li><strong>Custom group-by aggregation pandas cannot vectorise.</strong> Per-customer metrics over <code>transactions.csv</code>: time since previous purchase, longest fraud-free streak, a recency-weighted spend score. Baseline: <code>groupby("customer_id").apply(py_fn)</code>. Variants: sort once, then a Numba pass over the sorted arrays; a Rust equivalent; whatever pure-pandas trick you can find.</li>
+<li><strong>Rolling-window features with a custom reducer.</strong> On a synthetic price / sensor series: rolling regression slope, rolling entropy, rolling max-drawdown. Baseline: <code>series.rolling(w).apply(fn, raw=True)</code>. Variants: an explicit Numba sliding window, Cython, PyO3; compare against <code>bottleneck</code> / <code>numbagg</code>.</li>
+<li><strong>Pairwise similarity / nearest-neighbour from scratch.</strong> Cosine or Euclidean similarity across <code>N</code> rows for deduplication, a simple recommender, or k-NN (and, as a stretch, k-means – the assignment step is the same loop). Pure Python -&gt; NumPy broadcasting (watch the memory blow-up – read scalene’s <em>copy volume</em>) -&gt; blocked Numba -&gt; PyO3. Benchmark against <code>scipy.spatial.distance.cdist</code> and <code>sklearn</code>.</li>
+<li><strong>Geospatial: nearest facility + radius counts.</strong> Millions of synthetic <code>(lat, lon)</code> points and a few hundred reference locations: for each point find the nearest reference by haversine distance, and count points within <code>R</code> km of each reference. Vectorised NumPy -&gt; Numba -&gt; PyO3. Report points/second.</li>
+<li><strong>Text analytics from scratch: n-gram / co-occurrence counts.</strong> Tokenise a text column and build n-gram frequencies or a word co-occurrence matrix. Pure-Python <code>dict</code> counting -&gt; arrays + hashing -&gt; Cython -&gt; Rust (very strong here). Benchmark against <code>sklearn.feature_extraction.text.CountVectorizer</code>.</li>
+<li><strong>Bootstrap / permutation testing.</strong> <code>B = 100_000</code> resamples of <code>depression_data.csv</code>, computing a statistic each time – a bootstrap CI for mean income by education level, or a permutation test for a group difference. The resample-and-reduce loop is embarrassingly parallel: pure Python -&gt; NumPy -&gt; Numba <code>parallel=True</code> -&gt; PyO3 with <code>rayon</code>. Report resamples/second and the effective parallel speedup.</li>
+</ol>
 </section>
 <section id="references" class="level2">
 <h2 class="anchored" data-anchor-id="references">References</h2>
@@ -719,6 +1006,9 @@ warning: /Users/vitvly/.cache/ipython/cython/_cython_magic_c85ffb7e51b9b6e577272
 <li><a href="https://cython.readthedocs.io/en/latest/src/quickstart/build.html">Cython build instructions</a></li>
 <li><a href="https://cython.readthedocs.io/en/latest/src/userguide/language_basics.html">Cython language</a></li>
 <li><a href="https://pandas.pydata.org/pandas-docs/stable/user_guide/enhancingperf.html">Pandas optimization</a></li>
+<li><a href="https://github.com/pyutils/line_profiler">line_profiler</a>, <a href="https://github.com/plasma-umass/scalene">scalene</a>, <a href="https://github.com/benfred/py-spy">py-spy</a></li>
+<li><a href="https://pyo3.rs/">PyO3 user guide</a> and <a href="https://www.maturin.rs/">maturin</a></li>
+<li><a href="https://github.com/PyO3/rust-numpy"><code>rust-numpy</code></a> – zero-copy NumPy arrays in PyO3</li>
 </ol>
 
 

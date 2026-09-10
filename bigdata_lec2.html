@@ -34,6 +34,72 @@
       margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
       vertical-align: middle;
     }
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      { color: #003b4f; background-color: #f1f3f5; }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span { color: #003b4f; } /* Normal */
+    code span.al { color: #ad0000; } /* Alert */
+    code span.an { color: #5e5e5e; } /* Annotation */
+    code span.at { color: #657422; } /* Attribute */
+    code span.bn { color: #ad0000; } /* BaseN */
+    code span.bu { } /* BuiltIn */
+    code span.cf { color: #003b4f; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #20794d; } /* Char */
+    code span.cn { color: #8f5902; } /* Constant */
+    code span.co { color: #5e5e5e; } /* Comment */
+    code span.cv { color: #5e5e5e; font-style: italic; } /* CommentVar */
+    code span.do { color: #5e5e5e; font-style: italic; } /* Documentation */
+    code span.dt { color: #ad0000; } /* DataType */
+    code span.dv { color: #ad0000; } /* DecVal */
+    code span.er { color: #ad0000; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #ad0000; } /* Float */
+    code span.fu { color: #4758ab; } /* Function */
+    code span.im { color: #00769e; } /* Import */
+    code span.in { color: #5e5e5e; } /* Information */
+    code span.kw { color: #003b4f; font-weight: bold; } /* Keyword */
+    code span.op { color: #5e5e5e; } /* Operator */
+    code span.ot { color: #003b4f; } /* Other */
+    code span.pp { color: #ad0000; } /* Preprocessor */
+    code span.sc { color: #5e5e5e; } /* SpecialChar */
+    code span.ss { color: #20794d; } /* SpecialString */
+    code span.st { color: #20794d; } /* String */
+    code span.va { color: #111111; } /* Variable */
+    code span.vs { color: #20794d; } /* VerbatimString */
+    code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   </style>
   <link rel="stylesheet" href="site_libs/revealjs/dist/theme/quarto-2740581606dc327e82f18f789b69d8a0.css">
   <link href="site_libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
@@ -244,6 +310,130 @@ are in lockstep and gradually converging</li>
 </div>
 </div>
 </div>
+</section>
+<section id="dennard-scaling" class="slide level2">
+<h2>Dennard scaling</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Definition (Robert Dennard, 1974)</strong></p>
+</div>
+<div class="callout-content">
+<p>As transistors get smaller, their power density stays roughly <strong>constant</strong> – smaller transistors run at proportionally lower voltage and current.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Why it mattered</strong></p>
+</div>
+<div class="callout-content">
+<p>For ~30 years this is what let clock speeds climb <em>alongside</em> Moore’s Law: each new process node gave you more transistors <strong>and</strong> a higher safe clock at the same power budget. Software got faster for free.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="the-power-wall" class="slide level2">
+<h2>The power wall</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Dennard scaling broke down (~2006)</strong></p>
+</div>
+<div class="callout-content">
+<p>Below roughly 65 nm, leakage current and heat stopped shrinking with the transistors. More switching in the same area now means more power and more heat than the chip can dissipate.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-warning no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Consequence</strong></p>
+</div>
+<div class="callout-content">
+<p>Clock speed hit a ceiling. The Pentium 4 reached ~3.8 GHz in 2004; twenty years later, mainstream CPUs still run at ~3–5 GHz.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>“The Free Lunch Is Over” – Herb Sutter, 2005</strong></p>
+</div>
+<div class="callout-content">
+<p>Single-thread performance now grows only a few percent per year. Making code faster became a <strong>parallelism</strong> problem, not a “wait for next year’s CPU” problem.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="the-multicore-pivot" class="slide level2">
+<h2>The multicore pivot</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Same transistors, spent differently</strong></p>
+</div>
+<div class="callout-content">
+<p>Moore’s Law kept delivering transistors – vendors just stopped spending them on <em>faster</em> cores and started spending them on <em>more</em> cores.</p>
+<ul>
+<li>2005: first mainstream dual-core desktop chips (Athlon 64 X2, Pentium D)</li>
+<li>today: 8–16 cores on a laptop, 64–192 in a server socket</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="beyond-more-cores" class="slide level2">
+<h2>Beyond more cores</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Data-level parallelism: SIMD</strong></p>
+</div>
+<div class="callout-content">
+<p>One instruction, many elements:</p>
+<ul>
+<li>SSE (128-bit)</li>
+<li>AVX2 (256)</li>
+<li>AVX-512 (512)</li>
+<li>ARM NEON / SVE</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Domain-specific hardware:</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>GPUs</strong> (thousands of simple cores, huge memory bandwidth)</li>
+<li><strong>TPUs</strong> (matrix-multiply units)</li>
+<li><strong>FPGAs</strong>.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="what-to-do-now" class="slide level2">
+<h2>What to do now?</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Choices</strong></p>
+</div>
+<div class="callout-content">
+<ol type="1">
+<li><strong>Use all the cores</strong> – threads / processes <em>(next section)</em></li>
+<li><strong>Use SIMD</strong> – via vectorised libraries: NumPy, Polars, DuckDB</li>
+<li><strong>Use accelerators</strong> – GPUs for the right workloads</li>
+<li><strong>Be smart</strong> – better algorithms, cache-friendly data layout, better data formats</li>
+</ol>
+</div>
+</div>
+</div>
 </section></section>
 <section>
 <section id="multithreading-vs-multiprocessing" class="title-slide slide level1 center">
@@ -261,7 +451,7 @@ are in lockstep and gradually converging</li>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
-<p><strong>Concurrency Parallelism</strong></p>
+<p><strong>Concurrency</strong></p>
 </div>
 <div class="callout-content">
 <p>Individual steps of both tasks are executed in an <em>interleaved</em> fashion</p>
@@ -325,6 +515,10 @@ are in lockstep and gradually converging</li>
 <h2>Threads</h2>
 
 <img data-src="img/thread_diagram.png" class="r-stretch"></section>
+<section id="comparison-table" class="slide level2">
+<h2>Comparison table</h2>
+
+<img data-src="img/threads_vs_processes.jpg" class="r-stretch"></section>
 <section id="green-threadscoroutines" class="slide level2">
 <h2>Green threads/Coroutines</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
@@ -338,11 +532,336 @@ are in lockstep and gradually converging</li>
 </div>
 </div>
 <!-- ![](img/goroutines) -->
-</section>
-<section id="comparison-table" class="slide level2">
-<h2>Comparison table</h2>
 
-<img data-src="img/threads_vs_processes.jpg" class="r-stretch"></section></section>
+<img data-src="img/green_threads.png" class="r-stretch"></section>
+<section id="the-gil" class="slide level2">
+<h2>The GIL</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Global Interpreter Lock</strong></p>
+</div>
+<div class="callout-content">
+<p>CPython uses one lock that a thread must hold to execute Python bytecode.</p>
+<ul>
+<li>protects reference counts and interpreter state from data races</li>
+<li><strong>consequence:</strong> only <em>one</em> thread runs Python bytecode at a time (in the default build)</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>So what does <code>threading</code> give you?</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>Concurrency</strong>, not CPU <strong>parallelism</strong>, for <em>pure Python</em> code – unless you run a <strong>free-threaded build</strong> (below).</p>
+</div>
+</div>
+</div>
+</section>
+<section id="when-threads-still-help" class="slide level2">
+<h2>When threads still help</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The GIL is released…</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>during blocking <strong>I/O</strong> (network, disk, database) – so I/O-bound work does scale on threads</li>
+<li>inside C extensions that explicitly drop it: <strong>NumPy</strong>, parts of <strong>pandas</strong>, <strong>scikit-learn</strong>, <code>zlib</code>, Numba <code>nogil=True</code></li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Data-science nuance</strong></p>
+</div>
+<div class="callout-content">
+<p>A NumPy/BLAS-heavy workload <em>can</em> get real speedup from <code>threading</code> – the heavy lifting runs with the GIL released.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="multiprocessing" class="slide level2">
+<h2>multiprocessing</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Real parallelism for pure-Python CPU work</strong></p>
+</div>
+<div class="callout-content">
+<p>Each process gets its own interpreter and its own GIL.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>…but it isn’t free</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>process <strong>startup</strong> cost</li>
+<li><strong>everything crossing the boundary is pickled</strong> – expensive for large arrays / DataFrames</li>
+</ul>
+</div>
+</div>
+</div>
+
+<img data-src="img/pickle.jpg" class="r-stretch"></section>
+<section id="concurrent.futures-asyncio" class="slide level2">
+<h2>concurrent.futures &amp; asyncio</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong><code>concurrent.futures</code> – one API, two backends</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a aria-label="1"></a><span class="im">from</span> concurrent.futures <span class="im">import</span> ThreadPoolExecutor, ProcessPoolExecutor</span>
+<span id="cb1-2"><a aria-label="2"></a></span>
+<span id="cb1-3"><a aria-label="3"></a><span class="co"># ThreadPoolExecutor  -&gt; I/O-bound, or GIL-releasing native code</span></span>
+<span id="cb1-4"><a aria-label="4"></a><span class="co"># ProcessPoolExecutor -&gt; CPU-bound pure Python</span></span>
+<span id="cb1-5"><a aria-label="5"></a><span class="cf">with</span> ProcessPoolExecutor() <span class="im">as</span> ex:</span>
+<span id="cb1-6"><a aria-label="6"></a>    results <span class="op">=</span> <span class="bu">list</span>(ex.<span class="bu">map</span>(work, tasks, chunksize<span class="op">=</span><span class="dv">100</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong><code>asyncio</code></strong></p>
+</div>
+<div class="callout-content">
+<p>Single thread, cooperative multitasking. Built for <strong>thousands of concurrent I/O calls</strong> (HTTP, DB). Never for CPU-bound work.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="asyncio-the-event-loop" class="slide level2">
+<h2>asyncio: the event loop</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Cooperative multitasking, one thread</strong></p>
+</div>
+<div class="callout-content">
+<p>An <strong>event loop</strong> runs coroutines. A coroutine runs until it hits <code>await</code> on something not yet ready (a socket, a timer), then <strong>yields control</strong> back to the loop, which runs whatever else is ready.</p>
+<ul>
+<li>no preemption – a coroutine holds the CPU until it chooses to <code>await</code></li>
+<li>no GIL contention, no per-thread stack – scales to tens of thousands of open connections</li>
+<li>one blocking call, or one CPU-heavy stretch with no <code>await</code>, <strong>stalls everything</strong></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="asyncio-in-practice" class="slide level2">
+<h2>asyncio: in practice</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The pieces</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a aria-label="1"></a><span class="im">import</span> asyncio</span>
+<span id="cb2-2"><a aria-label="2"></a></span>
+<span id="cb2-3"><a aria-label="3"></a><span class="cf">async</span> <span class="kw">def</span> fetch(url): ...                    <span class="co"># a coroutine</span></span>
+<span id="cb2-4"><a aria-label="4"></a></span>
+<span id="cb2-5"><a aria-label="5"></a><span class="cf">async</span> <span class="kw">def</span> main():</span>
+<span id="cb2-6"><a aria-label="6"></a>    <span class="cf">async</span> <span class="cf">with</span> asyncio.TaskGroup() <span class="im">as</span> tg:    <span class="co"># 3.11+</span></span>
+<span id="cb2-7"><a aria-label="7"></a>        <span class="cf">for</span> u <span class="kw">in</span> urls:</span>
+<span id="cb2-8"><a aria-label="8"></a>            tg.create_task(fetch(u))         <span class="co"># scheduled concurrently</span></span>
+<span id="cb2-9"><a aria-label="9"></a></span>
+<span id="cb2-10"><a aria-label="10"></a>asyncio.run(main())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+<div class="callout callout-important callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Issues</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>“function colours”</strong> – <code>async</code> is contagious; you need async-native libraries (<code>aiohttp</code>, <code>httpx</code>, <code>asyncpg</code>). A normal blocking call freezes the loop.</li>
+<li>push unavoidable blocking / CPU work off the loop with <code>await asyncio.to_thread(fn, ...)</code> or <code>loop.run_in_executor(...)</code>.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="asyncio-vs-threads" class="slide level2">
+<h2>asyncio vs threads</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Same goal (I/O concurrency), different trade-offs</strong></p>
+</div>
+<div class="callout-content">
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th></th>
+<th><code>threading</code></th>
+<th><code>asyncio</code></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>scheduling</td>
+<td>preemptive (OS)</td>
+<td>cooperative (<code>await</code>)</td>
+</tr>
+<tr class="even">
+<td>memory per task</td>
+<td>~MB (stack)</td>
+<td>~KB</td>
+</tr>
+<tr class="odd">
+<td>scales to</td>
+<td>thousands</td>
+<td>tens of thousands</td>
+</tr>
+<tr class="even">
+<td>special libraries</td>
+<td>not needed</td>
+<td>yes (async drivers)</td>
+</tr>
+<tr class="odd">
+<td>accidental blocking</td>
+<td>slows one thread</td>
+<td>freezes everything</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</section>
+<section id="amdahls-law" class="slide level2">
+<h2>Amdahl’s law</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The ceiling on speedup</strong></p>
+</div>
+<div class="callout-content">
+<p><span class="math inline">\(S(n)\)</span> is the <strong>speedup</strong> with <span class="math inline">\(n\)</span> workers: <span class="math inline">\(S(n) = T(1)\,/\,T(n)\)</span> – single-worker time divided by <span class="math inline">\(n\)</span>-worker time.</p>
+<p>Normalise <span class="math inline">\(T(1) = 1\)</span>, split into a serial part <span class="math inline">\(1-p\)</span> and a parallel part <span class="math inline">\(p\)</span>. With <span class="math inline">\(n\)</span> workers the parallel part takes <span class="math inline">\(p/n\)</span> while the serial part is unchanged: <span class="math display">\[ T(n) = (1-p) + \frac{p}{n}, \qquad S(n) = \frac{1}{(1-p) + \dfrac{p}{n}}. \]</span></p>
+<p>As <span class="math inline">\(n \to \infty\)</span>, <span class="math inline">\(S \to \dfrac{1}{1-p}\)</span>: a <strong>5% serial fraction caps you at 20x</strong>, no matter the hardware.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="amdahls-law-1" class="slide level2">
+<h2>Amdahl’s law</h2>
+<img data-src="bigdata_lec2_files/mediabag/b8acf4c3e42deb6fe571b986303732b00939a27a.svg">
+</section>
+<section id="gustafsons-law" class="slide level2">
+<h2>Gustafson’s law</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>A different question (Gustafson, 1988)</strong></p>
+</div>
+<div class="callout-content">
+<p>Amdahl: <em>same problem, more cores – how much faster?</em> Gustafson: <em>more cores, same wall-clock time – how much more work?</em></p>
+<p>With more cores you scale the problem up (finer mesh, more data, more iterations). The serial part stays roughly fixed, so its <strong>relative</strong> weight shrinks as the problem grows.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Scaled speedup</strong></p>
+</div>
+<div class="callout-content">
+<p><span class="math display">\[ S(n) = (1-p) + p\,n \]</span> Linear in <span class="math inline">\(n\)</span>, slope <span class="math inline">\(p\)</span> – no hard ceiling, because <span class="math inline">\(p\)</span> is now the parallel fraction of the <em>bigger</em> workload.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="amdahl-vs-gustafson" class="slide level2">
+<h2>Amdahl vs Gustafson</h2>
+<img data-src="bigdata_lec2_files/mediabag/89bd3bbdc57a3799a125b8200880d3f44ca80164.svg">
+</section>
+<section id="sharing-data-without-pickling" class="slide level2">
+<h2>Sharing data without pickling</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Zero-copy between processes</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><code>multiprocessing.shared_memory.SharedMemory</code> – back a NumPy array with a shared buffer</li>
+<li><strong>Arrow IPC</strong> – the on-wire format <em>is</em> the in-memory format, so no serialization step</li>
+<li>memory-mapped files (<code>np.memmap</code>)</li>
+</ul>
+<p>This is how Dask and Ray move large arrays between workers cheaply.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="removing-the-gil-free-threading" class="slide level2">
+<h2>Removing the GIL: free threading</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Free-threaded CPython (PEP 703)</strong></p>
+</div>
+<div class="callout-content">
+<p>A build with the GIL compiled out.</p>
+<ul>
+<li><strong>experimental in 3.13</strong>, <strong>officially supported in 3.14</strong> (PEP 779)</li>
+<li>still opt-in (<code>python3.14t</code>); the GIL build stays the default</li>
+<li>single-threaded overhead: ~40% in 3.13 -&gt; under ~10% in 3.14</li>
+<li>pure-Python threads finally run in parallel</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>How to check if present?</strong></p>
+</div>
+<div class="callout-content">
+<p><code>sys._is_gil_enabled()</code></p>
+</div>
+</div>
+</div>
+</section>
+<section id="removing-the-gil-sub-interpreters" class="slide level2">
+<h2>Removing the GIL: sub-interpreters</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Multiple interpreters, one process (PEP 684, PEP 734)</strong></p>
+</div>
+<div class="callout-content">
+<p>Each interpreter gets its <strong>own</strong> GIL, so several can run Python bytecode at once – without the cost of separate OS processes.</p>
+<ul>
+<li>per-interpreter GIL: C-API since 3.12 (PEP 684)</li>
+<li><code>concurrent.interpreters</code> – a pure-Python API, <strong>new in 3.14</strong> (PEP 734)</li>
+<li>talk over channels / shared <code>memoryview</code>; no pickling on the fast path</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="which-approach" class="slide level2">
+<h2>Which approach?</h2>
+<img data-src="bigdata_lec2_files/mediabag/7c4dd9be15094ccf1830cb6d652a0a163190992f.svg">
+</section></section>
 <section>
 <section id="programming-paradigms" class="title-slide slide level1 center">
 <h1>Programming paradigms</h1>
@@ -499,6 +1018,8 @@ are in lockstep and gradually converging</li>
 <img data-src="img/uml.png" class="r-stretch"></section>
 <section id="object-oriented-2" class="slide level2">
 <h2>Object-oriented</h2>
+<div class="columns">
+<div class="column" data-background-color="lightgray" style="width:50%;">
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
@@ -512,6 +1033,7 @@ are in lockstep and gradually converging</li>
 </div>
 </div>
 </div>
+</div><div class="column" data-background-color="lightgray" style="width:50%;">
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
@@ -525,7 +1047,12 @@ are in lockstep and gradually converging</li>
 </div>
 </div>
 </div>
-</section>
+</div></div>
+<p><img data-src="img/execution-kingdom-of-nouns.png" height="250"></p>
+
+<aside><div>
+<p>https://yegge.ai/essays/execution-kingdom-of-nouns/</p>
+</div></aside></section>
 <section id="symbolic" class="slide level2">
 <h2>Symbolic</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
@@ -559,8 +1086,8 @@ are in lockstep and gradually converging</li>
 <img data-src="img/lisp_macro.png" class="r-stretch"></section>
 <section id="prolog" class="slide level2">
 <h2>Prolog</h2>
-<p><img data-src="img/prolog.png"> :::</p>
-</section></section>
+
+<img data-src="img/prolog.png" class="r-stretch"></section></section>
 <section>
 <section id="typing" class="title-slide slide level1 center">
 <h1>Typing</h1>
@@ -598,9 +1125,1202 @@ are in lockstep and gradually converging</li>
 <section id="typing-2" class="slide level2">
 <h2>Typing</h2>
 
+<img data-src="img/lang_graph.png" class="r-stretch"></section>
+<section id="typing-when-are-types-checked" class="slide level2">
+<h2>Typing: when are types checked?</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Three timings</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>compile time</strong> – C, Rust, Java, Haskell: type errors are rejected before the program runs</li>
+<li><strong>run time</strong> – Python, Ruby: an operation fails when it is actually attempted</li>
+<li><strong>gradual</strong> – optional annotations checked by a <em>separate tool</em>, not the interpreter: Python + <code>mypy</code> / <code>pyright</code> / <code>ty</code>, or TypeScript over JavaScript</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Manifest vs inferred</strong></p>
+</div>
+<div class="callout-content">
+<p>Do you write the types (<code>int x = 3</code>) or does the compiler work them out? Full inference: Haskell, ML, mostly Rust. Partial: C++ <code>auto</code>, C# <code>var</code>, Python type checkers.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="typing-nominal-vs-structural" class="slide level2">
+<h2>Typing: nominal vs structural</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>What makes two types “the same”?</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>nominal</strong> – the declared name must match (Java, C#, Rust): a class implements an interface only if it says so</li>
+<li><strong>structural</strong> – the <em>shape</em> must match (Go interfaces, TypeScript, Python <code>Protocol</code>): if it has the right methods, it fits</li>
+</ul>
+<p>“Duck typing” is structural typing checked at run time.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="typing-performance" class="slide level2">
+<h2>Typing &amp; performance</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Why static types make code faster</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>fixed types let the compiler pick a <strong>machine representation</strong> (a 64-bit int, not a boxed <code>PyObject</code>) and lay data out contiguously</li>
+<li><strong>no runtime dispatch</strong> – <code>a + b</code> becomes one instruction instead of “look up <code>__add__</code>, check types, box the result”</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Python’s hints don’t do this</strong></p>
+</div>
+<div class="callout-content">
+<p><code>def f(x: int) -&gt; int:</code> is <strong>erased at run time</strong> – CPython ignores it. The speed-up comes only when a tool <em>acts</em> on the types: <strong>Cython</strong>, <strong>mypyc</strong>, <strong>Numba</strong>.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="memory-management" class="slide level2">
+<h2>Memory management</h2>
+<div class="columns">
+<div class="column" data-background-color="lightgray" style="width:50%;">
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Manual</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>C/C++</li>
+<li>Pascal</li>
+<li>Forth</li>
+<li>Fortran</li>
+<li>Zig</li>
+</ul>
+</div>
+</div>
+</div>
+</div><div class="column" data-background-color="lightgray" style="width:50%;">
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Automatic</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>Lisp</li>
+<li>Java</li>
+<li>Python</li>
+<li>Go</li>
+<li>Julia</li>
+</ul>
+</div>
+</div>
+</div>
+</div></div>
+</section>
+<section id="memory-management-1" class="slide level2">
+<h2>Memory management</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Code</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a aria-label="1"></a><span class="im">import</span> os</span>
+<span id="cb3-2"><a aria-label="2"></a><span class="im">import</span> gc</span>
+<span id="cb3-3"><a aria-label="3"></a><span class="im">import</span> psutil</span>
+<span id="cb3-4"><a aria-label="4"></a></span>
+<span id="cb3-5"><a aria-label="5"></a>proc <span class="op">=</span> psutil.Process(os.getpid())</span>
+<span id="cb3-6"><a aria-label="6"></a>gc.collect()</span>
+<span id="cb3-7"><a aria-label="7"></a>initial_memory <span class="op">=</span> proc.memory_info().rss</span>
+<span id="cb3-8"><a aria-label="8"></a></span>
+<span id="cb3-9"><a aria-label="9"></a><span class="co">## Allocate memory by creating large lists</span></span>
+<span id="cb3-10"><a aria-label="10"></a>foo <span class="op">=</span> [<span class="st">'abc'</span> <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">10</span><span class="op">**</span><span class="dv">7</span>)]</span>
+<span id="cb3-11"><a aria-label="11"></a>allocated_memory <span class="op">=</span> proc.memory_info().rss</span>
+<span id="cb3-12"><a aria-label="12"></a></span>
+<span id="cb3-13"><a aria-label="13"></a><span class="co">## Deallocate memory</span></span>
+<span id="cb3-14"><a aria-label="14"></a><span class="kw">del</span> foo</span>
+<span id="cb3-15"><a aria-label="15"></a>gc.collect()</span>
+<span id="cb3-16"><a aria-label="16"></a>final_memory <span class="op">=</span> proc.memory_info().rss</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</section>
+<section id="memory-management-2" class="slide level2">
+<h2>Memory management</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Print memory statistics</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a aria-label="1"></a>increase <span class="op">=</span> <span class="kw">lambda</span> x2, x1: <span class="fl">100.0</span> <span class="op">*</span> (x2 <span class="op">-</span> x1) <span class="op">/</span> initial_memory</span>
+<span id="cb4-2"><a aria-label="2"></a><span class="bu">print</span>(<span class="st">"Allocated Memory Increase: </span><span class="sc">%0.2f%%</span><span class="st">"</span> <span class="op">%</span> increase(allocated_memory, initial_memory))</span>
+<span id="cb4-3"><a aria-label="3"></a><span class="bu">print</span>(<span class="st">"Memory After Deletion: </span><span class="sc">%0.2f%%</span><span class="st">"</span> <span class="op">%</span> increase(final_memory, allocated_memory))</span>
+<span id="cb4-4"><a aria-label="4"></a></span>
+<span id="cb4-5"><a aria-label="5"></a><span class="op">&gt;&gt;&gt;</span> Allocated Memory Increase: <span class="fl">23.35</span><span class="op">%</span></span>
+<span id="cb4-6"><a aria-label="6"></a><span class="op">&gt;&gt;&gt;</span> Memory After Deletion: <span class="op">-</span><span class="fl">10.78</span><span class="op">%</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</section>
+<section id="memory-management-3" class="slide level2">
+<h2>Memory management</h2>
+<!-- https://realpython.com/python-memory-management -->
+<div class="callout callout-note callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Python internals</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>pools</li>
+<li>blocks</li>
+<li>arenas</li>
+</ul>
+</div>
+</div>
+</div>
+
+<aside><div>
+<ol type="1">
+<li>https://docs.python.org/3/c-api/memory.html</li>
+<li>https://realpython.com/python-memory-management</li>
+</ol>
+</div></aside></section>
+<section id="memory-management-4" class="slide level2">
+<h2>Memory management</h2>
+<p><img data-src="img/python_mem.png"> <!-- mage from: https://www.honeybadger.io/blog/memory-management-in-python/ --></p>
+</section></section>
+<section>
+<section id="the-memory-hierarchy" class="title-slide slide level1 center">
+<h1>The memory hierarchy</h1>
+
+</section>
+<section id="the-memory-wall" class="slide level2">
+<h2>The memory wall</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Why caches exist</strong></p>
+</div>
+<div class="callout-content">
+<p>For decades CPU throughput grew far faster than DRAM <em>latency</em>. That widening gap – the <strong>memory wall</strong> – is why modern chips spend most of their transistors on cache.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Consequence</strong></p>
+</div>
+<div class="callout-content">
+<p>“Speeding up single-node computation” is very often really: <strong>stop waiting on memory.</strong></p>
+</div>
+</div>
+</div>
+</section>
+<section id="the-hierarchy" class="slide level2">
+<h2>The hierarchy</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Latency ladder (rough, modern x86)</strong></p>
+</div>
+<div class="callout-content">
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>Level</th>
+<th>Size</th>
+<th>Latency</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>register</td>
+<td>~KB</td>
+<td>&lt; 1 ns</td>
+</tr>
+<tr class="even">
+<td>L1 cache</td>
+<td>~32-64 KB</td>
+<td>~1 ns (~4 cycles)</td>
+</tr>
+<tr class="odd">
+<td>L2 cache</td>
+<td>~256 KB - 2 MB</td>
+<td>~4 ns</td>
+</tr>
+<tr class="even">
+<td>L3 cache</td>
+<td>~8-64 MB</td>
+<td>~15 ns</td>
+</tr>
+<tr class="odd">
+<td>DRAM</td>
+<td>GBs</td>
+<td>~80-100 ns</td>
+</tr>
+<tr class="even">
+<td>NVMe SSD</td>
+<td>TBs</td>
+<td>~100 us</td>
+</tr>
+<tr class="odd">
+<td>network / spinning disk</td>
+<td>–</td>
+<td>ms+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+
+<aside><div>
+<p>“If an L1 hit took 1 second, a DRAM access would take ~1.5 minutes and an SSD read ~1 day.”</p>
+</div></aside></section>
+<section id="latency-ladder" class="slide level2 scrollable">
+<h2>Latency ladder</h2>
+<p><img data-src="img/latency_ladder.png"></p>
+
+<aside><div>
+<p>https://cs.brown.edu/courses/csci1310/2020/assign/labs/lab4.html</p>
+</div></aside></section>
+<section id="cache-lines" class="slide level2">
+<h2>Cache lines</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Memory moves in blocks</strong></p>
+</div>
+<div class="callout-content">
+<p>The CPU never fetches a single byte – it pulls in a <strong>cache line</strong> (64 bytes) at a time.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Locality</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>spatial</strong> – touch an address and you’ll likely touch its neighbours: lay data out contiguously, walk it in order</li>
+<li><strong>temporal</strong> – touch an address and you’ll likely touch it again soon: reuse before it’s evicted</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="sequential-vs-strided" class="slide level2">
+<h2>Sequential vs strided</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Same element count, very different speed</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a aria-label="1"></a>a <span class="op">=</span> np.zeros((<span class="dv">10_000</span>, <span class="dv">10_000</span>))   <span class="co"># C-contiguous: row-major</span></span>
+<span id="cb5-2"><a aria-label="2"></a>a.<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">1</span>)   <span class="co"># walks each row contiguously  -- cache-friendly</span></span>
+<span id="cb5-3"><a aria-label="3"></a>a.<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">0</span>)   <span class="co"># jumps 10_000 floats per step -- a new cache line every access</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Summing <em>down columns</em> of a row-major array can be several times slower, purely from cache misses – the arithmetic is identical.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="row-major-vs-column-major" class="slide level2">
+<h2>Row-major vs column-major</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>It’s a layout question, everywhere</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>NumPy: <code>order='C'</code> (row-major) vs <code>order='F'</code> (column-major) – iterate along the contiguous axis</li>
+<li><strong>array-of-structs vs struct-of-arrays</strong> – SoA keeps each field contiguous</li>
+<li>columnar formats (Parquet, Arrow – Lec 1) are SoA on disk: analytics scans touch a few columns over many rows, so column layout means fewer cache lines read</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="python-object-overhead" class="slide level2">
+<h2>Python object overhead</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Why a plain <code>list</code> is the slow default</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>a Python <code>int</code> is a heap object: ~28 bytes, not 8</li>
+<li>a <code>list</code> of <span class="math inline">\({10}^7\)</span> ints is <span class="math inline">\({10}^7\)</span> <em>pointers</em>, each to a boxed int scattered across the heap – terrible locality</li>
+<li>a NumPy <code>int64</code> array is 8 bytes/element in one contiguous block</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a aria-label="1"></a>sys.getsizeof(<span class="dv">10</span><span class="op">**</span><span class="dv">6</span>)                   <span class="co"># ~28   (the int object alone)</span></span>
+<span id="cb6-2"><a aria-label="2"></a>sys.getsizeof([<span class="dv">0</span>] <span class="op">*</span> <span class="dv">1_000_000</span>)         <span class="co"># ~8 MB of pointers</span></span>
+<span id="cb6-3"><a aria-label="3"></a>np.zeros(<span class="dv">1_000_000</span>, np.int64).nbytes   <span class="co"># 8 MB, contiguous and unboxed</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="callout callout-note callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>The general lesson</strong></p>
+</div>
+<div class="callout-content">
+<p>Vectorised NumPy/pandas isn’t just “C is fast” – it’s <strong>contiguous, unboxed data that the cache can stream.</strong></p>
+</div>
+</div>
+</div>
+</section>
+<section id="views-vs-copies" class="slide level2">
+<h2>Views vs copies</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Allocation is not free</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>NumPy <strong>slicing returns a view</strong> – no copy, no allocation</li>
+<li><code>.copy()</code>, fancy / boolean indexing, <code>astype</code>, most reshapes that can’t alias -&gt; a new allocation</li>
+<li><code>np.shares_memory(a, b)</code> to check</li>
+<li>pandas’ <code>SettingWithCopyWarning</code> is exactly this distinction leaking through</li>
+</ul>
+</div>
+</div>
+</div>
+</section></section>
+<section>
+<section id="code-execution" class="title-slide slide level1 center">
+<h1>Code execution</h1>
+
+</section>
+<section id="python-options" class="slide level2">
+<h2>Python Options</h2>
+<table class="caption-top">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Libraries</th>
+<th>Low-level langs</th>
+<th>Alt Python Impls</th>
+<th>JIT</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>NumPy, <br> SciPy</td>
+<td>C,<br> Rust,<br> Cython,<br> PyO3</td>
+<td>PyPy, <br>Jython</td>
+<td>Numba, <br>PyPy</td>
+</tr>
+</tbody>
+</table>
+
+<aside><div>
+<p><strong>Options above are not mutually exclusive!</strong></p>
+</div></aside></section>
+<section id="interpreters" class="slide level2">
+<h2>Interpreters</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Wikipedia definition</strong></p>
+</div>
+<div class="callout-content">
+<p>An interpreter is a computer program that directly executes instructions written in a programming or scripting language, without requiring them previously to have been compiled into a machine language program.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Examples</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>Python</li>
+<li>Ruby</li>
+<li>Lua</li>
+<li>Javascript</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="cpython" class="slide level2">
+<h2>CPython</h2>
+
+<img data-src="img/cpython_internals.png" class="r-stretch"><div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Flow</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>Read Python code</li>
+<li>Convert Python into bytecode</li>
+<li>Execute bytecode inside a VM</li>
+<li>VM converts bytecode to machine code</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="cpython-1" class="slide level2">
+<h2>CPython</h2>
+<p><img data-src="img/cpython_code.png"> <img data-src="img/cpython_bytecode.png"></p>
+</section>
+<section id="compilers" class="slide level2">
+<h2>Compilers</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Wikipedia definition</strong></p>
+</div>
+<div class="callout-content">
+<p>Source code is compiled - in this context, translated into machine code for better performance.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Examples</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>C/C++</li>
+<li>Go</li>
+<li>Python (to intermediate VM code)</li>
+<li>Java</li>
+<li>Cython</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="compilers-1" class="slide level2">
+<h2>Compilers</h2>
+
+<img data-src="img/llvm.png" class="r-stretch"></section>
+<section id="cython" class="slide level2">
+<h2>Cython</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Definition</strong></p>
+</div>
+<div class="callout-content">
+<p>Cython is an optimising static compiler for the Python programming language.</p>
+<ul>
+<li>converts Python code to C</li>
+<li>supports static type declarations</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="cython-1" class="slide level2">
+<h2>Cython</h2>
+
+<img data-src="img/cython_flow.png" class="r-stretch"></section>
+<section id="cython-2" class="slide level2">
+<h2>Cython</h2>
+
+<img data-src="img/cython_speedup.png" class="r-stretch"></section>
+<section id="cython-3" class="slide level2">
+<h2>Cython</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Python code</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/cython_integratev1.png"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="cython-4" class="slide level2">
+<h2>Cython</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Annotated Python code</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/cython_integratev2.png"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="cython-5" class="slide level2">
+<h2>Cython</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Cython code</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/cython_integratev3.png"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="parallel-cython" class="slide level2">
+<h2>Parallel Cython</h2>
+
+<img data-src="img/cython_parallel1.png" class="r-stretch"></section>
+<section id="parallel-cython-1" class="slide level2">
+<h2>Parallel Cython</h2>
+
+<img data-src="img/cython_parallel2.png" class="r-stretch"></section>
+<section id="jit" class="slide level2">
+<h2>JIT</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Wikipedia definition</strong></p>
+</div>
+<div class="callout-content">
+<p>A compilation (of computer code) during execution of a program (at run time) rather than before execution.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Features</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>warm-up time:</strong> JIT causes a slight to noticeable delay in the initial execution of an application, due to the time taken to load and compile the input code.</li>
+<li><strong>statistics collection:</strong> performed by the system during runtime, shows how the program is actually running in the environment it is in; helps JIT to rearrange and recompile for optimum performance.</li>
+<li>particularly suited for <strong>dynamic</strong> programming languages</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="jit-1" class="slide level2">
+<h2>JIT</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Examples</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>HotSpot Java Virtual Machine</li>
+<li>LuaJIT</li>
+<li>Numba</li>
+<li>PyPy</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="numba" class="slide level2">
+<h2>Numba</h2>
+
+<img data-src="img/numba_arch.png" class="r-stretch"></section>
+<section id="numba-1" class="slide level2">
+<h2>Numba</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Description</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>Numba translates Python byte-code to machine code immediately before execution to improve the execution speed.</li>
+<li>For that we add a <code>@jit</code> decorator</li>
+<li>Works well for numeric operations, NumPy, and loops</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="numba-2" class="slide level2">
+<h2>Numba</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Steps</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>read the Python bytecode for a decorated function</li>
+<li>combine it with information about the types of the input arguments to the function</li>
+<li>analyze and optimize the code</li>
+<li>use the LLVM compiler library to generate a machine code version of the function, tailored to specific CPU capabilities.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="numba-3" class="slide level2">
+<h2>Numba</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Works great</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/numba_example1.png"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="numba-4" class="slide level2">
+<h2>Numba</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Nope</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/numba_example2.png"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="numba-5" class="slide level2">
+<h2>Numba</h2>
+
+<!-- ## Numba -->
+<!-- :::{.callout-important icon=false} -->
+<!-- ## Sequential -->
+<!-- ![](img/numba_sequential){height=400} -->
+<!-- ::: -->
+<!-- ## Numba -->
+<!-- :::{.callout-note icon=false} -->
+<!-- ## Parallel -->
+<!-- ![](img/numba_parallel){height=400} -->
+<!-- ::: -->
+<img data-src="img/numba_reduction.png" class="r-stretch"></section>
+<section id="numpy" class="slide level2">
+<h2>Numpy</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Why so fast?</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>Optimized C code</li>
+<li>Densely packed arrays</li>
+<li>Uses BLAS - Basic Linear Algebra Subroutines.</li>
+</ul>
+</div>
+</div>
+</div>
+</section></section>
+<section>
+<section id="rustpyo3-example" class="title-slide slide level1 center">
+<h1>Rust/PyO3 example</h1>
+
+</section>
+<section id="rustpyo3-example-1" class="slide level2">
+<h2>Rust/PyO3 example</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Description</strong></p>
+</div>
+<div class="callout-content">
+<p>We show an example of a simple algebraic cipher that utilizes PyO3 bindings to speed up encoding/decoding.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Cipher definition</strong></p>
+</div>
+<div class="callout-content">
+<p>The basic mechanism for encrypting a message using a shared secret key is called a cipher (or encryption scheme)</p>
+</div>
+</div>
+</div>
+</section>
+<section id="rustpyo3-example-2" class="slide level2">
+<h2>Rust/PyO3 example</h2>
+<div class="hidden">
+
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Definition</strong></p>
+</div>
+<div class="callout-content">
+<p>Encryption and decryption use the same secret key.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Examples</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>AES</li>
+<li>Salsa20</li>
+<li>Twofish</li>
+<li>DES</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="rustpyo3-example-3" class="slide level2">
+<h2>Rust/PyO3 example</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Types</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>block ciphers</li>
+<li>stream ciphers</li>
+<li>hash functions</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="rustpyo3-example-4" class="slide level2">
+<h2>Rust/PyO3 example</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Overview</strong></p>
+</div>
+<div class="callout-content">
+<p><span class="math display">\[
+f: \mathcal{K}\times\mathcal{D} \rightarrow C
+\]</span> where</p>
+<ul>
+<li><span class="math inline">\(\mathcal{K}\)</span> is <strong>key space</strong></li>
+<li><span class="math inline">\(\mathcal{D}\)</span> is <strong>domain</strong> (or <strong>message space</strong>)</li>
+<li><span class="math inline">\(\mathcal{C}\)</span> is <strong>co-domain</strong> (or <strong>ciphertext space</strong>)</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="rustpyo3-example-5" class="slide level2">
+<h2>Rust/PyO3 example</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Shannon cipher</strong></p>
+</div>
+<div class="callout-content">
+<p>A <strong>Shannon cipher</strong> is a pair <span class="math inline">\(\mathcal{E} = (E,D)\)</span> of functions:</p>
+<ul>
+<li>The function <span class="math inline">\(E\)</span> (the <strong>encryption function</strong>) takes as input a <strong>key</strong> <span class="math inline">\(k\)</span> and <strong>message</strong> <span class="math inline">\(m\)</span> (also called <strong>plaintext</strong>) and produces as output a <strong>ciphertext</strong> $c): <span class="math display">\[
+c = E(k,m)
+\]</span></li>
+</ul>
+<p><span class="math inline">\(c\)</span> is the <strong>encryption</strong> of <span class="math inline">\(m\)</span> <strong>under</strong> <span class="math inline">\(k\)</span>.</p>
+<ul>
+<li>The function <span class="math inline">\(D\)</span> (the <strong>decryption function</strong>) takes as input a key <span class="math inline">\(k\)</span> and ciphertext <span class="math inline">\(c\)</span>, and produces a message <span class="math inline">\(m\)</span>: <span class="math display">\[
+m = D(k,c)
+\]</span></li>
+</ul>
+<p><span class="math inline">\(m\)</span> is the <strong>decryption</strong> of <span class="math inline">\(c\)</span> <strong>under</strong> <span class="math inline">\(k\)</span>.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="rustpyo3-example-6" class="slide level2">
+<h2>Rust/PyO3 example</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Correctness property</strong></p>
+</div>
+<div class="callout-content">
+<p>For all keys <span class="math inline">\(k\)</span> and messages <span class="math inline">\(m\)</span>, we have <span class="math display">\[
+D(k, E(k,m)) = m
+\]</span></p>
+</div>
+</div>
+</div>
+</section>
+<section id="rustpyo3-example-7" class="slide level2">
+<h2>Rust/PyO3 example</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Parameters</strong></p>
+</div>
+<div class="callout-content">
+<p>Now we describe the cipher.</p>
+<p>First, we define cipher <em>parameters</em>:</p>
+<ul>
+<li>An alphabet <span class="math inline">\(A\)</span> with size <span class="math inline">\(L \equiv |A|\)</span>.</li>
+<li>A matrix <span class="math inline">\(M\)</span> with size <span class="math inline">\(N \gg L\)</span></li>
+<li><span class="math inline">\(\sigma_1, \sigma_2\)</span> are some permutations <span class="math inline">\(N \rightarrow N\)</span></li>
+<li><span class="math inline">\(\phi\)</span> is some bit sequence of length <span class="math inline">\(P\)</span>: <span class="math inline">\(\phi \in \{0,1\}^P\)</span></li>
+</ul>
+<p>A triple <span class="math inline">\((\sigma_1, \sigma_2, \phi)\)</span> will be our <strong>secret key</strong>.</p>
+<p>We define each symbol <span class="math inline">\(z\)</span> by a corresponding set of diagonals <span class="math inline">\(D\)</span> in the matrix <span class="math inline">\(M\)</span>, so that <span class="math inline">\(\forall (x,y) \in D: x - y = z (\mod L)\)</span> (see Figure 1).</p>
+</div>
+</div>
+</div>
+</section>
+<section id="rustpyo3-example-8" class="slide level2">
+<h2>Rust/PyO3 example</h2>
+
+<img data-src="img/matrix.png" class="r-stretch"></section>
+<section id="rustpyo3-example-9" class="slide level2">
+<h2>Rust/PyO3 example</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Encoder flow</strong></p>
+</div>
+<div class="callout-content">
+<p>Suppose we receive some text <span class="math inline">\(T\)</span> containing symbols to be encoded.</p>
+<p>For each <span class="math inline">\(t_i \in T\)</span>, obtain its numeric representation <span class="math inline">\(z_i\)</span>. <span class="math display">\[
+z_i \in [0,L)
+\]</span> Then we map each <span class="math inline">\(z_i\)</span> to a pair of matrix coordinates <span class="math inline">\((x_i, y_i)\)</span> such that:</p>
+<ol type="1">
+<li><p>First, we pick a random <span class="math inline">\(x_i \in [0,N)\)</span> (e.g., horizontal coordinate in a matrix)</p></li>
+<li><p>Then, we randomly pick some <span class="math inline">\(y_i \in [0,N)\)</span> such that: <span class="math display">\[
+x_i - y_i = z_i (\mod L)
+\]</span></p></li>
+</ol>
+</div>
+</div>
+</div>
+</section>
+<section id="rustpyo3-example-10" class="slide level2">
+<h2>Rust/PyO3 example</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Encoder flow</strong></p>
+</div>
+<div class="callout-content">
+<p>Having thus obtained a sequence <span class="math inline">\(\{(x_i, y_i), \, i \in [0, |T|) \}\)</span>, we now apply permutations <span class="math inline">\(\sigma_k: [0,N) \rightarrow [0,N), \, k=1,2\)</span>: <span class="math display">\[
+\text{ciphertext } (\xi,\eta) := (\sigma_j(x),\sigma_{j+1}(y))
+\]</span> where <span class="math display">\[
+\sigma_j = \begin{cases}
+\sigma_1, \; \text{if}\; \phi_j=0,\\
+\sigma_2\; \text{otherwise}
+\end{cases}
+\]</span></p>
+</div>
+</div>
+</div>
+</section>
+<section id="rustpyo3-example-11" class="slide level2">
+<h2>Rust/PyO3 example</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Decoder flow</strong></p>
+</div>
+<div class="callout-content">
+<p>Below are steps executing during decoding phase:</p>
+<ol type="1">
+<li><p>Receive encoded ciphertext <span class="math inline">\(\{(\xi_i, \eta_i)\}\)</span>.</p></li>
+<li><p>Apply inverse permutations <span class="math inline">\(\sigma_j^{-1}, \sigma_{j+1}^{-1}\)</span>: <span class="math display">\[
+(x_i,y_i) = (\sigma_j^{-1}(\xi_i), \sigma_{j+1}^{-1}(\eta_i))
+\]</span></p></li>
+<li><p>Find <span class="math inline">\(z_i\)</span>: <span class="math display">\[
+z_i = x_i - y_i \; (\mod L)
+\]</span></p></li>
+</ol>
+</div>
+</div>
+</div>
+</section>
+<section id="rustpyo3-example-12" class="slide level2">
+<h2>Rust/PyO3 example</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Implementation: PyO3</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>Rust bindings for Python extension modules</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Users</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>Qiskit <a href="https://www.ibm.com/quantum/qiskit" class="uri">https://www.ibm.com/quantum/qiskit</a></li>
+<li>Python Cryptography package <a href="https://github.com/pyca/cryptography" class="uri">https://github.com/pyca/cryptography</a></li>
+<li>Scallop <a href="https://www.scallop-lang.org" class="uri">https://www.scallop-lang.org</a></li>
+<li>HuggingFace Tokenizers <a href="https://github.com/huggingface/tokenizers" class="uri">https://github.com/huggingface/tokenizers</a></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="rustpyo3-example-13" class="slide level2">
+<h2>Rust/PyO3 example</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Rust wrapper</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode numberSource rust number-lines code-with-copy"><code class="sourceCode rust"><span id="cb7-1"><a aria-label="1"></a><span class="co">/// A Python module implemented in Rust.</span></span>
+<span id="cb7-2"><a aria-label="2"></a><span class="at">#[</span>pymodule<span class="at">]</span></span>
+<span id="cb7-3"><a aria-label="3"></a><span class="kw">fn</span> cipher(m<span class="op">:</span> <span class="op">&amp;</span>Bound<span class="op">&lt;</span><span class="ot">'_</span><span class="op">,</span> PyModule<span class="op">&gt;</span>) <span class="op">-&gt;</span> PyResult<span class="op">&lt;</span>()<span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb7-4"><a aria-label="4"></a>    m<span class="op">.</span>add_function(<span class="pp">wrap_pyfunction!</span>(encode<span class="op">,</span> m)<span class="op">?</span>)<span class="op">?;</span></span>
+<span id="cb7-5"><a aria-label="5"></a>    m<span class="op">.</span>add_function(<span class="pp">wrap_pyfunction!</span>(decode<span class="op">,</span> m)<span class="op">?</span>)<span class="op">?;</span></span>
+<span id="cb7-6"><a aria-label="6"></a>    <span class="cn">Ok</span>(())</span>
+<span id="cb7-7"><a aria-label="7"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</section>
+<section id="rustpyo3-example-14" class="slide level2">
+<h2>Rust/PyO3 example</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Encoding</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode numberSource rust number-lines code-with-copy"><code class="sourceCode rust"><span id="cb8-1"><a aria-label="1"></a><span class="co">// Generate random permutation of N integers</span></span>
+<span id="cb8-2"><a aria-label="2"></a><span class="kw">let</span> <span class="kw">mut</span> numbers<span class="op">:</span> <span class="dt">Vec</span><span class="op">&lt;</span><span class="dt">usize</span><span class="op">&gt;</span> <span class="op">=</span> (<span class="dv">0</span><span class="op">..</span>N)<span class="op">.</span>collect()<span class="op">;</span></span>
+<span id="cb8-3"><a aria-label="3"></a><span class="kw">let</span> <span class="kw">mut</span> rng <span class="op">=</span> thread_rng()<span class="op">;</span></span>
+<span id="cb8-4"><a aria-label="4"></a>numbers<span class="op">.</span>shuffle(<span class="op">&amp;</span><span class="kw">mut</span> rng)<span class="op">;</span></span>
+<span id="cb8-5"><a aria-label="5"></a><span class="kw">let</span> permutation <span class="op">=</span> numbers<span class="op">;</span></span>
+<span id="cb8-6"><a aria-label="6"></a></span>
+<span id="cb8-7"><a aria-label="7"></a><span class="co">// Generate pairs for each z</span></span>
+<span id="cb8-8"><a aria-label="8"></a><span class="kw">let</span> <span class="kw">mut</span> pairs <span class="op">=</span> <span class="dt">Vec</span><span class="pp">::</span>with_capacity(zs<span class="op">.</span>len())<span class="op">;</span></span>
+<span id="cb8-9"><a aria-label="9"></a><span class="cf">for</span> <span class="op">&amp;</span>z <span class="kw">in</span> <span class="op">&amp;</span>zs <span class="op">{</span></span>
+<span id="cb8-10"><a aria-label="10"></a>    <span class="co">// Generate random x between 0 and N-1</span></span>
+<span id="cb8-11"><a aria-label="11"></a>    <span class="kw">let</span> x <span class="op">=</span> rng<span class="op">.</span>gen_range(<span class="dv">0</span><span class="op">..</span>N)<span class="op">;</span></span>
+<span id="cb8-12"><a aria-label="12"></a></span>
+<span id="cb8-13"><a aria-label="13"></a>    <span class="co">// Compute y such that x - y = z (mod L)</span></span>
+<span id="cb8-14"><a aria-label="14"></a>    <span class="kw">let</span> y <span class="op">=</span> <span class="cf">if</span> x <span class="op">&gt;=</span> z <span class="op">{</span></span>
+<span id="cb8-15"><a aria-label="15"></a>        (x <span class="op">-</span> z) <span class="op">%</span> L</span>
+<span id="cb8-16"><a aria-label="16"></a>    <span class="op">}</span> <span class="cf">else</span> <span class="op">{</span></span>
+<span id="cb8-17"><a aria-label="17"></a>        ((x <span class="op">+</span> L) <span class="op">-</span> z) <span class="op">%</span> L</span>
+<span id="cb8-18"><a aria-label="18"></a>    <span class="op">};</span></span>
+<span id="cb8-19"><a aria-label="19"></a></span>
+<span id="cb8-20"><a aria-label="20"></a>    <span class="co">// Apply permutation to x and y</span></span>
+<span id="cb8-21"><a aria-label="21"></a>    <span class="kw">let</span> px <span class="op">=</span> permutation[x]<span class="op">;</span></span>
+<span id="cb8-22"><a aria-label="22"></a>    <span class="kw">let</span> py <span class="op">=</span> permutation[y]<span class="op">;</span></span>
+<span id="cb8-23"><a aria-label="23"></a>    pairs<span class="op">.</span>push((px<span class="op">,</span> py))<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</section>
+<section id="rustpyo3-example-15" class="slide level2">
+<h2>Rust/PyO3 example</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Decoding</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode numberSource rust number-lines code-with-copy"><code class="sourceCode rust"><span id="cb9-1"><a aria-label="1"></a><span class="co">// Create inverse permutation</span></span>
+<span id="cb9-2"><a aria-label="2"></a><span class="kw">let</span> <span class="kw">mut</span> inverse <span class="op">=</span> <span class="pp">vec!</span>[<span class="dv">0</span><span class="op">;</span> N]<span class="op">;</span></span>
+<span id="cb9-3"><a aria-label="3"></a><span class="cf">for</span> (i<span class="op">,</span> <span class="op">&amp;</span>p) <span class="kw">in</span> permutation<span class="op">.</span>iter()<span class="op">.</span>enumerate() <span class="op">{</span></span>
+<span id="cb9-4"><a aria-label="4"></a>    inverse[p] <span class="op">=</span> i<span class="op">;</span></span>
+<span id="cb9-5"><a aria-label="5"></a><span class="op">}</span></span>
+<span id="cb9-6"><a aria-label="6"></a></span>
+<span id="cb9-7"><a aria-label="7"></a><span class="co">// Recover z for each pair</span></span>
+<span id="cb9-8"><a aria-label="8"></a><span class="kw">let</span> <span class="kw">mut</span> zs <span class="op">=</span> <span class="dt">Vec</span><span class="pp">::</span>with_capacity(pairs<span class="op">.</span>len())<span class="op">;</span></span>
+<span id="cb9-9"><a aria-label="9"></a><span class="cf">for</span> <span class="op">&amp;</span>(px<span class="op">,</span> py) <span class="kw">in</span> pairs <span class="op">{</span></span>
+<span id="cb9-10"><a aria-label="10"></a>    <span class="co">// Apply inverse permutation to get x and y</span></span>
+<span id="cb9-11"><a aria-label="11"></a>    <span class="kw">let</span> x <span class="op">=</span> inverse[px]<span class="op">;</span></span>
+<span id="cb9-12"><a aria-label="12"></a>    <span class="kw">let</span> y <span class="op">=</span> inverse[py]<span class="op">;</span></span>
+<span id="cb9-13"><a aria-label="13"></a></span>
+<span id="cb9-14"><a aria-label="14"></a>    <span class="co">// Compute z = x - y (mod L)</span></span>
+<span id="cb9-15"><a aria-label="15"></a>    <span class="kw">let</span> z <span class="op">=</span> <span class="cf">if</span> x <span class="op">&gt;=</span> y <span class="op">{</span></span>
+<span id="cb9-16"><a aria-label="16"></a>        (x <span class="op">-</span> y) <span class="op">%</span> L</span>
+<span id="cb9-17"><a aria-label="17"></a>    <span class="op">}</span> <span class="cf">else</span> <span class="op">{</span></span>
+<span id="cb9-18"><a aria-label="18"></a>        ((x <span class="op">+</span> L) <span class="op">-</span> y) <span class="op">%</span> L</span>
+<span id="cb9-19"><a aria-label="19"></a>    <span class="op">};</span></span>
+<span id="cb9-20"><a aria-label="20"></a>    zs<span class="op">.</span>push(z)<span class="op">;</span></span>
+<span id="cb9-21"><a aria-label="21"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</section>
+<section id="rustpyo3-example-16" class="slide level2">
+<h2>Rust/PyO3 example</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Python</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a aria-label="1"></a>mkdir cipher<span class="op">;</span> cd cipher</span>
+<span id="cb10-2"><a aria-label="2"></a>python <span class="op">-</span>m venv venv</span>
+<span id="cb10-3"><a aria-label="3"></a>. venv<span class="op">/</span><span class="bu">bin</span><span class="op">/</span>activate</span>
+<span id="cb10-4"><a aria-label="4"></a><span class="op">!</span>pip install maturin</span>
+<span id="cb10-5"><a aria-label="5"></a>maturin init</span>
+<span id="cb10-6"><a aria-label="6"></a>maturin develop</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Usage</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a aria-label="1"></a><span class="im">import</span> cipher</span>
+<span id="cb11-2"><a aria-label="2"></a>encoded <span class="op">=</span> cipher.encode(<span class="st">"Whazzuuupppp??!!"</span>)</span>
+<span id="cb11-3"><a aria-label="3"></a>decoded <span class="op">=</span> cipher.decode(encoded)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</section></section>
+<section>
+<section id="distributed-computing" class="title-slide slide level1 center">
+<h1>Distributed computing</h1>
+
+</section>
+<section id="distributed-computing-1" class="slide level2">
+<h2>Distributed computing</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Types</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>Cluster computing:</strong> collection of similar workstations</li>
+<li><strong>Grid computing</strong>: federation of different computer systems</li>
+<li><strong>Cloud computing:</strong> provide the facilities to dynamically construct an infrastructure and compose what is needed from available services. Not only providing lots of resources.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="distributed-computing-2" class="slide level2">
+<h2>Distributed computing</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Original Beowulf cluster at NASA (1994)</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/beowulf.jpg" height="500"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="distributed-computing-3" class="slide level2">
+<h2>Distributed computing</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Beowulf cluster diagram</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/beowulf_diagram.png"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="distributed-computing-4" class="slide level2">
+<h2>Distributed computing</h2>
+<div class="columns">
+<div class="column" data-background-color="lightgray" style="width:50%;">
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Grid architecture diagram (Foster et al.&nbsp;2001)</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/grid_arch_diagram.png"></p>
+</div>
+</div>
+</div>
+</div><div class="column" data-background-color="lightgray" style="width:50%;">
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Notation</strong></p>
+</div>
+<div class="callout-content">
+<div style="font-size: 0.8em;">
+<ul>
+<li><strong>fabric:</strong> interfaces to local resources at a specific site</li>
+<li><strong>connectivity</strong>: communication protocols for supporting grid transactions that span the usage of multiple resources</li>
+<li><strong>resource:</strong> responsible for managing a single resource</li>
+<li><strong>collective:</strong> handling access to multiple resources and typically consists of services for resource discovery, allocation and scheduling of tasks onto multiple resources, data replication, and so on</li>
+<li><strong>application:</strong> applications that operate within a virtual organization</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+</section>
+<section id="distributed-computing-5" class="slide level2">
+<h2>Distributed computing</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Cloud architecture</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/cloud_arch.png"></p>
+</div>
+</div>
+</div>
 
 
-<img data-src="img/lang_graph.png" class="r-stretch"></section></section>
+</section></section>
     </div>
   <div class="quarto-auto-generated-content" style="display: none;">
 <div class="footer footer-default">
