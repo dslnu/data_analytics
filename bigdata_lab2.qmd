@@ -315,194 +315,127 @@ def compute_numba(df):
 :::
 
 
-## Concurrency
+## PyO3 (Rust)
 
-Cython and Numba make a *single* thread of computation faster. The other lever is doing more than one thing at once. In CPython that runs straight into the **GIL**: only one thread executes Python bytecode at a time. Let's measure what that actually means.
+Cython is a *dialect* -- Python plus C type declarations, compiled through C. **PyO3** takes a different route: write the extension in **Rust**, a real systems language, and expose functions to Python. You get memory safety, `cargo`'s package ecosystem, and modern tooling -- at the cost of learning Rust and a heavier build step. It has become the default way to write Rust extensions for Python (used by `pydantic-core`, `polars`, `cryptography`, `ruff`, ...).
 
-A tiny timing helper (best of a few runs):
-
-```{python}
-import time
-
-def bench(fn, repeat=2):
-    best = float("inf")
-    for _ in range(repeat):
-        t0 = time.perf_counter()
-        fn()
-        best = min(best, time.perf_counter() - t0)
-    return best
-```
-
-### CPU-bound pure Python: threads don't help
-
-Our workload counts primes by trial division. It lives in `_files/parallel_tasks.py` -- an importable module, not a notebook cell -- because the default multiprocessing start method here is `spawn`, and spawned workers re-import the target function by name.
-
-```{python}
-from _files.parallel_tasks import count_primes_in
-
-LO, HI, N_WORKERS = 2, 250_000, 4
-step = (HI - LO) // N_WORKERS
-chunks = [(LO + i * step, LO + (i + 1) * step) for i in range(N_WORKERS)]
-
-serial = bench(lambda: count_primes_in((LO, HI)))
-serial
-```
-
-:::{.callout-important icon=false}
-## Threads
-```{python}
-from concurrent.futures import ThreadPoolExecutor
-
-def run_threads():
-    with ThreadPoolExecutor(max_workers=N_WORKERS) as ex:
-        return sum(ex.map(count_primes_in, chunks))
-
-threaded = bench(run_threads)
-print(f"serial {serial:.3f}s   threaded {threaded:.3f}s   speedup {serial / threaded:.2f}x")
-```
-:::
-
-The speedup is roughly **1x** (often slightly *worse*, from lock contention and thread overhead). Four threads, one interpreter lock -- the CPU work is still serialised.
-
-Is the GIL actually active? Ask the interpreter:
-
-```{python}
-import sys
-print("GIL active:", sys._is_gil_enabled())
-```
-
-On the default build this is `True`. On a **free-threaded build** (`python3.14t`, officially supported since 3.14) it is `False`, and the threaded run above turns into a real speedup:
+Prerequisites: a Rust toolchain (`rustup` / `cargo`) and the `maturin` build tool:
 
 ```python
-# one-off, no project env needed:
-uv python install 3.14t
-
-uv run --python 3.14t --no-project python - <<'PY'
-import time
-from concurrent.futures import ThreadPoolExecutor
-
-def count_primes_in(bounds):
-    lo, hi = bounds
-    c = 0
-    for n in range(max(lo, 2), hi):
-        i, prime = 2, True
-        while i * i <= n:
-            if n % i == 0:
-                prime = False; break
-            i += 1
-        c += prime
-    return c
-
-LO, HI, W = 2, 250_000, 4
-step = (HI - LO) // W
-chunks = [(LO + i*step, LO + (i+1)*step) for i in range(W)]
-
-t0 = time.perf_counter(); count_primes_in((LO, HI)); serial = time.perf_counter() - t0
-with ThreadPoolExecutor(max_workers=W) as ex:
-    t0 = time.perf_counter(); sum(ex.map(count_primes_in, chunks)); threaded = time.perf_counter() - t0
-print(f"serial {serial:.3f}s  threaded {threaded:.3f}s  speedup {serial/threaded:.2f}x")
-PY
+uv add --dev maturin
 ```
 
-Expect roughly a `W`x speedup, with a single-threaded overhead of well under 10% versus the GIL build (it was ~40% back in 3.13).
+The crate lives in `_files/integ_rs/` and has three files:
 
-:::{.callout-tip icon=false}
-## Processes
+**`_files/integ_rs/Cargo.toml`**
+```toml
+[package]
+name = "integ_rs"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "integ_rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.27", features = ["extension-module"] }
+
+[profile.release]
+opt-level = 3
+lto = true
+```
+
+**`_files/integ_rs/pyproject.toml`** -- tells `maturin` how to build:
+```toml
+[build-system]
+requires = ["maturin>=1.7,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "integ_rs"
+version = "0.1.0"
+requires-python = ">=3.14"
+
+[tool.maturin]
+bindings = "pyo3"
+```
+
+**`_files/integ_rs/src/lib.rs`** -- the same `integrate_f` as before, in Rust:
+```rust
+use pyo3::prelude::*;
+
+#[inline]
+fn f(x: f64) -> f64 {
+    x * (x - 1.0)
+}
+
+/// Numeric integration of f from a to b using n rectangles.
+#[pyfunction]
+fn integrate_f(a: f64, b: f64, n: i64) -> f64 {
+    let dx = (b - a) / n as f64;
+    let mut s = 0.0;
+    for i in 0..n {
+        s += f(a + i as f64 * dx);
+    }
+    s * dx
+}
+
+/// Apply integrate_f over whole columns in one call.
+#[pyfunction]
+fn apply_integrate_f(a: Vec<f64>, b: Vec<f64>, n: Vec<i64>) -> Vec<f64> {
+    a.iter()
+        .zip(b.iter())
+        .zip(n.iter())
+        .map(|((&ai, &bi), &ni)| integrate_f(ai, bi, ni))
+        .collect()
+}
+
+#[pymodule]
+fn integ_rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
+    m.add_function(wrap_pyfunction!(integrate_f, m)?)?;
+    m.add_function(wrap_pyfunction!(apply_integrate_f, m)?)?;
+    Ok(())
+}
+```
+
+Build it into the current environment (`--release` for optimisations; the first build compiles PyO3 too, ~10 s):
+
 ```{python}
-from concurrent.futures import ProcessPoolExecutor
+import subprocess
 
-def run_processes():
-    with ProcessPoolExecutor(max_workers=N_WORKERS) as ex:
-        return sum(ex.map(count_primes_in, chunks))
-
-proc = bench(run_processes)
-print(f"serial {serial:.3f}s   processes {proc:.3f}s   speedup {serial / proc:.2f}x")
+out = subprocess.run(
+    ["maturin", "develop", "--release", "--manifest-path", "_files/integ_rs/Cargo.toml"],
+    capture_output=True, text=True,
+)
+print((out.stderr or out.stdout)[-400:])
+out.check_returncode()
 ```
-:::
 
-Now we get real parallelism -- each process has its own interpreter and its own GIL. The speedup is below `N_WORKERS` because of process startup and because arguments and results are **pickled** across the process boundary.
-
-### GIL-releasing work: threads *do* help
-
-The GIL is dropped while C extensions do their heavy lifting. `np.linalg.svd` (BLAS) is one such case.
+Import it and compare against the pure-Python `apply` from earlier:
 
 ```{python}
-import numpy as np
+import integ_rs
 
-def svd_once(seed):
-    rng = np.random.default_rng(seed)
-    return float(np.linalg.svd(rng.standard_normal((700, 700)), compute_uv=False)[0])
-
-seeds = list(range(8))
-svd_serial = bench(lambda: [svd_once(s) for s in seeds])
-
-def svd_threads():
-    with ThreadPoolExecutor(max_workers=4) as ex:
-        return list(ex.map(svd_once, seeds))
-
-svd_threaded = bench(svd_threads)
-print(f"serial {svd_serial:.3f}s   threaded {svd_threaded:.3f}s   speedup {svd_serial / svd_threaded:.2f}x")
+%timeit df.apply(lambda r: integrate_f(r["a"], r["b"], r["N"]), axis=1)
 ```
+
+```{python}
+%timeit integ_rs.apply_integrate_f(df["a"].tolist(), df["b"].tolist(), df["N"].tolist())
+```
+
+(The `.tolist()` copy is included in the timing; production code would take NumPy arrays directly via the `numpy` crate for zero-copy.)
 
 :::{.callout-note icon=false}
-## Why this one speeds up
-`svd` releases the GIL for the duration of the factorisation, so worker threads genuinely run in parallel -- no pickling, shared memory. This is why NumPy / pandas / scikit-learn code can scale on threads even though pure Python can't.
-:::
-
-### I/O-bound: threads and asyncio
-
-When a task spends its time *waiting* (network, disk, database), the GIL is released during the wait.
-
-```{python}
-def blocking_call(x):
-    time.sleep(0.1)          # stand-in for a network / DB round-trip
-    return x * x
-
-TASKS = list(range(16))
-io_serial = bench(lambda: [blocking_call(x) for x in TASKS])
-
-def io_threads():
-    with ThreadPoolExecutor(max_workers=8) as ex:
-        return list(ex.map(blocking_call, TASKS))
-
-io_threaded = bench(io_threads)
-print(f"serial {io_serial:.3f}s   threaded {io_threaded:.3f}s")
-```
-
-`asyncio` reaches the same result on a *single* thread, with far less per-task overhead:
-
-```{python}
-import asyncio, threading
-
-async def async_call(x):
-    await asyncio.sleep(0.1)
-    return x * x
-
-async def gather_all():
-    return await asyncio.gather(*(async_call(x) for x in TASKS))
-
-def run_in_fresh_loop(coro_factory):
-    box = {}
-    def _worker():
-        box["result"] = asyncio.run(coro_factory())
-    t = threading.Thread(target=_worker)
-    t.start(); t.join()
-    return box["result"]
-
-io_async = bench(lambda: run_in_fresh_loop(gather_all))
-print(f"asyncio {io_async:.3f}s")
-```
-
-:::{.callout-note icon=false}
-## Why the thread wrapper?
-Jupyter already runs an event loop, so a bare `asyncio.run()` in a cell raises *"cannot be called from a running event loop"*. Running it inside a short-lived helper thread gives it a fresh loop. In a plain `.py` script you would just call `asyncio.run(gather_all())`.
-:::
-
-:::{.callout-tip icon=false}
-## Rule of thumb
-- CPU-bound **pure Python** -> processes (`ProcessPoolExecutor`, `multiprocessing`, `joblib`)
-- CPU-bound **in NumPy / native code** -> threads often suffice (BLAS, joblib, Polars/DuckDB already do this)
-- **I/O-bound** -> threads, or `asyncio` for high fan-out
+## Cython vs PyO3
+| | Cython | PyO3 |
+|---|---|---|
+| language | Python + C type hints | Rust |
+| safety | manual (C rules) | borrow checker |
+| build | `%%cython` / `setuptools` | `cargo` / `maturin` |
+| notebook iteration | instant (`%%cython` cell) | rebuild step (`maturin develop`) |
+| ecosystem | C libraries | `crates.io` |
+| best when | incrementally typing hot Python | a self-contained, reusable, safe kernel |
 :::
 
 ## Profiling
@@ -562,26 +495,64 @@ print("ndarray nbytes:", np.zeros(10_000_000, dtype="int64").nbytes / 1e6, "MB, 
 
 `%memit` reports the peak memory of the expression: ~76 MiB just to hold 10 million pointers to the same cached `0`. The equivalent `int64` array is 80 MB in one contiguous block -- same element count, but the cache can stream it.
 
+### scalene -- CPU + GPU + memory, and *where* the time goes
+
+```python
+uv add scalene
+```
+
+`scalene` is a sampling profiler with low overhead (~10--20%). Its report is a browser UI, or a terminal table with `--cli`, so it does not render usefully inside a notebook -- run it on a script:
+
+```bash
+scalene --cli --reduced-profile myscript.py     # terminal, significant lines only
+scalene myscript.py                             # interactive HTML report
+```
+
+What makes it worth learning for *this* lab: for every line it splits the time into
+
+- **Python time** -- interpreter overhead; the part Cython / Numba / PyO3 can remove
+- **native time** -- already inside compiled C (NumPy, BLAS, ...); rewriting this line will not help
+- **system time** -- I/O and waiting
+
+and alongside CPU it tracks **memory over time** and **copy volume** (MB/s copied), which catches accidental copies -- `np.array(some_list)` in a loop, a pandas `.copy()` you did not mean, `df[mask]` in a hot path.
+
+:::{.callout-tip icon=false}
+## Reading it
+- a line that is ~95% *native time* is not your problem -- it is already fast C
+- a line that is ~90% *Python time* inside a loop is exactly what you port to Cython / Numba / Rust
+- a line with high *copy volume* is an allocation to hoist out of the loop
+:::
+
 :::{.callout-note icon=false}
-## More tools
+## Other tools
 - `%mprun` -- line-by-line *memory* (needs the function in an importable file)
-- **`scalene`** -- CPU + GPU + memory, line level, low overhead: `scalene script.py`
-- **`py-spy`** -- sampling profiler that attaches to an already-running process: `py-spy top --pid <PID>`
-- **`snakeviz`** -- browser flame-graph view of a saved cProfile run
+- **`py-spy`** -- sampling profiler that attaches to an already-running process, no code changes: `py-spy top --pid <PID>`, `py-spy dump --pid <PID>`
+- **`snakeviz`** -- browser icicle/flame view of a saved run: `python -m cProfile -o out.prof script.py && snakeviz out.prof`
+- **`viztracer`** -- full execution timeline, viewable in Perfetto / `chrome://tracing`
 :::
 
 
 ## Exercises
 
-1. Apply Cython/Numba optimizations to some computations on your dataframe from Lab 1.
+1. Apply Cython / Numba optimizations to some computations on your dataframe from Lab 1.
 2. Go through the tutorial on Black-Scholes option pricing (<https://louis-finegan.github.io/2024/10/10/Black-Scholes.html>). Modify the code so that:
   - it works for some different company
-  - has 2 versions: using Cython and Numba
-  - measure results
+  - has three versions: Cython, Numba, and PyO3
+  - measure and compare the results
+3. Profile `primes1` (or your own slow function) with `cProfile` and `line_profiler`. Identify the single hottest line, write a faster version, and confirm with the profiler that the hotspot moved.
+4. Add a third function to `_files/integ_rs` (for example the Black-Scholes formula, or a prime sieve), rebuild with `maturin develop`, and benchmark it against the Cython and Numba equivalents. Note how the edit/build/measure loop differs from `%%cython`.
 
-3. Take the embarrassingly-parallel part of your Lab 1 computation (or the Black-Scholes code) and parallelise it with `ProcessPoolExecutor`. Plot speedup vs. worker count. Then try `ThreadPoolExecutor` instead -- does it help? Explain why or why not in terms of where the work happens (pure Python vs. NumPy).
-4. Profile `primes1` (or your own slow function) with `%prun` and `%lprun`. Identify the single hottest line, write a faster version, and confirm with the profiler that the hotspot moved.
-5. Install a free-threaded build (`uv python install 3.14t`) and re-run the pure-Python threading benchmark on it (see the snippet in the Concurrency section). Report the thread speedup, and estimate the single-threaded overhead by comparing `serial` against the GIL build's `serial`.
+## Project ideas
+
+Data-science flavoured. Pick one. In each case: start from the natural slow version (a `df.apply(..., axis=1)`, a `groupby().apply()`, a `rolling().apply()`, or a plain Python loop), then produce **at least three** faster variants (NumPy-vectorised, Numba, Cython, PyO3), profile with `line_profiler` / `scalene` at each step to confirm *where* the time goes, and finish with a speedup table plus a paragraph on which approach was the least effort for the most gain. Reuse `_files/transactions.csv` and `_files/depression_data.csv` from Lab 1 where possible.
+
+1. **Row-wise feature engineering / business rules.** Build a customer "risk score" or segment label from 10+ nested `if/else` rules with lookups and date arithmetic over `transactions.csv`. Baseline: `df.apply(fn, axis=1)`. Variants: vectorised `np.select` / `np.where`; a Numba kernel over the raw column arrays; a PyO3 function taking the columns. The single most common real-world "my pandas is slow" case.
+2. **Custom group-by aggregation pandas cannot vectorise.** Per-customer metrics over `transactions.csv`: time since previous purchase, longest fraud-free streak, a recency-weighted spend score. Baseline: `groupby("customer_id").apply(py_fn)`. Variants: sort once, then a Numba pass over the sorted arrays; a Rust equivalent; whatever pure-pandas trick you can find.
+3. **Rolling-window features with a custom reducer.** On a synthetic price / sensor series: rolling regression slope, rolling entropy, rolling max-drawdown. Baseline: `series.rolling(w).apply(fn, raw=True)`. Variants: an explicit Numba sliding window, Cython, PyO3; compare against `bottleneck` / `numbagg`.
+4. **Pairwise similarity / nearest-neighbour from scratch.** Cosine or Euclidean similarity across `N` rows for deduplication, a simple recommender, or k-NN (and, as a stretch, k-means -- the assignment step is the same loop). Pure Python -> NumPy broadcasting (watch the memory blow-up -- read scalene's *copy volume*) -> blocked Numba -> PyO3. Benchmark against `scipy.spatial.distance.cdist` and `sklearn`.
+5. **Geospatial: nearest facility + radius counts.** Millions of synthetic `(lat, lon)` points and a few hundred reference locations: for each point find the nearest reference by haversine distance, and count points within `R` km of each reference. Vectorised NumPy -> Numba -> PyO3. Report points/second.
+6. **Text analytics from scratch: n-gram / co-occurrence counts.** Tokenise a text column and build n-gram frequencies or a word co-occurrence matrix. Pure-Python `dict` counting -> arrays + hashing -> Cython -> Rust (very strong here). Benchmark against `sklearn.feature_extraction.text.CountVectorizer`.
+7. **Bootstrap / permutation testing.** `B = 100_000` resamples of `depression_data.csv`, computing a statistic each time -- a bootstrap CI for mean income by education level, or a permutation test for a group difference. The resample-and-reduce loop is embarrassingly parallel: pure Python -> NumPy -> Numba `parallel=True` -> PyO3 with `rayon`. Report resamples/second and the effective parallel speedup.
 
 ## References
 
@@ -589,7 +560,6 @@ print("ndarray nbytes:", np.zeros(10_000_000, dtype="int64").nbytes / 1e6, "MB, 
 2. [Cython build instructions](https://cython.readthedocs.io/en/latest/src/quickstart/build.html)
 3. [Cython language](https://cython.readthedocs.io/en/latest/src/userguide/language_basics.html)
 4. [Pandas optimization](https://pandas.pydata.org/pandas-docs/stable/user_guide/enhancingperf.html)
-5. [`concurrent.futures`](https://docs.python.org/3/library/concurrent.futures.html) and [`asyncio`](https://docs.python.org/3/library/asyncio.html) docs
-6. David Beazley, ["Understanding the Python GIL"](https://www.dabeaz.com/GIL/)
-7. [line_profiler](https://github.com/pyutils/line_profiler), [scalene](https://github.com/plasma-umass/scalene), [py-spy](https://github.com/benfred/py-spy)
-8. [Python free-threading HOWTO](https://docs.python.org/3/howto/free-threading-python.html), [PEP 703](https://peps.python.org/pep-0703/), [`concurrent.interpreters`](https://docs.python.org/3/library/concurrent.interpreters.html) (PEP 734)
+5. [line_profiler](https://github.com/pyutils/line_profiler), [scalene](https://github.com/plasma-umass/scalene), [py-spy](https://github.com/benfred/py-spy)
+6. [PyO3 user guide](https://pyo3.rs/) and [maturin](https://www.maturin.rs/)
+7. [`rust-numpy`](https://github.com/PyO3/rust-numpy) -- zero-copy NumPy arrays in PyO3

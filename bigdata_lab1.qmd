@@ -70,7 +70,7 @@ Nice write-up here: <https://uwekorn.com/2020/05/24/the-one-pandas-internal.html
 
 Let's examine memory usage for each type:
 ```{python}
-for dtype in ['float','int','object']:
+for dtype in ['float','int','str']:
     selected_dtype = dd.select_dtypes(include=[dtype])
     mean_usage_b = selected_dtype.memory_usage(deep=True).mean()
     mean_usage_mb = mean_usage_b / 1024 ** 2
@@ -137,19 +137,19 @@ print(mem_usage(dd))
 print(mem_usage(optimized_dd))
 ```
 
-Just a bit. Let's proceed with object types.
+Just a bit. Let's proceed with string columns (dtype `str` in pandas 3, `object` in pandas 2).
 
 First, read <https://jakevdp.github.io/blog/2014/05/09/why-python-is-slow/>.
 
 Now, back to the dataset.
 
-We can use categoricals (<https://pandas.pydata.org/pandas-docs/stable/categorical.html>) to optimize object columns.
+We can use categoricals (<https://pandas.pydata.org/pandas-docs/stable/categorical.html>) to optimize string columns.
 
 ![](img/categorical.png)
 
-Let's look at the number of unique values for each object type:
+Let's look at the number of unique values for each string column:
 ```{python}
-dd_obj = dd.select_dtypes(include=['object']).copy()
+dd_obj = dd.select_dtypes(include=['object', 'str']).copy()
 dd_obj.describe()
 ```
 
@@ -177,7 +177,7 @@ We should only convert objects to categoricals if most values are repeated. We h
 
 **Note:** when reading a csv, we can also provide a `dtype` dictionary param with preferred types.
 
-Converting all object columns and creating a new optimized DataFrame is left as part of **Exercise 1**.
+Converting all string columns and creating a new optimized DataFrame is left as part of **Exercise 1**.
 
 ## Vectorization & query performance
 
@@ -366,13 +366,23 @@ Everything above still comfortably fits in memory. `bigdata_lec1.qmd`'s "Datafra
 Rather than materializing one huge pandas `DataFrame`, we build the file the same way `## Chunked processing` taught us to *read* one -- just applied to writing instead, reusing `make_transactions()` chunk by chunk:
 
 ```{python}
+import os
+
 def write_transactions_chunked(path, total_rows=40_000_000, chunk_rows=5_000_000, seed=0):
+    # This file is multi-GB. Regenerating it on every `quarto preview` re-render is
+    # slow and, if a render is interrupted mid-write, leaves a corrupt file. So:
+    #   - skip if it already exists
+    #   - write to a temp path and rename atomically, so readers never see a partial file
+    if os.path.exists(path) and os.path.getsize(path) > 0:
+        return
+    tmp = path + ".tmp"
     for i, start in enumerate(range(0, total_rows, chunk_rows)):
         n = min(chunk_rows, total_rows - start)
         chunk = make_transactions(n_rows=n, seed=seed + i)
         chunk["transaction_id"] += start  # keep IDs unique across chunks
-        chunk.to_csv(path, mode="w" if i == 0 else "a", header=(i == 0), index=False)
+        chunk.to_csv(tmp, mode="w" if i == 0 else "a", header=(i == 0), index=False)
         del chunk
+    os.replace(tmp, path)
 
 write_transactions_chunked("_files/transactions_large.csv")
 ```
@@ -491,7 +501,7 @@ plt.show()
 <!-- mypy does not improve performance. However, it makes the code easier to understand. -->
 <!-- ::: -->
 
-2. Perform numerical and object types conversions aimed at minimizing storage space, as outlined above.
+2. Perform numeric and string type conversions aimed at minimizing storage space, as outlined above.
 
 3. Measure performance impact and plot it via e.g. `matplotlib`.
 
