@@ -1,0 +1,795 @@
+---
+title: "Big Data: GeoScience part 4"
+subtitle: "Representing geographic data in raster format"
+author: 
+  - name: MSDE
+    affiliation: Lviv University
+code-fold: false
+execute:
+  enabled: true
+  cache: true
+diagram:
+  cache: true
+  cache-dir: ./cache
+  engine:
+    tikz:
+      execpath: lualatex
+      additional-packages: |
+        \usetikzlibrary{arrows.meta}
+        \usetikzlibrary{positioning}
+        \usetikzlibrary{decorations.pathreplacing}
+filters:
+  - diagram
+format: 
+  revealjs:
+    css: custom.css
+    preview-links: auto
+    slide-number: true
+    theme: default
+    multiplex:
+      url: 'https://mplex.vitv.ly'
+      secret: '2bef2622bcd3bb84fedb159ec8d93f39'
+      id: 'bb0b7463c7b7c17e7aa43607699eff55b7711720813985c8a5d58369765acd4f'
+---
+
+## Rasters
+:::{.callout-tip icon=false}
+## Overview
+
+- The raster data model represents the real-world features (e.g. temperature) as arrays of cells, commonly known as pixels.
+- Raster data is widely used to represent and store data about continuous surfaces, in which each pixel contain specific information, about a specific area of the Earth (e.g. 10x10 meter square) :
+  - characteristics
+  - radiance
+  - reflectance
+  - spectral signatures
+:::
+
+## Rasters
+:::{.callout-tip icon=false}
+## Reasons
+There are various reasons why you might want to store your data in raster format:
+
+- It is a simple data structure: A matrix of cells with values representing information about the observed surface/phenomena
+- It is an efficient way to store data from large continuous surfaces
+- It is a powerful format that can be used for various spatial and statistical analysis
+- You can perform fast overlays with multiple layers 
+:::
+
+## Rasters
+
+:::{.callout-tip icon=false}
+## Raster Data Overview
+
+Raster data is a digital image format that represents data as a grid of individual pixels, with each pixel containing a specific value or color information.
+
+-   Square grid of pixels.
+-   Pixel values can represent continuous or categorical variables:
+    -   Divides 2-D space into regular cells - pixels
+    -   Each cell has a single value
+-   Values assigned according to value at mean, centre point, or some other rule
+- The value of a pixel can be continuous (e.g. elevation) or categorical (e.g. land use).
+
+:::
+![](../img/raster/vector_raster.png){width="60%"}
+
+## Rasters
+
+:::{.callout-tip icon=false}
+## Difference from digital photos
+It is accompanied by spatial information that connects the data to a particular locationi
+
+- raster’s extent 
+- cell size
+- number of rows and columns
+- coordinate reference system (or CRS).
+
+:::
+![](../img/raster/raster_concept.png)
+
+## Rasters
+:::{.callout-tip icon=false}
+## Characteristics of raster data
+
+Different kind of sensors (e.g. remote sensing instruments or *{term}`LIDAR`*) are typically used to capture and collect data about specific aspects of the surface, such as temperature, elevation, or the electromagnetic radiation (light) that the surface reflects. This information can be captured with varying level of detail, depending on the sensor. Many sensors (especially satellite sensors) measure the electromagnetic radiation at specific ranges (i.e. bands) which is why they are called {term}`Multispectral sensors` or {term}`Hyperspectral sensors`. Most typically the raster data produced by these sensors can vary based on their:
+
+- *`spatial resolution`*, i.e. the size of a single pixel
+- *`temporal resolution`*, i.e. how frequently the data is captured from the same area of the Earth
+- *`spectral resolution`*, i.e. the number and location of spectral bands in the electromagnetic spectrum
+- *`radiometric resolution`*, i.e. the range of available brightness values (bit depth), usually measured in bits (binary digits)
+- *`spatial extent`*, i.e. how large area of the world a single image represents
+- *`coordinate reference system`*, i.e. in what CRS the data is represented 
+
+:::
+
+## Rasters
+:::{.callout-tip icon=false}
+## Data Types
+
+- Grayscale Rasters (**Nightlights Data**)
+- Multispectral Rasters (**Landsat Satellite Imagery**)
+- Color Rasters (**Digital Photographs**)
+- Elevation Rasters (**Digital Elevation Models (DEMs)**)
+:::
+
+## Rasters
+
+
+:::{.callout-tip icon=false}
+## Continuous rasters
+Some examples of continuous rasters include:
+  - Precipitation maps.
+  - Maps of tree height derived from LiDAR data.
+  - Elevation values for a region.
+A map of elevation for Harvard Forest derived from the NEON AOP LiDAR sensor is below.
+Elevation is represented as a continuous numeric variable in this map.
+The legend shows the continuous range of values in the data from around 300 to 420 meters.
+
+:::
+![](../img/raster/continuous-elevation-HARV-plot-01.png)
+
+## Rasters
+:::{.callout-tip icon=false}
+## Categorical rasters
+
+Some rasters contain categorical data where each pixel represents a discrete class such as a landcover type (e.g., “forest” or “grassland”) rather than a continuous value such as elevation or temperature. Some examples of classified maps include:
+
+1. Landcover / land-use maps.
+2. Tree height maps classified as short, medium, and tall trees.
+3. Elevation maps classified as low, medium, and high elevation.
+
+![](../img/USA_landcover_classification.png)
+:::
+
+## Attributes
+
+:::{.callout-tip icon=false}
+##  Extent
+
+The spatial extent is the geographic area that the raster data covers. The spatial extent of an object represents the geographic edge or location that is the furthest north, south, east and west. In other words, extent represents the overall geographic coverage of the spatial object.
+
+![](../img/spatial_extent.png)
+:::
+
+:::{.callout-tip icon=false}
+## Resolution
+A resolution of a raster represents the area on the ground that each pixel of the raster covers. The image below illustrates the effect of changes in resolution.
+![](../img/raster_resolution.png)
+
+:::
+
+## Rasters
+:::{.callout-tip icon=false}
+## Multi-band raster data
+
+A raster can contain one or more bands. One type of multi-band raster dataset that is familiar to many of us is a color image. A basic color image consists of three bands: red, green, and blue. Each band represents light reflected from the red, green or blue portions of the electromagnetic spectrum. The pixel brightness for each band, when composited creates the colors that we see in an image.
+:::
+![](../img/multi_band_raster.png)
+
+## Rasters
+:::{.callout-tip icon=false}
+## Multi-band raster data
+Multi-band raster data might also contain:
+
+1. **Time series:** the same variable, over the same area, over time.
+2. **Multi or hyperspectral imagery:** image rasters that have 4 or more (multi-spectral) or more than 10-15 (hyperspectral) bands.
+:::
+
+## Rasters
+:::{.callout-tip icon=false}
+## Working with raster data in Python
+
+There are a number of libraries that are widely used when working with raster data in Python:
+
+- `numpy` is a core Python library for numerical computing that is used for representing and working with multidimensional arrays. `numpy` has a big influence on how the other raster libraries function and can be used to generate multidimensional arrays from scratch.
+- `xarray` provides a user-friendly and intuitive way to work with multidimensional raster data with coordinates and attributes (somewhat similar to `geopandas` that is used for vector data processing),
+- `rasterio` core library for working with GIS raster data,
+- `rioxarray` provides methods to conduct GIS-related operations with raster data (e.g. reading/writing, reprojecting, clipping, resampling). It is an extension of `rasterio` library that brings the same functionalities on top of `xarray` library,
+- `xarray-spatial` provides methods for analysing raster data (e.g. focal/zonal operations, surface analysis, path finding).
+:::
+
+## Rasters
+:::{.callout-tip icon=false}
+## Creating a simple raster layer using `numpy`
+Create an empty layer:
+
+```{python}
+import numpy as np
+import matplotlib.pyplot as plt
+
+raster_layer = np.zeros((10, 10))
+raster_layer
+```
+
+Add a "mountain" in the middle:
+```{python}
+raster_layer[4:7, 4:7] = 5
+raster_layer[5, 5] = 10
+raster_layer
+```
+
+Display:
+
+```{python}
+plt.imshow(raster_layer, cmap='terrain')
+plt.colorbar(label='Elevation')
+plt.title('Simple Raster Layer representing a Hill')
+plt.show()
+```
+
+
+:::
+
+## Working with xarray/rioxarray
+
+:::{.callout-tip icon=false}
+## What is xarray?
+
+- `xarray` library is a highly useful tool for storing, representing and manipulating raster data
+- `rioxarray` provides various raster processing (GIS) capabilities on top of the `xarray` data structures, such as reading and writing several different raster formats and conducting different geocomputational tasks
+- `rioxarray` uses another Python library called `rasterio` (that works with N-dimensional `numpy` arrays)
+:::
+
+:::{.callout-tip icon=false}
+## Temporal dimensions
+You may have longitudinal (repetitive) observations from the same area, constituting time series data. More often than not, you need to combine information from these layers to be able to conduct meaningful analysis based on the data, such as do a weather forecast.
+
+One of the greatest benefits of `xarray` is that you can easily store, combine and analyze all these different layers via a single object, i.e. a `Dataset`.
+
+:::
+
+## Working with xarray/rioxarray
+:::{.callout-tip icon=false}
+## Key xarray datastructures: Dataset and DataArray 
+
+- `DataArray` is a labeled N-dimensional array that is similar to `pandas.Series` but works with raster data (stored as `numpy` arrays)
+- `Dataset` is a multi-dimensional in-memory array database that contains multiple `DataArray` objects. In addition to the variables containing the observations of a given phenomena, you also have the `x` and `y` coordinates of the observations stored in separate layers, as well as metadata providing relevant information about your data, such as Coordinate Reference System and/or time. 
+:::
+![](../img/raster/xarray-dataset-diagram.png)
+
+## Working with xarray/rioxarray
+:::{.callout-tip icon=false}
+## `xarray` advantages
+
+- A more intuitive and user-friendly interface to work with multidimensional arrays (compared e.g. to `numpy`)
+- The possibility to select and combine data along a dimension across all arrays in a `Dataset` simultaneously
+- Compatibility with a large ecosystem of Python libraries that work with arrays / raster data
+- Tight integration of functionalities from well-known Python data analysis libraries, such as `pandas`, `numpy`, `matplotlib`, and `dask`
+:::
+
+## Working with xarray/rioxarray
+:::{.callout-tip icon=false}
+## Reading a file into Dataset
+
+Let's investigate a simple elevation dataset using `xarray` that represents a DEM of Kilimanjaro area in Tanzania.
+
+By importing the `rioxarray` library, we can extend the functionalities of the `xarray` and use the `engine="rasterio"` parameter when reading the data. 
+
+```{python}
+import os
+import urllib.request
+import xarray as xr
+import rioxarray
+
+bucket_url = "https://a3s.fi/swift/v1/AUTH_0914d8aff9684df589041a759b549fc2/PythonGIS"
+remote_url = bucket_url + "/elevation/kilimanjaro/ASTGTMV003_S03E036_dem.tif"
+local_path = "../_data/Kilimanjaro/kilimanjaro_elevation.tif"
+
+os.makedirs(os.path.dirname(local_path), exist_ok=True)
+if not os.path.exists(local_path):
+    tmp_path = local_path + ".tmp"
+    urllib.request.urlretrieve(remote_url, tmp_path)
+    os.replace(tmp_path, local_path)  # atomic: never leaves a half-downloaded file behind
+
+data = xr.open_dataset(local_path, engine="rasterio", masked=True)
+data
+```
+:::
+
+## Working with xarray/rioxarray
+
+:::{.callout-tip icon=false}
+## Attributes
+
+- `Dimensions` show the number of `bands` (in our case 1), and the number of cells (3601) on the `x` and `y` axis
+- `Coordinates` is a container that contains the actual `x` and `y` coordinates of the cells, the Coordinate Reference System information stored in the `spatial_ref` attribute, and the `band` attribute that shows the number of bands in our data.
+- `Data variables` contains the actual data values of the cells (e.g. elevations as in our data)
+:::
+
+## Working with xarray/rioxarray
+:::{.callout-tip icon=false}
+## Drop unneeded stuff
+Because our `Dataset` only consists of a single `band` (i.e. the elevation values), it might make sense to reduce the dimensions of our dataset by dropping the `band` attribute because it is not really providing any useful information for us. We can subset our data and remove a specific dimension from our data by using the `.squeeze()` method. In the following, we drop the `"band"` dimension:
+
+```{python}
+data = data.squeeze("band", drop=True)
+data
+```
+As a result, now the `Dimensions` and `Coordinates` only shows the data for `x` and `y` axis, meaning that the unnecessary data was successfully removed.
+
+An alternative way to deal with this issue is to use `band_as_variable=True` parameter directly when reading the raster file with `xr.open_dataset()`:
+
+```python
+xr.open_dataset(url, engine="rasterio", masked=True, band_as_variable=True)
+```
+:::
+
+## Working with xarray/rioxarray
+:::{.callout-tip icon=false}
+## Renaming data variables
+
+To make the data more intuitive to use, we can also change the name of the data variable from `band_data` into `elevation`. In this way, it is more evident what our data is about. We can easily change the name of an attibute by using the `.rename()` method as follows which wants a dictionary with syntax `{"old_name": "new_name"}`:
+
+```{python}
+data = data.rename({"band_data": "elevation"})
+data
+```
+
+Now the name of our data variable was changed to `elevation` which makes it more intuitive and convenient to use than calling the variable with a very generic name `band_data`.
+
+:::
+
+## Plotting a data variable
+
+Thus far, we have investigated how the `xarray` data structures look like. However, we have not yet plotted anything on a map, which is also one of the typical things that you want to do as one of the first steps whenever working with new data. The `xarray` library provides very similar plotting functionality as `geopandas`, i.e. you can easily create a visualization out of your `DataArray` objects by using the `.plot()` method that uses `matplotlib` library in the background. In the following, we create a simple map out of the `"elevation"` data variable: 
+
+```python
+import matplotlib.pyplot as plt
+
+# Plot the values
+mesh = data["elevation"].plot(cmap="terrain")
+
+# Add a title
+plt.title("Elevation in meters");
+```
+
+<!-- #region editable=true slideshow={"slide_type": ""} -->
+_**Figure 7.3.** A map representing the elevation values in the Kilimanjaro area._
+
+Great! Now we have a nice simple map that shows the relative height of the landscape where the highest peaks of the mountains are clearly visible on the bottom left corner. Notice that we used the `"terrain"` as a colormap for our visualization which provides a decent starting point for our visualization. However, as you can see it does not make sense that the part of the elevations are colored with blue because the land surface in this area of the world should not have any values going below the sea surface (0 meters). It is possible to deal with this issue by adjusting the colormap which you can learn from Chapter 8. 
+
+We can also easily plot our data in a couple of different ways and e.g. produce a contour map representing the elevation using contour lines. A contour map is a type of map that represents the three-dimensional features of a landscape in two dimensions by using contour lines  highlighting the hills and valleys in our data. Each contour line connects points of equal elevation above a reference level, such as sea level. These lines provide a way to visualize the shape, slope, and elevation of the terrain. Contour maps are widely applied to different data in various domains, such as in navigation and orienteering to visualize elevation characteristics to help activities such as hiking; in meteorology to visualize weather related phenomena (atmospheric pressure, temperature); and in hydrology to help identifying drainage patterns, watersheds, and potential flood zones.  We can create a contour map based on the input data by calling the `.plot.contour()` method in `xarray`:
+<!-- #endregion -->
+
+```python editable=true slideshow={"slide_type": ""}
+contours = data["elevation"].plot.contour()
+plt.title("Contour map based on the elevation");
+```
+
+<!-- #region editable=true slideshow={"slide_type": ""} -->
+_**Figure 7.4.** A contour map representing the elevation values in the Kilimanjaro area._
+
+It is also possible to create a surface map that shows the elevation values in 3D. A 3D surface map is a three-dimensional representation of a terrain or surface, created by plotting elevation or depth data as a continuous surface. The map visually depicts the topography by assigning different colors, shading, and heights to represent variations in elevation, providing a realistic and intuitive view of the terrain. Creating a 3D surface map can be done by calling the `.plot.surface()` method in `xarray`:
+<!-- #endregion -->
+
+```python editable=true slideshow={"slide_type": ""}
+surface = data["elevation"].plot.surface(cmap="Greens")
+plt.title("A surface map representing the elevation in 3D");
+```
+
+<!-- #region editable=true slideshow={"slide_type": ""} -->
+_**Figure 7.5.** A 3D surface map representing the elevation values in the Kilimanjaro area._
+
+Now we have a nice three dimensional map that clearly shows the hills and valleys in our study region that gives an intuitive view to the landscape in the given region.
+<!-- #endregion -->
+
+<!-- #region editable=true slideshow={"slide_type": ""} -->
+## Extracting basic raster dataset properties
+
+Now as we have explored our data visually, it is good to continue by examining the basic properties of the data, as well as by calculating summary statistics out of the data, such as the minimum,  maximum, or mean values of your data. To extract this information from your `Dataset`, `xarray` provides very similar functionalities as `pandas` to compute some basic statistics out of your data. For instance, we can easily extract the maximum elevation of our data by calling `.max()` method:
+<!-- #endregion -->
+
+```python
+data["elevation"].max()
+```
+
+As we see, this produces quite a lot of information because `xarray` returns an `DataArray` as a result by default. When exploring the output, we can see that the single value in the array is `2943` which is the highest point in our data. However, typically it would be more useful to get a numerical value as a result when doing operations like these. Luckily, it is easy to extract the actual number from the data by adding `.item()` after the command. The `.item()` method returns the `xarray.Dataset` element as a regular Python scalar value which is more similar to what e.g. `pandas` returns when you call the `.max()` or `.min()`, as demonstrated below: 
+
+```python
+data["elevation"].min().item()
+```
+
+```python
+data["elevation"].max().item()
+```
+
+### Dimensions of the data
+
+In addition to the summary statistics, we can explore some of the basic properties of our raster data. Majority of the geographic data related properties of a raster `Dataset` can be accessed via `.rio` {term}`accessor`. An accessor is a method or attribute added to an existing data structure, such as a `DataArray` or `Dataset` in `xarray`, to provide specialized functionality. Accessors extend the capabilities of the base object without modifying its core structure. Via the `.rio` accessor we can explore various attributes of our data, such as the `.shape`, `.width` or `.height`:
+
+```python
+print(data.rio.shape)
+print(data.rio.width)
+print(data.rio.height)
+```
+
+### Spatial resolution
+
+From the outputs we can see that the shape of our raster data seems to be rectangular as we have 3601 X 3601 cells to each direction (x and y). To better understand the data in geographic terms, we can retrieve the *{term}`spatial resolution`* of the data by calling the `.rio.resolution()` method:
+
+```python
+data.rio.resolution()
+```
+
+As we see, the spatial resolution, i.e. the size of a single cell in our raster layer is ~0.0028. The resolution is always reported in the units of the input dataset's *{term}`coordinate reference system`* (CRS). Thus, in our case, this number is reported in *{term}`decimal degrees`* meaning that the resolution is 30 meters. 
+
+
+### Coordinate reference system
+
+We can easily access the coordinate reference system (CRS) information of our raster dataset via the `.rio.crs` attribute:
+
+```python
+data.rio.crs
+```
+
+The `.rio.crs` returns the coordinate reference system information as an *{term}`EPSG code`* and the code `4326` stands for the WGS84 coordinate reference system in which the units are represented as latitudes and longitudes (i.e. decimal degrees). Another CRS-related attribute that is useful to know is *{term}`transform`*. The transform refers to the affine transformation matrix that maps pixel coordinates to geographic coordinates. It defines how the raster data is aligned in space, including information on scaling, rotation, and translation relative to a coordinate reference system. You can access the `transform` attribute as follows:
+
+```python
+data.rio.transform()
+```
+
+### Spatial extent
+
+To extract information about the *{term}`spatial extent`* of the dataset, we can use the `.rio.bounds()` method:
+
+```python
+data.rio.bounds()
+```
+
+This returns the minimum and maximum coordinates (here, in latitude and longitude) that bound our dataset, forming a minimum bounding rectangle around the data. The first two numbers represent the left-bottom (x,y) corner of the dataset, while the last two number represent the right-top corner (x,y) of the area, respectively. 
+
+
+### NoData value
+
+Did you notice a small white rectangle in the bottom-right corner in Figure 7.3? This white area exists because our dataset includes some cells that does not have any data, i.e. they are represented with `NaN` values. To investigate whether your data contains `NaN` values, you can access the NoData value of the `DataArray` as follows:
+
+```python
+data["elevation"].rio.nodata
+```
+
+The `.rio.nodata` returns the value how the NaN value is represented in our `xarray.DataArray`. As we can see, the NaN value is represented with `numpy` library's `nan`. However, in many cases, the NoData value in a given raster file is actually coded with a specific numerical value that is a clear outlier compared to the rest of the data, such as `-9999` or `9999`. To find out what value has been used in the raster file to code the NoData value, we can use `rio.encoded_nodata` which returns the NoData value as it is represented in the actual source data: 
+
+```python
+data["elevation"].rio.encoded_nodata
+```
+
+It is important to deal with possible NaN values in the data, because otherwise the NoData values would be presented as actual values in the dataset (i.e. elevation). In our case, we dealt with the NaN values already when reading the data into `xarray` with `xr.open_dataset()` by specifying `masked=True`. This ensured that all values with number `9999` in the raster were transformed into `numpy.nan` values. This ensures that they do not influence any of the calculations when using the data but they are properly treated as data that does not exist. For example, the maximum value that we extracted earlier from the data was `2943`, not `9999` which would be the case unless we mask out the NaN values when reading the data. 
+
+If a given dataset contains NoData values (it does not necessarily contain any NoData), the metadata of the dataset should always contain information about how the NoData values are encoded. With some raster files, you can also search for the NoData value by checking the `.attrs` attribute that might include information about NoData and is returned as a Python dictionary. The information about NoData can be can be stored with different keys, and you should look for values stored in keys, such as `_FillValue`, `missing_value`, `fill_value` or `nodata`. In our raster file, this metadata has not been stored as part of the file, and thus, we cannot access the `.attrs` attribute:
+
+```python
+data["elevation"].rio.attrs
+```
+
+### Radiometric resolution (bit depth)
+
+Lastly, we can extract information about the *{term}`radiometric resolution`* (i.e. bit depth) of our `Dataset` by calling `.dtypes`:
+
+```python
+data.dtypes
+```
+
+This returns a Python dictionary like object that provides information about the bit depth of each `DataArray` stored in our `Dataset`. In our case, we only have one data attribute (elevation) and from the result we can see that the bit depth of this data is 32 bits. The radiometric resolution is determined by the number of bits used to represent the data for each pixel, which defines the range of possible intensity values. For example, an 8-bit sensor can record 256 levels of intensity (values 0-255), while a 16-bit sensor can record 65536 levels. Thus, the more bits you use to store the numbers on computer, the larger numbers you can store with a given bit depth. Notice that the more bits you use to store the numbers, the higher the memory consumption is as well. In terms of our example here (32-bit float), the data can be stored with high precision as it allows to store numbers with many decimals (approximately 7 decimal digits). 
+
+Another useful thing to understand about computer systems is that the numbers can be represented as either signed or unsigned, which determines whether negative values can be stored. Signed numbers include a "+" or "-" sign to indicate whether the value is positive or negative, while unsigned numbers are limited to non-negative values. The sign and bit depth (8-bit, 16-bit, etc.) directly affect the range of values that can be represented in the raster. For example, an 8-bit signed integer can represent values from -128 to 127, while an 8-bit unsigned integer can represent values from 0 to 255. Thus, if your data only contains positive numbers, it makes sense to store the data as unsigned because then you can store larger numbers with the same number of bits. For instance, Landsat 8 satellite sensor data are stored as unsigned 16-bit values meaning that the possible values are from 0 to 65536. The data type (signed, unsigned) can also significantly influence the memory footprint of your data which we will cover next.
+
+
+### Size of the data: Memory footprint in bytes
+
+We can extract information about the memory footprint of our `DataArray` or `Dataset` via the `.nbytes` attribute which returns the total bytes consumed by the stored data. For convenience, we convert the bytes into Megabytes (MB) with formula `<bytes> / (1000*1000)` where the value 1000 converts the bytes into kilobytes and the second one converts the kilobytes into megabytes, respectively:
+
+```python
+# Memory consumption of a single DataArray
+bytes_to_MB = 1000 * 1000
+footprint_MB = data["elevation"].nbytes / bytes_to_MB
+print(f"DaraArray memory consumption: {footprint_MB:.2f} MB.")
+```
+
+```python
+# Memory consumption of the whole Dataset
+footprint_MB = data.nbytes / bytes_to_MB
+print(f"Dataset memory consumption: {footprint_MB:.2f} MB.")
+```
+
+As we can see from the above, the memory consumption of the `elevation` data variable is 51.87 megabytes while the memory consumption of the whole `Dataset` is slightly larger (51.93 MB). Majority of the memory footprint of a `Dataset` goes to storing the data variables (here, elevation values) and the rest of the memory is mostly consumed by other metadata related to the data (coordinates, CRS, indices etc.). Thus, the more data variables you store in your `Dataset` the larger the overall memory footprint of the data will be. 
+
+
+### Converting data type (bit depth)
+
+Now we know that our data consumes quite a bit of memory from our computer. However, in certain cases there might be ways to optimize the memory usage by changing the data type (i.e. bit depth) into a type that is not as memory-hungry as the 32-bit float. For example our elevation data is presented with whole numbers which is evident e.g. from the minimum and maximum values of our data, which were `568.0` and `2943.0` respectively. Notice that neither of these values have any decimals (other than 0), which is due to the fact the precision of our elevation data is in full meters. Thus, the type of our elevation data could be changed to integers. In fact, we could use {term}`unsigned integer` as a data type because the elevation values present in the data fall under the range of 0-65535. Notice that if our data values would exceed these limits, we could use 32-bit or 64-bit integer data types which allow to store much higher numbers in the array. 
+
+But does the bit-depth matter really? It does. For example in our case it would make a lot of sense to store the data with lower bit depth because that requires less disk space and memory from the computer as we demonstrate in the following. To change a data type of our elevation data variable, we can use the `.astype()` method that converts the input values into the target data type which is provided as an input argument. In the following, we will convert the elevation values (32-bit floats) into 16-bit unsigned integer numbers by calling `.astype("uint16")`. 
+
+```python
+# Convert the data into integers
+data16 = data.copy()
+data16["elevation"] = data16["elevation"].astype("uint16")
+```
+
+Oops, the `xarray` is producing a warning for us here. The reason for the warning is because our data contains `NaN` values which are incompatible with the integer data type. NaN values are only supported by float data types, thus to get rid off this warning, you should fill the NaN values with some meaningful number before doing the conversion to integers. By default, the data type conversion will replace the NaN values with value 0. There are different approaches to deal with this issue (e.g. interpolation), but for now, we will just ignore this warning for the sake of simplicity. 
+
+We can check the memory consumption of our updated `DataArray` as follows:
+
+```python
+# Memory consumption of the updated DataArray
+footprint_MB = data16["elevation"].nbytes / bytes_to_MB
+print(f"DaraArray memory consumption: {footprint_MB:.2f} MB.")
+```
+
+```python
+data16["elevation"].max().item()
+```
+
+As we can see from the above the maximum elevation was now changed from the decimal number (2943.0) into integer (2943). Also the memory consumption improved significantly as the size of our data was cut into half when we converted the data into 16-bit unsigned integers. Thus, by choosing the data type in a smart way, you can significantly lower the memory consumption of the data on your computer which might make a big difference in terms of performance of your analysis. This is especially true in case you are analyzing very large raster datasets. In the following, we can see how changing the data type influences on the memory footprint of the data. Now we use `float` data types in the conversions so that we don't receive the "invalid value" warning as before:
+
+```python
+print(
+    "Memory consumption 16-bit:",
+    data["elevation"].astype("float16").nbytes / bytes_to_MB,
+    "MB.",
+)
+print(
+    "Memory consumption 32-bit:",
+    data["elevation"].astype("float32").nbytes / bytes_to_MB,
+    "MB.",
+)
+print(
+    "Memory consumption 64-bit:",
+    data["elevation"].astype("float64").nbytes / bytes_to_MB,
+    "MB.",
+)
+```
+
+As we can see, the memory consumption of the same exact data varies significantly depending on the bit-depth that we choose to use for our data. It is important to be careful when doing bit-dept conversions that you do not sabotage your data with the data conversion. For example, in our data the value range is between 568-2943. Thus, we need to use at least 16-bits to store these values. However, nothing stops you from changing the data type into 8-bit integers which will significantly alter our data:
+
+```python
+low_bit_depth_data = data["elevation"].astype("uint8")
+print("Min value: ", low_bit_depth_data.min().item())
+print("Max value: ", low_bit_depth_data.max().item())
+```
+
+```python
+low_bit_depth_data.plot(cmap="terrain")
+plt.title("Data presented with 8-bit integers");
+```
+
+<!-- #region editable=true slideshow={"slide_type": ""} -->
+_**Figure 7.6.** Elevation values represented as 8-bit integers with distorted values._
+
+As we can see from the map, the result distorts the data significantly and ultimately makes it unusable because all the cells having a value larger than 255 (i.e. the maximum supported value with 8-bits) are incorrectly presented in the data. Thus, when doing data type conversions, it is good to be extra careful that you do not accidentally break your data and produce incorrect results when further analyzing it. 
+<!-- #endregion -->
+
+<!-- #region editable=true slideshow={"slide_type": ""} -->
+## Creating a new data variable
+
+At the moment, we only have one data variable in our `Dataset`, i.e. the `elevation`. As a reference to vector data structures in `geopandas` library which we introduced in Chapter 6, this would correspond to a situation in which you would have a single column in your `GeoDataFrame`. However, it is very easy create new data variables into your `Dataset` e.g. based on specific calculations or data conversions. For instance, we might be interested to calculate the relative height (i.e. relief) based on our data which tells how much higher the elevations (e.g. the highest peak) are relative to the lowest elevation in the area. This can be easily calculated by subtracting the lowest elevation from the highest elevation in an area. In the following, we create a new data variable called `"relative_height"` into our `Dataset` based on a simple mathematical calculation. You can create new data variables into your `Dataset` by using square brackets and the name of your variable as a string (e.g. `data["THE_NAME"]`), as follows:
+<!-- #endregion -->
+
+```python
+min_elevation = data["elevation"].min().item()
+
+# Calculate the relief
+data["relative_height"] = data["elevation"] - min_elevation
+data
+```
+
+As a result, we now can see that a new data variable called `"relative_height"` was created and stored into our `Dataset`. All of the data variables stored in a `Dataset` are of type `DataArray` which is the N-dimensional array as we discussed at the beginning of this section. We can confirm the data type of our data variable by typing: 
+
+```python
+type(data["elevation"])
+```
+
+Ultimately, you can store as many data variables to your dataset as you like. In case you are interested to explore all the data variables that are presented in your `Dataset`, you can do this by calling `.data_vars` attribute as follows: 
+
+```python
+data.data_vars
+```
+
+Here, we can see the names of the data variables, as well as some basic information about the data itself including the data type, size of the data in MiB, and a snippet of the actual values in the `DataArrays`. In case you are only interested to find out the names of the data variables, you can extract them as a list as follows:
+
+```python
+list(data.data_vars)
+```
+
+<!-- #region editable=true slideshow={"slide_type": ""} -->
+## Writing to a file
+
+At this stage, we have learned how to read raster data and explored some of the basic properties of a raster `Dataset`. As a last thing, we will learn how to write the data from `xarray` into specific raster file formats. Similarly as with vector data, raster data can be stored in various formats. 
+<!-- #endregion -->
+
+<!-- #region editable=true slideshow={"slide_type": ""} -->
+### Raster file formats
+
+Table 7.1 introduces some of the popular file formats used for storing raster data. The `GeoTIFF` format is one of the most widely used formats to store individual raster layers (i.e. a single `DataArray`) to disk which is widely used format in various GIS software. One flavor of `GeoTIFF` that is useful to know is a `Cloud Optimized GeoTIFF` (`COG`) which is a regular `GeoTIFF` file with an internal organization that enables more efficient workflows on the cloud (useful with large datasets). With `COG` files you can stream just the portion of data that is needed that can significantly reduce processing times and allow working with a single large `GeoTIFF` file instead of multiple tiles.
+<!-- #endregion -->
+
+<!-- #region editable=true slideshow={"slide_type": ""} tags=["remove_book_cell"] -->
+: _**Table 7.1**. Common raster file formats._
+
+| Name    | Extension   | Description                                                                                  |
+|:--------|:-----------:|:---------------------------------------------------------------------------------------------|
+| GeoTIFF | .tif, .tiff | Widely used to store individual raster layers to disk (i.e. a single `xarray.DataArray`).    |
+| netCDF  | .nc         | Widely used to store a whole `xarray.Dataset` that can contain multiple variables.           |
+| Zarr    | .zarr       | Newer format for storing `xarray.Dataset`. Supports storing large data in compressed chunks. |
+<!-- #endregion -->
+
+<!-- #raw editable=true slideshow={"slide_type": ""} tags=["hide-cell"] raw_mimetype="" -->
+\setlength\LTleft{0pt}
+\setlength\LTright{0pt}
+\begin{longtable}[]{@{}lcl@{}}
+\caption{\emph{\textbf{Table 7.1}. Common raster file formats.}}
+\tabularnewline
+\toprule\noalign{}
+Name & Extension & Description \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+Name & Extension & Description \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+GeoTIFF & .tif, .tiff & Widely used to store individual raster layers to disk (i.e.~a single \\
+& & \texttt{xarray.DataArray}). \\
+netCDF & .nc & Widely used to store a whole \texttt{xarray.Dataset} that can contain multiple \\
+& & variables. \\
+Zarr & .zarr & Newer format for storing \texttt{xarray.Dataset}. Supports storing large data \\
+& & in compressed chunks. \\
+\end{longtable}
+<!-- #endraw -->
+
+<!-- #region editable=true slideshow={"slide_type": ""} -->
+The `netCDF` format is also widely used in geosciences for storing multiple variables into a single file which is based on a general-purpose file format and a data model called `HDF5` (`.h5`). The `Zarr` file format is a newer format designed for cloud-native, chunked, and compressed array storage. The `Zarr` file format and the associated `zarr` library also allows you to write multiple variables (i.e. a whole `xarray.Dataset`) into a single `.zarr` directory/file in a similar manner as with `netCDF`. In addition, `zarr` has the ability to store arrays in various ways, including in memory, in files, and in cloud-based object storage (such as Amazon S3 buckets or Google Cloud Storage) that are often used to store very large datasets. When using `.zarr` file format, you can take advantage of the nice capabilities of `Zarr`, including the ability to store and analyze datasets far too large fit onto disk, particularly in combination with `dask` library which provides capabilities for parallel and distributed computing. 
+<!-- #endregion -->
+
+<!-- #region editable=true slideshow={"slide_type": ""} -->
+### Raster compression methods
+
+When working with large raster datasets, managing storage space and improving performance are essential. Raster compression methods can help you to reduce the file size of raster data which can often take up significant disk space. Compression can also speed up your analysis process because compressed files are faster to read, download and transfer (online). Thus, when working with `rioxarray` and writing data to different file formats, it is useful to compress the data. Thus, knowing which compression method to choose when saving raster data in formats like `GeoTIFF` is essential. 
+
+The data compression can be *{term}`lossless <lossless compression>`* or *{term}`lossy <lossy compression>`*. Lossless compression means that the file size is reduced without losing or changing any data, while lossy compression achieves higher compression rate (i.e. smaller file size) with some loss in data quality / precision. Table 7.2 introduces some of the most widely used compression methods that can be used when writing raster data. Choosing the "right" compression method depends on different factors. If you need lossless compression, `LZW` or `ZSTD` is a good balance between size and speed. If storage space is a top priority, you can consider using `JPEG` or `JPEG2000` but it is good to be aware of the potential data loss. For cloud-based workflows, `ZSTD` or `DEFLATE` are good choices for compression.
+<!-- #endregion -->
+
+<!-- #region editable=true slideshow={"slide_type": ""} tags=["remove_book_cell"] -->
+: _**Table 7.2**. Common raster compression methods._
+
+| Name      | Type        | Compress Ratio | Encoding / Decoding Speed | Common Raster Formats   |
+|:----------|:-----------:|:--------------:|:-------------------------:|:------------------------|
+|`LZW`      | Lossless    | Moderate       | Medium / Fast             | GeoTIFF, PNG            |
+|`DEFLATE`  | Lossless    | High           | Slow / Medium             | GeoTIFF, PNG            |
+|`ZSTD`     | Lossless    | High           | Fast / Fast               | Cloud-optimized GeoTIFF |
+|`JPEG`     | Lossy       | Very High      | Fast / Fast               | JPEG, GeoTIFF (YCbCr)   |
+|`JPEG2000` | Both avail. | Very High      | Slow / Medium             | JP2, GeoTIFF (JP2)      |
+<!-- #endregion -->
+
+<!-- #raw editable=true slideshow={"slide_type": ""} raw_mimetype="" tags=["hide-cell"] -->
+\setlength\LTleft{0pt}
+\setlength\LTright{0pt}
+\begin{longtable}[]{@{}lcccl@{}}
+\caption{\emph{\textbf{Table 7.2}. Common raster compression
+methods.}}\tabularnewline
+\toprule\noalign{}
+Name & Type & Compress Ratio & Encoding / Decoding Speed & Common Raster Formats\\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+Name & Type & Compress Ratio & Encoding / Decoding Speed & Common Raster Formats\\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\texttt{LZW} & Lossless & Moderate & Medium/Fast & GeoTIFF, PNG\\
+\texttt{DEFLATE} & Lossless & High & Slow / Medium & GeoTIFF, PNG\\
+\texttt{ZSTD} & Lossless & High & Fast / Fast & Cloud-optimized GeoTIFF\\
+\texttt{JPEG} & Lossy & Very High & Fast / Fast & JPEG, GeoTIFF (YCbCr)\\
+\texttt{JPEG2000} & Both avail. & Very High & Slow / Medium & JP2, GeoTIFF (JP2)\\
+\end{longtable}
+<!-- #endraw -->
+
+<!-- #region editable=true slideshow={"slide_type": ""} -->
+### GeoTIFF
+
+In the following, we will see how to write data into all of these data formats. When writing data into `GeoTIFF` format you can use the `.rio.to_raster()` method that comes with the `rioxarray` library. As mentioned earlier, `GeoTiff` only allows you to write a single `DataArray` at a time into a file:
+<!-- #endregion -->
+
+```python
+data["elevation"].rio.to_raster("data/temp/elevation.tif")
+data["relative_height"].rio.to_raster("data/temp/relative_height.tif")
+```
+
+As we saw at the beginnig of this section, to read a `GeoTIFF` file, you can use the `xr.open_dataset()` with engine `"rasterio"`:
+
+```python
+xr.open_dataset("data/temp/relative_height.tif", engine="rasterio", masked=True)
+```
+
+### Cloud Optimized GeoTIFF (COG)
+
+Writing a cloud optimized `GeoTIFF` (`COG`) can be done in a similar manner as writing a regular `GeoTIFF` file, but here we define that the `driver` for our output dataset is `"COG"`. Here, we also compress our data using the `LZW` compression method that reduces the file size of the output:
+
+```python
+data["elevation"].rio.to_raster(
+    "data/temp/elevation_cog.tif", driver="COG", compress="LZW"
+)
+```
+
+To read the `COG` file, we can use the `xr.open_dataset()` method in a similar way as before:
+
+```python
+xr.open_dataset("data/temp/elevation_cog.tif", engine="rasterio", masked=True)
+```
+
+### netCDF
+
+With `netCDF` format you can write (and read) a whole `xarray.Dataset` at a time which can be very convenient especially when you have multiple relevant variables that you want to store. When saving a `Dataset` to `netCDF`, you can use the `.to_netcdf()` method of `xarray`:
+
+```python
+netcdf_fp = "data/temp/kilimanjaro_dataset.nc"
+data.to_netcdf(netcdf_fp)
+```
+
+To read the `netCDF` file, you can use `xarray.open_dataset()` method that picks the correct file format based on the file extension. Here, it is important to use the parameter `decode_coords="all"` to ensure that the metadata (CRS information) is also read appropriately:
+
+```python
+ds = xr.open_dataset(netcdf_fp, decode_coords="all")
+ds
+```
+
+### Zarr
+
+To write the data into `Zarr` file format, you can use the `.to_zarr()` method. To be able to write to `Zarr` format you need to have `zarr` Python library. Here, we write our dataset using writing `mode="w"` which will overwrite an existing `Zarr` file if it exist:
+
+```python
+zarr_fp = "data/temp/kilimanjaro_dataset.zarr"
+data.to_zarr(zarr_fp, mode="w")
+```
+
+To read the `Zarr` file, you can again use the `xr.open_dataset()`. Here, we specify also the `engine` to tell the `xarray` that we want specifically to read `Zarr` file format and similarly as with `netCDF` we use `decode_coords="all" to ensure that the coordinate reference system metadata is correctly read from the data:
+
+```python
+ds = xr.open_dataset(zarr_fp, engine="zarr", decode_coords="all")
+ds
+```
+
+As mentioned earlier, `Zarr` is a useful format because it allows to write a given `Dataset` into disk by dividing the data into chunks of specific size. This can be especially useful when you have a very large `Dataset` because it allows reading and writing data in parallel which makes the process faster. To write a `Dataset` into `Zarr` using chunks, we can specify specific `encoding` settings that tells how the data should be chunked. We can do this as follows:
+
+```python
+zarr_fp = "data/temp/kilimanjaro_dataset_chunked.zarr"
+
+# Provide the size of a single chunk per variable
+encoding = {
+    "elevation": {"chunks": (256, 256)},
+    "relative_height": {"chunks": (256, 256)},
+}
+
+data.to_zarr(zarr_fp, mode="w", encoding=encoding)
+```
+
+With the `encoding` we basically told that `.to_zarr()` method that the values in `elevation` and `relative_height` variables should be sliced into chunks where each chunk has 256 x 256 items of data (i.e. raster cells).
+
+To read the chunked `Zarr` file, we can use the `xarray.open_dataset()` function in a similar manner as before:
+
+```python
+ds = xr.open_dataset(zarr_fp, engine="zarr", decode_coords="all")
+ds
+```
+
+If it happens that during the reading the CRS information (`spatial_ref`) is not properly read as part of the `Coordinates` information alongside with `x` and `y` coordinates (as in our case here), you can fix this as follows:
+
+```python
+ds.coords["spatial_ref"] = ds["spatial_ref"]
+ds
+```
+
+Now the CRS information in the `spatial_ref` variable is in correct place so that the `rioxarray` functionalities work as should. We can now for example correctly access the `.crs` attribute via the `.rio` accessor:
+
+```python
+ds.rio.crs
+```
+
+`Zarr` file format supports many other useful functionalities to e.g. compress the data and store the data in cloud object storage. In case you are interested in these functionalities, we recommend you to read further details from the [`xarray` documentation](https://docs.xarray.dev/en/stable/user-guide/io.html#zarr) [^zarr-xarray] as well as from the [`zarr` documentation](https://zarr.readthedocs.io/)[^zarr]. 
+
+
+## Footnotes
+
+[^zarr-xarray]: <https://docs.xarray.dev/en/stable/user-guide/io.html#zarr>
+[^zarr]: <https://zarr.readthedocs.io/>
