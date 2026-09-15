@@ -8,6 +8,7 @@ code-fold: false
 execute:
   enabled: true
   cache: true
+  echo: true
 diagram:
   cache: true
   cache-dir: ./cache
@@ -94,8 +95,6 @@ It is accompanied by spatial information that connects the data to a particular 
 :::{.callout-tip icon=false}
 ## Sensors
 
-Different kind of sensors are used.
-
 Many sensors (especially satellite sensors) measure the electromagnetic radiation at specific ranges (i.e. bands) which is why they are called `Multispectral sensors` or `Hyperspectral sensors`. Most typically the raster data produced by these sensors can vary based on their:
 
 - *`spatial resolution`*, i.e. the size of a single pixel
@@ -121,24 +120,20 @@ Many sensors (especially satellite sensors) measure the electromagnetic radiatio
 
 :::{.callout-tip icon=false}
 ## Continuous rasters
-Some examples of continuous rasters include:
+
   - Precipitation maps.
   - Maps of tree height derived from LiDAR data.
   - Elevation values for a region.
-A map of elevation for Harvard Forest derived from the NEON AOP LiDAR sensor is below.
-Elevation is represented as a continuous numeric variable in this map.
-The legend shows the continuous range of values in the data from around 300 to 420 meters.
 
 :::
 
-## Rasters
-![](../img/raster/continuous-elevation-HARV-plot-01.png)
+![Harvard Forest data from the NEON AOP LiDAR sensor](../img/raster/continuous-elevation-HARV-plot-01.png)
 
 ## Rasters
 :::{.callout-tip icon=false}
 ## Categorical rasters
 
-Some rasters contain categorical data where each pixel represents a discrete class such as a landcover type (e.g., “forest” or “grassland”) rather than a continuous value such as elevation or temperature. Some examples of classified maps include:
+Some rasters contain categorical data where each pixel represents a discrete class such as a landcover type (e.g., “forest” or “grassland”) rather than a continuous value such as elevation or temperature. Some examples of categorical maps include:
 
 1. Landcover / land-use maps.
 2. Tree height maps classified as short, medium, and tall trees.
@@ -147,22 +142,24 @@ Some rasters contain categorical data where each pixel represents a discrete cla
 :::
 
 ## Rasters
-![](../img/USA_landcover_classification.png)
+![](../img/raster/USA_landcover_classification.png)
 
-## Rasters
+## Rasters {.scrollable}
 
 :::{.callout-tip icon=false}
 ## Attributes: Extent
 
-The spatial extent is the geographic area that the raster data covers. The spatial extent of an object represents the geographic edge or location that is the furthest north, south, east and west. In other words, extent represents the overall geographic coverage of the spatial object.
+The spatial extent is the geographic area that the raster data covers. It represents the geographic edge or location that is the furthest north, south, east and west. 
 
-![](../img/spatial_extent.png)
+![](../img/raster/spatial_extent.png)
 :::
+
+## Rasters {.scrollable}
 
 :::{.callout-tip icon=false}
 ## Attributes: Resolution
 A resolution of a raster represents the area on the ground that each pixel of the raster covers. The image below illustrates the effect of changes in resolution.
-![](../img/raster_resolution.png)
+![](../img/raster/raster_resolution.png)
 
 :::
 
@@ -170,9 +167,9 @@ A resolution of a raster represents the area on the ground that each pixel of th
 :::{.callout-tip icon=false}
 ## Multi-band raster data
 
-A raster can contain one or more bands. One type of multi-band raster dataset that is familiar to many of us is a color image. A basic color image consists of three bands: red, green, and blue. Each band represents light reflected from the red, green or blue portions of the electromagnetic spectrum. The pixel brightness for each band, when composited creates the colors that we see in an image.
+A raster can contain one or more bands. One type of multi-band raster dataset is a color image. A basic color image consists of three bands: red, green, and blue. Each band represents light reflected from the red, green or blue portions of the electromagnetic spectrum.
 :::
-![](../img/multi_band_raster.png)
+![](../img/raster/multi_band_raster.png)
 
 ## Rasters
 :::{.callout-tip icon=false}
@@ -183,13 +180,15 @@ Multi-band raster data might also contain:
 2. **Multi or hyperspectral imagery:** image rasters that have 4 or more (multi-spectral) or more than 10-15 (hyperspectral) bands.
 :::
 
+# Working with raster data in Python
+
 ## Rasters
 :::{.callout-tip icon=false}
 ## Working with raster data in Python
 
 There are a number of libraries that are widely used when working with raster data in Python:
 
-- `numpy` is a core Python library for numerical computing that is used for representing and working with multidimensional arrays. `numpy` has a big influence on how the other raster libraries function and can be used to generate multidimensional arrays from scratch.
+- `numpy` has a big influence on how the other raster libraries function and can be used to generate multidimensional arrays from scratch.
 - `xarray` provides a user-friendly and intuitive way to work with multidimensional raster data with coordinates and attributes (somewhat similar to `geopandas` that is used for vector data processing),
 - `rasterio` core library for working with GIS raster data,
 - `rioxarray` provides methods to conduct GIS-related operations with raster data (e.g. reading/writing, reprojecting, clipping, resampling). It is an extension of `rasterio` library that brings the same functionalities on top of `xarray` library,
@@ -208,14 +207,22 @@ import matplotlib.pyplot as plt
 raster_layer = np.zeros((10, 10))
 raster_layer
 ```
+:::
 
+## Rasters
+:::{.callout-tip icon=false}
+## Creating a simple raster layer using `numpy`
 Add a "mountain" in the middle:
 ```{python}
 raster_layer[4:7, 4:7] = 5
 raster_layer[5, 5] = 10
 raster_layer
 ```
+:::
 
+## Rasters {.scrollable/
+:::{.callout-tip icon=false}
+## Creating a simple raster layer using `numpy`
 Display:
 
 ```{python}
@@ -247,11 +254,10 @@ One of the greatest benefits of `xarray` is that you can easily store, combine a
 :::{.callout-tip icon=false}
 ## Key xarray datastructures: Dataset and DataArray 
 
-- `DataArray` is a labeled N-dimensional array that is similar to `pandas.Series` but works with raster data (stored as `numpy` arrays)
-- `Dataset` is a multi-dimensional in-memory array database that contains multiple `DataArray` objects. In addition to the variables containing the observations of a given phenomena, you also have the `x` and `y` coordinates of the observations stored in separate layers, as well as metadata providing relevant information about your data, such as Coordinate Reference System and/or time. 
+- `DataArray` is a labeled N-dimensional array, like `pandas.Series` but for raster data 
+- `Dataset` is a multi-dimensional in-memory array database that contains multiple `DataArray` objects. Contains observed variables, `x` and `y` coordinates of the observations stored in separate layers, as well as metadata (CRS/time/etc.). 
 :::
 
-## Working with xarray/rioxarray
 ![](../img/raster/xarray-dataset-diagram.png)
 
 ## Working with xarray/rioxarray
@@ -303,10 +309,10 @@ data
 - `Data variables` contains the actual data values of the cells (e.g. elevations as in our data)
 :::
 
-## Working with xarray/rioxarray
+## Working with xarray/rioxarray {.scrollable}
 :::{.callout-warning icon=false}
 ## Drop unneeded stuff
-Because our `Dataset` only consists of a single `band` (i.e. the elevation values), it might make sense to reduce the dimensions of our dataset by dropping the `band` attribute because it is not really providing any useful information for us. We can subset our data and remove a specific dimension from our data by using the `.squeeze()` method. In the following, we drop the `"band"` dimension:
+Because our `Dataset` only consists of a single `band` (i.e. the elevation values), we can drop the `"band"` dimension:
 
 ```{python}
 data = data.squeeze("band", drop=True)
@@ -321,7 +327,7 @@ xr.open_dataset(url, engine="rasterio", masked=True, band_as_variable=True)
 ```
 :::
 
-## Working with xarray/rioxarray
+## Working with xarray/rioxarray {.scrollable}
 :::{.callout-tip icon=false}
 ## Renaming data variables
 
@@ -333,6 +339,7 @@ data
 ```
 :::
 
+## Working with xarray/rioxarray {.scrollable}
 :::{.callout-tip icon=false}
 ## Plotting a data variable
 
@@ -349,7 +356,7 @@ plt.title("Elevation in meters");
 ```
 :::
 
-## Working with xarray/rioxarray
+## Working with xarray/rioxarray {.scrollable}
 :::{.callout-tip icon=false}
 ## Contour maps
 
@@ -361,10 +368,10 @@ plt.title("Contour map based on the elevation");
 ```
 :::
 
-## Working with xarray/rioxarray
+## Working with xarray/rioxarray {.scrollable}
 :::{.callout-tip icon=false}
 ## Surface maps
-A 3D surface map is a three-dimensional representation of a terrain or surface, created by plotting elevation or depth data as a continuous surface. Creating a 3D surface map can be done by calling the `.plot.surface()` method in `xarray`:
+A 3D surface map is a 3D representation of a terrain or surface, created by plotting elevation or depth data as a continuous surface. These can be done by:
 
 ```{python}
 surface = data["elevation"].plot.surface(cmap="Greens")
@@ -372,7 +379,7 @@ plt.title("A surface map representing the elevation in 3D");
 ```
 :::
 
-## Working with xarray/rioxarray
+## Working with xarray/rioxarray {.scrollable}
 :::{.callout-tip icon=false}
 ## Extracting basic raster dataset properties
 
@@ -420,7 +427,7 @@ We can easily access the coordinate reference system (CRS) information of our ra
 data.rio.crs
 ```
 
-*`Transform`: affine transformation matrix that maps pixel coordinates to geographic coordinates. It defines how the raster data is aligned in space, including information on scaling, rotation, and translation relative to a coordinate reference system. You can access the `transform` attribute as follows:
+`Transform`: affine transformation matrix that maps pixel coordinates to geographic coordinates. It defines how the raster data is aligned in space, including information on scaling, rotation, and translation relative to a coordinate reference system. You can access the `transform` attribute as follows:
 
 ```{python}
 data.rio.transform()
@@ -462,6 +469,7 @@ In our raster file, this metadata has not been stored as part of the file, and t
 ```python
 data["elevation"].rio.attrs
 ```
+will give `AttributeError: 'RasterArray' object has no attribute 'attrs'`.
 :::
 
 ## Working with xarray/rioxarray
@@ -511,7 +519,7 @@ data16["elevation"] = data16["elevation"].astype("uint16")
 
 We can check the memory consumption of our updated `DataArray` as follows:
 
-```{ python }
+```{python}
 # Memory consumption of the updated DataArray
 footprint_MB = data16["elevation"].nbytes / bytes_to_MB
 print(f"DaraArray memory consumption: {footprint_MB:.2f} MB.")
@@ -545,7 +553,7 @@ print(
 :::
 
 
-## Working with xarray/rioxarray
+## Working with xarray/rioxarray {.scrollable}
 :::{.callout-tip icon=false}
 ## Saving too much
 In our data the value range is between 568-2943. Thus, we need to use at least 16-bits to store these values. However, nothing stops you from changing the data type into 8-bit integers which will significantly alter our data:
@@ -562,7 +570,7 @@ plt.title("Data presented with 8-bit integers");
 ```
 :::
 
-## Working with xarray/rioxarray
+## Working with xarray/rioxarray {.scrollable}
 :::{.callout-tip icon=false}
 ## Creating a new data variable
 
@@ -624,7 +632,7 @@ list(data.data_vars)
 |`JPEG2000` | Both avail. | Very High      | Slow / Medium             | JP2, GeoTIFF (JP2)      |
 :::
 
-## Working with xarray/rioxarray
+## Working with xarray/rioxarray {.scrollable}
 :::{.callout-tip icon=false}
 ## GeoTIFF
 When writing data into `GeoTIFF` format you can use the `.rio.to_raster()` method that comes with the `rioxarray` library. As mentioned earlier, `GeoTiff` only allows you to write a single `DataArray` at a time into a file:
@@ -641,7 +649,7 @@ xr.open_dataset("../_data/temp/relative_height.tif", engine="rasterio", masked=T
 ```
 :::
 
-## Working with xarray/rioxarray
+## Working with xarray/rioxarray {.scrollable}
 :::{.callout-tip icon=false}
 ## Cloud Optimized GeoTIFF (COG)
 
@@ -660,7 +668,7 @@ xr.open_dataset("../_data/temp/elevation_cog.tif", engine="rasterio", masked=Tru
 ```
 :::
 
-## Working with xarray/rioxarray
+## Working with xarray/rioxarray {.scrollable}
 :::{.callout-tip icon=false}
 ## netCDF
 
@@ -679,7 +687,7 @@ ds
 ```
 :::
 
-## Working with xarray/rioxarray
+## Working with xarray/rioxarray {.scrollable}
 :::{.callout-tip icon=false}
 ## Zarr
 
@@ -698,7 +706,7 @@ ds
 ```
 :::
 
-## Working with xarray/rioxarray
+## Working with xarray/rioxarray {.scrollable}
 :::{.callout-tip icon=false}
 ## Zarr chunking
 `Zarr` allows to write a given `Dataset` into disk by dividing the data into chunks of specific size. To write a `Dataset` into `Zarr` using chunks, we can specify specific `encoding` settings that tells how the data should be chunked:
@@ -723,7 +731,7 @@ ds
 ```
 :::
 
-## Working with xarray/rioxarray
+## Working with xarray/rioxarray {.scrollable}
 :::{.callout-tip icon=false}
 ## Zarr
 If it happens that during the reading the CRS information (`spatial_ref`) is not properly read as part of the `Coordinates` information alongside with `x` and `y` coordinates (as in our case here), you can fix this as follows:
@@ -740,6 +748,8 @@ ds.rio.crs
 ```
 :::
 
+# Common raster operations
+
 ## Common raster operations
 
 :::{.callout-tip icon=false}
@@ -753,13 +763,19 @@ ds.rio.crs
 - resampling the raster pixels into higher or lower spatial resolution (upscaling, downscaling). 
 :::
 
-## Common raster operations
+## Common raster operations {.scrollable}
 :::{.callout-tip icon=false}
 ## Selecting data
 
-Being able to select data based on indices or certain criteria (e.g. all values above specific threshold) is one of the most common operations that you need to do when working with any kind of data (raster, vector, as well as non-geographical data). When working with raster data, we can take advantage of `xarray`'s flexible indexing routines that combine the best features of `numpy` and `pandas` for data selection.
+We can select data based on indices or certain criteria (e.g. all values above specific threshold). 
 
-There are various ways how you can select data from `DataArray` and `Dataset`, but some of the most commonly used methods include `.isel()`, `.sel()` and `.where()` which we will introduce in the following. Let's start by reading the `elevation` dataset that we used earlier in Chapter 7.2:
+There are various ways how you can select data from `DataArray` and `Dataset`, but some of the most commonly used methods include:
+
+- `.isel()`
+- `.sel()`
+- `.where()`
+
+Let's start by reading the `elevation` dataset that we used earlier:
 
 ```{python}
 import xarray as xr
@@ -770,7 +786,11 @@ fp = "../_data/temp/kilimanjaro_dataset.nc"
 data = xr.open_dataset(fp, decode_coords="all")
 data
 ```
+:::
 
+## Common raster operations {.scrollable}
+:::{.callout-tip icon=false}
+## Selecting data
 Let's also plot the data to see how our values and coordinates (x and y) distribute over a map:
 
 ```{python}
@@ -779,18 +799,18 @@ plt.title("Elevation in meters");
 ```
 :::
 
-## Common raster operations
+## Common raster operations {.scrollable}
 :::{.callout-tip icon=false}
 ## Selecting data by index values
 
-The logic for selecting data from a `DataArray` values works quite similarly as we have learned earlier in this book using `pandas` (for `Series` and `DataFrame` objects), except that the returned object in `xarray` is always another `DataArray`. To select data based on specific index values, we can take advantage of the `.isel()` method that can be used similarly with `Dataset` and `DataArray` objects. For instance, we might be interested to select a cell at index `[0, 0]` in the array which corresponds to the cell that is located at the very top-left corner of the raster. To do this, we specify that the index value for both `x` and `y` dimension is `0` when calling the `.isel()` method:
+To select data based on specific index values, we can take advantage of the `.isel()` method:
 
 ```{python}
 selected_cell = data.isel(x=0, y=0)
 selected_cell
 ```
 
-As we can see, the output is always returned as an `xarray` object, which in our case is a `Dataset`. To access the `elevation` or `relative_height` value at this given position, we can use the `.item()` which will return the value as a regular number (as learned in Chapter 7.2):
+To access the `elevation` or `relative_height` value at this given position, we can use the `.item()` which will return the value as a regular number (as learned in Chapter 7.2):
 
 ```{python}
 selected_cell["elevation"].item()
@@ -799,8 +819,12 @@ selected_cell["elevation"].item()
 ```{python}
 selected_cell["relative_height"].item()
 ```
+:::
 
-Quite often when working with raster data, you are interested to select a range of values from a given raster (called slicing). To slice the data based on index ranges, we can use the same `.isel()` method and provide the information about the index range using the Python's built-in `slice()` function that can be used to specify a range of indices to be included in the selection by specifying `start` and `end` index positions. In the following, we will select the first 1000 cells in the x and y dimensions: 
+## Common raster operations {.scrollable}
+:::{.callout-tip icon=false}
+## Selecting data by index values
+If we want to select a range of values:
 
 ```{python}
 selection = data.isel(x=slice(0, 1000), y=slice(0, 1000))
@@ -816,11 +840,13 @@ As we can see, now the shape of our output `Dataset` is 1000x1000 cells and the 
 
 :::
 
-## Common raster operations
+## Common raster operations {.scrollable}
 :::{.callout-tip icon=false}
 ## Selecting data based on coordinates
 
-While selecting data based on index positions might be useful in certain situations, quite often you want to select data based on coordinates. To do this, we can take advantage of the coordinate labels using `.sel()` method, which allows for more intuitive selection by providing the actual coordinates for you area of interest. Next, we will do the selection for an area that covers the following area: 
+We often want to select data based on coordinates, we use `.sel()` method.
+
+Next, we will do the selection for an area that covers the following area: 
 - x-coordinates: `36.4` - `36.6`
 - y-coordinates: `-2.4` - `-2.6`
 
@@ -835,12 +861,12 @@ plt.title("Elevation in meters for the selected area of interest");
 :::
 
 
-## Common raster operations
+## Common raster operations {.scrollable}
 
 :::{.callout-tip icon=false}
 ## Selecting data based on logical conditions
 
-A third way to select data from a given raster is based on a specific criteria. To select data based on specific conditions, we can use the `.where()` method which is a handy tool to make conditional selections. For instance, we might be interested to select only such pixels from the raster where the elevation is above 2000 meters:
+A third way to select data from a given raster is based on a specific criteria. For this we can use the `.where()` method. For instance, we might be interested to select only such pixels from the raster where the elevation is above 2000 meters:
 
 ```{python}
 moderate_altitudes = data.where(data["elevation"] > 2000)
@@ -851,6 +877,8 @@ moderate_altitudes["elevation"].plot()
 plt.title("Moderate altitude areas in the region");
 ```
 :::
+
+## Common raster operations {.scrollable}
 
 :::{.callout-tip icon=false}
 ## Selecting data based on logical conditions
@@ -868,16 +896,14 @@ plt.title("Low altitude areas in the region");
 
 :::
 
-## Common raster operations
+## Common raster operations {.scrollable}
 
 :::{.callout-tip icon=false}
 ## Clipping raster
 
-In the previous section we learned how to select data based on given criteria or by specifying an area of interest based on coordinates. However, quite often you actually have another geographic dataset that should be used to crop or select the data for your analysis. Clipping is one of the common raster operations in which you clip a given raster `Dataset` by another layer. This process allows you to crop the data in a way that only the cells that are e.g. within a given Polygon are selected for further analysis. In the following, we will learn how to do this by using the `.rio.clip()` method that comes with the `rioxarray` library. 
+Clipping is one of the common raster operations in which you clip a given raster `Dataset` by another layer. This process allows you to crop the data in a way that only the cells that are e.g. within a given Polygon are selected for further analysis. 
 
-<!-- #region editable=true slideshow={"slide_type": ""} -->
-To be able to clip this `xarray.Dataset`, we first need to create a `geopandas.GeoDataFrame` that contains the geometry that we want to use as our clipping features. In our case, we want to create a simple bounding box that defines the area which we want to keep from the raster. To create the `GeoDataFrame`, we can specify the corner coordinates of our bounding box and utilize the `box` function of `shapely` library which can conveniently create us the geometry (as introduced in Chapter 6.1):
-<!-- #endregion -->
+To be able to clip this `xarray.Dataset`, we first need to create a `geopandas.GeoDataFrame` that contains the geometry that we want to use as our clipping features:
 
 ```{python}
 import geopandas as gpd
@@ -898,13 +924,13 @@ clipping_gdf.explore()
 ```
 :::
 
-## Common raster operations
+## Common raster operations {.scrollable}
 
 :::{.callout-tip icon=false}
 ## Clipping
-Now after we have created the `GeoDataFrame` we can use it to clip the `xarray.Dataset`. To do this, we use the `.rio.clip()` method which wants as input the `geometries` that will be used for clipping the raster data. We can pass the `gpd.GeoSeries` as an input for this (i.e. the `geometry` column of our `GeoDataFrame`) and we also specify the `crs` to be the same as in out input raster data. It is important that the coordinate reference system of both layers are the same whenever doing GIS operations between multiple layers. Thus, we use a simple `assert` to check the match before doing the clipping:
+Now after we have created the `GeoDataFrame` we can use it to clip the `xarray.Dataset`:
 
-```{python} editable=true slideshow={"slide_type": ""}
+```{python}
 # Check that the CRS matches between layers (only continues if True)
 assert clipping_gdf.crs == data.elevation.rio.crs
 
@@ -912,7 +938,7 @@ assert clipping_gdf.crs == data.elevation.rio.crs
 kitumbene = data.rio.clip(geometries=clipping_gdf.geometry, crs=data.elevation.rio.crs)
 ```
 
-Perfect! Now we have succesfully clipped the raster with our bounding box. Let's make a map out of our results to see how our data looks like:
+Let's make a map out of our results to see how our data looks like:
 
 ```{python}
 kitumbene["elevation"].plot()
@@ -920,11 +946,11 @@ plt.title("Elevations around Mt Kitumbene");
 ```
 :::
 
-## Common raster operations
+## Common raster operations {.scrollable}
 
 :::{.callout-tip icon=false}
 ## Clipping
-After clipping, it is possible to continue working with the clipped `Dataset` and e.g. find the mean elevation for this area around the Mt Kitumbene. Notice that the operations clipped all the variables in our `Dataset` simultaneously. We can extract basic statistics from `elevation` and inspect the relative height in this area as follows:
+Notice that the operations clipped all the variables in our `Dataset` simultaneously. We can extract basic statistics from `elevation` and inspect the relative height in this area as follows:
 
 ```{python}
 # Mean elevation
@@ -942,15 +968,14 @@ kitumbene["relative_height"].max().item()
 We can see that the mean elevation in this area is approximately 1470 meters while the maximum relative height is ~2100 meters. We needed to recalculate the relative height because the baseline minimum elevation in the landscape changed significantly after the clipping operation.
 :::
 
-## Common raster operations
+## Common raster operations {.scrollable}
 
 :::{.callout-tip icon=false}
 ## Masking a raster
 
-Another commonly used approach when working with raster data is to mask the data based on certain criteria or using another geographical layer as a mask. One common reasons for doing this is for example to exclude water bodies (e.g. lakes or oceans) from the terrain when doing specific analyses. In the following, we will continue working with the same elevation data and mask out the lakes from our raster dataset that exist in our study area. 
+Another commonly used approach when working with raster data is to mask the data based on certain criteria or using another geographical layer as a mask. lakes or oceans) from the terrain when doing specific analyses. Let's mask out the lakes from our raster dataset that exist in our study area. 
 
 Let's start by downloading data from OpenStreetMap (OSM) about existing lakes in our study area. To do this, we first extract the bounds of our raster `Dataset` and then use `osmnx` library to fetch all OSM elements that have been tagged with key `"water"` and `"lake"` (read more about `osmnx` from Chapter 9.1):
-<!-- #endregion -->
 
 ```{python}
 import osmnx as ox
@@ -968,12 +993,13 @@ lakes.plot(ax=ax, facecolor="lightblue", edgecolor="red", alpha=0.4);
 ```
 :::
 
-## Common raster operations
+## Common raster operations {.scrollable}
 
 :::{.callout-tip icon=false}
 ## Masking a raster
-As we can see from the Figure 7.10, there is one large lake and multiple smaller ones in our study that we might not want to be taken into account when analyzing the terrain. Luckily, we can easily mask these areas out of our `Dataset` by using `rioxarray`. To do this, we can use the same `.rio.clip()` method which we used in the previous example. However, in this case, we do not want to totally remove those cells from our `Dataset` but only mask them out, so that the values on those areas are replaced with NaN values. By using parameters `drop=False` and `invert=True`, the cells that are intersecting with the lake geometries will be masked with NaNs: 
-<!-- #endregion -->
+we can use the same `.rio.clip()` method which we used in the previous example. However, in this case, we do not want to totally remove those cells from our `Dataset` but only mask them out, so that the values on those areas are replaced with NaN values.
+
+By using parameters `drop=False` and `invert=True`, the cells that are intersecting with the lake geometries will be masked with NaNs: 
 
 ```{python}
 masked_data = data.rio.clip(
@@ -990,27 +1016,24 @@ plt.title("Elevation data with a mask");
 ```
 :::
 
-## Common raster operations
+## Common raster operations {.scrollable}
 
 :::{.callout-tip icon=false}
 ## Masking a raster
 As a result, we now have a new `Dataset` where the elevation values overlapping with the lakes have been converted to NaNs. We can now compare whether e.g. the mean land surface elevation differs from the original one where the lakes were still included:
-<!-- #endregion -->
 
-```python editable=true slideshow={"slide_type": ""}
+```{python}
 print("Mean elevation with lakes:", data["elevation"].mean().round().item())
 print("Mean elevation without lakes:", masked_data["elevation"].mean().round().item())
 ```
-
-Based on this comparison, we can see that masking out the lakes increases the mean elevation in the area by approximately 30 meters. In a similar manner, you can mask any `rioxarray.Dataset` with given mask features that you want to remove from the analysis. 
 :::
 
-## Common raster operations
+## Common raster operations {.scrollable}
 :::{.callout-tip icon=false}
 ## Creating a raster mosaic by merging datasets
 
-One very common operation when working with raster data is to combine multiple individual raster layers (also called as tiles) into a single larger raster dataset, often called as raster mosaic. This can be done easily with the `merge_datasets()` -function in `rioxarray`.
-Here, we will create a mosaic based on DEM files (altogether 4 files) covering Kilimanjaro region in Tanzania. First we will read elevation data from an S3 bucket. Let's start by creating a list of URL paths to given `GeoTiff` files that we have
+<!-- One very common operation when working with raster data is to combine multiple individual raster layers (also called as tiles) into a single larger raster dataset, often called as raster mosaic. This can be done easily with the `merge_datasets()` -function in `rioxarray`. -->
+Here, we will create a mosaic based on DEM files (altogether 4 files) covering Kilimanjaro region in Tanzania. First we will read elevation data from an S3 bucket. Let's start by creating a list of URL paths to given `GeoTiff` files that we have:
 
 ```{python}
 import xarray as xr
