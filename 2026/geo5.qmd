@@ -271,15 +271,15 @@ Whichever rules we follow to define spatial relationships, spatial graphs encode
 
 Techniques that rely on these topologies span:
 
-- exploratory statistics of spatial autocorrelation (Chs. 6 and 7)
-- regionalization (Ch. 10)
-- spatial econometrics (Ch. 11)
+- exploratory statistics of spatial autocorrelation 
+- regionalization
+- spatial econometrics
 :::
 
 :::{.callout-warning icon=false}
 ## One structure, many names
 
-Ironically, several fields in computer science and mathematics came up with their own terminology for similar structures:
+Several fields in computer science and mathematics came up with their own terminology for similar structures:
 
 - spatial weights matrices
 - adjacency matrices
@@ -340,6 +340,7 @@ So machine learning has made it much easier to move between data structures.
 → The **"costs" of moving between data structures have been lowered**, reducing the importance of picking the "right" representation from the outset.
 :::
 
+## This categorization is breaking up {.scrollable}
 :::{.callout-note icon=false}
 ## 2. The search for a "fundamental" scale
 
@@ -352,507 +353,20 @@ Largely grown out of corporate data science, where transferring all geographic d
 WorldPop shifts population from an object-based representation (census units + counts) to a **continuous field** over which counts can be presented.
 :::
 
-:::{.callout-warning icon=false}
-## But should we?
-
-Scientific results stress the issues of a *one-size-fits-all* scale of analysis, and show that results often **do** change when the geographical scale of analysis changes.
-
-This may not matter in practical applications where **explanation is less important than prediction** — but it matters when it does.
-
-> Yes, we *can* grid this — but *should* we?
-> The answer will depend on your goal.
-:::
-
-## Chapter 1 — conclusion
-
-:::{.callout-important icon=false}
-## Take-aways
-
-- **Objects** → "vector" structures: points, lines, polygons
-- **Fields** → "raster" structures: *pixels* record values, *bands* record the kind of data
-- **Networks** → historically core to data *models*, poorly served by classic GIS data *structures* — this is changing
-
-By recognizing that the **conceptual data model can be distinct from the computational data structure**, we can move more easily between structures.
-
-Be attentive to what the entities you analyse *are*, and aware of when that is at odds with *how they are measured*.
-:::
-
-# Chapter 2 — Computational Tools
-
-## Computational tools
-
-:::{.callout-tip icon=false}
-## Overview
-
-The scientific and computational context in which the book is framed.
-
-1. Debates around **Open Science**, its origins, and how the computational community responds
-2. Three innovations: **computational notebooks**, **open-source packages**, **reproducible platforms**
-3. A practical introduction to the key infrastructure: Jupyter / JupyterLab, Python packages, and a containerized platform
-:::
-
-## Open science
-
-:::{.callout-tip icon=false}
-## The intuition
-
-> The scientific process, at its core, is meant to be **transparent and accessible to anyone**.
-
-Openness is not an "add-on" making cosmetic changes to the scientific approach — it is a key component of what makes our practices *Science*.
-
-Science "stands on the shoulders of giants" and progresses through dialectics. That can only work if the community can access and study both **results** *and* **the process that created them**.
-
-**Transparency, accessibility, inclusiveness** are critical for good science.
-:::
-
-:::{.callout-note icon=false}
-## A short history
-
-Openness was a core commitment of early scientists — one of the key differences from their contemporary *alchemists*, who worked on similar topics in a much more opaque way.
-
-Scientists recorded field or lab experiments in paper notebooks and diaries:
-
-- to remember what they had done and how they arrived at their results
-- to ensure other members of the community could **study, understand and replicate** their findings
-:::
-
-## Open science
-
-![Galileo's drawings of Jupiter and the Medicean stars — the power of diagrams inside scientific texts](../img/gds/medicean_stars.png){width="26%" fig-align="center"}
-
-## Open science
-
-:::{.callout-warning icon=false}
-## A sense of crisis
-
-There is a growing perception that this original scientific ethos has been lost. High-profile scandals have prompted some to call a state of **crisis** (Ioannidis, 2007).
-
-The "crisis" arises because the analyses scientists conduct are **difficult to repeat**. Sometimes it is even impossible to clearly understand the steps taken to arrive at results.
-:::
-
-:::{.callout-tip icon=false}
-## Why? Technology plays a role
-
-The original scientists relied on **analog** technologies, for which a parallel set of analog tools was developed to track procedures — paper notebooks where biologists drew species, or chemists detailed each step in the lab.
-
-Social science had it easier: quantitative data was scarce, analysis relied on math to minimize computation, or on small datasets documented in the publication itself.
-
-Today, much of the experimental workflow is dominated by **computers**. Writing every step down in a paper notebook **separates from the medium** in which those steps actually take place.
-:::
-
-## Reproducibility
-
-:::{.callout-important icon=false}
-## Definition
-
-> Scientific results need to be accompanied by enough information and detail so that they could be **repeated by a third party**.
-
-Since much of modern science is mediated through computers, reproducibility poses important challenges for the computational tools and practices the scientific community builds and relies on.
-:::
-
-## The reproducibility stack
-
-:::{.callout-tip icon=false}
-## Three layers that build on each other
-
-1. **Computational notebooks** — the top layer; capture the detail specific to a given project
-2. **Open source packages** — support the code written in notebooks
-3. **Reproducible platforms** — make it possible to transfer computations across hardware devices and architectures
-:::
-
-```{dot}
-//| echo: false
-//| fig-width: 6
-digraph stack {
-  rankdir=BT; node [shape=box, style="rounded,filled", fontname="Helvetica", fillcolor="#EEF2FF", color="#4B58A6"];
-  platform [label="Reproducible platforms\n(Docker, containers)"];
-  packages [label="Open source packages\n(geopandas, pysal, xarray)"];
-  notebooks [label="Computational notebooks\n(Jupyter)"];
-  platform -> packages -> notebooks [color="#4B58A6"];
-}
-```
-
-## Computational notebooks
-
-:::{.callout-tip icon=false}
-## The twenty-first century sibling of Galileo's notebooks
-
-Like their predecessors, they let researchers record their practices and steps as they go about their work — but they are **fully integrated in the technological paradigm** in which research takes place today.
-
-They are rapidly becoming the modern-day version of the traditional academic paper: the main vehicle on which computational knowledge is created, shared, and consumed.
-
-They are also spreading into industry practice, e.g. in reports.
-:::
-
-:::{.callout-important icon=false}
-## Three core features
-
-1. **Single file** — narrative text, computer code, *and* the output produced by that code. The entire workflow is recorded and documented in one place, without ancillary devices.
-
-2. **Interactive work** — modern computational work benefits from the ability to try, fail, tinker and iterate quickly. The same interface works on a laptop or a data centre, lowering the cognitive load of scaling up.
-
-3. **Interoperability** — notebooks are designed to be easily convertible into other formats (e.g. PDF), so they can be read, printed and annotated without technical software.
-:::
-
-## Open source packages
-
-:::{.callout-tip icon=false}
-## Why package at all?
-
-For notebooks to be an efficient medium, they must be **concise and streamlined**: include only what is unique to the application being recorded, and avoid duplication.
-
-Code used several times across notebooks should be taken out and put into a **centralized place** — a package.
-
-Packages are **modular, flexible, reusable** compilations of code. They do not capture specific applications but **abstractions of functionality**.
-
-> DRY — "don't repeat yourself"
-:::
-
-:::{.callout-note icon=false}
-## Why *open* source?
-
-Open source software provides its own code for the user to inspect. The user can then modify it to make new software, or redistribute it.
-
-Open source packages fulfil the same modularizing function as any package, but they also enable **transparency**: any user can access the exposed functionality *and* the underlying code that generates it.
-
-For code packages to serve Open Science and reproducibility, they need to be **open source**.
-:::
-
-## Reproducible platforms
-
-:::{.callout-tip icon=false}
-## Beyond code
-
-It is not enough to specify the code (notebooks) or even the shared functionality (packages) — the **computational environment** in which they are executed needs to be reproducible too.
-
-> It is no longer enough for an analysis to just work on the author's laptop; it needs to work on "any laptop".
-
-A reproducible platform specifies:
-
-- lower-level infrastructure: operating system, sometimes hardware (e.g. GPUs)
-- the **versions** of all packages required — changes to packages can change results or break workflows entirely
-:::
-
-:::{.callout-note icon=false}
-## Containers
-
-The notion of reproducible platforms is not as widespread or agreed upon as notebooks or packaging — its necessity has only become apparent recently.
-
-**Containers** are a lightweight version of a virtual machine: they encapsulate an entire environment (or platform) in a format easy to transfer and reproduce in a variety of computational contexts.
-
-The most popular container technology today is **Docker**.
-:::
-
-## Jupyter notebooks and JupyterLab
-
-:::{.callout-tip icon=false}
-## The format
-
-A Jupyter notebook is a plain text file with the `.ipynb` extension — easy to move around, sync and track over time.
-
-Internally it is a plain-text document containing **JSON** that records the state of the notebook, so it integrates well with modern web technologies.
-
-Other notebook systems: Apache **Zeppelin**, the Alan Turing Institute's **Wrattler**, **ObservableHQ** — all generally web-based.
-:::
-
-:::{.callout-warning icon=false}
-## Common traits (and a caveat)
-
-- They separate the system that **executes** analytical code from the system that **displays** the document
-- Many (Jupyter included) allow computational steps to be (re)run repeatedly **out of the order in which they appear**
-  - great for experimenting directly with the code
-  - **confusing** when code is executed out of order
-- Their web-focused nature allows direct integration of visualizations and tables within the document
-:::
-
-## Notebooks and cells
-
-:::{.callout-tip icon=false}
-## The atomic element
-
-A notebook is a **collection of cells** that, when executed in the correct order, describe and conduct an analysis.
-
-**Text cells** contain Markdown — a popular set of rules to create rich content (headers, lists, links) from plain text, designed so that the plain text version looks similar to the output.
-
-For more demanding tasks, text cells can integrate $\LaTeX$ notation: most narrative in Markdown, equations in $\LaTeX$.
-:::
-
-:::{.callout-tip icon=false}
-## Code cells
-
-Code cells are boxes that contain snippets of computer code. In this course all code is Python, but Jupyter is flexible enough for other languages via **kernels**.
-
-```{python}
-# This is a code cell
-```
-
-A code cell can be **run** to execute the code it contains. If the code produces an output (a table, a figure), it appears below the cell.
-
-Every run increments the cell's counter, which indicates the order in which cells were run.
-:::
-
-## Rich content {.scrollable}
-
-:::{.callout-tip icon=false}
-## `IPython.display`
-
-The `IPython` package provides methods to bring a series of media directly into the notebook environment:
-
-```{python}
-import IPython.display as display
-```
-
-This opens the door to a large number of elements from the web — for example a YouTube clip:
-
-```python
-display.YouTubeVideo("iinQDhsdE9s")
-```
-
-or an `iframe` embedding an interactive OpenStreetMap map.
-:::
-
-:::{.callout-tip icon=false}
-## Raw HTML
-
-```{python}
-display.HTML(
-    """<table>
-<tr><th>Header 1</th><th>Header 2</th></tr>
-<tr><td>row 1, cell 1</td><td>row 1, cell 2</td></tr>
-<tr><td>row 2, cell 1</td><td>row 2, cell 2</td></tr>
-</table>"""
-)
-```
-
-And local images with `display.Image(path, width=250)`.
-:::
-
-## JupyterLab
-
-:::{.callout-tip icon=false}
-## An interface to the Jupyter ecosystem
-
-JupyterLab brings together several data science tools into a consistent interface. It is a **web app following a client-server architecture** — the computation is *decoupled* from the interface.
-
-This decoupling lets each be hosted wherever is most convenient:
-
-- kernel and browser both on your laptop
-- **or** the kernel in a cloud data centre, with JupyterLab open on a tablet
-:::
-
-## JupyterLab
-
-![An annotated view of the JupyterLab interface](../img/gds/jupyter_lab.png){width="70%" fig-align="center"}
-
-:::{.callout-note icon=false}
-## Three main areas
-
-- **Menu bar** (red) — open, create and interact with files; modify the appearance and behaviour of JupyterLab
-- **Main pane** (blue) — the largest real estate. New notebook, console, terminal session, Markdown text file, contextual help. Open as many windows as needed and rearrange them by dragging and dropping
-- **Side pane** (green) — tabs that toggle auxiliary information: a file browser, the list of open kernels and terminals, the **command palette**, the list of open windows
-:::
-
-## Python {.scrollable}
-
-:::{.callout-tip icon=false}
-## Why Python?
-
-From satellites controlled by NASA to economics courses by Nobel Prize-winning professors, Python is a fundamental component of "consensus" data science.
-
-- good for **beginners** and **high-performance science** alike
-- a vibrant scientific community (`scipy`, PyData) in universities *and* companies
-- new methods and usability improvements released continuously
-- in the geographic domain: the scripting language of **both** ArcGIS (proprietary) and QGIS (open)
-
-Whether you are thinking of higher education or industry, Python is an important asset.
-:::
-
-:::{.callout-note icon=false}
-## Dynamically interpreted
-
-Python code is run **on the fly**, without needing to be compiled — in contrast to languages that require a non-interactive step converting the program into a binary.
-
-Write code → run it → fix issues directly → rerun, in a **rapid iteration cycle**.
-
-This makes Python a very productive tool for science: you can prototype code quickly.
-:::
-
-:::{.callout-tip icon=false}
-## Out of the box: a calculator
-
-```{python}
-3 + 5
-```
-
-```{python}
-2 / 3
-```
-
-```{python}
-(3 + 5) * 2 / 3
-```
-:::
-
-## Open source packages in Python {.scrollable}
-
-:::{.callout-tip icon=false}
-## Importing
-
-The strength of Python as a data analysis tool comes from **additional packages**. Loading a package is called *importing*:
-
-```python
-import geopandas
-```
-
-Shortening the name to save keystrokes is called **aliasing**:
-
-```python
-import geopandas as gpd
-```
-
-Importing only part of a library:
-
-```python
-from geopandas import read_file
-```
-:::
-
-:::{.callout-note icon=false}
-## A style choice
-
-The book deliberately does **not** alias, to make code more readable:
-
-`geopandas.read_file(...)`  instead of  `gpd.read_file(...)`
-
-Each new library is introduced within the text of the chapter where it is first required, so the code is threaded pedagogically with the narrative.
-
-Once introduced, later chapters import it at the top with all the other, already-introduced libraries.
-:::
-
-## Contextual help
-
-:::{.callout-tip icon=false}
-## Help from inside the session
-
-Check what a function does, or how to use it, without leaving Python.
-
-Add a question mark after the name:
-
-```python
-?read_file
-```
-
-JupyterLab also offers a **Contextual Help** box in the launcher: the help of every function where your cursor lands is displayed dynamically.
-
-To print help into the notebook itself:
-
-```python
-help(geopandas.read_file)
-```
-:::
-
-## Containerized platform
-
-:::{.callout-tip icon=false}
-## Why Docker?
-
-1. It is **widely adopted as an industry standard** — well supported, likely to be maintained
-2. It has become a standard in **data science** — foundational projects such as Jupyter publish official containers
-3. Because of 1 and 2, building on Docker integrates easily with **cloud services** or local clusters, widening delivery channels
-:::
-
-:::{.callout-note icon=false}
-## What *is* a container?
-
-A "box" that includes **everything** required to run a certain piece of software. It can be moved from machine to machine and the computations remain **exactly the same, bit by bit**.
-
-When we download a container we are *not* installing software from the usual channels for our platform — we download the software **in the form it was installed when the container was built**.
-
-> **Build once, run everywhere.**
-
-Similar to virtual machines, but far more **lightweight**: faster, less computational power and memory.
-:::
-
-## Running the book in a container {.scrollable}
-
-:::{.callout-tip icon=false}
-## Pull
-
-The book uses the `gds_env` project — a containerised platform for geographic data science, built on the official Jupyter Docker release, released twice a year.
-
-```shell
-docker pull darribas/gds_py:7.0
-```
-
-The image is relatively large (~4 GB), so you need the space and a good internet connection. You only need to do this **once**.
-:::
-
-:::{.callout-tip icon=false}
-## Run
-
-```shell
-docker run \
-        --rm \
-        -ti \
-        -p 8888:8888 \
-        -v ${PWD}:/home/jovyan/work \
-        darribas/gds_py:7.0
-```
-:::
-
-:::{.callout-note icon=false}
-## Unpacking the command
-
-- `docker run` — we want to *run* a new container
-- `--rm` — remove the container when you close it, so every run starts afresh with the exact same setup
-- `-ti` — run interactively, not in the background
-- `-p 8888:8888` — forward the *port* out to the host machine; **door 1**, lets the Jupyter server inside talk to your browser
-- `-v ${PWD}:/home/jovyan/work` — **door 2**; "mounts" the current working directory inside the container, at `work`
-- `darribas/gds_py:7.0` — which container to run
-:::
-
-## Running the book in a container
-
-![The authentication screen for Jupyter notebooks](../img/gds/jupyter_landing_page.png){width="60%" fig-align="center"}
-
-Copy the token printed in the terminal, paste it in the box, click **Log in**.
-
-## Chapter 2 — conclusion
-
-:::{.callout-important icon=false}
-## Take-aways
-
-**Reproducibility requires us to take our tools seriously.**
-
-- Since the onset of computational science, we have sought methods to keep the *code* that implements science tightly linked to the *writing* that explains it → **notebooks**
-- Keeping in the spirit of open science, we do better science if our software is **public and open**
-- To guarantee our code can in fact be executed, we must **document the environment** it runs in → **Docker**
-:::
-
-# Chapter 3 — Spatial Data
+# Spatial data in Python
 
 ## Spatial data
-
-:::{.callout-tip icon=false}
-## Overview
-
-This chapter grounds the previous two into a practical context: how data structures are implemented in Python, and how to interact with them.
-
-Note the emphasis: we discuss how Python represents data **once read**, rather than focusing on specific *file* formats.
-
-Libraries read *any* format into one of a few canonical data structures. Those structures are our **interface with the data** — file formats are secondary. This is the benefit of **abstraction**.
-:::
 
 :::{.callout-note icon=false}
 ## Plan
 
-**Part 1 — the three fundamental structures**
+**Three fundamental structures**
 
 - geographic tables
 - surfaces
 - spatial graphs
 
-**Part 2 — hybrids**, combinations that depart from the traditional model/structure matchings:
+**Hybrid data structures**:
 
 - surfaces as tables
 - tables as surfaces
@@ -887,13 +401,14 @@ A geographic table is like a tab in a spreadsheet where one column records **geo
 Systems using this structure add geography to a *relational database*: PostgreSQL (PostGIS), sqlite (spatialite). Data science languages have their own: R `sf`, Julia `GeoTables.jl`, Python `geopandas`.
 :::
 
+## Geographic tables
 :::{.callout-warning icon=false}
 ## Terminology matters
 
 Throughout the book, consistent with data science and machine learning:
 
-- a **feature** = one measured trait pertaining to an observation → a **column**
-- a **sample** = one set of measurements → a **row**
+- a **feature** = one measured trait pertaining to an observation: a **column**
+- a **sample** = one set of measurements: a **row**
 
 Historically, geographic information scientists used *"feature"* to mean an individual observation (an entity on a map), and *"attribute"* for its characteristics. Elsewhere a feature may be a "variable", a sample a "record".
 :::
@@ -1146,6 +661,7 @@ They differ from tables and surfaces in two ways:
 2. Because of that relational nature, the data is **unstructured**: one sample may have one link, another several
 :::
 
+## Spatial graphs
 :::{.callout-note icon=false}
 ## Nodes and edges
 
@@ -1158,7 +674,7 @@ In a *spatial* network:
 
 Networks require **both** nodes and edges to analyse their structure.
 
-There are several Python data structures for spatial graphs, each optimized for a different context. For statistical methods, the most common are **spatial weights matrices** — the subject of Chapter 4.
+There are several Python data structures for spatial graphs, each optimized for a different context. For statistical methods, the most common are **spatial weights matrices**.
 :::
 
 ## Spatial graphs {.scrollable}
@@ -1234,6 +750,7 @@ Each cell of the surface/cube becomes a **row** in a table.
 - conceptually: treating pixels as independent realizations of a process we *know* is continuous can be computationally inefficient and **statistically flawed**
 :::
 
+## Surfaces as tables
 :::{.callout-tip icon=false}
 ## The benefits
 
@@ -1358,6 +875,7 @@ dem.where(dem > 0).plot.imshow();
 ```
 :::
 
+## Pixels to polygons {.scrollable}
 :::{.callout-tip icon=false}
 ## The zones
 
@@ -1442,7 +960,7 @@ elevations2.head()
 :::
 
 :::{.callout-tip icon=false}
-## Surface → geography → choropleth
+## Surface -> geography -> choropleth
 
 ```{python}
 f, axs = plt.subplots(1, 3, figsize=(11, 4))
@@ -1476,6 +994,7 @@ Less controversial than the reverse. Useful when we care about the **overall dis
 This is the reverse of zonal statistics: instead of aggregating cells into objects, we aggregate **objects into cells**. Both reduce information to make the data more manageable.
 :::
 
+## Tables as surfaces {.scrollable}
 :::{.callout-warning icon=false}
 ## Overplotting
 
@@ -1529,8 +1048,9 @@ Sometimes we want to operate on each component independently: map streets, calcu
 These operations do **not** require topological information, are standard for geo-tables, and are irrelevant to the graph structure.
 :::
 
+## Networks as graphs *and* tables {.scrollable}
 :::{.callout-tip icon=false}
-## Graph → two geo-tables
+## Graph $->$ two geo-tables
 
 ```{python}
 gt_intersections, gt_lines = osmnx.graph_to_gdfs(graph)
@@ -1548,7 +1068,7 @@ new_graph = osmnx.graph_from_gdfs(gt_intersections, gt_lines)
 ```
 :::
 
-## Chapter 3 — conclusion
+## Spatial data
 
 :::{.callout-important icon=false}
 ## Take-aways
@@ -1562,7 +1082,7 @@ Bespoke representations might make your analysis more efficient — but they can
 > A solid understanding of `GeoDataFrame`, `DataArray` and `Graph` will support nearly any analysis you need to conduct.
 :::
 
-# Chapter 4 — Spatial Weights
+# Spatial Weights
 
 ## Spatial weights
 
@@ -1576,6 +1096,7 @@ They represent geographic relationships between the observational units in a spa
 By expressing geographical **proximity** or **connectedness**, spatial weights are the main mechanism through which spatial relationships are brought to bear in the analysis.
 :::
 
+## Spatial weights
 :::{.callout-note icon=false}
 ## From questions to topology
 
@@ -1718,6 +1239,7 @@ wr.neighbors
 This exploits the **sparse** nature of contiguity weights by recording only non-zero weights.
 :::
 
+## Contiguity weights {.scrollable}
 :::{.callout-note icon=false}
 ## Sparse vs. dense
 
@@ -1747,6 +1269,7 @@ Compared to representations of relationships *in time*:
 The first row is not first for a mathematical reason — it just happens to be first in the input. Any arbitrary rule would give a different-looking matrix, but the **graph would be isomorphic** and retain the mapping of relationships.
 :::
 
+## Contiguity weights
 :::{.callout-note icon=false}
 ## A familiar object
 
@@ -1754,9 +1277,9 @@ Spatial weights matrices may look familiar to those acquainted with social netwo
 
 A spatial weights matrix *is* a graph adjacency matrix where each observation is a node and the weight is the edge weight. Sometimes called the **dual graph** of the input geographic data.
 
-→ geographic data science can borrow from the rich graph theory literature
+- geographic data science can borrow from the rich graph theory literature
 
-→ but spatial data has distinguishing characteristics that require specialized procedures
+- but spatial data has distinguishing characteristics that require specialized procedures
 :::
 
 ## Contiguity weights {.scrollable}
@@ -1774,7 +1297,6 @@ wq.neighbors
 ```
 
 The neighbours of $0$ now include $4$ along with $1$ and $3$.
-:::
 
 ```{python}
 #| code-fold: true
@@ -1786,7 +1308,9 @@ ax.set_axis_off()
 ```
 
 Grid cells connected by a red line are neighbours under **Queen** contiguity.
+:::
 
+## Contiguity weights {.scrollable}
 :::{.callout-tip icon=false}
 ## The `weights` attribute
 
@@ -1866,7 +1390,6 @@ print(w_queen.pct_nonzero)
 ```
 
 A larger number of spatial units, and **much sparser** weights than the toy grid.
-:::
 
 ```{python}
 #| code-fold: true
@@ -1886,6 +1409,8 @@ axs[1].axis([-13040000, -13020000, 3850000, 3860000]);
 ```
 
 The Queen contiguity graph — whole region (left) and zoomed detail (right).
+
+:::
 
 ## Weights from real geographic tables {.scrollable}
 
@@ -1986,7 +1511,8 @@ Kernel weights are the most commonly used kind of distance weights. The weight b
 All `pysal` kernels share the property of **distance decay**, but decay at different rates.
 :::
 
-:::{.callout-warning icon=false}
+## Kernel weights
+:::{.callout-warning}
 ## A computational note
 
 Distance-based decay functions require **more resources** than contiguity or KNN weights.
@@ -1994,8 +1520,10 @@ Distance-based decay functions require **more resources** than contiguity or KNN
 Contiguity and KNN embed *simple assumptions* about how shapes relate in space; kernel functions **relax** several of those assumptions.
 
 > More flexibility, at the expense of computation.
+
 :::
 
+## Kernel weights
 :::{.callout-tip icon=false}
 ## Two options: function and bandwidth
 
@@ -2411,7 +1939,7 @@ Certain spatial analytical techniques **require a fully connected graph**.
 The **Union** graph offers the best of both: a single connected component, with very dense *intra-regional* linkages and thinner *inter-regional* ones.
 :::
 
-## Use case: boundary detection
+## Use case: boundary detection {.scrollable}
 
 :::{.callout-tip icon=false}
 ## Weights are useful in their own right
@@ -2655,7 +2183,6 @@ adjlist_income[outside]
 ```
 
 Two boundaries fall in the **top 1% most extreme** differences in neighbouring household incomes.
-:::
 
 ```{python}
 #| code-fold: true
@@ -2695,7 +2222,9 @@ ax[2].set_axis_off()
 
 Observation $473$ appears in **both** boundaries → likely an **outlier**, extremely unlike *all* of its neighbours.
 
-## Chapter 4 — conclusion
+:::
+
+## Spatial weights - conclusion
 
 :::{.callout-important icon=false}
 ## Take-aways
@@ -2705,35 +2234,6 @@ Spatial weights are central to how we **represent** spatial relationships in mat
 - at their core they are a **"geo-graph"** — a network defined by geographical relationships between observations
 - they form a kind of **spatial index**, recording which observations have a specific geographical relationship
 - they are **fundamental** to geographic data science: exploratory statistics, regionalization, spatial regression all build on them
-:::
-
-# Wrap-up
-
-## Part I — summary
-
-:::{.callout-important icon=false}
-## What we covered
-
-| Chapter | Question | Answer |
-|---|---|---|
-| 1 | How do we *think* about geography? | objects, fields, networks |
-| 2 | How do we *work* reproducibly? | notebooks, packages, containers |
-| 3 | How is geographic data *represented*? | `GeoDataFrame`, `DataArray`, `Graph` |
-| 4 | How are *relationships* stored? | spatial weights (`W`) |
-:::
-
-## Part I — summary
-
-:::{.callout-note icon=false}
-## The recurring theme
-
-**Data model ≠ data structure.**
-
-- the *conceptual* choice (what are the entities? how are they related?) can be made independently of the *computational* one
-- recent developments (machine learning, H3, WorldPop) are **breaking down** the traditional pairings
-- change-of-support is getting cheap — which makes it *easier*, not less important, to be clear about what you are modelling
-
-> Be attentive to what the entities you analyse **are**, and aware of when that is at odds with **how they are measured**.
 :::
 
 ## Exercises
