@@ -1,6 +1,5 @@
 ---
-title: "Big Data: GeoScience part 6"
-subtitle: "Geographic Data Science — Part II: Spatial Data Analysis"
+title: "GeoScience part 6"
 author: 
   - name: MSDE
     affiliation: Lviv University
@@ -136,9 +135,9 @@ Different classification schemes obtain from their definition of the **class bou
 ## Quantitative data classification {.scrollable}
 
 :::{.callout-tip icon=false}
-## Our running example: Mexican state incomes
+## Example: Mexican state incomes
 
-Per capita GDP for 32 Mexican states, 1940 (`PCGDP1940`):
+Per capita GDP for 32 Mexican states, 1940:
 
 ```{python}
 mx = geopandas.read_file(f"{GDS}/mexico/mexicojoin.shp")
@@ -155,6 +154,7 @@ seaborn.rugplot(
 The distribution is **positively skewed**, as is common in regional income studies: the mean exceeds the median, giving the long right tail. This skewness will have implications for the choice of scheme.
 :::
 
+## Quantitative data classification {.scrollable}
 :::{.callout-tip icon=false}
 ## The histogram is already a classifier
 
@@ -283,7 +283,7 @@ mb5 = mapclassify.MaximumBreaks(mx["PCGDP1940"], k=5)
 mb5
 ```
 
-**Appropriate when** we want observations in each class separated from those in neighbouring classes — works well for non-unimodal distributions, and is relatively fast.
+**Appropriate when** we want observations in each class separated from those in neighbouring classes - works well for non-unimodal distributions, and is relatively fast.
 
 **But** its simplicity can surprise: only the top $k-1$ differences are considered, so more nuanced within-group dissimilarities are ignored.
 :::
@@ -307,6 +307,7 @@ bp
 Values in the extreme classes are defined as **outliers**. Since income is non-negative, the lower outlier class here has an inadmissible upper bound — lower outliers are impossible for this sample.
 :::
 
+## Boxplot {.scrollable}
 :::{.callout-note icon=false}
 ## Changing the hinge
 
@@ -374,7 +375,7 @@ fj5
 :::{.callout-note icon=false}
 ## Max-p: a region-building heuristic
 
-Adapts the max-p region building method to map classification. Similar in spirit to Jenks-Caspall — greedy swapping between adjacent classes — so **no optimal solution is guaranteed**:
+Adapts the max-p region building method to map classification. Similar in spirit to Jenks-Caspall - greedy swapping between adjacent classes - so **no optimal solution is guaranteed**:
 
 ```{python}
 mp5 = mapclassify.MaxP(mx["PCGDP1940"], k=5)
@@ -387,7 +388,7 @@ mp5
 :::{.callout-important icon=false}
 ## Optimality is relative to an objective
 
-Freedman-Diaconis is "optimal" — but only relative to *its* objective function: minimizing the difference between the area under the estimated kernel density and that under the theoretical population distribution.
+Freedman-Diaconis is "optimal" - but only relative to *its* objective function: minimizing the difference between the area under the estimated kernel density and that under the theoretical population distribution.
 
 This notion of **statistical fit** is important, but it is not the only consideration. Also relevant:
 
@@ -735,7 +736,7 @@ plt.show()
 :::{.callout-tip icon=false}
 ## The concept
 
-> The existence of a "functional relationship between what happens at one point in space and what happens elsewhere" — Anselin (1988)
+> The existence of a "functional relationship between what happens at one point in space and what happens elsewhere" - Anselin (1988)
 
 The degree to which **similarity in values** between observations is related to **similarity in locations**.
 
@@ -746,13 +747,12 @@ Compare with its relatives:
 - **spatial autocorrelation** — the value of a variable *here*, vs. the same variable *elsewhere*
 :::
 
+## Global spatial autocorrelation {.scrollable}
 :::{.callout-note icon=false}
 ## An alternative framing
 
 The degree of **information contained** in the value of a variable at a given location **about the value of that same variable in other locations**.
 :::
-
-## Spatial autocorrelation {.scrollable}
 
 :::{.callout-important icon=false}
 ## Start from its absence
@@ -766,29 +766,15 @@ The degree of **information contained** in the value of a variable at a given lo
 :::{.callout-tip icon=false}
 ## Two dimensions: sign and scale
 
-**Sign** - *positive* (similarity and geographical closeness go hand in hand) or *negative* (similar values located away from each other).
+**Sign**:
 
-**Scale** - *global* (the overall trend that the location of values follows; the degree of **clustering**) or *local* (deviations from the global trend at much more focused levels).
-:::
+- *positive* (similarity and geographical closeness go hand in hand)
+- *negative* (similar values located away from each other).
 
-## Spatial autocorrelation {.scrollable}
-:::{.callout-note icon=false}
-## Positive spatial autocorrelation
+**Scale**:
 
-Similar values are located near each other; different values tend to be scattered and further away.
-
-The *sign of the values themselves* is irrelevant: it may be **high near high**, *or* **low near low**. What matters is that the relationship between closeness and statistical similarity is positive.
-
-Common in social contexts — think of the distribution of income or poverty: wealthy areas near other wealthy areas, poor population concentrated in space.
-:::
-
-## Spatial autocorrelation {.scrollable}
-:::{.callout-note icon=false}
-## Negative spatial autocorrelation
-
-Similar values tend to be located **away** from each other — statistical similarity is associated with *distance*.
-
-Less common in the social sciences, but real: phenomena following **spatial competition**, or facility siting that aims at the highest spatial coverage. Supermarkets of different brands, or hospitals, usually follow a pattern of negative spatial dependence.
+- *global* (the overall trend that the location of values follows; the degree of **clustering**)
+- *local* (deviations from the global trend at much more focused levels).
 :::
 
 ## Example: the EU Referendum {.scrollable}
@@ -889,6 +875,7 @@ w.transform = "R"
 Eight nearest neighbours, **row-standardized**. 
 :::
 
+## EU Referendum 
 :::{.callout-warning}
 ## Why we need statistics at all
 
@@ -918,10 +905,10 @@ $$
 
 Because non-neighbours receive a weight of zero, $y_{sl-i}$ really captures the product of values and weights for $i$'s **neighbours**.
 
-- if $\textbf{W}$ is **binary** → the *sum* of the values of $i$'s neighbours
-- if $\textbf{W}$ is **row-standardized** → a **local average**: the average value of $Y$ in the neighbourhood of $i$
+- if $\textbf{W}$ is **binary** $\rightarrow$ the *sum* of the values of $i$'s neighbours
+- if $\textbf{W}$ is **row-standardized** $\rightarrow$ a **local average**: the average value of $Y$ in the neighbourhood of $i$
 
-Conceptually, the spatial lag captures the behaviour of a variable in the immediate surroundings of each location — it is akin to a **local smoother**.
+Conceptually, the spatial lag captures the behaviour of a variable in the immediate surroundings of each location - it is akin to a **local smoother**.
 :::
 
 ## The spatial lag {.scrollable}
@@ -1046,8 +1033,8 @@ Inference uses **999 random spatial permutations** of the observed values, creat
 
 Both p-values are **one-sided with the alternative "observed is greater than under randomness"**. So:
 
-- `p_sim_bb` ≈ 0.001 → far *more* same-category joins than expected
-- `p_sim_bw` = 1.0 → the observed opposite joins are *lower than every simulation*
+- `p_sim_bb` ≈ 0.001 $\rightarrow$ far *more* same-category joins than expected
+- `p_sim_bw` = 1.0 $\rightarrow$ the observed opposite joins are *lower than every simulation*
 
 Together: clear **positive** spatial autocorrelation.
 :::
@@ -1193,10 +1180,10 @@ where $w_{ij}(d)$ is a **binary distance band** weight.
 Conceived for **points** (hence a distance $W$), but applicable to polygons given a binary weights matrix. Designed for **positive variables with a natural origin**.
 :::
 
-:::{.callout-warning icon=false}
+:::{.callout-warning}
 ## An important limitation
 
-$G$ was proposed as a measure of **concentration** rather than of spatial autocorrelation. It is well suited to testing to what extent similar values — high *or* low — tend to co-locate.
+$G$ was proposed as a measure of **concentration** rather than of spatial autocorrelation. It is well suited to testing to what extent similar values - high *or* low - tend to co-locate.
 
 It is a statistic of ***positive*** spatial autocorrelation only: because $G$ measures the intensity with which $Y$ is concentrated, **it cannot pick up negative spatial autocorrelation**.
 :::
@@ -1267,13 +1254,20 @@ Moran's $I$ tells us whether values in our map *cluster* together (or disperse) 
 :::{.callout-note icon=false}
 ## Where spatial autocorrelation comes from
 
-- **Spillovers** — outcomes at one site *influence* other sites
-- **Contagion** — outcomes at one site *causally influence* other sites
-- **Heterogeneity** — systematic spatial variation (Ch. 11)
-- **Measurement artifacts** — e.g., "down-sampling" can create large patches of identical values
+- **Spillovers** - outcomes at one site *influence* other sites
+- **Contagion** - outcomes at one site *causally influence* other sites
+- **Heterogeneity** - systematic spatial variation
+- **Measurement artifacts** - e.g., "down-sampling" can create large patches of identical values
 
 Substantive or nuisance, it is a form of **non-randomness** that complicates statistical analysis.
 :::
+
+:::{.callout-tip icon=false}
+## LISAs
+
+**Local Indicators of Spatial Association** (Anselin, 1995). Some local statistics are mathematically connected to their global counterparts: the global version can be **decomposed into a collection of local ones**.
+:::
+
 
 ## An empirical illustration
 
@@ -1292,12 +1286,6 @@ We continue with the Brexit dataset and the same 8-nearest-neighbour, row-standa
 w = weights.distance.KNN.from_dataframe(db, k=8)
 w.transform = "R"
 ```
-:::
-
-:::{.callout-note icon=false}
-## LISAs
-
-**Local Indicators of Spatial Association** (Anselin, 1995). Some local statistics are mathematically connected to their global counterparts: the global version can be **decomposed into a collection of local ones**.
 :::
 
 ## Local spatial autocorrelation {.scrollable}
@@ -1344,7 +1332,7 @@ $$
 
 where $m_2$ is the second moment (variance) of the distribution, $z_i = y_i - \bar{y}$, and $w_{ij}$ the spatial weight for the pair $(i,j)$.
 
-The mechanism is similar to the global Moran's $I$, but applied **to each observation** — giving as many statistics as original observations.
+The mechanism is similar to the global Moran's $I$, but applied **to each observation** - giving as many statistics as original observations.
 :::
 
 :::{.callout-tip icon=false}
@@ -1368,9 +1356,9 @@ ax = seaborn.kdeplot(lisa.Is)
 seaborn.rugplot(lisa.Is, ax=ax);
 ```
 
-A rather **skewed** distribution, due to the dominance of positive forms of spatial association. High positive values arise from value similarity — high-next-to-high **or** low-next-to-low. **The $I_i$ values alone cannot distinguish these two cases.**
+A rather **skewed** distribution, due to the dominance of positive forms of spatial association. High positive values arise from value similarity - high-next-to-high **or** low-next-to-low. **The $I_i$ values alone cannot distinguish these two cases.**
 
-The left tail represents negative spatial association — again in two forms (HL and LH) that $I_i$ cannot tell apart.
+The left tail represents negative spatial association - again in two forms (HL and LH) that $I_i$ cannot tell apart.
 :::
 
 ## Local Moran's $I_i$ {.scrollable}
@@ -1481,7 +1469,7 @@ Comparing the top two maps reveals that the positive local association in **Scot
 (lisa.p_sim < 0.05).sum() * 100 / len(lisa.p_sim)
 ```
 
-1. **Fewer than half** of the polygons have local spatial association strong enough to reject pure chance — a little over 41%.
+1. **Fewer than half** of the polygons have local spatial association strong enough to reject pure chance - a little over 41%.
 2. Three clear areas of **low support** for leaving: **Scotland**, **London**, and the area around **Oxford**.
 3. Although many areas appeared to have concentrated high support, only the **North-East and West of England** show enough strength to reasonably rule out pure chance.
 :::
@@ -1533,17 +1521,17 @@ db["labels"].value_counts()
 
 **Positive** local spatial autocorrelation:
 
-- **HH** → **"hot spots"** — values at the site *and* its surroundings are larger than average
-- **LL** → **"cold spots"** — significant clusters of low values surrounded by low values
+- **HH** $\rightarrow$ **"hot spots"** — values at the site *and* its surroundings are larger than average
+- **LL** $\rightarrow$ **"cold spots"** — significant clusters of low values surrounded by low values
 
 **Negative** local spatial autocorrelation:
 
-- **LH** → **"doughnuts"** — low value, high surroundings
-- **HL** → **"diamonds in the rough"** — high value, low surroundings
+- **LH** $\rightarrow$ **"doughnuts"** — low value, high surroundings
+- **HL** $\rightarrow$ **"diamonds in the rough"** — high value, low surroundings
 
 The terminology is purely mnemonic, but it helps in remembering the interpretation.
 
-We see many more hotspots/coldspots than doughnuts/diamonds — consistent with the skew in the distribution of local statistics.
+We see many more hotspots/coldspots than doughnuts/diamonds - consistent with the skew in the distribution of local statistics.
 :::
 
 ## Getis and Ord's local statistics {.scrollable}
@@ -1569,7 +1557,7 @@ When standardized, **positive** values imply clustering of high values, **negati
 ## Getis and Ord's local statistics {.scrollable}
 
 :::{.callout-tip icon=false}
-## `splot` does not cover $G$ — so we write a helper
+## `splot` does not cover $G$ - so we write a helper
 
 ```{python}
 def g_map(g, db, ax):
@@ -1620,7 +1608,7 @@ The results are virtually identical for $G_i$ and $G_i^*$, and at first glance s
 - local $I_i$ (on its own) gives an indication of **cluster / outlier status**
 - local $G_i$ shows which side of the **hotspot / coldspot** divide the observation is on
 
-The local Moran's $I_i$ *cluster map* provides both pieces of information — but it can be more challenging to visualize all at once.
+The local Moran's $I_i$ *cluster map* provides both pieces of information - but it can be more challenging to visualize all at once.
 
 It depends on your analytical preferences and the point of the analysis at hand.
 :::
@@ -1776,15 +1764,15 @@ for i in range(2):
     contextily.add_basemap(axs[i], crs=lisa_da.rio.crs)
 ```
 
-## local spatial autocorrelation 
+## Local spatial autocorrelation 
 
 :::{.callout-important icon=false}
 ## Take-aways
 
 Local statistics are one of the most commonly used tools in the geographic data science toolkit — the most common **"first brush"** geographic statistic for many analyses.
 
-- **Local Moran's $I_i$** summarizes the *co-variation* between observations and their immediate surroundings → cluster **and** outlier status
-- **Getis-Ord local $G$** compares the *sum of values* in the area around each site → hotspot / coldspot, but no outliers
+- **Local Moran's $I_i$** summarizes the *co-variation* between observations and their immediate surroundings $\rightarrow$ cluster **and** outlier status
+- **Getis-Ord local $G$** compares the *sum of values* in the area around each site $\rightarrow$ hotspot / coldspot, but no outliers
 
 Used properly, local statistics provide a powerful way to analyze and visualize the structure of geographic data.
 :::
@@ -1796,10 +1784,12 @@ Used properly, local statistics provide a powerful way to analyze and visualize 
 :::{.callout-important icon=false}
 ## Two ways to understand points
 
-**1. Fixed objects in space** — location is taken as given (*exogenous*), secondary to the value observed at the point.
+**1. Fixed objects in space** - location is taken as given (*exogenous*), secondary to the value observed at the point.
+
 *Example:* the number of cars traversing a road intersection. The location is fixed; the data of interest is the measurement there. Analysis resembles that of polygons and lines.
 
-**2. Sites of measurement from an underlying continuous process** — the measurement *could* theoretically take place anywhere, but was only carried out in certain locations.
+**2. Sites of measurement from an underlying continuous process** - the measurement *could* theoretically take place anywhere, but was only carried out in certain locations.
+
 *Example:* the length of birds' wings. Location reflects bird movement and foraging; wing length reflects an ecological process.
 
 **We will adopt the second perspective**: both the location and the measurement matter.
@@ -1813,8 +1803,10 @@ When points are seen as **events** that could take place in several locations bu
 
 A good example is **geo-tagged photographs**: they could technically happen in many locations, but tend to concentrate in a handful.
 
-- **unmarked** — only the coordinates of where the event occurred
-- **marked** — more attributes are provided with the location (time, camera model, an "image quality score")
+Types:
+
+- **unmarked** - only the coordinates of where the event occurred
+- **marked** - more attributes are provided with the location (time, camera model, an "image quality score")
 :::
 
 ## Point pattern analysis
@@ -1826,7 +1818,7 @@ Point pattern analysis is concerned with the **visualization, description, stati
 
 - *What does the pattern look like?*
 - *What is the nature of the distribution of points?*
-- *Is there any structure in the way locations are arranged over space — are events clustered, or dispersed?*
+- *Is there any structure in the way locations are arranged over space - are events clustered, or dispersed?*
 - *Why do events occur in those places and not in others?*
 :::
 
@@ -1834,9 +1826,9 @@ Point pattern analysis is concerned with the **visualization, description, stati
 :::{.callout-important icon=false}
 ## Process vs. pattern
 
-**Process** — the underlying mechanism at work that generates the outcome. Abstract; we do not get to see it. It is the *how*.
+**Process** - the underlying mechanism at work that generates the outcome. Abstract; we do not get to see it. It is the *how*.
 
-**Pattern** — the *result* of that process. Often the only trace we can observe, and thus the only input we have to reconstruct it.
+**Pattern** - the *result* of that process. Often the only trace we can observe, and thus the only input we have to reconstruct it.
 
 > Pattern is only a reflection of process. The real challenge is not to characterize the former but to use it to work out the latter.
 :::
@@ -1870,7 +1862,7 @@ Note the spatial information is encoded as **separate columns** - in contrast to
 seaborn.jointplot(x="longitude", y="latitude", data=db, s=0.5);
 ```
 
-A good start — dots concentrate in the centre in a non-random pattern, with more localized clusters within. But **two key drawbacks**: it lacks geographical context, and in dense areas the points become an indistinct blur.
+A good start - dots concentrate in the centre in a non-random pattern, with more localized clusters within. But **two key drawbacks**: it lacks geographical context, and in dense areas the points become an indistinct blur.
 :::
 
 ## Point pattern analysis {.scrollable}
@@ -2208,7 +2200,7 @@ contextily.add_basemap(
 plt.show()
 ```
 
-The **alpha shape** is much tighter than the rest. The bounding rectangle and circle are the **loosest** — they contain the most area outside the user's typical range — but they are the simplest shapes to draw and understand.
+The **alpha shape** is much tighter than the rest. The bounding rectangle and circle are the **loosest** - they contain the most area outside the user's typical range - but they are the simplest shapes to draw and understand.
 
 ## Randomness and clustering
 
@@ -2221,8 +2213,8 @@ In other words: **what is the overall degree of clustering?**
 
 Two families of technique:
 
-1. **quadrat statistics** — split the data into small areas ("buckets") and examine the **uniformity of counts** across them
-2. **Ripley's functions** — measurements of the **distance between points** in the pattern
+1. **Quadrat statistics** - split the data into small areas ("buckets") and examine the **uniformity of counts** across them
+2. **Ripley's functions** - measurements of the **distance between points** in the pattern
 :::
 
 ## Randomness and clustering {.scrollable}
@@ -2327,7 +2319,7 @@ qstat_null_ashape.plot()
 qstat_null_ashape.chi2_pvalue
 ```
 
-The test finds this **statistically non-random** — yet our simulating process guaranteed that *within the given study area* it is completely spatially random.
+The test finds this **statistically non-random** - yet our simulating process guaranteed that *within the given study area* it is completely spatially random.
 
 One way to reconcile this: think of the quadrat statistic as testing both the **uniformity of points** *and* the **shape of their extent**. Useful sometimes; use with caution.
 :::
@@ -2339,8 +2331,8 @@ One way to reconcile this: think of the quadrat statistic as testing both the **
 
 Derived from Ripley's seminal work on characterizing clustering or co-location:
 
-- **nearest neighbour distances** — how far each point is from its closest companion
-- **"gaps"** in the pattern — how far empty space is from the nearest point
+- **nearest neighbour distances** - how far each point is from its closest companion
+- **"gaps"** in the pattern - how far empty space is from the nearest point
 
 Each function characterizes an aspect of the pattern **as we increase the distance range** from each point.
 :::
@@ -2350,9 +2342,9 @@ Each function characterizes an aspect of the pattern **as we increase the distan
 
 Keeps track of the **proportion of points for which the nearest neighbour is within a given distance threshold**, plotted against increasing distance radii.
 
-- $G$ increasing **rapidly** with distance → **clustered**
-- $G$ increasing **slowly** → **dispersed**
-- something in between → hard to distinguish from pure chance
+- $G$ increasing **rapidly** with distance $\rightarrow$ **clustered**
+- $G$ increasing **slowly** $\rightarrow$ **dispersed**
+- something in between $\rightarrow$ hard to distinguish from pure chance
 :::
 
 ## Ripley's alphabet of functions {.scrollable}
@@ -2439,7 +2431,7 @@ f.tight_layout()
 plt.show()
 ```
 
-The red empirical function rises **much faster** than simulated random patterns → points are *closer* to their nearest neighbours than expected. The pattern is **clustered**.
+The red empirical function rises **much faster** than simulated random patterns $\rightarrow$ points are *closer* to their nearest neighbours than expected. The pattern is **clustered**.
 
 ## Ripley's $F$ {.scrollable}
 
@@ -2450,8 +2442,8 @@ Where $G$ analyses the distance **between** points in the pattern, $F$ analyses 
 
 $F$ accumulates, for a growing distance range, the percentage of points found within that range from a *random* point pattern generated within the extent of the observed one.
 
-- large gaps or empty areas → $F$ increases **slowly**
-- highly dispersed pattern → $F$ increases **rapidly**
+- large gaps or empty areas $\rightarrow$ $F$ increases **slowly**
+- highly dispersed pattern $\rightarrow$ $F$ increases **rapidly**
 
 ```{python}
 f_test = distance_statistics.f_test(
@@ -2490,18 +2482,18 @@ f.tight_layout()
 plt.show()
 ```
 
-The observed $F$ increases **much more slowly** than the simulations → many gaps in our pattern → **clustered**.
+The observed $F$ increases **much more slowly** than the simulations $\rightarrow$ many gaps in our pattern $\rightarrow$ **clustered**.
 
 ## Identifying clusters
 
 :::{.callout-important icon=false}
 ## Cluster*ing* vs. cluster*s*
 
-The previous sections characterize whether a pattern is dispersed or clustered — the degree of overall **clustering**.
+The previous sections characterize whether a pattern is dispersed or clustered - the degree of overall **clustering**.
 
 But knowing a pattern is clustered does not tell us **where** the clusters are. For that we need a method able to identify **areas of high density of points**.
 
-The distinction is exactly analogous to global (Ch. 6) vs. local (Ch. 7) spatial autocorrelation.
+The distinction is exactly analogous to global vs. local spatial autocorrelation.
 
 The difference in technique comes from the unique nature of points: earlier methods take the **location of objects as given** and study the configuration of *values*; point pattern methods treat points as **events that happen in particular locations but could happen in a much broader set of places**.
 :::
@@ -2522,11 +2514,11 @@ In some ways a point pattern counterpart of the local statistics - but with a fu
 
 A **cluster** is a concentration of at least `m` points, each within a distance `r` of at least another point in the cluster. Each point is classified as:
 
-- **Noise** — outside a cluster
-- **Core** — inside a cluster, with at least `m` points of the cluster within distance `r`
-- **Border** — inside a cluster, with *fewer* than `m` points of the cluster within `r`
+- **Noise** - outside a cluster
+- **Core** - inside a cluster, with at least `m` points of the cluster within distance `r`
+- **Border** - inside a cluster, with *fewer* than `m` points of the cluster within `r`
 
-Both `m` and `r` must be specified **by the user** — the flexibility *and* the limitation.
+Both `m` and `r` must be specified **by the user** - the flexibility *and* the limitation.
 :::
 
 ## DBSCAN {.scrollable}
@@ -2576,7 +2568,7 @@ ax.set_axis_off()
 plt.show()
 ```
 
-Not satisfactory — *way* too many points classified as noise. The defaults are a radius of **0.5** and a minimum of **five** points. Since our data is in metres, half a metre picks up only hyper-local clusters.
+Not satisfactory - *way* too many points classified as noise. The defaults are a radius of **0.5** and a minimum of **five** points. Since our data is in metres, half a metre picks up only hyper-local clusters.
 
 ## DBSCAN {.scrollable}
 
@@ -2623,12 +2615,10 @@ Now the algorithm picks up the **general patterns**: the main concentrations of 
 :::{.callout-important icon=false}
 ## Take-aways
 
-The journey of this chapter:
-
-1. **Visualize** the locations, overcoming the "cluttering" challenge — hexbin and KDE
-2. **Characterize** their spatial distribution statistically — central tendency, dispersion, extent; the point pattern counterparts of the mean and standard deviation
-3. **Test** whether the pattern is clustered or dispersed — quadrat and Ripley's functions
-4. **Locate** the clusters themselves — DBSCAN
+1. **Visualize** the locations, overcoming the "cluttering" challenge - hexbin and KDE
+2. **Characterize** their spatial distribution statistically - central tendency, dispersion, extent; the point pattern counterparts of the mean and standard deviation
+3. **Test** whether the pattern is clustered or dispersed - quadrat and Ripley's functions
+4. **Locate** the clusters themselves - DBSCAN
 
 These techniques answer fundamental questions about point patterns representing widely varied phenomena: from where photographs were taken, to the distribution of bird nests, to the clustering of bike crashes in a city.
 :::
