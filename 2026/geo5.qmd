@@ -1,6 +1,5 @@
 ---
-title: "Big Data: GeoScience part 5"
-subtitle: "Geographic Data Science — Part I: Building Blocks"
+title: "GeoScience part 5"
 author: 
   - name: MSDE
     affiliation: Lviv University
@@ -66,22 +65,20 @@ def _carto(variant):
 BASEMAP = _carto(contextily.providers.CartoDB.Voyager)
 ```
 
-## Geographic Data Science
-
 ## Geographic thinking
 
 :::{.callout-tip icon=false}
 ## Overview
 
-**Geographic thinking** = the collected knowledge geographers have about why geographic information deserves special care and attention, especially when used in computations.
+**Geographic thinking**: the collected knowledge geographers have about why geographic information deserves special care and attention, especially when used in computations.
 :::
 
-:::{.callout-tip icon=false}
+:::{.callout-note}
 ## Two useful traits of geographic data
 
 1. **Geographic data is ubiquitous.** Everything has a *location* in space-time, and that location can be used directly to make better predictions or inferences.
 
-2. **Location gives you relations.**  - these let us **contextualise** our data
+2. **Location gives you relations**: these let us **contextualise** our data.
 :::
 
 ## Geographic thinking {.scrollable}
@@ -121,7 +118,7 @@ If we learn from this contextual information appropriately, we may be able to bu
 - **data structure** — how geographic data is *represented in a computer*
 :::
 
-## Conceptual representations: models
+## Data models
 
 :::{.callout-tip icon=false}
 ## The population density puzzle
@@ -132,10 +129,10 @@ But people are **discrete**: each of us exists at one specific point in space an
 
 - At a sufficiently fine-grained scale (space *and* time), population density is **zero almost everywhere**!
 - In a typical day, a person moves from home to work through several points in space-time.
-- Shopping malls have few residents, yet a very high population density at specific times — drawn from elsewhere.
+- Shopping malls have few residents, yet a very high population density at specific times - drawn from elsewhere.
 :::
 
-## Conceptual representations: models
+## Data models
 
 :::{.callout-important icon=false}
 ## The three classic data models
@@ -151,34 +148,26 @@ In the population example:
 - the *network* view: the inter-related system of places whose densities arise from people moving around
 :::
 
-## Conceptual representations: models
+## Data models
 
 :::{.callout-tip icon=false}
 ## Why the distinction matters — it changes what *relations* are appropriate
 
 **Objects** — relationships modelled with simple **distances**. Near objects are "strongly related", distant objects "weakly related".
 
-**Networks** — must account for **topology**, the structure of connections between nodes. We cannot assume every node is connected, and connections cannot be derived from the nodes alone.
-
-*Example:* two subway stations may be far apart but linked by a frequent express train. Raw distance is then a poor indication of their true geographic relationship.
+**Networks** — must account for **topology**, the structure of connections between nodes. We cannot assume every node is connected, and connections cannot be derived from the nodes alone. (Example: two subway stations)
 
 **Fields** — measurements can occur *anywhere*, so models must account for hypothetical realizations in the unobserved space between measurement points.
 :::
 
-## Conceptual representations: models
 :::{.callout-warning icon=false}
 ## Generative structure vs. measurement
 
-Structures arise from how processes are conceptualised **and** what questions the analyst seeks to answer.
-
-Since measurement is often beyond the analyst's control:
-
-> *how a geographical process actually operates* (its "causal" or "generative" structure)
-> can be different from
-> *how we are actually able to measure it*.
+*How a geographical process actually operates* (its "causal" or "generative" structure)
+can be different from *how we are actually able to measure it*.
 :::
 
-## Computational representations: data structures
+## Data structures
 
 :::{.callout-tip icon=false}
 ## From models to bytes
@@ -193,16 +182,16 @@ But most of data and geographical science is **empirical** — analysis and inte
 - At worst: a bad match makes analysis awkward and forces conversion to another structure
 :::
 
-## Computational representations: data structures
+## Data structures
 :::{.callout-warning icon=false}
 ## The relationship runs both ways
 
 Once established, a technology or data structure can exert an important influence on **how we see and model the world**.
 
-This is not necessarily bad — embedding complex ideas in software widens the reach of a discipline. Desktop GIS in the 1990s–2000s made geographic information useful to a much wider audience, largely by standardizing the "geographic matrix" (Berry, 1964), which we now call a **geotable**.
+Example: desktop GIS in the 1990s–2000s made geographic information useful to a much wider audience, largely by standardizing the "geographic matrix" (Berry, 1964), which we now call a **geotable**.
 :::
 
-## Computational representations: data structures
+## Data structures
 :::{.callout-important icon=false}
 ## "Disabling technology"
 
@@ -232,7 +221,7 @@ Each serves as a technological mirror for one of the conceptual models.
 ## Geographic tables
 
 :::{.callout-tip icon=false}
-## Objects → rows
+## Objects $\rightarrow$ rows
 
 Tables are two-dimensional structures of rows and columns:
 
@@ -252,7 +241,7 @@ Crucially, geographic tables **seamlessly combine geographic and non-geographic 
 ## Surfaces
 
 :::{.callout-tip icon=false}
-## Fields → grids
+## Fields $\rightarrow$ grids
 
 For a field, there is (in theory) an **infinite** set of locations at which it may be measured. In practice, fields are measured at a **finite** set of locations.
 
@@ -260,7 +249,7 @@ Surfaces are recorded and stored in **uniform grids** — arrays whose dimension
 
 Unlike geographic tables, the arrays used in a surface use **both rows and columns to signify location**, and cell values to store information about that location.
 
-*Example:* air pollution — each row is a latitude, each column a longitude.
+*Example:* air pollution - each row is a latitude, each column a longitude.
 :::
 
 ## Surfaces
@@ -294,6 +283,7 @@ Techniques that rely on these topologies span:
 - spatial econometrics
 :::
 
+## Spatial graphs
 :::{.callout-warning icon=false}
 ## One structure, many names
 
@@ -306,7 +296,7 @@ Several fields in computer science and mathematics came up with their own termin
 
 We are thinking of very similar fundamental structures deployed in different contexts.
 
-In this book: `networkX` graph objects, and the spatial weights objects in `pysal`, which rely on **sparse adjacency matrices** from `scipy`.
+We will use this terms: `networkX` graph objects, and the spatial weights objects in `pysal`, which rely on **sparse adjacency matrices** from `scipy`.
 :::
 
 ## Spatial graphs
@@ -315,29 +305,29 @@ In this book: `networkX` graph objects, and the spatial weights objects in `pysa
 
 ## Spatial graphs
 
-:::{.callout-important icon=false}
+:::{.callout-important}
 ## Graph or table? Streets and rivers
 
 The streets of a city, or the interconnected rivers in a catchment area, are *usually called* networks — but often what is recorded is really a collection of objects in a geographic table.
 
 - Interested in the **exact shape, length and location** of each segment?
-  → a collection of independent lines/polygons that happen to touch at their ends → **geographic table**
+  → a collection of independent lines/polygons that happen to touch at their ends $\rightarrow$ **geographic table**
 - Interested in **who is connected to whom**, and how individual connections comprise a broader interconnected system?
-  → **spatial graph**
+  $\rightarrow$ **spatial graph**
 
 The *right* link between data model and data structure depends not only on the phenomenon, but on our **analytical goal**.
 :::
 
-## Connecting conceptual to computational
+## Conceptual $\leftrightarrow$ computational
 
 :::{.callout-tip icon=false}
 ## The traditional ("desktop") view
 
 The main conceptual mapping is inherited from advances made in **computer graphics**:
 
-- fields → **rasters**
-- objects → **vector-based tables**
-- networks → *no first-class structure*; computed on the fly
+- fields $\rightarrow$ **rasters**
+- objects $\rightarrow$ **vector-based tables**
+- networks $\rightarrow$ *no first-class structure*; computed on the fly
 
 This separation stems from implementation decisions in one of the first commercially successful GIS: ESRI's **ARC/INFO**, a command-line precursor to QGIS and ArcGIS.
 
@@ -351,11 +341,11 @@ Some argue this association is fundamental to geographic representation and cann
 
 The rise of machine learning has produced extremely efficient "black box" prediction algorithms.
 
-**Change of support problems** — moving data from one geographical data structure to another — are wholly focused on *accuracy*; the interpretation of a change-of-support algorithm is rarely of substantive interest.
+**Change of support problems** - moving data from one geographical data structure to another - are wholly focused on *accuracy*; the interpretation of a change-of-support algorithm is rarely of substantive interest.
 
 So machine learning has made it much easier to move between data structures.
 
-→ The **"costs" of moving between data structures have been lowered**, reducing the importance of picking the "right" representation from the outset.
+$\rightarrow$ The **"costs" of moving between data structures have been lowered**, reducing the importance of picking the "right" representation from the outset.
 :::
 
 ## This categorization is breaking up {.scrollable}
@@ -416,14 +406,16 @@ A geographic table is like a tab in a spreadsheet where one column records **geo
 - each **column** records an attribute of the object
 - a special column records the **geometry**
 
-Systems using this structure add geography to a *relational database*: PostgreSQL (PostGIS), sqlite (spatialite). Data science languages have their own: R `sf`, Julia `GeoTables.jl`, Python `geopandas`.
+Systems using this structure add geography to a *relational database*: PostgreSQL (PostGIS), sqlite (spatialite). Data science languages have their own:
+
+- R `sf`
+- Julia `GeoTables.jl`
+- Python `geopandas`.
 :::
 
 ## Geographic tables
 :::{.callout-warning icon=false}
 ## Terminology matters
-
-Throughout the book, consistent with data science and machine learning:
 
 - a **feature** = one measured trait pertaining to an observation: a **column**
 - a **sample** = one set of measurements: a **row**
@@ -462,6 +454,7 @@ gt_polygons.plot();
 ```
 :::
 
+## Geographic tables {.scrollable}
 :::{.callout-tip icon=false}
 ## Changing the geometric representation
 
@@ -475,6 +468,7 @@ gt_polygons[["ADMIN", "geometry", "centroid"]].head(3)
 Despite starting with `POINT`, `centroid` is not yet the *active* geometry. Switch with `set_geometry()`.
 :::
 
+## Geographic tables {.scrollable}
 :::{.callout-tip icon=false}
 ## Two representations of the same samples
 
@@ -520,6 +514,7 @@ gt_polygons.query('ADMIN == "Bolivia"').plot();
 ```
 :::
 
+## Geographic tables {.scrollable}
 :::{.callout-tip icon=false}
 ## Many polygons: Indonesia
 
@@ -549,6 +544,7 @@ gt_points.head(3)
 No `geometry` column in sight.
 :::
 
+## Geographic tables {.scrollable}
 :::{.callout-tip icon=false}
 ## Two steps to a `GeoDataFrame`
 
@@ -648,6 +644,7 @@ pop.sel(band=1).plot();
 ```
 :::
 
+## Surfaces {.scrollable}
 :::{.callout-warning icon=false}
 ## Negative population?
 
@@ -744,21 +741,9 @@ list(graph.adj[1520546819].keys())
 ```
 :::
 
-## Hybrids
-
-:::{.callout-important icon=false}
-## Out of the box
-
-`GeoDataFrame`, `DataArray` and `Graph` are the **conventional pairings** that align data models to data structures.
-
-But others are in active use, and many more are yet to be developed. Many new pairings are driven by **new technology**, enabling approaches that were not possible before, or creating situations (e.g. large datasets) that make the conventional approach limiting.
-
-So: when might it make sense to represent a dataset with a structure that is *not* the obvious initial choice?
-:::
-
 ## Surfaces as tables
 
-:::{.callout-warning icon=false}
+:::{.callout-important icon=false}
 ## The costs
 
 Each cell of the surface/cube becomes a **row** in a table.
@@ -926,6 +911,7 @@ dem_clip.where(dem_clip > 0).mean()
 ```
 :::
 
+## Pixels to polygons {.scrollable}
 :::{.callout-tip icon=false}
 ## Seeing the clip
 
@@ -960,6 +946,7 @@ sd_tracts.head().apply(get_mean_elevation, dem=dem, axis=1)
 Plays well with `xarray`, scales to parallel/distributed form with `dask`, extends with arbitrary Python functions — but **slow on big data**.
 :::
 
+## Pixels to polygons {.scrollable}
 :::{.callout-tip icon=false}
 ## Approach 2: `rasterstats`
 
@@ -977,8 +964,10 @@ elevations2.head()
 ```
 :::
 
+## Pixels to polygons {.scrollable}
 :::{.callout-tip icon=false}
 ## Surface -> geography -> choropleth
+Visualize:
 
 ```{python}
 f, axs = plt.subplots(1, 3, figsize=(11, 4))
@@ -1044,6 +1033,7 @@ type(grid)
 The result is a standard `DataArray`.
 :::
 
+## Tables as surfaces {.scrollable}
 :::{.callout-tip icon=false}
 ## Far more detail than the points alone
 
@@ -1068,7 +1058,7 @@ These operations do **not** require topological information, are standard for ge
 
 ## Networks as graphs *and* tables {.scrollable}
 :::{.callout-tip icon=false}
-## Graph $->$ two geo-tables
+## Graph $\rightarrow$ two geo-tables
 
 ```{python}
 gt_intersections, gt_lines = osmnx.graph_to_gdfs(graph)
@@ -1076,7 +1066,7 @@ gt_intersections.head(3)
 ```
 
 ```{python}
-gt_lines.shape
+gt_lines.info()
 ```
 
 And back again, with the sister method:
@@ -1109,9 +1099,8 @@ Bespoke representations might make your analysis more efficient — but they can
 
 **Spatial weights** are one way to represent graphs in geographic data science and spatial statistics.
 
-They represent geographic relationships between the observational units in a spatially referenced dataset, connecting objects in a geographic table using the spatial relationships between them.
-
-By expressing geographical **proximity** or **connectedness**, spatial weights are the main mechanism through which spatial relationships are brought to bear in the analysis.
+- They represent geographic relationships between the observational units in a spatially referenced dataset, connecting objects in a geographic table using the spatial relationships between them.
+- By expressing geographical **proximity** or **connectedness**, spatial weights are the main mechanism through which spatial relationships are brought to bear in the analysis.
 :::
 
 ## Spatial weights
@@ -1371,6 +1360,7 @@ pandas.Series(wq.cardinalities).plot.hist(color="k");
 Cardinalities help quickly spot **asymmetries** in the number of neighbours — relevant for spatial autocorrelation analysis and spatial regression.
 :::
 
+## Joins and density
 :::{.callout-note icon=false}
 ## Joins and density
 
@@ -1384,7 +1374,7 @@ wq.s0  # the number of joins
 wq.pct_nonzero  # density (complement of sparsity)
 ```
 
-which equals $100 \times (\texttt{w.s0} / \texttt{w.n}^2)$.
+which equals $100 \times (\text{w.s0} / \text{w.n}^2)$.
 :::
 
 ## Weights from real geographic tables {.scrollable}
@@ -1490,6 +1480,7 @@ This usually requires a matrix of distances between all pairs of observations, w
 `pysal` implements a family of distance functions. We start with **nearest neighbour** weights.
 :::
 
+## Distance based weights {.scrollable}
 :::{.callout-tip icon=false}
 ## The $k$ closest observations
 
@@ -1619,6 +1610,7 @@ ax[1].set_title("Kernel centered on 18th tract")
 
 The kernel is strongly affected by the local structure of spatial proximity.
 
+## Kernel weights {.scrollable}
 :::{.callout-warning icon=false}
 ## The cost of explicit distance decay
 
@@ -1664,6 +1656,7 @@ w_hy = weights.distance.DistanceBand.from_dataframe(
 The threshold **must use the same units of distance** as those used to define the matrix.
 :::
 
+## Distance bands and hybrid weights {.scrollable}
 :::{.callout-tip icon=false}
 ## Comparing polygon 4 (the centre of the grid)
 
@@ -1738,8 +1731,8 @@ But observation 13 is **ever so slightly closer** when computing straight-line d
 
 Block weights connect **every observation that belongs to the same category** in a provided list.
 
-- all members of a group are considered "near" one another → weight of one for every pair in the group
-- all non-members are disconnected from the group → weight of zero
+- all members of a group are considered "near" one another $\rightarrow$ weight of one for every pair in the group
+- all non-members are disconnected from the group $\rightarrow$ weight of zero
 
 The resulting matrix looks like **blocks of 1s stacked on the diagonal** — hence the name.
 
@@ -1748,6 +1741,7 @@ san_diego_tracts[["GEOID", "state", "county", "tract"]].head(3)
 ```
 :::
 
+## Block weights {.scrollable}
 :::{.callout-tip icon=false}
 ## No spatial data required
 
@@ -1768,6 +1762,7 @@ As a check — the first two tracts share a county, so they should be neighbours
 ```
 :::
 
+## Block weights {.scrollable}
 :::{.callout-note icon=false}
 ## An intermediate step
 
@@ -1851,7 +1846,7 @@ w_fixed_sets.n
 ```
 :::
 
-:::{.callout-warning icon=false}
+:::{.callout-warning}
 ## Not exactly the same
 
 In principle this differs from the manual patch: the nearest observation might **not** have been a Rook neighbour, in which case the two matrices would differ.
@@ -1971,6 +1966,7 @@ These are used in models of inequality, and to adapt classic empirical outlier d
 Below: one **model-free** way to identify empirical boundaries in your data.
 :::
 
+## Use case: boundary detection {.scrollable}
 :::{.callout-tip icon=false}
 ## Median household income in San Diego
 
@@ -2090,10 +2086,9 @@ Non-neighbouring tracts are **more dispersed** → neighbouring tracts have *sma
 Neighbouring tracts have **more small differences in wealth** than non-neighbouring tracts.
 
 This is consistent with **spatial autocorrelation**: the tendency for observations to be statistically more similar to nearby observations than to distant ones.
-
-*(Chapters 6 and 7 of the book develop this properly.)*
 :::
 
+## Use case: boundary detection {.scrollable}
 :::{.callout-tip icon=false}
 ## The most extreme observed differences
 
@@ -2249,7 +2244,7 @@ Observation $473$ appears in **both** boundaries → likely an **outlier**, extr
 
 Spatial weights are central to how we **represent** spatial relationships in mathematical and computational environments.
 
-- at their core they are a **"geo-graph"** — a network defined by geographical relationships between observations
+- at their core they are a **"geo-graph"** - a network defined by geographical relationships between observations
 - they form a kind of **spatial index**, recording which observations have a specific geographical relationship
 - they are **fundamental** to geographic data science: exploratory statistics, regionalization, spatial regression all build on them
 :::
@@ -2289,37 +2284,4 @@ Spatial weights are central to how we **represent** spatial relationships in mat
 6. Build the **Voronoi diagram** for the centroids of Mexican states with `libpysal.cg.voronoi_frames`, then the `weights.Voronoi` weights. Compare their connections with the Queen weights, visually and with `weights.set_operations`.
 7. Interoperability: convert the Mexico Queen+Block weights to a `networkx` graph with `w.to_networkx()` and compute eigenvector centrality. Using `w.sparse`, compute connected components and all-pairs shortest paths with `scipy.sparse.csgraph`.
 8. **In-degree vs. out-degree** in a KNN graph: build `knn_6`, verify $k=6$ with a row sum over `knn_6.sparse`, then compute in-degree with a *column* sum. How evenly distributed is "hubbiness"? Does it reduce at $k=26$?
-:::
-
-## Next steps
-
-:::{.callout-note icon=false}
-## Further reading
-
-**Geographic representation**
-
-- Goodchild, Yuan & Cova (2007). "Towards a general theory of geographic representation in GIS." *IJGIS* 21(3)
-- Worboys & Duckham (2004). *GIS, A Computing Perspective*. CRC Press
-- Gahegan (1999). "Guest Editorial: What is Geocomputation?" *Transactions in GIS* 3
-
-**Reproducibility**
-
-- Rule et al. (2019). "Ten Simple Rules for writing and sharing computational analyses in Jupyter Notebooks." *PLOS Comp Bio* 15(7)
-- Rey (2009). "Show me the code: spatial analysis and open source." *J. Geographical Systems* 11(2)
-
-**Spatial weights**
-
-- Anselin & Rey, *Modern Spatial Econometrics in Practice*, ch. 3
-- Uitermark & van Meeteren (2021). "Geographical Network Analysis." *TESG* 112
-:::
-
-## Coming next
-
-:::{.callout-important icon=false}
-## Part II — Spatial Data Analysis
-
-- **Ch. 5** — Choropleth mapping
-- **Ch. 6** — Global spatial autocorrelation
-- **Ch. 7** — Local spatial autocorrelation
-- **Ch. 8** — Point pattern analysis
 :::
