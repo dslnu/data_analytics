@@ -1,0 +1,2342 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-html/tabby.min.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/light-border.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.10.18">
+
+  <meta name="author" content="MSDE">
+  <title>Big Data analytics / Applied Data analytics – Big Data: DAGs and Scheduling</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="site_libs/revealjs/dist/reset.css">
+  <link rel="stylesheet" href="site_libs/revealjs/dist/reveal.css">
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: 1.5em;}
+    div.column{flex: auto;}
+    @media screen {
+    div.columns{gap: min(4vw, 1.5em);}
+    div.column{overflow-x: auto;}
+    }
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+      vertical-align: middle;
+    }
+  </style>
+  <link rel="stylesheet" href="site_libs/revealjs/dist/theme/quarto-2740581606dc327e82f18f789b69d8a0.css">
+  <link href="site_libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
+  <link href="site_libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
+  <link href="site_libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
+  <link href="site_libs/revealjs/plugin/quarto-support/footer.css" rel="stylesheet">
+  <style type="text/css">
+    .reveal div.sourceCode {
+      margin: 0;
+      overflow: auto;
+    }
+    .reveal div.hanging-indent {
+      margin-left: 1em;
+      text-indent: -1em;
+    }
+    .reveal .slide:not(.center) {
+      height: 100%;
+    }
+    .reveal .slide.scrollable {
+      overflow-y: auto;
+    }
+    .reveal .footnotes {
+      height: 100%;
+      overflow-y: auto;
+    }
+    .reveal .slide .absolute {
+      position: absolute;
+      display: block;
+    }
+    .reveal .footnotes ol {
+      counter-reset: ol;
+      list-style-type: none; 
+      margin-left: 0;
+    }
+    .reveal .footnotes ol li:before {
+      counter-increment: ol;
+      content: counter(ol) ". "; 
+    }
+    .reveal .footnotes ol li > p:first-child {
+      display: inline-block;
+    }
+    .reveal .slide ul,
+    .reveal .slide ol {
+      margin-bottom: 0.5em;
+    }
+    .reveal .slide ul li,
+    .reveal .slide ol li {
+      margin-top: 0.4em;
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide ul[role="tablist"] li {
+      margin-bottom: 0;
+    }
+    .reveal .slide ul li > *:first-child,
+    .reveal .slide ol li > *:first-child {
+      margin-block-start: 0;
+    }
+    .reveal .slide ul li > *:last-child,
+    .reveal .slide ol li > *:last-child {
+      margin-block-end: 0;
+    }
+    .reveal .slide .columns:nth-child(3) {
+      margin-block-start: 0.8em;
+    }
+    .reveal blockquote {
+      box-shadow: none;
+    }
+    .reveal .tippy-content>* {
+      margin-top: 0.2em;
+      margin-bottom: 0.7em;
+    }
+    .reveal .tippy-content>*:last-child {
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide > img.stretch.quarto-figure-center,
+    .reveal .slide > img.r-stretch.quarto-figure-center {
+      display: block;
+      margin-left: auto;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-left,
+    .reveal .slide > img.r-stretch.quarto-figure-left  {
+      display: block;
+      margin-left: 0;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-right,
+    .reveal .slide > img.r-stretch.quarto-figure-right  {
+      display: block;
+      margin-left: auto;
+      margin-right: 0; 
+    }
+  </style>
+</head>
+<body class="quarto-light">
+  <div class="reveal">
+    <div class="slides">
+
+<section id="title-slide" class="quarto-title-block center">
+  <h1 class="title">Big Data: DAGs and Scheduling</h1>
+
+<div class="quarto-title-authors">
+<div class="quarto-title-author">
+<div class="quarto-title-author-name">
+MSDE
+</div>
+        <p class="quarto-title-affiliation">
+            Lviv University
+          </p>
+    </div>
+</div>
+
+</section>
+<section>
+<section id="from-sequential-to-parallel" class="title-slide slide level1 center">
+<h1>From sequential to parallel</h1>
+
+</section>
+<section id="a-sequential-program-is-a-total-order" class="slide level2">
+<h2>A sequential program is a total order</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>What the source code says</strong></p>
+</div>
+<div class="callout-content">
+<p>Statements are written one after another, so they <em>appear</em> to be totally ordered: line 1, then line 2, then line 3.</p>
+<p>But most of that order is an <strong>artefact of writing the program down</strong>. It is not required by the computation.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The real constraint</strong></p>
+</div>
+<div class="callout-content">
+<p>Statement <span class="math inline">\(B\)</span> must come after statement <span class="math inline">\(A\)</span> only if <span class="math display">\[
+B \text{ reads what } A \text{ wrote.}
+\]</span> Everything else is free.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="which-orderings-are-actually-forced" class="slide level2">
+<h2>Which orderings are actually forced?</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Three kinds of dependence</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>true</strong> (read-after-write): <span class="math inline">\(B\)</span> consumes <span class="math inline">\(A\)</span>’s result — <strong>a genuine edge</strong></li>
+<li><strong>anti</strong> (write-after-read): <span class="math inline">\(B\)</span> overwrites something <span class="math inline">\(A\)</span> still needs</li>
+<li><strong>output</strong> (write-after-write): <span class="math inline">\(A\)</span> and <span class="math inline">\(B\)</span> write the same location</li>
+</ul>
+<p>Only the first is about data. The other two come from <strong>reusing a name</strong>, and disappear if you rename — or never reassign at all.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Which is why</strong></p>
+</div>
+<div class="callout-content">
+<p>Single-assignment and functional style parallelize more easily: with no reassignment there are no false dependences, and what is left <em>is</em> the dataflow.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="from-one-order-to-many" class="slide level2">
+<h2>From one order to many</h2>
+<img data-src="bigdata_lec3_files/mediabag/57675973ce09da4ccc688fc3c5e6b460818aad74.svg">
+</section>
+<section id="from-one-order-to-many-1" class="slide level2">
+<h2>From one order to many</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>What the graph tells us that the listing did not</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><code>b</code> never needed to wait for <code>a</code> — they can run <strong>at the same time</strong></li>
+<li><code>d</code> was written after <code>c</code>, but depends only on <code>a</code>; it can run <strong>before</strong> <code>c</code>, or beside it</li>
+<li>five statements, but only <strong>three</strong> levels of real dependence</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The shift</strong></p>
+</div>
+<div class="callout-content">
+<p>The sequential program was <strong>one linearization</strong> of this graph. Any topological order of the graph computes the same result.</p>
+<p>We stop asking <em>“what runs next?”</em> and start asking <em>“what is allowed to run now?”</em></p>
+</div>
+</div>
+</div>
+</section>
+<section id="choosing-the-nodes" class="slide level2">
+<h2>Choosing the nodes</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Granularity is ours to pick</strong></p>
+</div>
+<div class="callout-content">
+<p>A node can be a single instruction, a loop body, a function call, or “read this 100 MB file”. The theory does not care; the trade-off does:</p>
+<ul>
+<li><strong>fine grain</strong>: more parallelism to exploit, more scheduling overhead per unit of work</li>
+<li><strong>coarse grain</strong>: negligible overhead, less parallelism, worse load balance</li>
+</ul>
+<p>We call a node a <strong>task</strong> and leave its size open for now.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="who-recovers-the-graph" class="slide level2">
+<h2>Who recovers the graph?</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The same idea, at every level</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>CPUs</strong> do it in hardware: out-of-order execution rebuilds the dependence graph over a window of instructions and issues whatever is ready</li>
+<li><strong>Compilers</strong> do it statically: dependence analysis, vectorization, instruction scheduling</li>
+<li><strong>Build systems</strong> are given it: <code>make</code> is a DAG scheduler with files as nodes</li>
+<li><strong>Parallel frameworks</strong> ask <em>you</em> to build it explicitly, then schedule it</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>From here on</strong></p>
+</div>
+<div class="callout-content">
+<p>We assume the graph exists. The rest of the lecture is about what to <strong>do</strong> with it.</p>
+</div>
+</div>
+</div>
+</section></section>
+<section>
+<section id="program-as-dag" class="title-slide slide level1 center">
+<h1>Program as DAG</h1>
+
+</section>
+<section id="program-as-dag-1" class="slide level2">
+<h2>Program as DAG</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Representation</strong></p>
+</div>
+<div class="callout-content">
+<p>A parallel program can be represented by a node- and edge-weighted <strong>directed acyclic graph (DAG)</strong>, in which:</p>
+<ul>
+<li><strong>node weights</strong> represent task processing times</li>
+<li><strong>edge weights</strong> represent data dependencies as well as the communication times between tasks.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="program-as-dag-2" class="slide level2">
+<h2>Program as DAG</h2>
+
+<img data-src="img/dag.png" class="r-stretch"></section>
+<section id="program-as-dag-3" class="slide level2">
+<h2>Program as DAG</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Generalization</strong></p>
+</div>
+<div class="callout-content">
+<p>Multithreaded computing can be viewed as a natural generalization of sequential computing in the following sense:</p>
+<ul>
+<li>in <strong>sequential computing</strong>, a computation can be defined as a totally ordered set of instructions, where the ordering corresponds to the sequential execution order;</li>
+<li><strong>in multithreaded computing</strong>, a computation can be viewed as a partially ordered set of instructions (as specified by the DAG), where the instructions may be executed in any order compatible with the specified partial order.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="program-as-dag-4" class="slide level2">
+<h2>Program as DAG</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Ordering re-cap</strong></p>
+</div>
+<div class="callout-content">
+<p>A binary relation <span class="math inline">\(\preccurlyeq\)</span> on some set <span class="math inline">\(X\)</span> is called a <strong>partial order</strong> if <span class="math inline">\(\forall a,b,c \in X\)</span> the following is true:</p>
+<ul>
+<li><strong>Reflexivity:</strong> <span class="math inline">\(a \preccurlyeq a\)</span></li>
+<li><strong>Transitiity:</strong> <span class="math inline">\(a \preccurlyeq b, b \preccurlyeq c \Rightarrow a \preccurlyeq c\)</span></li>
+<li><strong>Antisymmetricity:</strong> <span class="math inline">\(a \preccurlyeq b, b \preccurlyeq a \Rightarrow a = b\)</span></li>
+</ul>
+<p>If, additionally, <span class="math inline">\(\forall a,b \ in X\)</span> either <span class="math inline">\(a \preccurlyeq b\)</span> or <span class="math inline">\(b \preccurlyeq a\)</span>, then the order is total.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="program-as-dag-5" class="slide level2">
+<h2>Program as DAG</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Definitions</strong></p>
+</div>
+<div class="callout-content">
+<p>A parallel program can be represented by a directed acyclic graph (<strong>DAG</strong>) <span class="math display">\[
+G=(V,E),
+\]</span></p>
+<p>where <span class="math inline">\(V\)</span> is a set of <span class="math inline">\(v\)</span> nodes and <span class="math inline">\(E\)</span> is a set of <span class="math inline">\(e\)</span> directed edges.</p>
+<p>A <strong>node</strong> in the DAG represents a task which in turn is a set of instructions which must be executed sequentially without preemption in the same processor.</p>
+<p>The <strong>weight</strong> of a node <span class="math inline">\(n_i\)</span> is called the <strong>computation cost</strong> and is denoted by <span class="math inline">\(w(n_i)\)</span>.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="program-as-dag-6" class="slide level2">
+<h2>Program as DAG</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Definitions</strong></p>
+</div>
+<div class="callout-content">
+<p>The edges in the DAG, each of which is denoted by <span class="math inline">\((n_i,n_j)\)</span>, correspond to the communication messages and precedence constraints among the nodes.</p>
+<p>The <strong>weight of an edge</strong> is called the <strong>communication cost</strong> of the edge and is denoted by <span class="math inline">\(c(n_i, n_j)\)</span>.</p>
+<p>The <strong>source node of an edge</strong> is called the <strong>parent</strong> node while the sink node is called the <strong>child</strong> node.</p>
+<p>A node with no parent is called an <strong>entry</strong> node and a node with no child is called an <strong>exit</strong> node.</p>
+<p>The <strong>communication-to-computation-ratio (CCR)</strong> of a parallel program is defined as its average edge weight divided by its average node weight.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="program-as-dag-7" class="slide level2">
+<h2>Program as DAG</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Definition</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>Scheduling</strong> involves executing a parallel program by mapping the computation over the processors so that:</p>
+<ul>
+<li>completion time is minimized</li>
+<li>use of other resources such as storage as energy is optimal.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="program-as-dag-8" class="slide level2">
+<h2>Program as DAG</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Definitions</strong></p>
+</div>
+<div class="callout-content">
+<p><span class="math inline">\(ST(n_i)\)</span> and <span class="math inline">\(FT(n_i)\)</span> denote start time and finish time at some processor.</p>
+<p>After all the nodes have been scheduled, the schedule length is defined as <span class="math inline">\(\max_i\left\{FT(n_i)\right\}\)</span> across all processors.</p>
+<p>The goal of scheduling is to minimize <span class="math inline">\(\max_i\left\{FT(n_i)\right\}\)</span>.</p>
+<p>Scheduling is done in such a manner that the precedence constraints among the program tasks are preserved.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="program-as-dag-9" class="slide level2">
+<h2>Program as DAG</h2>
+
+<img data-src="img/embarrassingly_parallel.png" class="r-stretch"></section>
+<section id="program-as-dag-10" class="slide level2">
+<h2>Program as DAG</h2>
+
+<img data-src="img/map_reduce_type.png" class="r-stretch"></section>
+<section id="program-as-dag-11" class="slide level2">
+<h2>Program as DAG</h2>
+
+<img data-src="img/full_scheduling.png" class="r-stretch"></section>
+<section id="program-as-dag-12" class="slide level2">
+<h2>Program as DAG</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Work</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>Work</strong> is defined as the number of vertices in the DAG.</p>
+<p>Work of a computation corresponds to the total number of operations it performs.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Span</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>Span</strong> is the length of the longest path in the DAG.</p>
+<p>Span corresponds to the longest chain of dependencies in the computation.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Work[make]span</strong></p>
+</div>
+<div class="callout-content">
+<p>The overall finish-time of a parallel program is commonly called the <strong>schedule length</strong> or <strong>makespan</strong>.</p>
+</div>
+</div>
+</div>
+</section></section>
+<section>
+<section id="scheduling" class="title-slide slide level1 center">
+<h1>Scheduling</h1>
+
+</section>
+<section id="scheduling-1" class="slide level2">
+<h2>Scheduling</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Taxonomy</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/scheduling_taxonomy.png"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="scheduling-2" class="slide level2">
+<h2>Scheduling</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Types</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>Static:</strong> the characteristics of a parallel program (such as task processing times, communication, data dependencies, and synchronization requirements) are known before program execution</li>
+<li><strong>Dynamic:</strong> a few assumptions about the parallel program can be made before execution, and thus, scheduling decisions have to be made on-the-fly. <!-- The goal of a dynamic scheduling algorithm as such includes not only the minimization of the program completion time but also the minimization of the scheduling overhead which constitutes a significant portion of the cost paid for running the scheduler. --></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="scheduling-3" class="slide level2">
+<h2>Scheduling</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Categories</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>Job scheduling</strong>: independent jobs are to be scheduled among the processors of a distributed computing system to optimize overall system performance</li>
+<li><strong>Scheduling and mapping</strong>: allocation of multiple interacting tasks of a single parallel program in order to minimize the completion time on the parallel computer system.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="scheduling-model-variations" class="slide level2">
+<h2>Scheduling model variations</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Preemptive vs non-preemptive</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>preemptive:</strong> execution of the task might be interrupted so that it’s allocated to a different processor</li>
+<li><strong>non-preemptive:</strong> execution must complete on a single processor</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Parallel vs non-parallel</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>Parallel</strong> task requires more than one processor for its execution.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>With vs without conditional branches</strong></p>
+</div>
+<div class="callout-content">
+<p>In conditional model, each edge in the DAG is associated with a non-zero probability that the child will be executed immediately after the parent.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="scheduling-4" class="slide level2">
+<h2>Scheduling</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>List scheduling</strong></p>
+</div>
+<div class="callout-content">
+<p>The basic idea of <strong>list scheduling</strong> is to make a scheduling list (a sequence of nodes for scheduling) by assigning them some priorities, and then repeatedly execute the following two steps until all the nodes in the graph are scheduled:</p>
+<ul>
+<li>Remove the first node from the scheduling list;</li>
+<li>Allocate the node to a processor which allows the earliest start-time.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="scheduling-5" class="slide level2">
+<h2>Scheduling</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Greedy Scheduler</strong></p>
+</div>
+<div class="callout-content">
+<p>We say that a scheduler is <strong>greedy</strong> if whenever there is a processor available and a task ready to execute, then it assigns the task to the processor and starts running it immediately. Greedy schedulers have an important property that is summarized by the greedy scheduling principle.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Greedy Scheduling Principle</strong></p>
+</div>
+<div class="callout-content">
+<p>The <strong>greedy scheduling principle</strong> postulates that if a computation is run on <span class="math inline">\(P\)</span> processors using a greedy scheduler, then the total time (clock cycles) for running the computation is bounded by <span class="math display">\[
+T_P &lt; \frac{W}{P} + S
+\]</span> where <span class="math inline">\(W\)</span> is the work of the computation, and <span class="math inline">\(S\)</span> is the span of the computation (both measured in units of clock cycles).</p>
+</div>
+</div>
+</div>
+</section>
+<section id="scheduling-6" class="slide level2">
+<h2>Scheduling</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Optimality of Greedy Schedulers</strong></p>
+</div>
+<div class="callout-content">
+<p>Firstly, the time to execute the computation cannot be less than <span class="math inline">\(\frac{W}{P}\)</span> clock cycles since we have a total of <span class="math inline">\(W\)</span> clock cycles of work to do and the best we can possibly do is divide it evenly among the processors. Secondly, the time to execute the computation cannot be any less than <span class="math inline">\(S\)</span> clock cycles, because <span class="math inline">\(S\)</span> represents the longest chain of sequential dependencies. Therefore we have <span class="math display">\[
+T_P \geq \max\left(\frac{W}{P},S\right).
+\]</span> We therefore see that a greedy scheduler does reasonably close to the best possible. In particular, <span class="math inline">\(\frac{W}{P} +S\)</span> is never more than twice <span class="math inline">\(\max\left(\frac{W}{P} ,S\right)\)</span>.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="scheduling-7" class="slide level2">
+<h2>Scheduling</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The same bound, other names</strong></p>
+</div>
+<div class="callout-content">
+<p>The greedy scheduling principle is also known as <strong>Brent’s theorem</strong> (Brent, 1974) and, in the list-scheduling literature, as <strong>Graham’s bound</strong>: <span class="math display">\[
+\max\left(\frac{W}{P}, S\right) \;\leq\; T_P \;&lt;\; \frac{W}{P} + S \;\leq\; 2\max\left(\frac{W}{P}, S\right).
+\]</span></p>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Read it as a design rule</strong></p>
+</div>
+<div class="callout-content">
+<p>Two knobs, and only two: <strong>grow the work</strong> you can spread (<span class="math inline">\(W/P\)</span>), <strong>shorten the critical path</strong> (<span class="math inline">\(S\)</span>). Everything a scheduler does is fighting for the constant factor between those bounds.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="scheduling-8" class="slide level2">
+<h2>Scheduling</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Relation to Amdahl</strong></p>
+</div>
+<div class="callout-content">
+<p>Amdahl’s law assumes a program splits into a serial fraction <span class="math inline">\(s\)</span> and a perfectly parallel rest. The DAG model says where <span class="math inline">\(s\)</span> <em>comes from</em>: it is the <strong>span</strong>.</p>
+<ul>
+<li>Amdahl: a number you guess about your program</li>
+<li>Span: a structural property you can measure, and change, by rewriting the graph</li>
+</ul>
+<p>A reduction written as a chain has <span class="math inline">\(S = \Theta(n)\)</span>; written as a tree, <span class="math inline">\(S = \Theta(\log n)\)</span>. Same work, same answer, different ceiling.</p>
+</div>
+</div>
+</div>
+</section></section>
+<section>
+<section id="how-hard-is-scheduling" class="title-slide slide level1 center">
+<h1>How hard is scheduling?</h1>
+
+</section>
+<section id="complexity" class="slide level2">
+<h2>Complexity</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The bad news</strong></p>
+</div>
+<div class="callout-content">
+<p>Minimizing makespan on <span class="math inline">\(P\)</span> processors under precedence constraints – <span class="math inline">\(P \mid prec \mid C_{\max}\)</span> – is <strong>NP-complete</strong> (Ullman, 1975).</p>
+<p>It stays NP-complete even when every task takes exactly <strong>one</strong> time unit – the durations are not what makes it hard, the <em>precedence structure</em> is.</p>
+<p>Adding <strong>communication costs</strong> (<span class="math inline">\(P \mid prec, c_{ij} \mid C_{\max}\)</span>) makes it NP-hard even with <em>unlimited</em> processors (Papadimitriou &amp; Yannakakis, 1990).</p>
+</div>
+</div>
+</div>
+</section>
+<section id="complexity-1" class="slide level2">
+<h2>Complexity</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The tractable corners</strong></p>
+</div>
+<div class="callout-content">
+<p>A handful of special cases <em>are</em> solvable exactly in polynomial time:</p>
+<ul>
+<li><strong>Trees</strong>, unit tasks, <span class="math inline">\(m\)</span> processors – Hu’s level algorithm (1961)</li>
+<li><strong>Two processors</strong>, unit tasks, arbitrary DAG – Coffman–Graham (1972), <span class="math inline">\(O(v^2)\)</span></li>
+<li><strong>Interval orders</strong>, unit tasks – Papadimitriou &amp; Yannakakis (1979)</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Still open</strong></p>
+</div>
+<div class="callout-content">
+<p>For a <em>fixed</em> number of processors <span class="math inline">\(m \geq 3\)</span> with unit tasks and arbitrary precedence, the complexity is <strong>still an open problem</strong> – one of the oldest in scheduling theory.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="complexity-2" class="slide level2">
+<h2>Complexity</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>So why bother with the theory?</strong></p>
+</div>
+<div class="callout-content">
+<p>Because the approximation results are surprisingly strong.</p>
+<p><strong>Graham (1966):</strong> <em>any</em> list schedule – no cleverness at all, just “never leave a processor idle if a task is ready” – satisfies <span class="math display">\[
+\frac{T_{\text{list}}}{T_{\text{opt}}} \leq 2 - \frac{1}{m}.
+\]</span></p>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Why it works</strong></p>
+</div>
+<div class="callout-content">
+<p>At every instant, either all <span class="math inline">\(m\)</span> processors are busy (we are burning through <span class="math inline">\(W\)</span>), or some processor is idle – and then a task on a critical path must be running (we are burning through <span class="math inline">\(S\)</span>).</p>
+</div>
+</div>
+</div>
+</section>
+<section id="complexity-3" class="slide level2">
+<h2>Complexity</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>And yet</strong></p>
+</div>
+<div class="callout-content">
+<p>For <strong>independent</strong> tasks (no precedence at all), sorting by longest-processing-time-first gives <span class="math display">\[
+\frac{T_{\text{LPT}}}{T_{\text{opt}}} \leq \frac{4}{3} - \frac{1}{3m} \qquad \text{(Graham, 1969)}
+\]</span> but the problem is <em>still</em> NP-hard – it contains <code>PARTITION</code>.</p>
+<p><strong>Scheduling two identical machines with no dependencies at all is already intractable.</strong></p>
+</div>
+</div>
+</div>
+</section></section>
+<section>
+<section id="grahams-anomalies" class="title-slide slide level1 center">
+<h1>Graham’s anomalies</h1>
+
+</section>
+<section id="grahams-anomalies-1" class="slide level2">
+<h2>Graham’s anomalies</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The most useful counterexample in scheduling</strong></p>
+</div>
+<div class="callout-content">
+<p>List scheduling is within a factor of 2. But it is <strong>not monotone</strong>. Fix the priority list and then make the problem <em>easier</em>: the schedule can get <strong>worse</strong>.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>An instance (Graham, 1969)</strong></p>
+</div>
+<div class="callout-content">
+<p>Nine tasks, priority list <span class="math inline">\(L = (T_1, \dots, T_9)\)</span>, three processors.</p>
+<table class="caption-top" style="width:100%;">
+<colgroup>
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>task</th>
+<th><span class="math inline">\(T_1\)</span></th>
+<th><span class="math inline">\(T_2\)</span></th>
+<th><span class="math inline">\(T_3\)</span></th>
+<th><span class="math inline">\(T_4\)</span></th>
+<th><span class="math inline">\(T_5\)</span></th>
+<th><span class="math inline">\(T_6\)</span></th>
+<th><span class="math inline">\(T_7\)</span></th>
+<th><span class="math inline">\(T_8\)</span></th>
+<th><span class="math inline">\(T_9\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>time</td>
+<td>3</td>
+<td>2</td>
+<td>2</td>
+<td>2</td>
+<td>4</td>
+<td>4</td>
+<td>4</td>
+<td>4</td>
+<td>9</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</section>
+<section id="grahams-anomalies-2" class="slide level2">
+<h2>Graham’s anomalies</h2>
+<img data-src="bigdata_lec3_files/mediabag/a0d798fe2b054d5b453762658e3fff2733da9859.svg">
+</section>
+<section id="grahams-anomalies-baseline" class="slide level2">
+<h2>Graham’s anomalies: baseline</h2>
+<div class="r-stack">
+<img data-src="bigdata_lec3_files/mediabag/acaa259b215670515708cf9d4e17ac53315a4181.svg">
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong><span class="math inline">\(m = 3\)</span>, original times, original precedence</strong></p>
+</div>
+<div class="callout-content">
+<p><span class="math inline">\(T_9\)</span> (the long task) is the critical path. One processor idles from <span class="math inline">\(t=2\)</span> to <span class="math inline">\(t=4\)</span>. This is optimal here.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="anomaly-1-every-task-gets-faster" class="slide level2">
+<h2>Anomaly 1: every task gets <em>faster</em></h2>
+<div class="r-stack">
+<img data-src="bigdata_lec3_files/mediabag/2f85dafff2c87ecb616208c41c7e15239ad7ef9d.svg">
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Subtract 1 from every execution time</strong></p>
+</div>
+<div class="callout-content">
+<p>Makespan <strong>12 <span class="math inline">\(\to\)</span> 13</strong>. Every single task finished sooner, and the program finished later.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="anomaly-2-add-a-processor" class="slide level2">
+<h2>Anomaly 2: <em>add</em> a processor</h2>
+<div class="r-stack">
+<img data-src="bigdata_lec3_files/mediabag/e888c6d43022960f7168d37e32f30a839cb9ad30.svg">
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong><span class="math inline">\(m = 3 \to 4\)</span></strong></p>
+</div>
+<div class="callout-content">
+<p>Makespan <strong>12 <span class="math inline">\(\to\)</span> 15</strong>. The fourth processor grabs <span class="math inline">\(T_4\)</span> early, which releases <span class="math inline">\(T_5 \dots T_8\)</span> early, which pushes the 9-unit <span class="math inline">\(T_9\)</span> to the back of the list.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="anomaly-3-remove-the-dependencies" class="slide level2">
+<h2>Anomaly 3: <em>remove</em> the dependencies</h2>
+<div class="r-stack">
+<img data-src="bigdata_lec3_files/mediabag/49a07e1cd9353f4d598f8c10dbcbfaa5cfdd8923.svg">
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Drop all precedence constraints</strong></p>
+</div>
+<div class="callout-content">
+<p>Makespan <strong>12 <span class="math inline">\(\to\)</span> 16</strong>. Fewer constraints, longer schedule.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="grahams-anomalies-3" class="slide level2">
+<h2>Graham’s anomalies</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The bound on the damage</strong></p>
+</div>
+<div class="callout-content">
+<p>Graham proved the anomalies are bounded. Going from <span class="math inline">\(m\)</span> to <span class="math inline">\(m'\)</span> processors, with the same list: <span class="math display">\[
+\frac{T_{m'}}{T_m} \leq 1 + \frac{m-1}{m'}.
+\]</span> So doubling the cluster can never more than <em>roughly</em> halve your gains – but it can absolutely make things worse.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>What to take away</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>greedy is within <span class="math inline">\(2\times\)</span>, but <strong>not monotone</strong>: local improvements are not safe</li>
+<li>“it got slower after we upgraded” is a legitimate scheduling outcome, not necessarily a bug</li>
+<li>and all of this assumed <strong>exact, known</strong> execution times</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="grahams-anomalies-4" class="slide level2">
+<h2>Graham’s anomalies</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The gap between theory and a running cluster</strong></p>
+</div>
+<div class="callout-content">
+<p>Everything so far assumed:</p>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>assumption</th>
+<th>reality</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(w(n_i)\)</span> known in advance</td>
+<td>measured after the fact, if at all</td>
+</tr>
+<tr class="even">
+<td>identical processors</td>
+<td>mixed hardware, noisy neighbours, throttling</td>
+</tr>
+<tr class="odd">
+<td>fixed processor count</td>
+<td>workers join and leave mid-job</td>
+</tr>
+<tr class="even">
+<td>processors never fail</td>
+<td>they run out of memory and die</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(c(n_i,n_j)\)</span> a constant</td>
+<td>depends on where the data happens to be</td>
+</tr>
+<tr class="even">
+<td>the graph is known</td>
+<td>it can be built while it runs</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</section></section>
+<section>
+<section id="scheduling-algorithms" class="title-slide slide level1 center">
+<h1>Scheduling algorithms</h1>
+
+</section>
+<section id="scheduling-algorithms-1" class="slide level2">
+<h2>Scheduling algorithms</h2>
+
+<img data-src="img/scheduling_classification.png" class="r-stretch"></section>
+<section id="scheduling-algorithms-2" class="slide level2">
+<h2>Scheduling algorithms</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>What’s a <strong>heuristic</strong> algorithm?</strong></p>
+</div>
+<div class="callout-content">
+<p>Algorithm used when classic methods are too slow for finding an exact or approximate solution, or when classic methods fail to find any exact solution in a search space.</p>
+<p>This is achieved by trading</p>
+<ul>
+<li>optimality,</li>
+<li>completeness,</li>
+<li>accuracy,</li>
+<li>or precision</li>
+</ul>
+<p>for speed.</p>
+<p>In a way, it can be considered a shortcut.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="scheduling-algorithms-3" class="slide level2">
+<h2>Scheduling algorithms</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>List scheduling</strong></p>
+</div>
+<div class="callout-content">
+<p>A list-scheduling heuristic maintains a list of all tasks of a given graph according to their priorities. It has two phases:</p>
+<ul>
+<li>the <strong>task prioritizing</strong> or <strong>task selection</strong> phase for selecting the highest-priority ready task</li>
+<li>and the <strong>processor selection</strong> phase for selecting a suitable processor that minimizes a predefined cost function which can be the execution start time.</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Features</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>for a bounded number of fully connected homogeneous processors</li>
+<li>provide better performance results at a lower scheduling time than the other groups</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="scheduling-algorithms-4" class="slide level2">
+<h2>Scheduling algorithms</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Clustering</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>Maps the tasks to unlimited number of clusters. The selected tasks for clustering can be any task, not necessarily a ready task.</p></li>
+<li><p>Each iteration refines the previous clustering by merging some clusters.</p></li>
+<li><p>If two tasks are assigned to the same cluster, they will be executed on the same processor.</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="scheduling-algorithms-5" class="slide level2">
+<h2>Scheduling algorithms</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Clustering: Extra final steps</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>a cluster <strong>merging</strong> step for merging the clusters so that the remaining number of clusters equal the number of processors</li>
+<li>a cluster <strong>mapping</strong> step for mapping the clusters on the available processors</li>
+<li>a task <strong>ordering</strong> step for ordering the mapped tasks within each processor</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="scheduling-algorithms-6" class="slide level2">
+<h2>Scheduling algorithms</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Guided random search</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>Guided random search</strong> techniques (or <strong>randomized search</strong> techniques) use random choice to guide themselves through the problem space, which is not the same as performing merely random walks as in the random search methods.</p>
+<p>These techniques combine the knowledge gained from previous search results with some randomizing features to generate new results.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="heftcpop" class="slide level2">
+<h2>HEFT/CPOP</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Definition</strong></p>
+</div>
+<div class="callout-content">
+<p>Heterogeneous earliest finish time (HEFT) is a heuristic algorithm to schedule a set of dependent tasks onto a network of heterogeneous workers taking communication time into account.</p>
+<p>Critical-Path-On-a-Processor (CPOP) algorithm uses the summation of upward and downward rank values for prioritizing tasks.</p>
+</div>
+</div>
+</div>
+
+<aside><div>
+<p>H. Topcuoglu, S. Hariri and Min-You Wu, <strong>“Performance-effective and low-complexity task scheduling for heterogeneous computing,”</strong> in IEEE Transactions on Parallel and Distributed Systems, vol.&nbsp;13, no. 3, pp.&nbsp;260-274, March 2002, doi: 10.1109/71.993206.</p>
+</div></aside></section>
+<section id="heftcpop-1" class="slide level2">
+<h2>HEFT/CPOP</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Definitions</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><span class="math inline">\(V\)</span> – set of <span class="math inline">\(v\)</span> nodes</li>
+<li><span class="math inline">\(E\)</span> – set of <span class="math inline">\(e\)</span> edges</li>
+<li><span class="math inline">\(data\)</span> – a <span class="math inline">\(v \times v\)</span> matrix of communication data</li>
+<li><span class="math inline">\(data_{i,k}\)</span> – amount of data to be transmitted from <span class="math inline">\(n_i\)</span> to <span class="math inline">\(n_k\)</span></li>
+<li><span class="math inline">\(Q\)</span> – set of <span class="math inline">\(q\)</span> processors</li>
+<li><span class="math inline">\(W\)</span> – a <span class="math inline">\(v \times q\)</span> computation cost matrix, in which each <span class="math inline">\(w_{i,j}\)</span> gives the estimated execution cost to complete task <span class="math inline">\(n_i\)</span> on processor <span class="math inline">\(p_j\)</span></li>
+<li><span class="math inline">\(B\)</span> – <span class="math inline">\(q \times q\)</span> data transfer rates matrix</li>
+<li><span class="math inline">\(L\)</span> – <span class="math inline">\(q\)</span>-dimensional vector of communication startup costs</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="heftcpop-2" class="slide level2">
+<h2>HEFT/CPOP</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Costs</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>Average execution cost</strong>: <span class="math display">\[
+  \overline{w_i} = \sum\limits_{j=1}^q \frac{w_{i,j}}{q}.
+\]</span> <strong>Communication cost</strong> of the edge <span class="math inline">\((i,k)\)</span> for transfering data from task <span class="math inline">\(n_i\)</span> scheduled on processor <span class="math inline">\(p_m\)</span> to task <span class="math inline">\(n_k\)</span> scheduled on processor <span class="math inline">\(p_n\)</span>: <span class="math display">\[
+c_{i,k} = L_m + \frac{data_{i,k}}{B_{m,n}}
+\]</span> <strong>Average communication cost:</strong> <span class="math display">\[
+\overline{c_{i,k}} = \overline{L} + \frac{data_{i,k}}{\overline{B}}
+\]</span></p>
+</div>
+</div>
+</div>
+</section>
+<section id="heftcpop-3" class="slide level2">
+<h2>HEFT/CPOP</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Times</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>Earliest execution start time</strong> of task <span class="math inline">\(n_i\)</span> on processor <span class="math inline">\(p_j\)</span>: <span class="math display">\[
+\begin{align*}
+&amp; EST(n_{entry}, p_j) = 0, \\
+&amp; EST(n_i, p_j) = \max\left\{avail[j], \max\limits_{n_m \in pred(n_i)} (AFT(n_m)+c_{m,i})\right\},
+\end{align*}
+\]</span> where <span class="math inline">\(avail[j]\)</span> is the earliest time at which processor <span class="math inline">\(p_j\)</span> is ready for task execution.</p>
+<p><strong>Earliest execution finish time</strong> of task <span class="math inline">\(n_i\)</span> on processor <span class="math inline">\(p_j\)</span>: <span class="math display">\[
+EFT(n_i, p_j) = w_{i,j} + EST(n_i,p_j)
+\]</span></p>
+<p>After a task <span class="math inline">\(n_m\)</span> is scheduled on processor <span class="math inline">\(p_j\)</span>, the earliest start time and the earliest finish time of <span class="math inline">\(n_m\)</span> on processor <span class="math inline">\(p_j\)</span> is equal to the <strong>actual start time</strong> <span class="math inline">\(AST(n_m)\)</span> and the <strong>actual finish time</strong> <span class="math inline">\(AFT(n_m)\)</span>, respectively.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="heftcpop-4" class="slide level2">
+<h2>HEFT/CPOP</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Workspan</strong></p>
+</div>
+<div class="callout-content">
+<p>After all tasks in the graph have been scheduled, the <strong>schedule length</strong> (<strong>makespan</strong>) will be equal to the actual finish time of the exit task <span class="math inline">\(n_{exit}\)</span>. In case of several exits: <span class="math display">\[
+makespan = \max \left\{AFT(n_{exit})\right\}
+\]</span></p>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Definition</strong></p>
+</div>
+<div class="callout-content">
+<p>The <strong>objective function</strong> of the task scheduling problem is to determine the assignment of tasks to processors such that its <strong>makespan is minimized</strong>.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="heftcpop-5" class="slide level2">
+<h2>HEFT/CPOP</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Upward rank</strong></p>
+</div>
+<div class="callout-content">
+<p><span class="math display">\[
+\begin{align*}
+  rank_u(n_i) = \overline{w_i} + \max\limits_{n_j \in succ(n_i)} \left(\overline{c_{i,j}} + rank_u(n_j)\right)
+\end{align*}
+\]</span></p>
+<ul>
+<li><span class="math inline">\(succ(n_i)\)</span> – set of immediate successors of <span class="math inline">\(n_i\)</span></li>
+<li><span class="math inline">\(\overline{c_{i,j}}\)</span> – average communication cost of edge <span class="math inline">\((i,j)\)</span></li>
+<li><span class="math inline">\(\overline{w_i}\)</span> – average computation cost of task <span class="math inline">\(n_i\)</span></li>
+</ul>
+<p><span class="math display">\[
+rank_u(n_{exit}) = \overline{w_{exit}}
+\]</span></p>
+</div>
+</div>
+</div>
+</section>
+<section id="heftcpop-6" class="slide level2">
+<h2>HEFT/CPOP</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Downward rank</strong></p>
+</div>
+<div class="callout-content">
+<p><span class="math display">\[
+\begin{align*}
+  rank_d(n_i) = \max\limits_{n_j \in pred(n_i)} \left(rank_d(n_j)+ \overline{w_j} + \overline{c_{j,i}}\right)
+  \end{align*}
+\]</span></p>
+<ul>
+<li><span class="math inline">\(pred(n_i)\)</span> – set of immediate predecessors of <span class="math inline">\(n_i\)</span></li>
+<li><span class="math inline">\(rank_d(n_{entry}) = 0\)</span></li>
+<li>can be thought of as the longest distance from the entry task to <span class="math inline">\(n_i\)</span> without computation costs</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="heftcpop-7" class="slide level2">
+<h2>HEFT/CPOP</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>HEFT</strong></p>
+</div>
+<div class="callout-content">
+<ol type="1">
+<li>Set the computation costs of tasks and communication costs of edges with mean values</li>
+<li>Compute <span class="math inline">\(rank_u\)</span> for all tasks by traversing graph upward, starting from the exit task</li>
+<li>Sort the tasks in the scheduling list by non-increasing order of <span class="math inline">\(rank_u\)</span> values</li>
+<li><strong>while</strong> there are unscheduled tasks in the list <strong>do</strong>:</li>
+<li>   select the task <span class="math inline">\(n_i\)</span> from the scheduling list</li>
+<li>   <strong>for</strong> each processor <span class="math inline">\(p_k\)</span> in the processor set <span class="math inline">\(Q\)</span> <strong>do</strong>:</li>
+<li>     Compute <span class="math inline">\(EFT(n_i,p_k)\)</span> using the insertion-based scheduling policy</li>
+<li>   Assign task <span class="math inline">\(n_i\)</span> to the processor <span class="math inline">\(p_j\)</span> minimizing <span class="math inline">\(EFT(n_i, p_j)\)</span></li>
+</ol>
+</div>
+</div>
+</div>
+</section>
+<section id="heftcpop-8" class="slide level2">
+<h2>HEFT/CPOP</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>CPOP</strong></p>
+</div>
+<div class="callout-content">
+<ol type="1">
+<li>Set the computation costs of tasks and communication costs of edges with mean values</li>
+<li>Compute <span class="math inline">\(rank_u\)</span> for all tasks by traversing graph upward, starting from the exit task</li>
+<li>Compute <span class="math inline">\(rank_d\)</span> for all tasks by traversing graph downward, starting from the entry task</li>
+<li>Compute <span class="math inline">\(priority(n_i) = rank_d(n_i) + rank_u(n_i) \; \forall n_i\)</span></li>
+<li><span class="math inline">\(|CP| = priority(n_{entry})\)</span></li>
+<li><span class="math inline">\(SET_{CP} = \{n_{entry}\}\)</span>, where <span class="math inline">\(SET_{CP}\)</span> is a set of tasks on a critical path</li>
+<li><span class="math inline">\(n_k \leftarrow n_{entry}\)</span></li>
+</ol>
+</div>
+</div>
+</div>
+</section>
+<section id="heftcpop-9" class="slide level2">
+<h2>HEFT/CPOP</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>CPOP</strong></p>
+</div>
+<div class="callout-content">
+<ol start="8" type="1">
+<li><strong>while</strong> <span class="math inline">\(n_k \neq n_{exit}\)</span> <strong>do</strong></li>
+<li>   select <span class="math inline">\(n_j: n_j \in succ(n_k) \textbf{ and } priority(n_j) = |CP|\)</span></li>
+<li>   <span class="math inline">\(SET_{CP} = SET_{CP} \cup {n_j}\)</span></li>
+<li>   <span class="math inline">\(n_k \leftarrow n_j\)</span></li>
+<li>select <span class="math inline">\(p_{CP}\)</span> minimizing <span class="math inline">\(\sum\limits_{n_i \in SET_{CP}} w_{i,j} \; \forall p_j \in Q\)</span></li>
+<li>initialize priority queue <span class="math inline">\(PQ\)</span> with the entry task</li>
+</ol>
+</div>
+</div>
+</div>
+</section>
+<section id="heftcpop-10" class="slide level2">
+<h2>HEFT/CPOP</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>CPOP</strong></p>
+</div>
+<div class="callout-content">
+<ol start="14" type="1">
+<li><strong>while</strong> there are unscheduled tasks in the <span class="math inline">\(PQ\)</span><strong>do</strong></li>
+<li>   select the highest priority task <span class="math inline">\(n_i\)</span> from <span class="math inline">\(PQ\)</span></li>
+<li>   <strong>if</strong> <span class="math inline">\(n_i \ in SET_{CP}\)</span> <strong>then</strong></li>
+<li>     assign <span class="math inline">\(n_i\)</span> to <span class="math inline">\(p_{CP}\)</span></li>
+<li>   <strong>else</strong></li>
+<li>     assign <span class="math inline">\(n_i\)</span> to <span class="math inline">\(p_j\)</span> minimizing <span class="math inline">\(EFT(n_i,p_j)\)</span></li>
+<li>   update <span class="math inline">\(PQ\)</span> with the successors of <span class="math inline">\(n_i\)</span> if ready</li>
+</ol>
+</div>
+</div>
+</div>
+</section>
+<section id="heftcpop-11" class="slide level2">
+<h2>HEFT/CPOP</h2>
+<p><img data-src="img/heft_graph.png" height="600"></p>
+</section>
+<section id="heftcpop-12" class="slide level2">
+<h2>HEFT/CPOP</h2>
+
+<img data-src="img/heft_cpop.png" class="r-stretch quarto-figure-center"><p class="caption">HEFT - (a), CPOP - (b)</p></section></section>
+<section>
+<section id="dynamic-scheduling" class="title-slide slide level1 center">
+<h1>Dynamic scheduling</h1>
+
+</section>
+<section id="why-the-static-picture-breaks" class="slide level2">
+<h2>Why the static picture breaks</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>HEFT needs a cost matrix. Where would you get one?</strong></p>
+</div>
+<div class="callout-content">
+<p>Static algorithms want <span class="math inline">\(w(n_i, p_k)\)</span> and <span class="math inline">\(c(n_i, n_j)\)</span> for every task and every processor, <strong>before</strong> anything runs. In a real analytics cluster:</p>
+<ul>
+<li>a task’s duration depends on <strong>data it has not read yet</strong> (how many rows survive a filter?)</li>
+<li>the machine is <strong>shared</strong> – noisy neighbours, thermal throttling, a cold page cache</li>
+<li>the first execution of a task includes <strong>JIT warm-up</strong> and import time</li>
+<li>workers <strong>appear and disappear</strong> (autoscaling, spot instances, OOM kills)</li>
+<li><span class="math inline">\(c(n_i,n_j)\)</span> is <span class="math inline">\(0\)</span> if the data is already on the worker and seconds if it is not – which is what you are trying to decide</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="why-the-static-picture-breaks-1" class="slide level2">
+<h2>Why the static picture breaks</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>And the graph itself may not be finished</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><code>dask.dataframe</code> does not know partition sizes until it reads them</li>
+<li>shuffles produce graph structure that depends on the data</li>
+<li>interactive work appends to the graph while earlier parts are still running</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The pivot</strong></p>
+</div>
+<div class="callout-content">
+<p>Stop computing a schedule. Compute a <strong>policy</strong>: a cheap rule, re-evaluated constantly, that is good on average and recovers from being wrong.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="work-sharing-vs-work-stealing" class="slide level2">
+<h2>Work sharing vs work stealing</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Two ways to balance load</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>Work sharing</strong>: whenever a processor creates new work, it <em>pushes</em> it out to a central pool or to another processor. Migration happens whenever work is created.</li>
+<li><strong>Work stealing</strong>: an idle processor <em>pulls</em> work from a busy one. Migration happens only when a processor runs dry.</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Why stealing wins</strong></p>
+</div>
+<div class="callout-content">
+<p>When everybody is busy, stealing costs <strong>nothing at all</strong>: no messages, no contention. Communication is proportional to the <em>imbalance</em>, not to the amount of work.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="the-deque-discipline" class="slide level2">
+<h2>The deque discipline</h2>
+<img data-src="bigdata_lec3_files/mediabag/77f3bc4c9852375d56bef0f7cd42779982871273.svg">
+</section>
+<section id="the-deque-discipline-1" class="slide level2">
+<h2>The deque discipline</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Why the two ends differ</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>The <strong>owner</strong> runs its own deque <strong>LIFO</strong>. That is a depth-first traversal: the data it needs is the data it just produced, still in L1/L2. It also keeps the memory footprint small (see <code>dask.order</code> later).</li>
+<li>The <strong>thief</strong> takes from the <strong>other</strong> end, <strong>FIFO</strong>. The oldest entry sits nearest the root of the computation, so it is usually the <em>largest</em> remaining subtree. One expensive steal buys a long stretch of local work.</li>
+<li>Because the two ends are different, owner and thief almost never touch the same slot – the common path needs no lock at all (Cilk’s THE protocol).</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="work-stealing-the-theory" class="slide level2">
+<h2>Work stealing: the theory</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Blumofe &amp; Leiserson (1999)</strong></p>
+</div>
+<div class="callout-content">
+<p>For a fully strict computation with work <span class="math inline">\(T_1\)</span> and span <span class="math inline">\(T_\infty\)</span>, randomized work stealing on <span class="math inline">\(P\)</span> processors achieves <span class="math display">\[
+\mathbb{E}[T_P] \;=\; \frac{T_1}{P} + O(T_\infty)
+\]</span> – <strong>provably within a constant factor of optimal</strong>, with no knowledge of task durations at all.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>And two bounds that matter more in practice</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>Space</strong>: <span class="math inline">\(S_P \leq P \cdot S_1\)</span> – stealing cannot blow up memory more than linearly in <span class="math inline">\(P\)</span></li>
+<li><strong>Communication</strong>: expected <span class="math inline">\(O(P \, T_\infty \, S_{\max})\)</span> bytes – again proportional to the <em>span</em>, not the work</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="work-stealing-the-theory-1" class="slide level2">
+<h2>Work stealing: the theory</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Why random victim selection?</strong></p>
+</div>
+<div class="callout-content">
+<p>A thief picks a victim <strong>uniformly at random</strong>. No load table, no coordination, no central state.</p>
+<p>If a constant fraction of the deques are non-empty, a steal succeeds with constant probability, so <span class="math inline">\(O(P)\)</span> steal attempts suffice per unit of progress. Any attempt to be smarter reintroduces the shared state you were trying to avoid.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The work-first principle (Cilk)</strong></p>
+</div>
+<div class="callout-content">
+<p>Move overhead <strong>off the work path and onto the critical path</strong>. The work path executes <span class="math inline">\(T_1\)</span> times; the steal path executes <span class="math inline">\(O(P\,T_\infty)\)</span> times. Make the common case free, and let stealing be expensive.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="locality-vs-load-balance" class="slide level2">
+<h2>Locality vs load balance</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The core tension</strong></p>
+</div>
+<div class="callout-content">
+<p>Two jobs pull in opposite directions:</p>
+<ul>
+<li><strong>balance</strong>: keep every processor busy <span class="math inline">\(\Rightarrow\)</span> move tasks freely</li>
+<li><strong>locality</strong>: run a task where its input already is <span class="math inline">\(\Rightarrow\)</span> never move tasks</li>
+</ul>
+<p>Moving a task is cheap. Moving its 200 MB input is not.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Delay scheduling (Zaharia et al., 2010)</strong></p>
+</div>
+<div class="callout-content">
+<p>When the next task’s preferred node is busy: <strong>wait a few seconds</strong> instead of launching it elsewhere. Slots free up constantly, so a short wait almost always wins the local slot.</p>
+<p>In the Hadoop fair scheduler this raised data locality to nearly 100% and roughly <strong>doubled</strong> throughput. Five lines of policy.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="sampling-instead-of-state" class="slide level2">
+<h2>Sampling instead of state</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The power of two choices</strong></p>
+</div>
+<div class="callout-content">
+<p>Placing a task on a <strong>uniformly random</strong> worker of <span class="math inline">\(n\)</span> leaves a maximum queue length of <span class="math inline">\(\Theta(\log n / \log\log n)\)</span>.</p>
+<p>Sampling <strong>two</strong> at random and taking the shorter queue drops it to <span class="math inline">\(\Theta(\log\log n)\)</span> – an exponential improvement, for one extra probe.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Why schedulers care</strong></p>
+</div>
+<div class="callout-content">
+<p>It means you can get near-centralized quality of placement with <strong>no centralized state at all</strong>. Sparrow builds a whole distributed scheduler out of this idea: batch sampling plus <em>late binding</em> – place reservations on several workers, and let the first one to become free actually claim the task.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="stragglers" class="slide level2">
+<h2>Stragglers</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The task that will not finish</strong></p>
+</div>
+<div class="callout-content">
+<p>In a 10 000-task stage, the makespan is set by the slowest task, not the average one. Causes: a bad disk, a hot node, skewed data, a background daemon, a garbage collection pause.</p>
+<p><strong>Speculative execution</strong>: once a stage is nearly done, launch duplicate copies of the laggards and take whichever finishes first.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Refinements</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>MapReduce (2004)</strong>: back up the last few tasks near the end of a phase</li>
+<li><strong>LATE (2008)</strong>: rank by <em>longest approximate time to end</em>, not by progress so far – crucial on heterogeneous nodes</li>
+<li><strong>Mantri (2010)</strong>: diagnose the <em>cause</em> (data skew vs slow node) before acting</li>
+<li><strong>Dolly (2013)</strong>: for small jobs, just clone every task up front – cheaper than detecting stragglers</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="stragglers-1" class="slide level2">
+<h2>Stragglers</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The tail at scale (Dean &amp; Barroso, 2013)</strong></p>
+</div>
+<div class="callout-content">
+<p>If a single machine answers within 10 ms 99% of the time, then a request that fans out to <strong>100</strong> machines waits longer than 10 ms <strong>63%</strong> of the time.</p>
+<p>Rare slowness at the component level becomes the <em>common case</em> at the system level.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Techniques</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>hedged requests</strong> (send a second copy after the 95th-percentile delay), <strong>tied requests</strong> (send two, have them cancel each other), micro-partitioning, selective replication, “good enough” partial answers.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="the-scheduler-is-itself-a-parallel-program" class="slide level2">
+<h2>The scheduler is itself a parallel program</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Costs you now own</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>a <strong>decision</strong> must be cheaper than the task it schedules – so per-task overhead sets your minimum useful task size</li>
+<li>the scheduler holds state proportional to the <strong>graph</strong>, not the cluster: millions of tasks means millions of objects in one process</li>
+<li>every policy above (stealing, speculation, locality delay) is <strong>work the scheduler does while jobs are running</strong></li>
+<li>and each one can misfire: stealing can thrash, speculation can double your cluster load, locality delay can idle machines</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Where we see this concretely</strong></p>
+</div>
+<div class="callout-content">
+<p>Lecture 5 walks through one real implementation — Dask’s ordering pass, placement rule, stealing loop, state machine and memory policy. First, one level up.</p>
+</div>
+</div>
+</div>
+</section></section>
+<section>
+<section id="beyond-one-framework" class="title-slide slide level1 center">
+<h1>Beyond one framework</h1>
+
+</section>
+<section id="who-hands-out-the-machines" class="slide level2">
+<h2>Who hands out the machines?</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Two levels of scheduling</strong></p>
+</div>
+<div class="callout-content">
+<p>Everything so far was <strong>intra-job</strong>: one framework deciding which of <em>its</em> tasks runs on which of <em>its</em> workers.</p>
+<p>But those workers are processes on machines that somebody else hands out — to this job and to fifty other tenants at the same time. That is <strong>cluster resource management</strong>, and it is a second, mostly independent scheduling problem.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Why it is harder, not easier</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>jobs arrive <strong>online</strong>, with no notice and no cost estimates</li>
+<li>multiple <strong>resource dimensions</strong>: CPU, memory, disk, network, GPUs, licences</li>
+<li><strong>fairness</strong> and priorities across teams that do not trust each other</li>
+<li>long-running services and batch jobs sharing the same machines</li>
+<li>decisions must be made in <strong>milliseconds</strong>, at tens of thousands of machines</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="four-architectures" class="slide level2">
+<h2>Four architectures</h2>
+<img data-src="bigdata_lec3_files/mediabag/a3ee08555bcb10461692af2794b3e910557a77c4.svg">
+</section>
+<section id="four-architectures-1" class="slide level2">
+<h2>Four architectures</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The trade-off in one line</strong></p>
+</div>
+<div class="callout-content">
+<p>Going down the list, you trade <strong>decision quality</strong> for <strong>decision throughput</strong>.</p>
+<ul>
+<li><em>monolithic</em>: best decisions, one bottleneck, and every new policy goes into the same codebase</li>
+<li><em>two-level</em>: isolation between frameworks – but a framework can only reason about the slice it was offered</li>
+<li><em>shared state</em>: everyone sees everything and commits transactions; conflicts are resolved by <strong>retrying</strong>, which is fine until contention is high</li>
+<li><em>distributed</em>: millisecond decisions at any scale, and no way to enforce a global policy</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="the-zoo" class="slide level2">
+<h2>The zoo</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Worth knowing by name</strong></p>
+</div>
+<div class="callout-content">
+<table class="caption-top">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>system</th>
+<th>idea</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Borg</strong> (Google, 2015)</td>
+<td>monolithic, cells of tens of thousands of machines, priorities + quota, services and batch co-scheduled</td>
+</tr>
+<tr class="even">
+<td><strong>Omega</strong> (Google, 2013)</td>
+<td>shared state, optimistic concurrency control between many schedulers</td>
+</tr>
+<tr class="odd">
+<td><strong>Mesos</strong> (2011)</td>
+<td>two-level <em>offers</em>; frameworks accept or decline</td>
+</tr>
+<tr class="even">
+<td><strong>YARN</strong> (2013)</td>
+<td>two-level <em>requests</em>; per-application masters</td>
+</tr>
+<tr class="odd">
+<td><strong>Kubernetes</strong></td>
+<td>filter (predicates) <span class="math inline">\(\to\)</span> score (priorities) <span class="math inline">\(\to\)</span> bind; pluggable framework</td>
+</tr>
+<tr class="even">
+<td><strong>Sparrow</strong> (2013)</td>
+<td>decentralized, batch sampling + late binding</td>
+</tr>
+<tr class="odd">
+<td><strong>Quincy</strong> (2009) / <strong>Firmament</strong> (2016)</td>
+<td>encode fairness <em>and</em> locality as <strong>min-cost flow</strong>, solve it exactly</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</section>
+<section id="fairness-with-many-resources" class="slide level2">
+<h2>Fairness with many resources</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>What does “half the cluster” even mean?</strong></p>
+</div>
+<div class="callout-content">
+<p>User A’s jobs are CPU-bound; user B’s are memory-bound. Splitting <em>cores</em> evenly wastes memory; splitting <em>memory</em> evenly wastes cores.</p>
+<p><strong>Dominant Resource Fairness</strong> (Ghodsi et al., 2011): for each user, find the resource of which they consume the largest <em>share</em> – their <strong>dominant resource</strong> – and equalize those shares.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Why it caught on</strong></p>
+</div>
+<div class="callout-content">
+<p>DRF is strategy-proof (lying about your needs does not help), envy-free, and Pareto-efficient. It is the default in Mesos and in YARN’s capacity scheduler.</p>
+<p>Even “be fair” turns out to be a research problem.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="scale-for-perspective" class="slide level2">
+<h2>Scale, for perspective</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The numbers</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>a Borg cell: <strong>tens of thousands</strong> of machines, one logically centralized scheduler</li>
+<li>Google reported Borg placing on the order of <strong>10 000 tasks per minute</strong> per cell</li>
+<li>Sparrow targets sub-second tasks with <strong>millisecond</strong> placement decisions, spread over many independent schedulers</li>
+<li>a Dask scheduler: <strong>a few thousand</strong> tasks per second, single-threaded Python</li>
+</ul>
+<p>Different problems, four orders of magnitude apart in task size.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="the-honest-summary" class="slide level2">
+<h2>The honest summary</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>What “scheduling” turned out to mean</strong></p>
+</div>
+<div class="callout-content">
+<p>We started with a clean statement – minimize <span class="math inline">\(\max_i FT(n_i)\)</span> over a weighted DAG – and found:</p>
+<ol type="1">
+<li>it is <strong>NP-complete</strong>, and stays so under almost every simplification</li>
+<li>the trivial greedy algorithm is already within <span class="math inline">\(2\times\)</span> of optimal</li>
+<li>…but is <strong>not monotone</strong>: more processors can be slower</li>
+<li>the inputs it needs (durations, communication costs) <strong>do not exist</strong> at run time</li>
+<li>so real systems <strong>measure</strong> instead, and re-decide continuously</li>
+<li>and then spend most of their code on memory, failure, elasticity and observability – none of which appear in the model at all</li>
+</ol>
+</div>
+</div>
+</div>
+</section>
+<section id="the-honest-summary-1" class="slide level2">
+<h2>The honest summary</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Where the theory still earns its keep</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>work and span</strong> tell you the ceiling before you write any code</li>
+<li><strong>Graham’s bound</strong> says a simple greedy policy is not the thing holding you back</li>
+<li><strong>Graham’s anomalies</strong> say to measure, not to reason, about “improvements”</li>
+<li><strong>list scheduling’s two phases</strong> – pick a task, pick a processor – are exactly the two halves of every real scheduler: a static ordering pass and a placement rule</li>
+<li><strong>work stealing’s bounds</strong> are why the decentralized version is respectable and not a hack</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The practical rule</strong></p>
+</div>
+<div class="callout-content">
+<p>Your job is to hand the scheduler a graph it can do well on: <strong>few enough tasks, big enough tasks, short enough span, small enough intermediates.</strong></p>
+</div>
+</div>
+</div>
+</section></section>
+<section>
+<section id="references" class="title-slide slide level1 center">
+<h1>References</h1>
+
+</section>
+<section id="books" class="slide level2">
+<h2>Books</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Where this lecture comes from</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>O. Sinnen, <em>Task Scheduling for Parallel Systems</em>, Wiley, 2007 — the DAG model used here: node/edge weights, CCR, list scheduling, clustering</li>
+<li>U. A. Acar &amp; G. E. Blelloch, <em>Algorithms: Parallel and Sequential</em>, CMU, freely available — work, span, and the greedy scheduling principle</li>
+<li>T. Cormen, C. Leiserson, R. Rivest &amp; C. Stein, <em>Introduction to Algorithms</em>, 4th ed., MIT Press, 2022 — ch.&nbsp;26, <em>Parallel Algorithms</em>: work/span analysis and Brent’s bound</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="books-1" class="slide level2">
+<h2>Books</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Scheduling theory</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>M. L. Pinedo, <em>Scheduling: Theory, Algorithms, and Systems</em>, Springer, 6th ed., 2022 — the standard reference; source of the <span class="math inline">\(\alpha \mid \beta \mid \gamma\)</span> notation used here</li>
+<li>P. Brucker, <em>Scheduling Algorithms</em>, Springer, 5th ed., 2007</li>
+<li>J. Y-T. Leung (ed.), <em>Handbook of Scheduling: Algorithms, Models, and Performance Analysis</em>, Chapman &amp; Hall/CRC, 2004</li>
+<li>M. R. Garey &amp; D. S. Johnson, <em>Computers and Intractability: A Guide to the Theory of NP-Completeness</em>, Freeman, 1979 — where the scheduling reductions live</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="books-2" class="slide level2">
+<h2>Books</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Parallel algorithms and task scheduling</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>H. Casanova, A. Legrand &amp; Y. Robert, <em>Parallel Algorithms</em>, Chapman &amp; Hall/CRC, 2008</li>
+<li>H. El-Rewini, T. G. Lewis &amp; H. H. Ali, <em>Task Scheduling in Parallel and Distributed Systems</em>, Prentice Hall, 1994</li>
+<li>M. McCool, A. D. Robison &amp; J. Reinders, <em>Structured Parallel Programming: Patterns for Efficient Computation</em>, Morgan Kaufmann, 2012 — work/span reasoning applied to real patterns</li>
+<li>M. Herlihy, N. Shavit, V. Luchangco &amp; M. Spear, <em>The Art of Multiprocessor Programming</em>, 2nd ed., Morgan Kaufmann, 2020 — ch.&nbsp;16: work-stealing deques, in detail</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="books-3" class="slide level2">
+<h2>Books</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Systems and clusters</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>L. A. Barroso, U. Hölzle &amp; P. Ranganathan, <em>The Datacenter as a Computer</em>, 3rd ed., Morgan &amp; Claypool, 2018 — warehouse-scale machines, utilization, tail latency</li>
+<li>M. Kleppmann, <em>Designing Data-Intensive Applications</em>, O’Reilly — batch and stream processing, fault tolerance</li>
+<li>A. S. Tanenbaum &amp; M. van Steen, <em>Distributed Systems</em>, 4th ed., 2023</li>
+<li>R. &amp; A. Arpaci-Dusseau, <em>Operating Systems: Three Easy Pieces</em>, freely available — the <em>other</em> scheduler: CPU scheduling, MLFQ, multiprocessor scheduling</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="papers" class="slide level2">
+<h2>Papers</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Classical scheduling theory</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>R. L. Graham, <em>Bounds for certain multiprocessing anomalies</em>, Bell System Technical Journal, 1966</li>
+<li>R. L. Graham, <em>Bounds on multiprocessing timing anomalies</em>, SIAM J. Applied Mathematics, 1969</li>
+<li>T. C. Hu, <em>Parallel sequencing and assembly line problems</em>, Operations Research, 1961</li>
+<li>E. G. Coffman &amp; R. L. Graham, <em>Optimal scheduling for two-processor systems</em>, Acta Informatica, 1972</li>
+<li>J. D. Ullman, <em>NP-complete scheduling problems</em>, J. Computer and System Sciences, 1975</li>
+<li>C. Papadimitriou &amp; M. Yannakakis, <em>Scheduling interval-ordered tasks</em>, SIAM J. Computing, 1979</li>
+<li>C. Papadimitriou &amp; M. Yannakakis, <em>Towards an architecture-independent analysis of parallel algorithms</em>, SIAM J. Computing, 1990</li>
+<li>R. L. Graham, E. L. Lawler, J. K. Lenstra &amp; A. H. G. Rinnooy Kan, <em>Optimization and approximation in deterministic sequencing and scheduling: a survey</em>, Annals of Discrete Mathematics, 1979 — introduces the <span class="math inline">\(\alpha \mid \beta \mid \gamma\)</span> notation</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="papers-1" class="slide level2">
+<h2>Papers</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>DAG scheduling and heuristics</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>Y.-K. Kwok &amp; I. Ahmad, <em>Static scheduling algorithms for allocating directed task graphs to multiprocessors</em>, ACM Computing Surveys, 1999</li>
+<li>H. Topcuoglu, S. Hariri &amp; M.-Y. Wu, <em>Performance-effective and low-complexity task scheduling for heterogeneous computing</em> (HEFT/CPOP), IEEE TPDS, 2002</li>
+<li>R. P. Brent, <em>The parallel evaluation of general arithmetic expressions</em>, JACM, 1974</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Work stealing</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>R. Blumofe &amp; C. Leiserson, <em>Scheduling multithreaded computations by work stealing</em>, JACM, 1999</li>
+<li>M. Frigo, C. Leiserson &amp; K. Randall, <em>The implementation of the Cilk-5 multithreaded language</em>, PLDI, 1998</li>
+<li>M. Mitzenmacher, <em>The power of two choices in randomized load balancing</em>, IEEE TPDS, 2001</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="papers-2" class="slide level2">
+<h2>Papers</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Cluster scheduling</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>J. Dean &amp; S. Ghemawat, <em>MapReduce: simplified data processing on large clusters</em>, OSDI, 2004</li>
+<li>M. Isard et al., <em>Quincy: fair scheduling for distributed computing clusters</em>, SOSP, 2009</li>
+<li>M. Zaharia et al., <em>Improving MapReduce performance in heterogeneous environments</em> (LATE), OSDI, 2008</li>
+<li>M. Zaharia et al., <em>Delay scheduling</em>, EuroSys, 2010</li>
+<li>B. Hindman et al., <em>Mesos: a platform for fine-grained resource sharing</em>, NSDI, 2011</li>
+<li>A. Ghodsi et al., <em>Dominant Resource Fairness</em>, NSDI, 2011</li>
+<li>M. Schwarzkopf et al., <em>Omega: flexible, scalable schedulers for large compute clusters</em>, EuroSys, 2013</li>
+<li>K. Ousterhout et al., <em>Sparrow: distributed, low latency scheduling</em>, SOSP, 2013</li>
+<li>A. Verma et al., <em>Large-scale cluster management at Google with Borg</em>, EuroSys, 2015</li>
+<li>I. Gog et al., <em>Firmament: fast, centralized cluster scheduling at scale</em>, OSDI, 2016</li>
+<li>J. Dean &amp; L. A. Barroso, <em>The tail at scale</em>, CACM, 2013</li>
+</ul>
+</div>
+</div>
+</div>
+
+
+</section></section>
+    </div>
+  <div class="quarto-auto-generated-content" style="display: none;">
+<div class="footer footer-default">
+
+</div>
+</div></div>
+
+  <script>window.backupDefine = window.define; window.define = undefined;</script>
+  <script src="site_libs/revealjs/dist/reveal.js"></script>
+  <!-- reveal.js plugins -->
+  <script src="site_libs/revealjs/plugin/quarto-line-highlight/line-highlight.js"></script>
+  <script src="site_libs/revealjs/plugin/pdf-export/pdfexport.js"></script>
+  <script src="site_libs/revealjs/plugin/reveal-menu/menu.js"></script>
+  <script src="site_libs/revealjs/plugin/reveal-menu/quarto-menu.js"></script>
+  <script src="site_libs/revealjs/plugin/multiplex/socket.io.js"></script>
+  <script src="site_libs/revealjs/plugin/multiplex/multiplex.js"></script>
+  <script src="site_libs/revealjs/plugin/quarto-support/support.js"></script>
+  
+
+  <script src="site_libs/revealjs/plugin/notes/notes.js"></script>
+  <script src="site_libs/revealjs/plugin/search/search.js"></script>
+  <script src="site_libs/revealjs/plugin/zoom/zoom.js"></script>
+  <script src="site_libs/revealjs/plugin/math/math.js"></script>
+  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script>
+
+  <script>
+
+      // Full list of configuration options available at:
+      // https://revealjs.com/config/
+      Reveal.initialize({
+'controlsAuto': true,
+'previewLinksAuto': true,
+'pdfSeparateFragments': false,
+'autoAnimateEasing': "ease",
+'autoAnimateDuration': 1,
+'autoAnimateUnmatched': true,
+'jumpToSlide': true,
+'menu': {"side":"left","useTextContentForMissingTitles":true,"markers":false,"loadIcons":false,"custom":[{"title":"Tools","icon":"<i class=\"fas fa-gear\"></i>","content":"<ul class=\"slide-menu-items\">\n<li class=\"slide-tool-item active\" data-item=\"0\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.fullscreen(event)\"><kbd>f</kbd> Fullscreen</a></li>\n<li class=\"slide-tool-item\" data-item=\"1\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.speakerMode(event)\"><kbd>s</kbd> Speaker View</a></li>\n<li class=\"slide-tool-item\" data-item=\"2\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.overview(event)\"><kbd>o</kbd> Slide Overview</a></li>\n<li class=\"slide-tool-item\" data-item=\"3\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.togglePdfExport(event)\"><kbd>e</kbd> PDF Export Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"4\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.toggleScrollView(event)\"><kbd>r</kbd> Scroll View Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"5\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.keyboardHelp(event)\"><kbd>?</kbd> Keyboard Help</a></li>\n</ul>"}],"openButton":true},
+'multiplex': {"url":"https://mplex.vitv.ly","secret":null,"id":"39acf32c2c1a12d43592e19daab1de68e0891d6223245c617d9943bb251c7a4d"},
+'smaller': false,
+ 
+        // Display controls in the bottom right corner
+        controls: false,
+
+        // Help the user learn the controls by providing hints, for example by
+        // bouncing the down arrow when they first encounter a vertical slide
+        controlsTutorial: false,
+
+        // Determines where controls appear, "edges" or "bottom-right"
+        controlsLayout: 'edges',
+
+        // Visibility rule for backwards navigation arrows; "faded", "hidden"
+        // or "visible"
+        controlsBackArrows: 'faded',
+
+        // Display a presentation progress bar
+        progress: true,
+
+        // Display the page number of the current slide
+        slideNumber: 'c/t',
+
+        // 'all', 'print', or 'speaker'
+        showSlideNumber: 'all',
+
+        // Add the current slide number to the URL hash so that reloading the
+        // page/copying the URL will return you to the same slide
+        hash: true,
+
+        // Start with 1 for the hash rather than 0
+        hashOneBasedIndex: false,
+
+        // Flags if we should monitor the hash and change slides accordingly
+        respondToHashChanges: true,
+
+        // Push each slide change to the browser history
+        history: true,
+
+        // Enable keyboard shortcuts for navigation
+        keyboard: true,
+
+        // Enable the slide overview mode
+        overview: true,
+
+        // Disables the default reveal.js slide layout (scaling and centering)
+        // so that you can use custom CSS layout
+        disableLayout: false,
+
+        // Vertical centering of slides
+        center: false,
+
+        // Enables touch navigation on devices with touch input
+        touch: true,
+
+        // Loop the presentation
+        loop: false,
+
+        // Change the presentation direction to be RTL
+        rtl: false,
+
+        // see https://revealjs.com/vertical-slides/#navigation-mode
+        navigationMode: 'linear',
+
+        // Randomizes the order of slides each time the presentation loads
+        shuffle: false,
+
+        // Turns fragments on and off globally
+        fragments: true,
+
+        // Flags whether to include the current fragment in the URL,
+        // so that reloading brings you to the same fragment position
+        fragmentInURL: false,
+
+        // Flags if the presentation is running in an embedded mode,
+        // i.e. contained within a limited portion of the screen
+        embedded: false,
+
+        // Flags if we should show a help overlay when the questionmark
+        // key is pressed
+        help: true,
+
+        // Flags if it should be possible to pause the presentation (blackout)
+        pause: true,
+
+        // Flags if speaker notes should be visible to all viewers
+        showNotes: false,
+
+        // Global override for autoplaying embedded media (null/true/false)
+        autoPlayMedia: null,
+
+        // Global override for preloading lazy-loaded iframes (null/true/false)
+        preloadIframes: null,
+
+        // Number of milliseconds between automatically proceeding to the
+        // next slide, disabled when set to 0, this value can be overwritten
+        // by using a data-autoslide attribute on your slides
+        autoSlide: 0,
+
+        // Stop auto-sliding after user input
+        autoSlideStoppable: true,
+
+        // Use this method for navigation when auto-sliding
+        autoSlideMethod: null,
+
+        // Specify the average time in seconds that you think you will spend
+        // presenting each slide. This is used to show a pacing timer in the
+        // speaker view
+        defaultTiming: null,
+
+        // Enable slide navigation via mouse wheel
+        mouseWheel: false,
+
+        // The display mode that will be used to show slides
+        display: 'block',
+
+        // Hide cursor if inactive
+        hideInactiveCursor: true,
+
+        // Time before the cursor is hidden (in ms)
+        hideCursorTime: 5000,
+
+        // Opens links in an iframe preview overlay
+        previewLinks: false,
+
+        // Transition style (none/fade/slide/convex/concave/zoom)
+        transition: 'none',
+
+        // Transition speed (default/fast/slow)
+        transitionSpeed: 'default',
+
+        // Transition style for full page slide backgrounds
+        // (none/fade/slide/convex/concave/zoom)
+        backgroundTransition: 'none',
+
+        // Number of slides away from the current that are visible
+        viewDistance: 3,
+
+        // Number of slides away from the current that are visible on mobile
+        // devices. It is advisable to set this to a lower number than
+        // viewDistance in order to save resources.
+        mobileViewDistance: 2,
+
+        // The "normal" size of the presentation, aspect ratio will be preserved
+        // when the presentation is scaled to fit different resolutions. Can be
+        // specified using percentage units.
+        width: 1050,
+
+        height: 700,
+
+        // Factor of the display size that should remain empty around the content
+        margin: 0.1,
+
+        math: {
+          mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@2.7.9/MathJax.js',
+          config: 'TeX-AMS_HTML-full',
+          tex2jax: {
+            inlineMath: [['\\(','\\)']],
+            displayMath: [['\\[','\\]']],
+            balanceBraces: true,
+            processEscapes: false,
+            processRefs: true,
+            processEnvironments: true,
+            preview: 'TeX',
+            skipTags: ['script','noscript','style','textarea','pre','code'],
+            ignoreClass: 'tex2jax_ignore',
+            processClass: 'tex2jax_process'
+          },
+        },
+
+        // reveal.js plugins
+        plugins: [QuartoLineHighlight, PdfExport, RevealMenu, QuartoSupport,
+
+          RevealMath,
+          
+          RevealSearch,
+          RevealZoom
+        ]
+      });
+    </script>
+    <script id="quarto-html-after-body" type="application/javascript">
+      window.document.addEventListener("DOMContentLoaded", function (event) {
+        const tabsets =  window.document.querySelectorAll(".panel-tabset-tabby")
+        tabsets.forEach(function(tabset) {
+          const tabby = new Tabby('#' + tabset.id);
+        });
+        const isCodeAnnotation = (el) => {
+          for (const clz of el.classList) {
+            if (clz.startsWith('code-annotation-')) {                     
+              return true;
+            }
+          }
+          return false;
+        }
+        const onCopySuccess = function(e) {
+          // button target
+          const button = e.trigger;
+          // don't keep focus
+          button.blur();
+          // flash "checked"
+          button.classList.add('code-copy-button-checked');
+          var currentTitle = button.getAttribute("title");
+          button.setAttribute("title", "Copied!");
+          let tooltip;
+          if (window.bootstrap) {
+            button.setAttribute("data-bs-toggle", "tooltip");
+            button.setAttribute("data-bs-placement", "left");
+            button.setAttribute("data-bs-title", "Copied!");
+            tooltip = new bootstrap.Tooltip(button, 
+              { trigger: "manual", 
+                customClass: "code-copy-button-tooltip",
+                offset: [0, -8]});
+            tooltip.show();    
+          }
+          setTimeout(function() {
+            if (tooltip) {
+              tooltip.hide();
+              button.removeAttribute("data-bs-title");
+              button.removeAttribute("data-bs-toggle");
+              button.removeAttribute("data-bs-placement");
+            }
+            button.setAttribute("title", currentTitle);
+            button.classList.remove('code-copy-button-checked');
+          }, 1000);
+          // clear code selection
+          e.clearSelection();
+        }
+        const getTextToCopy = function(trigger) {
+          const outerScaffold = trigger.parentElement.cloneNode(true);
+          const codeEl = outerScaffold.querySelector('code');
+          for (const childEl of codeEl.children) {
+            if (isCodeAnnotation(childEl)) {
+              childEl.remove();
+            }
+          }
+          return codeEl.innerText;
+        }
+        const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+          text: getTextToCopy
+        });
+        clipboard.on('success', onCopySuccess);
+        if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+          const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+            text: getTextToCopy,
+            container: window.document.getElementById('quarto-embedded-source-code-modal')
+          });
+          clipboardModal.on('success', onCopySuccess);
+        }
+          var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+          var mailtoRegex = new RegExp(/^mailto:/);
+            var filterRegex = new RegExp("https:\/\/dslnu\.github\.io\/data_analytics\/");
+          var isInternal = (href) => {
+              return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+          }
+          // Inspect non-navigation links and adorn them if external
+         var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+          for (var i=0; i<links.length; i++) {
+            const link = links[i];
+            if (!isInternal(link.href)) {
+              // undo the damage that might have been done by quarto-nav.js in the case of
+              // links that we want to consider external
+              if (link.dataset.originalHref !== undefined) {
+                link.href = link.dataset.originalHref;
+              }
+            }
+          }
+        function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+          const config = {
+            allowHTML: true,
+            maxWidth: 500,
+            delay: 100,
+            arrow: false,
+            appendTo: function(el) {
+                return el.closest('section.slide') || el.parentElement;
+            },
+            interactive: true,
+            interactiveBorder: 10,
+            theme: 'light-border',
+            placement: 'bottom-start',
+          };
+          if (contentFn) {
+            config.content = contentFn;
+          }
+          if (onTriggerFn) {
+            config.onTrigger = onTriggerFn;
+          }
+          if (onUntriggerFn) {
+            config.onUntrigger = onUntriggerFn;
+          }
+            config['offset'] = [0,0];
+            config['maxWidth'] = 700;
+          window.tippy(el, config); 
+        }
+        const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+        for (var i=0; i<noterefs.length; i++) {
+          const ref = noterefs[i];
+          tippyHover(ref, function() {
+            // use id or data attribute instead here
+            let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+            try { href = new URL(href).hash; } catch {}
+            const id = href.replace(/^#\/?/, "");
+            const note = window.document.getElementById(id);
+            if (note) {
+              return note.innerHTML;
+            } else {
+              return "";
+            }
+          });
+        }
+        const findCites = (el) => {
+          const parentEl = el.parentElement;
+          if (parentEl) {
+            const cites = parentEl.dataset.cites;
+            if (cites) {
+              return {
+                el,
+                cites: cites.split(' ')
+              };
+            } else {
+              return findCites(el.parentElement)
+            }
+          } else {
+            return undefined;
+          }
+        };
+        var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+        for (var i=0; i<bibliorefs.length; i++) {
+          const ref = bibliorefs[i];
+          const citeInfo = findCites(ref);
+          if (citeInfo) {
+            tippyHover(citeInfo.el, function() {
+              var popup = window.document.createElement('div');
+              citeInfo.cites.forEach(function(cite) {
+                var citeDiv = window.document.createElement('div');
+                citeDiv.classList.add('hanging-indent');
+                citeDiv.classList.add('csl-entry');
+                var biblioDiv = window.document.getElementById('ref-' + cite);
+                if (biblioDiv) {
+                  citeDiv.innerHTML = biblioDiv.innerHTML;
+                }
+                popup.appendChild(citeDiv);
+              });
+              return popup.innerHTML;
+            });
+          }
+        }
+      });
+      </script>
+    
+
+</body></html>

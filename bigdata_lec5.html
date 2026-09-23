@@ -646,6 +646,215 @@ MSDE
 </section>
 <section id="dask-23" class="slide level2">
 <h2>Dask</h2>
+<p>Three layers: <strong>collections</strong> build the graph, the <strong>scheduler</strong> decides what runs where, <strong>workers</strong> execute. <img data-src="img/dask_layers.png"></p>
+</section>
+<section id="scheduling" class="slide level2">
+<h2>Scheduling</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>What does Dask scheduler do?</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>execute DAGs on parallel hardware</li>
+<li>manage resource allocation across DAG nodes</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="dask-scheduling" class="slide level2">
+<h2>Dask Scheduling</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Dask Scheduler types</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>Single-machine scheduler:</strong> This scheduler provides basic features on a local process or thread pool. This scheduler was made first and is the default. It is simple and cheap to use, although it can only be used on a single machine and does not scale</li>
+<li><strong>Distributed scheduler:</strong> This scheduler is more sophisticated, offers more features, but also requires a bit more effort to set up. It can run locally or distributed across a cluster</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="dag" class="slide level2">
+<h2>DAG</h2>
+
+<img data-src="img/dask-overview.png" class="r-stretch"></section>
+<section id="dask-scheduling-1" class="slide level2">
+<h2>Dask Scheduling</h2>
+
+<img data-src="img/dask_dist.png" class="r-stretch"></section>
+<section id="scheduling-1" class="slide level2">
+<h2>Scheduling</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Single-thread scheduler</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a aria-label="1"></a><span class="im">import</span> dask</span>
+<span id="cb15-2"><a aria-label="2"></a>dask.config.<span class="bu">set</span>(scheduler<span class="op">=</span><span class="st">'synchronous'</span>)  <span class="co"># overwrite default with single-threaded scheduler</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Notes</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>Useful for debugging or profiling</li>
+<li>No parallelism at all</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="scheduling-2" class="slide level2">
+<h2>Scheduling</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Thread scheduler</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a aria-label="1"></a><span class="im">import</span> dask</span>
+<span id="cb16-2"><a aria-label="2"></a>dask.config.<span class="bu">set</span>(scheduler<span class="op">=</span><span class="st">'threads'</span>)  <span class="co"># overwrite default with threaded scheduler </span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Notes</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>Small overhead of 50 microseconds per task</li>
+<li>Only provides parallelism when executing non-Python code (because of GIL)</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="scheduling-3" class="slide level2">
+<h2>Scheduling</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Process scheduler</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a aria-label="1"></a><span class="im">import</span> dask</span>
+<span id="cb17-2"><a aria-label="2"></a>dask.config.<span class="bu">set</span>(scheduler<span class="op">=</span><span class="st">'processes'</span>)  <span class="co"># overwrite default with multiprocessing scheduler</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Notes</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>Performance penalties when inter-process communication is heavy</li>
+<li>Can provide parallelism when executing Python code</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="scheduling-4" class="slide level2">
+<h2>Scheduling</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Distributed (local) scheduler</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a aria-label="1"></a><span class="im">from</span> dask.distributed <span class="im">import</span> Client</span>
+<span id="cb18-2"><a aria-label="2"></a>client <span class="op">=</span> Client()</span>
+<span id="cb18-3"><a aria-label="3"></a><span class="co"># or</span></span>
+<span id="cb18-4"><a aria-label="4"></a>client <span class="op">=</span> Client(processes<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Notes</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>Can be more efficient than the multiprocessing scheduler on workloads that require multiple processes</li>
+<li>Diagnostic dashboard and async API</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="scheduling-5" class="slide level2">
+<h2>Scheduling</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Distributed (cluster) scheduler</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a aria-label="1"></a><span class="co"># You can swap out LocalCluster for other cluster types</span></span>
+<span id="cb19-2"><a aria-label="2"></a></span>
+<span id="cb19-3"><a aria-label="3"></a><span class="im">from</span> dask.distributed <span class="im">import</span> LocalCluster</span>
+<span id="cb19-4"><a aria-label="4"></a><span class="im">from</span> dask_kubernetes <span class="im">import</span> KubeCluster</span>
+<span id="cb19-5"><a aria-label="5"></a></span>
+<span id="cb19-6"><a aria-label="6"></a><span class="co"># cluster = LocalCluster()</span></span>
+<span id="cb19-7"><a aria-label="7"></a>cluster <span class="op">=</span> KubeCluster()  <span class="co"># example, you can swap out for Kubernetes</span></span>
+<span id="cb19-8"><a aria-label="8"></a></span>
+<span id="cb19-9"><a aria-label="9"></a>client <span class="op">=</span> cluster.get_client()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Notes</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>Can be setup either locally, or e.g.&nbsp;on a pre-existing Kubernetes cluster</li>
+<li>Different cluster backends easy to swap</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="scheduling-6" class="slide level2">
+<h2>Scheduling</h2>
+
+<img data-src="img/scheduling_overhead.png" class="r-stretch"></section>
+<section id="issues" class="slide level2">
+<h2>Issues</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Issues</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>Resource starvation</li>
+<li>Worker failures</li>
+<li>Data loss</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="dask-24" class="slide level2">
+<h2>Dask</h2>
 <p>Graph creation and graph scheduling are separate problems!</p>
 <p>Current Dask scheduler is <strong>dynamic</strong>.</p>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
@@ -664,7 +873,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="dask-24" class="slide level2">
+<section id="dask-25" class="slide level2">
 <h2>Dask</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -683,14 +892,455 @@ MSDE
 </div>
 </div>
 </section>
-<section id="dask-25" class="slide level2">
-<h2>Dask</h2>
-
-<img data-src="img/dask_custom_scheduler.png" class="r-stretch"></section>
 <section id="dask-26" class="slide level2">
 <h2>Dask</h2>
 
+<img data-src="img/dask_custom_scheduler.png" class="r-stretch"></section>
+<section id="dask-27" class="slide level2">
+<h2>Dask</h2>
+
 <img data-src="img/dask_blas_comparison.png" class="r-stretch"></section>
+<section id="dask-scheduling-2" class="slide level2">
+<h2>Dask Scheduling</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>What the scheduler actually has to decide</strong></p>
+</div>
+<div class="callout-content">
+<p>Every one of these is a scheduling decision, made thousands of times a second:</p>
+<ul>
+<li>which task runs <strong>next</strong> (ordering)</li>
+<li>on <strong>which worker</strong> (placement)</li>
+<li>whether to <strong>move</strong> a task to data, or data to a task</li>
+<li>what to <strong>keep</strong> in memory and what to <strong>spill</strong> to disk</li>
+<li>what to <strong>recompute</strong> after a worker dies</li>
+<li>when to ask for <strong>more workers</strong>, and which ones to retire</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="ordering-the-static-pass" class="slide level2">
+<h2>Ordering: the static pass</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong><code>dask.order</code></strong></p>
+</div>
+<div class="callout-content">
+<p>Before <em>any</em> task runs, Dask walks the whole graph once and assigns every key an integer priority. Both the local and the distributed scheduler use it.</p>
+<p>This is the one genuinely <strong>static</strong> step in Dask – and note what it optimizes: not makespan, but <strong>memory</strong>.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Objectives</strong></p>
+</div>
+<div class="callout-content">
+<ol type="1">
+<li>finish chains you have started, so intermediate results can be <strong>released</strong></li>
+<li>prefer tasks that <strong>unblock</strong> many dependents, or complete an output</li>
+<li>do all of this in roughly linear time – the pass runs on every <code>compute()</code></li>
+</ol>
+</div>
+</div>
+</div>
+</section>
+<section id="ordering-why-memory-not-makespan" class="slide level2">
+<h2>Ordering: why memory, not makespan</h2>
+<img data-src="bigdata_lec5_files/mediabag/04f05b12bbb75054482b97350259cbab353c6538.svg">
+</section>
+<section id="ordering-why-memory-not-makespan-1" class="slide level2">
+<h2>Ordering: why memory, not makespan</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The trade-off</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>pure <strong>breadth-first</strong> maximises available parallelism – and holds every intermediate result at once</li>
+<li>pure <strong>depth-first</strong> minimises memory – and can leave processors with nothing ready to run</li>
+</ul>
+<p><code>dask.order</code> is a hybrid, and getting it right is genuinely hard: the ordering pass has been rewritten several times, and a regression there shows up to users as <em>“my job used to fit in memory”</em>.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Priorities at run time</strong></p>
+</div>
+<div class="callout-content">
+<p>The distributed scheduler orders ready tasks by a <strong>triple</strong>: <span class="math display">\[
+(\text{user priority},\; \text{submission generation},\; \texttt{dask.order}\ \text{index})
+\]</span> so later-submitted work does not starve earlier work, and within one graph the static order decides.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="placement-decide_worker" class="slide level2">
+<h2>Placement: <code>decide_worker</code></h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The candidate set</strong></p>
+</div>
+<div class="callout-content">
+<p>When a task becomes ready, the scheduler looks at the workers that <strong>already hold its dependencies</strong>. If it has none, any worker will do.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The objective</strong></p>
+</div>
+<div class="callout-content">
+<p>For each candidate, estimate <span class="math display">\[
+\text{start time} \;\approx\; \underbrace{\frac{\sum \text{expected durations of queued tasks}}{\text{n\_threads}}}_{\text{occupancy}} \;+\; \underbrace{\frac{\text{bytes of missing dependencies}}{\text{measured bandwidth}}}_{\text{transfer}}
+\]</span> and take the minimum. This is list scheduling’s <em>processor selection</em> phase – with <strong>measured</strong> rather than given costs.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="placement-where-the-numbers-come-from" class="slide level2">
+<h2>Placement: where the numbers come from</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The scheduler is also a measurement system</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>every task is tagged with a <strong>prefix</strong> (<code>'read_parquet'</code>, <code>'add'</code>, …); Dask keeps a rolling average of observed durations per prefix and uses it to predict the next one</li>
+<li><strong>bandwidth</strong> between every pair of workers is measured from actual transfers</li>
+<li><strong><code>nbytes</code></strong> of every result in memory is tracked, so transfer cost is known</li>
+</ul>
+<p>None of this exists in the classical model. All of it has to be maintained, at every task completion, for the life of the cluster.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="work-stealing-in-dask" class="slide level2">
+<h2>Work stealing in Dask</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The loop</strong></p>
+</div>
+<div class="callout-content">
+<p>Every <strong>100 ms</strong> the scheduler compares saturated workers against idle ones and moves <em>pending</em> tasks between them. Enabled by default:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode numberSource yaml number-lines code-with-copy"><code class="sourceCode yaml"><span id="cb20-1"><a aria-label="1"></a><span class="fu">distributed</span><span class="kw">:</span></span>
+<span id="cb20-2"><a aria-label="2"></a><span class="at">  </span><span class="fu">scheduler</span><span class="kw">:</span></span>
+<span id="cb20-3"><a aria-label="3"></a><span class="at">    </span><span class="fu">work-stealing</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb20-4"><a aria-label="4"></a><span class="at">    </span><span class="fu">work-stealing-interval</span><span class="kw">:</span><span class="at"> 100ms</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>What may be stolen</strong></p>
+</div>
+<div class="callout-content">
+<p>Tasks are bucketed by the ratio <span class="math display">\[
+\frac{\text{cost to move the dependencies}}{\text{expected compute time}}
+\]</span> Cheap-to-move, expensive-to-run tasks are stolen freely. A task whose inputs are a gigabyte and whose body takes 5 ms is never worth stealing – and tasks with explicit <strong>worker restrictions</strong> are never stolen at all.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="work-stealing-in-dask-1" class="slide level2">
+<h2>Work stealing in Dask</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Note the difference from Cilk</strong></p>
+</div>
+<div class="callout-content">
+<p>Cilk-style stealing is <strong>fully decentralized</strong>: an idle worker picks a random victim itself.</p>
+<p>Dask’s stealing is <strong>scheduler-mediated</strong>: the central scheduler already knows every worker’s occupancy and every result’s location, so it can make a <em>better</em> decision than a random probe – at the price of that central state being the bottleneck.</p>
+<p>Same name, different architecture, different failure mode.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="when-greedy-goes-wrong-root-task-overproduction" class="slide level2">
+<h2>When greedy goes wrong: root task overproduction</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>A real, expensive bug class</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a aria-label="1"></a>df <span class="op">=</span> dd.read_parquet(<span class="st">"s3://.../*.parquet"</span>)   <span class="co"># 10 000 partitions</span></span>
+<span id="cb21-2"><a aria-label="2"></a>df.map_partitions(expensive).<span class="bu">sum</span>().compute()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>A greedy scheduler sees 10 000 <strong>ready</strong> root tasks and no reason not to run them. Workers cheerfully load far more data than the downstream tasks can consume, and the cluster dies of memory exhaustion – while doing nothing wrong by the greedy principle.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The fix: don’t be greedy</strong></p>
+</div>
+<div class="callout-content">
+<p>Dask added a <code>queued</code> task state and the <code>worker-saturation</code> knob: a worker is given roughly <span class="math inline">\(1.1 \times\)</span> its thread count of root tasks, and the rest <strong>wait on the scheduler</strong>.</p>
+<p>Deliberately leaving work unassigned, to protect memory.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="the-task-state-machine" class="slide level2">
+<h2>The task state machine</h2>
+<img data-src="bigdata_lec5_files/mediabag/c6ac8cba25edd8e7169e797a5ea03a5f67b6ce1e.svg">
+</section>
+<section id="the-task-state-machine-1" class="slide level2">
+<h2>The task state machine</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>And that is only the scheduler’s half</strong></p>
+</div>
+<div class="callout-content">
+<p><code>queued</code> and <code>no-worker</code> are distinct: <code>queued</code> means <em>the scheduler is deliberately holding this back</em> (see root task overproduction), <code>no-worker</code> means <em>no worker satisfies its restrictions</em>.</p>
+<p>The <strong>worker</strong> runs its own state machine in parallel, with states like <code>waiting</code>, <code>ready</code>, <code>constrained</code>, <code>executing</code>, <code>long-running</code>, <code>fetch</code>, <code>flight</code>, <code>memory</code>, <code>cancelled</code>, <code>resumed</code>.</p>
+<p>Both machines exchange messages over an unreliable network, so every transition has to be idempotent and every message has to tolerate arriving late, twice, or after the worker it refers to has already died.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>This is the honest answer to “what is a scheduler?”</strong></p>
+</div>
+<div class="callout-content">
+<p>Not an algorithm. A <strong>distributed state machine</strong> with a cost model bolted on.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="memory-the-other-resource" class="slide level2">
+<h2>Memory: the other resource</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Worker memory thresholds (fractions of the limit)</strong></p>
+</div>
+<div class="callout-content">
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>threshold</th>
+<th>default</th>
+<th>action</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>target</code></td>
+<td>0.60</td>
+<td>spill least-recently-used results to disk</td>
+</tr>
+<tr class="even">
+<td><code>spill</code></td>
+<td>0.70</td>
+<td>spill based on <em>process</em> memory, not tracked bytes</td>
+</tr>
+<tr class="odd">
+<td><code>pause</code></td>
+<td>0.80</td>
+<td>stop accepting new tasks; keep serving data</td>
+</tr>
+<tr class="even">
+<td><code>terminate</code></td>
+<td>0.95</td>
+<td>the nanny kills the worker</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Unmanaged memory</strong></p>
+</div>
+<div class="callout-content">
+<p>Dask knows the size of results it holds. It does <strong>not</strong> know about a C library’s arena, a leaked buffer, or memory freed by Python but never returned to the OS. Much real-world Dask debugging is exactly this gap.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="failure-the-graph-is-the-backup" class="slide level2">
+<h2>Failure: the graph is the backup</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>What happens when a worker dies</strong></p>
+</div>
+<div class="callout-content">
+<ol type="1">
+<li>the scheduler marks every result that lived only on that worker as <strong>lost</strong></li>
+<li>the tasks that produced them go back to <code>released</code> <span class="math inline">\(\to\)</span> <code>waiting</code></li>
+<li>their <em>dependencies</em> may now also be missing – so the recovery cascades backwards through the graph</li>
+<li>everything is recomputed and the job continues</li>
+</ol>
+<p>The DAG is not just a schedule. It is the <strong>lineage</strong> that makes recovery possible – the same idea as Spark’s RDDs.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Guardrails</strong></p>
+</div>
+<div class="callout-content">
+<p><code>retries=</code> per task, <code>allowed-failures</code> (default 3) before a task is declared poisonous, and a <code>Nanny</code> process that restarts workers. Without the failure counter, one segfaulting task kills the cluster one worker at a time.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="steering-the-scheduler" class="slide level2">
+<h2>Steering the scheduler</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>What users can annotate</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a aria-label="1"></a><span class="cf">with</span> dask.annotate(priority<span class="op">=</span><span class="dv">10</span>):          <span class="co"># jump the queue</span></span>
+<span id="cb22-2"><a aria-label="2"></a>    urgent <span class="op">=</span> expensive(x)</span>
+<span id="cb22-3"><a aria-label="3"></a></span>
+<span id="cb22-4"><a aria-label="4"></a><span class="cf">with</span> dask.annotate(resources<span class="op">=</span>{<span class="st">"GPU"</span>: <span class="dv">1</span>}): <span class="co"># abstract semaphore</span></span>
+<span id="cb22-5"><a aria-label="5"></a>    y <span class="op">=</span> train(urgent)</span>
+<span id="cb22-6"><a aria-label="6"></a></span>
+<span id="cb22-7"><a aria-label="7"></a><span class="cf">with</span> dask.annotate(workers<span class="op">=</span>[<span class="st">"tcp://10.0.0.5:8786"</span>],</span>
+<span id="cb22-8"><a aria-label="8"></a>                   allow_other_workers<span class="op">=</span><span class="va">True</span>):</span>
+<span id="cb22-9"><a aria-label="9"></a>    z <span class="op">=</span> reads_local_file()</span>
+<span id="cb22-10"><a aria-label="10"></a></span>
+<span id="cb22-11"><a aria-label="11"></a>future <span class="op">=</span> client.submit(f, x, retries<span class="op">=</span><span class="dv">3</span>, priority<span class="op">=-</span><span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Note</strong></p>
+</div>
+<div class="callout-content">
+<p><code>resources</code> are <strong>not enforced</strong>. They are counters the scheduler respects – nothing stops your task from using two GPUs.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="elasticity" class="slide level2">
+<h2>Elasticity</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Adaptive scaling</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a aria-label="1"></a>cluster.adapt(minimum<span class="op">=</span><span class="dv">2</span>, maximum<span class="op">=</span><span class="dv">100</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The scheduler watches occupancy and asks the cluster manager for more workers, or gives them back.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Retiring a worker is a scheduling problem of its own</strong></p>
+</div>
+<div class="callout-content">
+<p>You cannot just switch it off – it holds results other tasks need. <strong>Graceful retirement</strong> replicates its data elsewhere <em>first</em>, then removes it. Do that badly and autoscaling turns into an unbounded recomputation storm.</p>
+<p>Meanwhile <span class="math inline">\(P\)</span> changes underneath every estimate the scheduler has made. Recall Graham’s anomalies.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="when-the-graph-itself-is-the-problem" class="slide level2">
+<h2>When the graph itself is the problem</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Shuffles</strong></p>
+</div>
+<div class="callout-content">
+<p>An all-to-all shuffle of <span class="math inline">\(n\)</span> partitions is <span class="math inline">\(O(n^2)\)</span> edges. At 10 000 partitions that is <span class="math inline">\(10^8\)</span> tasks – the scheduler runs out of memory before a single row moves.</p>
+<p>Dask’s answer was to stop expressing it as a graph: <strong>P2P shuffle</strong> makes the exchange a <em>side service</em> that workers run among themselves, appearing to the scheduler as <span class="math inline">\(O(n)\)</span> tasks.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb24"><pre class="sourceCode numberSource yaml number-lines code-with-copy"><code class="sourceCode yaml"><span id="cb24-1"><a aria-label="1"></a><span class="fu">dataframe</span><span class="kw">:</span></span>
+<span id="cb24-2"><a aria-label="2"></a><span class="at">  </span><span class="fu">shuffle</span><span class="kw">:</span></span>
+<span id="cb24-3"><a aria-label="3"></a><span class="at">    </span><span class="fu">method</span><span class="kw">:</span><span class="at"> p2p</span><span class="co">     # the alternative is the old "tasks" graph</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Now the default on distributed clusters – the graph-based shuffle is the fallback.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="scheduler-overhead" class="slide level2">
+<h2>Scheduler overhead</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The budget</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>threaded scheduler: <strong>~50 <span class="math inline">\(\mu\)</span>s</strong> per task</li>
+<li>distributed scheduler: <strong>~1 ms</strong> per task round trip; a single central scheduler saturates somewhere in the low thousands of tasks per second</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>What follows from that number</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>a task should do <strong>at least ~100 ms</strong> of work, or you are paying more to schedule it than to run it</li>
+<li>prefer chunks around <strong>100 MB</strong>; graphs beyond <span class="math inline">\(10^5\)</span>–<span class="math inline">\(10^6\)</span> tasks start to hurt the scheduler itself</li>
+<li>“my Dask job is slow” is, very often, “my tasks are too small”</li>
+</ul>
+<p>The greedy scheduling principle has no term for this. Real systems are dominated by it.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="diagnostics" class="slide level2">
+<h2>Diagnostics</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>You cannot schedule what you cannot see</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>the <strong>dashboard</strong>: task stream, progress, worker memory, per-worker profiles</li>
+<li><code>client.profile()</code> – statistical profiler across all workers</li>
+<li><code>performance_report()</code> – a self-contained HTML record of a run</li>
+<li><code>dask.visualize()</code> / <code>.dask</code> – look at the graph before you run it</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>What to look for in the task stream</strong></p>
+</div>
+<div class="callout-content">
+<p>white gaps (starvation), red bars (data transfer), a long thin tail (stragglers), or one colour dominating (a fused task hiding everything else).</p>
+</div>
+</div>
+</div>
+</section>
 <section id="taskvine" class="slide level2">
 <h2>Taskvine</h2>
 <div class="callout callout-note no-icon callout-titled callout-style-default">
@@ -796,12 +1446,12 @@ MSDE
 <li>Individual tasks can be simple Python functions, complex Unix applications, or serverless function invocations.</li>
 <li>The <strong>key idea</strong> is that you declare file objects, and then declare tasks that consume them and produce new file objects. <!-- For example, this snippet draws an input file from the Project Gutenberg repository and runs a Task to search for the string "needle", producing the file output.txt: --></li>
 </ul>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a aria-label="1"></a>f <span class="op">=</span> m.declare_url(<span class="st">"https://www.gutenberg.org/cache/epub/2600/pg2600.txt"</span>)</span>
-<span id="cb15-2"><a aria-label="2"></a>g <span class="op">=</span> m.declare_file(<span class="st">"myoutput.txt"</span>)</span>
-<span id="cb15-3"><a aria-label="3"></a></span>
-<span id="cb15-4"><a aria-label="4"></a>t <span class="op">=</span> Task(<span class="st">"grep needle warandpeace.txt &gt; output.txt"</span>)</span>
-<span id="cb15-5"><a aria-label="5"></a>t.add_input(f, <span class="st">"warandpeace.txt"</span>)</span>
-<span id="cb15-6"><a aria-label="6"></a>t.add_output(g, <span class="st">"output.txt"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a aria-label="1"></a>f <span class="op">=</span> m.declare_url(<span class="st">"https://www.gutenberg.org/cache/epub/2600/pg2600.txt"</span>)</span>
+<span id="cb25-2"><a aria-label="2"></a>g <span class="op">=</span> m.declare_file(<span class="st">"myoutput.txt"</span>)</span>
+<span id="cb25-3"><a aria-label="3"></a></span>
+<span id="cb25-4"><a aria-label="4"></a>t <span class="op">=</span> Task(<span class="st">"grep needle warandpeace.txt &gt; output.txt"</span>)</span>
+<span id="cb25-5"><a aria-label="5"></a>t.add_input(f, <span class="st">"warandpeace.txt"</span>)</span>
+<span id="cb25-6"><a aria-label="6"></a>t.add_output(g, <span class="st">"output.txt"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -832,62 +1482,62 @@ MSDE
 </div>
 <div class="callout-content">
 <p>TaskVine manager can be used as Dask scheduler:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a aria-label="1"></a><span class="cf">try</span>:</span>
-<span id="cb16-2"><a aria-label="2"></a>    <span class="im">import</span> dask</span>
-<span id="cb16-3"><a aria-label="3"></a>    <span class="im">import</span> awkward <span class="im">as</span> ak</span>
-<span id="cb16-4"><a aria-label="4"></a>    <span class="im">import</span> dask_awkward <span class="im">as</span> dak</span>
-<span id="cb16-5"><a aria-label="5"></a>    <span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb16-6"><a aria-label="6"></a><span class="cf">except</span> <span class="pp">ImportError</span>:</span>
-<span id="cb16-7"><a aria-label="7"></a>    <span class="bu">print</span>(<span class="st">"You need dask, awkward, and numpy installed"</span>)</span>
-<span id="cb16-8"><a aria-label="8"></a>    <span class="bu">print</span>(<span class="st">"(e.g. conda install -c conda-forge dask dask-awkward numpy) to run this example."</span>)</span>
-<span id="cb16-9"><a aria-label="9"></a></span>
-<span id="cb16-10"><a aria-label="10"></a>behavior: <span class="bu">dict</span> <span class="op">=</span> {}</span>
-<span id="cb16-11"><a aria-label="11"></a></span>
-<span id="cb16-12"><a aria-label="12"></a><span class="at">@ak.mixin_class</span>(behavior)</span>
-<span id="cb16-13"><a aria-label="13"></a><span class="kw">class</span> Point:</span>
-<span id="cb16-14"><a aria-label="14"></a>    <span class="kw">def</span> distance(<span class="va">self</span>, other):</span>
-<span id="cb16-15"><a aria-label="15"></a>    <span class="cf">return</span> np.sqrt((<span class="va">self</span>.x <span class="op">-</span> other.x) <span class="op">**</span> <span class="dv">2</span> <span class="op">+</span> (<span class="va">self</span>.y <span class="op">-</span> other.y) <span class="op">**</span> <span class="dv">2</span>)</span>
-<span id="cb16-16"><a aria-label="16"></a></span>
-<span id="cb16-17"><a aria-label="17"></a></span>
-<span id="cb16-18"><a aria-label="18"></a><span class="cf">if</span> <span class="va">__name__</span> <span class="op">==</span> <span class="st">"__main__"</span>:</span>
-<span id="cb16-19"><a aria-label="19"></a>    <span class="co"># data arrays</span></span>
-<span id="cb16-20"><a aria-label="20"></a>    points1 <span class="op">=</span> ak.Array([</span>
-<span id="cb16-21"><a aria-label="21"></a>    [{<span class="st">"x"</span>: <span class="fl">1.0</span>, <span class="st">"y"</span>: <span class="fl">1.1</span>}, {<span class="st">"x"</span>: <span class="fl">2.0</span>, <span class="st">"y"</span>: <span class="fl">2.2</span>}, {<span class="st">"x"</span>: <span class="dv">3</span>, <span class="st">"y"</span>: <span class="fl">3.3</span>}],</span>
-<span id="cb16-22"><a aria-label="22"></a>    [],</span>
-<span id="cb16-23"><a aria-label="23"></a>    [{<span class="st">"x"</span>: <span class="fl">4.0</span>, <span class="st">"y"</span>: <span class="fl">4.4</span>}, {<span class="st">"x"</span>: <span class="fl">5.0</span>, <span class="st">"y"</span>: <span class="fl">5.5</span>}],</span>
-<span id="cb16-24"><a aria-label="24"></a>    [{<span class="st">"x"</span>: <span class="fl">6.0</span>, <span class="st">"y"</span>: <span class="fl">6.6</span>}],</span>
-<span id="cb16-25"><a aria-label="25"></a>    [{<span class="st">"x"</span>: <span class="fl">7.0</span>, <span class="st">"y"</span>: <span class="fl">7.7</span>}, {<span class="st">"x"</span>: <span class="fl">8.0</span>, <span class="st">"y"</span>: <span class="fl">8.8</span>}, {<span class="st">"x"</span>: <span class="dv">9</span>, <span class="st">"y"</span>: <span class="fl">9.9</span>}],</span>
-<span id="cb16-26"><a aria-label="26"></a>    ])</span>
-<span id="cb16-27"><a aria-label="27"></a></span>
-<span id="cb16-28"><a aria-label="28"></a>    points2 <span class="op">=</span> ak.Array([</span>
-<span id="cb16-29"><a aria-label="29"></a>    [{<span class="st">"x"</span>: <span class="fl">0.9</span>, <span class="st">"y"</span>: <span class="fl">1.0</span>}, {<span class="st">"x"</span>: <span class="fl">2.0</span>, <span class="st">"y"</span>: <span class="fl">2.2</span>}, {<span class="st">"x"</span>: <span class="fl">2.9</span>, <span class="st">"y"</span>: <span class="fl">3.0</span>}],</span>
-<span id="cb16-30"><a aria-label="30"></a>    [],</span>
-<span id="cb16-31"><a aria-label="31"></a>    [{<span class="st">"x"</span>: <span class="fl">3.9</span>, <span class="st">"y"</span>: <span class="fl">4.0</span>}, {<span class="st">"x"</span>: <span class="fl">5.0</span>, <span class="st">"y"</span>: <span class="fl">5.5</span>}],</span>
-<span id="cb16-32"><a aria-label="32"></a>    [{<span class="st">"x"</span>: <span class="fl">5.9</span>, <span class="st">"y"</span>: <span class="fl">6.0</span>}],</span>
-<span id="cb16-33"><a aria-label="33"></a>    [{<span class="st">"x"</span>: <span class="fl">6.9</span>, <span class="st">"y"</span>: <span class="fl">7.0</span>}, {<span class="st">"x"</span>: <span class="fl">8.0</span>, <span class="st">"y"</span>: <span class="fl">8.8</span>}, {<span class="st">"x"</span>: <span class="fl">8.9</span>, <span class="st">"y"</span>: <span class="fl">9.0</span>}],</span>
-<span id="cb16-34"><a aria-label="34"></a>    ])</span>
-<span id="cb16-35"><a aria-label="35"></a>    array1 <span class="op">=</span> dak.from_awkward(points1, npartitions<span class="op">=</span><span class="dv">3</span>)</span>
-<span id="cb16-36"><a aria-label="36"></a>    array2 <span class="op">=</span> dak.from_awkward(points2, npartitions<span class="op">=</span><span class="dv">3</span>)</span>
-<span id="cb16-37"><a aria-label="37"></a></span>
-<span id="cb16-38"><a aria-label="38"></a>    array1 <span class="op">=</span> dak.with_name(array1, name<span class="op">=</span><span class="st">"Point"</span>, behavior<span class="op">=</span>behavior)</span>
-<span id="cb16-39"><a aria-label="39"></a>    array2 <span class="op">=</span> dak.with_name(array2, name<span class="op">=</span><span class="st">"Point"</span>, behavior<span class="op">=</span>behavior)</span>
-<span id="cb16-40"><a aria-label="40"></a></span>
-<span id="cb16-41"><a aria-label="41"></a>    distance <span class="op">=</span> array1.distance(array2)</span>
-<span id="cb16-42"><a aria-label="42"></a></span>
-<span id="cb16-43"><a aria-label="43"></a>    m <span class="op">=</span> vine.DaskVine(port<span class="op">=</span><span class="dv">9123</span>, ssl<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb16-44"><a aria-label="44"></a>    m.set_name(<span class="st">"test_manager"</span>)</span>
-<span id="cb16-45"><a aria-label="45"></a>    <span class="bu">print</span>(<span class="ss">f"Listening for workers at port: </span><span class="sc">{</span>m<span class="sc">.</span>port<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb16-46"><a aria-label="46"></a></span>
-<span id="cb16-47"><a aria-label="47"></a>    f <span class="op">=</span> vine.Factory(manager<span class="op">=</span>m)</span>
-<span id="cb16-48"><a aria-label="48"></a>    f.cores <span class="op">=</span> <span class="dv">4</span></span>
-<span id="cb16-49"><a aria-label="49"></a>    f.max_workers <span class="op">=</span> <span class="dv">1</span></span>
-<span id="cb16-50"><a aria-label="50"></a>    f.min_workers <span class="op">=</span> <span class="dv">1</span></span>
-<span id="cb16-51"><a aria-label="51"></a>    <span class="cf">with</span> f:</span>
-<span id="cb16-52"><a aria-label="52"></a>        <span class="cf">with</span> dask.config.<span class="bu">set</span>(scheduler<span class="op">=</span>m.get):</span>
-<span id="cb16-53"><a aria-label="53"></a>            result <span class="op">=</span> distance.compute(resources<span class="op">=</span>{<span class="st">"cores"</span>: <span class="dv">1</span>}, resources_mode<span class="op">=</span><span class="st">"max"</span>, lazy_transfers<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb16-54"><a aria-label="54"></a>            <span class="bu">print</span>(<span class="ss">f"distance = </span><span class="sc">{</span>result<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb16-55"><a aria-label="55"></a>        <span class="bu">print</span>(<span class="st">"Terminating workers..."</span>, end<span class="op">=</span><span class="st">""</span>)</span>
-<span id="cb16-56"><a aria-label="56"></a>    <span class="bu">print</span>(<span class="st">"done!"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a aria-label="1"></a><span class="cf">try</span>:</span>
+<span id="cb26-2"><a aria-label="2"></a>    <span class="im">import</span> dask</span>
+<span id="cb26-3"><a aria-label="3"></a>    <span class="im">import</span> awkward <span class="im">as</span> ak</span>
+<span id="cb26-4"><a aria-label="4"></a>    <span class="im">import</span> dask_awkward <span class="im">as</span> dak</span>
+<span id="cb26-5"><a aria-label="5"></a>    <span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb26-6"><a aria-label="6"></a><span class="cf">except</span> <span class="pp">ImportError</span>:</span>
+<span id="cb26-7"><a aria-label="7"></a>    <span class="bu">print</span>(<span class="st">"You need dask, awkward, and numpy installed"</span>)</span>
+<span id="cb26-8"><a aria-label="8"></a>    <span class="bu">print</span>(<span class="st">"(e.g. conda install -c conda-forge dask dask-awkward numpy) to run this example."</span>)</span>
+<span id="cb26-9"><a aria-label="9"></a></span>
+<span id="cb26-10"><a aria-label="10"></a>behavior: <span class="bu">dict</span> <span class="op">=</span> {}</span>
+<span id="cb26-11"><a aria-label="11"></a></span>
+<span id="cb26-12"><a aria-label="12"></a><span class="at">@ak.mixin_class</span>(behavior)</span>
+<span id="cb26-13"><a aria-label="13"></a><span class="kw">class</span> Point:</span>
+<span id="cb26-14"><a aria-label="14"></a>    <span class="kw">def</span> distance(<span class="va">self</span>, other):</span>
+<span id="cb26-15"><a aria-label="15"></a>    <span class="cf">return</span> np.sqrt((<span class="va">self</span>.x <span class="op">-</span> other.x) <span class="op">**</span> <span class="dv">2</span> <span class="op">+</span> (<span class="va">self</span>.y <span class="op">-</span> other.y) <span class="op">**</span> <span class="dv">2</span>)</span>
+<span id="cb26-16"><a aria-label="16"></a></span>
+<span id="cb26-17"><a aria-label="17"></a></span>
+<span id="cb26-18"><a aria-label="18"></a><span class="cf">if</span> <span class="va">__name__</span> <span class="op">==</span> <span class="st">"__main__"</span>:</span>
+<span id="cb26-19"><a aria-label="19"></a>    <span class="co"># data arrays</span></span>
+<span id="cb26-20"><a aria-label="20"></a>    points1 <span class="op">=</span> ak.Array([</span>
+<span id="cb26-21"><a aria-label="21"></a>    [{<span class="st">"x"</span>: <span class="fl">1.0</span>, <span class="st">"y"</span>: <span class="fl">1.1</span>}, {<span class="st">"x"</span>: <span class="fl">2.0</span>, <span class="st">"y"</span>: <span class="fl">2.2</span>}, {<span class="st">"x"</span>: <span class="dv">3</span>, <span class="st">"y"</span>: <span class="fl">3.3</span>}],</span>
+<span id="cb26-22"><a aria-label="22"></a>    [],</span>
+<span id="cb26-23"><a aria-label="23"></a>    [{<span class="st">"x"</span>: <span class="fl">4.0</span>, <span class="st">"y"</span>: <span class="fl">4.4</span>}, {<span class="st">"x"</span>: <span class="fl">5.0</span>, <span class="st">"y"</span>: <span class="fl">5.5</span>}],</span>
+<span id="cb26-24"><a aria-label="24"></a>    [{<span class="st">"x"</span>: <span class="fl">6.0</span>, <span class="st">"y"</span>: <span class="fl">6.6</span>}],</span>
+<span id="cb26-25"><a aria-label="25"></a>    [{<span class="st">"x"</span>: <span class="fl">7.0</span>, <span class="st">"y"</span>: <span class="fl">7.7</span>}, {<span class="st">"x"</span>: <span class="fl">8.0</span>, <span class="st">"y"</span>: <span class="fl">8.8</span>}, {<span class="st">"x"</span>: <span class="dv">9</span>, <span class="st">"y"</span>: <span class="fl">9.9</span>}],</span>
+<span id="cb26-26"><a aria-label="26"></a>    ])</span>
+<span id="cb26-27"><a aria-label="27"></a></span>
+<span id="cb26-28"><a aria-label="28"></a>    points2 <span class="op">=</span> ak.Array([</span>
+<span id="cb26-29"><a aria-label="29"></a>    [{<span class="st">"x"</span>: <span class="fl">0.9</span>, <span class="st">"y"</span>: <span class="fl">1.0</span>}, {<span class="st">"x"</span>: <span class="fl">2.0</span>, <span class="st">"y"</span>: <span class="fl">2.2</span>}, {<span class="st">"x"</span>: <span class="fl">2.9</span>, <span class="st">"y"</span>: <span class="fl">3.0</span>}],</span>
+<span id="cb26-30"><a aria-label="30"></a>    [],</span>
+<span id="cb26-31"><a aria-label="31"></a>    [{<span class="st">"x"</span>: <span class="fl">3.9</span>, <span class="st">"y"</span>: <span class="fl">4.0</span>}, {<span class="st">"x"</span>: <span class="fl">5.0</span>, <span class="st">"y"</span>: <span class="fl">5.5</span>}],</span>
+<span id="cb26-32"><a aria-label="32"></a>    [{<span class="st">"x"</span>: <span class="fl">5.9</span>, <span class="st">"y"</span>: <span class="fl">6.0</span>}],</span>
+<span id="cb26-33"><a aria-label="33"></a>    [{<span class="st">"x"</span>: <span class="fl">6.9</span>, <span class="st">"y"</span>: <span class="fl">7.0</span>}, {<span class="st">"x"</span>: <span class="fl">8.0</span>, <span class="st">"y"</span>: <span class="fl">8.8</span>}, {<span class="st">"x"</span>: <span class="fl">8.9</span>, <span class="st">"y"</span>: <span class="fl">9.0</span>}],</span>
+<span id="cb26-34"><a aria-label="34"></a>    ])</span>
+<span id="cb26-35"><a aria-label="35"></a>    array1 <span class="op">=</span> dak.from_awkward(points1, npartitions<span class="op">=</span><span class="dv">3</span>)</span>
+<span id="cb26-36"><a aria-label="36"></a>    array2 <span class="op">=</span> dak.from_awkward(points2, npartitions<span class="op">=</span><span class="dv">3</span>)</span>
+<span id="cb26-37"><a aria-label="37"></a></span>
+<span id="cb26-38"><a aria-label="38"></a>    array1 <span class="op">=</span> dak.with_name(array1, name<span class="op">=</span><span class="st">"Point"</span>, behavior<span class="op">=</span>behavior)</span>
+<span id="cb26-39"><a aria-label="39"></a>    array2 <span class="op">=</span> dak.with_name(array2, name<span class="op">=</span><span class="st">"Point"</span>, behavior<span class="op">=</span>behavior)</span>
+<span id="cb26-40"><a aria-label="40"></a></span>
+<span id="cb26-41"><a aria-label="41"></a>    distance <span class="op">=</span> array1.distance(array2)</span>
+<span id="cb26-42"><a aria-label="42"></a></span>
+<span id="cb26-43"><a aria-label="43"></a>    m <span class="op">=</span> vine.DaskVine(port<span class="op">=</span><span class="dv">9123</span>, ssl<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb26-44"><a aria-label="44"></a>    m.set_name(<span class="st">"test_manager"</span>)</span>
+<span id="cb26-45"><a aria-label="45"></a>    <span class="bu">print</span>(<span class="ss">f"Listening for workers at port: </span><span class="sc">{</span>m<span class="sc">.</span>port<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb26-46"><a aria-label="46"></a></span>
+<span id="cb26-47"><a aria-label="47"></a>    f <span class="op">=</span> vine.Factory(manager<span class="op">=</span>m)</span>
+<span id="cb26-48"><a aria-label="48"></a>    f.cores <span class="op">=</span> <span class="dv">4</span></span>
+<span id="cb26-49"><a aria-label="49"></a>    f.max_workers <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb26-50"><a aria-label="50"></a>    f.min_workers <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb26-51"><a aria-label="51"></a>    <span class="cf">with</span> f:</span>
+<span id="cb26-52"><a aria-label="52"></a>        <span class="cf">with</span> dask.config.<span class="bu">set</span>(scheduler<span class="op">=</span>m.get):</span>
+<span id="cb26-53"><a aria-label="53"></a>            result <span class="op">=</span> distance.compute(resources<span class="op">=</span>{<span class="st">"cores"</span>: <span class="dv">1</span>}, resources_mode<span class="op">=</span><span class="st">"max"</span>, lazy_transfers<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb26-54"><a aria-label="54"></a>            <span class="bu">print</span>(<span class="ss">f"distance = </span><span class="sc">{</span>result<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb26-55"><a aria-label="55"></a>        <span class="bu">print</span>(<span class="st">"Terminating workers..."</span>, end<span class="op">=</span><span class="st">""</span>)</span>
+<span id="cb26-56"><a aria-label="56"></a>    <span class="bu">print</span>(<span class="st">"done!"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -897,7 +1547,7 @@ MSDE
 <h1>Other Dask collections</h1>
 
 </section>
-<section id="dask-27" class="slide level2">
+<section id="dask-28" class="slide level2">
 <h2>Dask</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -914,7 +1564,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="dask-28" class="slide level2">
+<section id="dask-29" class="slide level2">
 <h2>Dask</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -930,21 +1580,21 @@ MSDE
 </div>
 </div>
 </section>
-<section id="dask-29" class="slide level2">
-<h2>Dask</h2>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a aria-label="1"></a><span class="op">&gt;&gt;&gt;</span> <span class="im">import</span> dask.bag <span class="im">as</span> db</span>
-<span id="cb17-2"><a aria-label="2"></a><span class="op">&gt;&gt;&gt;</span> <span class="im">import</span> json</span>
-<span id="cb17-3"><a aria-label="3"></a><span class="op">&gt;&gt;&gt;</span> b <span class="op">=</span> db.from_filenames(<span class="st">'2014-*.json.gz'</span>).<span class="bu">map</span>(json.loads)</span>
-<span id="cb17-4"><a aria-label="4"></a><span class="op">&gt;&gt;&gt;</span> alices <span class="op">=</span> b.<span class="bu">filter</span>(<span class="kw">lambda</span> d: d[<span class="st">'name'</span>] <span class="op">==</span> <span class="st">'Alice'</span>)</span>
-<span id="cb17-5"><a aria-label="5"></a><span class="op">&gt;&gt;&gt;</span> alices.take(<span class="dv">3</span>)</span>
-<span id="cb17-6"><a aria-label="6"></a>({<span class="st">'name'</span>: <span class="st">'Alice'</span>, <span class="st">'city'</span>: <span class="st">'LA'</span>, <span class="st">'balance'</span>: <span class="dv">100</span>},</span>
-<span id="cb17-7"><a aria-label="7"></a>{<span class="st">'name'</span>: <span class="st">'Alice'</span>, <span class="st">'city'</span>: <span class="st">'LA'</span>, <span class="st">'balance'</span>: <span class="dv">200</span>},</span>
-<span id="cb17-8"><a aria-label="8"></a>{<span class="st">'name'</span>: <span class="st">'Alice'</span>, <span class="st">'city'</span>: <span class="st">'NYC'</span>, <span class="st">'balance'</span>: <span class="dv">300</span>},)</span>
-<span id="cb17-9"><a aria-label="9"></a></span>
-<span id="cb17-10"><a aria-label="10"></a><span class="op">&gt;&gt;&gt;</span> <span class="bu">dict</span>(alices.pluck(<span class="st">'city'</span>).frequencies())</span>
-<span id="cb17-11"><a aria-label="11"></a>{<span class="st">'LA'</span>: <span class="dv">10000</span>, <span class="st">'NYC'</span>: <span class="dv">20000</span>, ...}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</section>
 <section id="dask-30" class="slide level2">
+<h2>Dask</h2>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a aria-label="1"></a><span class="op">&gt;&gt;&gt;</span> <span class="im">import</span> dask.bag <span class="im">as</span> db</span>
+<span id="cb27-2"><a aria-label="2"></a><span class="op">&gt;&gt;&gt;</span> <span class="im">import</span> json</span>
+<span id="cb27-3"><a aria-label="3"></a><span class="op">&gt;&gt;&gt;</span> b <span class="op">=</span> db.from_filenames(<span class="st">'2014-*.json.gz'</span>).<span class="bu">map</span>(json.loads)</span>
+<span id="cb27-4"><a aria-label="4"></a><span class="op">&gt;&gt;&gt;</span> alices <span class="op">=</span> b.<span class="bu">filter</span>(<span class="kw">lambda</span> d: d[<span class="st">'name'</span>] <span class="op">==</span> <span class="st">'Alice'</span>)</span>
+<span id="cb27-5"><a aria-label="5"></a><span class="op">&gt;&gt;&gt;</span> alices.take(<span class="dv">3</span>)</span>
+<span id="cb27-6"><a aria-label="6"></a>({<span class="st">'name'</span>: <span class="st">'Alice'</span>, <span class="st">'city'</span>: <span class="st">'LA'</span>, <span class="st">'balance'</span>: <span class="dv">100</span>},</span>
+<span id="cb27-7"><a aria-label="7"></a>{<span class="st">'name'</span>: <span class="st">'Alice'</span>, <span class="st">'city'</span>: <span class="st">'LA'</span>, <span class="st">'balance'</span>: <span class="dv">200</span>},</span>
+<span id="cb27-8"><a aria-label="8"></a>{<span class="st">'name'</span>: <span class="st">'Alice'</span>, <span class="st">'city'</span>: <span class="st">'NYC'</span>, <span class="st">'balance'</span>: <span class="dv">300</span>},)</span>
+<span id="cb27-9"><a aria-label="9"></a></span>
+<span id="cb27-10"><a aria-label="10"></a><span class="op">&gt;&gt;&gt;</span> <span class="bu">dict</span>(alices.pluck(<span class="st">'city'</span>).frequencies())</span>
+<span id="cb27-11"><a aria-label="11"></a>{<span class="st">'LA'</span>: <span class="dv">10000</span>, <span class="st">'NYC'</span>: <span class="dv">20000</span>, ...}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="dask-31" class="slide level2">
 <h2>Dask</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -952,20 +1602,20 @@ MSDE
 <p><strong>S3 example</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a aria-label="1"></a><span class="op">&gt;&gt;&gt;</span> <span class="im">import</span> dask.bag <span class="im">as</span> db</span>
-<span id="cb18-2"><a aria-label="2"></a><span class="op">&gt;&gt;&gt;</span> b <span class="op">=</span> db.from_s3(<span class="st">'githubarchive-data'</span>, <span class="st">'2015-01-01-*.json.gz'</span>)</span>
-<span id="cb18-3"><a aria-label="3"></a>          .<span class="bu">map</span>(json.loads)</span>
-<span id="cb18-4"><a aria-label="4"></a>          .<span class="bu">map</span>(<span class="kw">lambda</span> d: d[<span class="st">'type'</span>] <span class="op">==</span> <span class="st">'PushEvent'</span>)</span>
-<span id="cb18-5"><a aria-label="5"></a>          .count()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a aria-label="1"></a><span class="op">&gt;&gt;&gt;</span> <span class="im">import</span> dask.bag <span class="im">as</span> db</span>
+<span id="cb28-2"><a aria-label="2"></a><span class="op">&gt;&gt;&gt;</span> b <span class="op">=</span> db.from_s3(<span class="st">'githubarchive-data'</span>, <span class="st">'2015-01-01-*.json.gz'</span>)</span>
+<span id="cb28-3"><a aria-label="3"></a>          .<span class="bu">map</span>(json.loads)</span>
+<span id="cb28-4"><a aria-label="4"></a>          .<span class="bu">map</span>(<span class="kw">lambda</span> d: d[<span class="st">'type'</span>] <span class="op">==</span> <span class="st">'PushEvent'</span>)</span>
+<span id="cb28-5"><a aria-label="5"></a>          .count()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
 </section>
-<section id="dask-31" class="slide level2">
+<section id="dask-32" class="slide level2">
 <h2>Dask</h2>
 <p><!-- %https://blog.dask.org/2015/06/26/Complex-Graphs --> <img data-src="img/dask_bag_graph.png"></p>
 </section>
-<section id="dask-32" class="slide level2">
+<section id="dask-33" class="slide level2">
 <h2>Dask</h2>
 <div class="callout callout-note no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -979,7 +1629,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="dask-33" class="slide level2">
+<section id="dask-34" class="slide level2">
 <h2>Dask</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -994,7 +1644,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="dask-34" class="slide level2">
+<section id="dask-35" class="slide level2">
 <h2>Dask</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1007,7 +1657,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="dask-35" class="slide level2">
+<section id="dask-36" class="slide level2">
 <h2>Dask</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1015,15 +1665,15 @@ MSDE
 <p><strong>Out-of-core parallel SVD example</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a aria-label="1"></a><span class="op">&gt;&gt;&gt;</span> <span class="im">import</span> dask.array <span class="im">as</span> da</span>
-<span id="cb19-2"><a aria-label="2"></a><span class="op">&gt;&gt;&gt;</span> x <span class="op">=</span> da.ones((<span class="dv">5000</span>, <span class="dv">1000</span>), chunks<span class="op">=</span>(<span class="dv">1000</span>, <span class="dv">1000</span>))</span>
-<span id="cb19-3"><a aria-label="3"></a><span class="op">&gt;&gt;&gt;</span> u, s, v <span class="op">=</span> da.svd(x)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a aria-label="1"></a><span class="op">&gt;&gt;&gt;</span> <span class="im">import</span> dask.array <span class="im">as</span> da</span>
+<span id="cb29-2"><a aria-label="2"></a><span class="op">&gt;&gt;&gt;</span> x <span class="op">=</span> da.ones((<span class="dv">5000</span>, <span class="dv">1000</span>), chunks<span class="op">=</span>(<span class="dv">1000</span>, <span class="dv">1000</span>))</span>
+<span id="cb29-3"><a aria-label="3"></a><span class="op">&gt;&gt;&gt;</span> u, s, v <span class="op">=</span> da.svd(x)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Out-of-core parallel non-negative matrix factorizations on top of <code>dask.array</code>.</p>
 </div>
 </div>
 </div>
 </section>
-<section id="dask-36" class="slide level2">
+<section id="dask-37" class="slide level2">
 <h2>Dask</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
