@@ -46,6 +46,27 @@ matplotlib.rcParams["figure.dpi"] = 110
 matplotlib.rcParams["font.size"] = 8
 
 GDS = "../_repos/gdsbook/data"
+
+import os
+import contextily
+
+
+def _carto(variant):
+    """CARTO basemaps now require an API key. Use it when CARTO_API_KEY is
+    set; otherwise fall back to a keyless Esri equivalent so the render
+    never shows the "API KEY REQUIRED" watermark."""
+    key = os.environ.get("CARTO_API_KEY")
+    return (
+        variant(apikey=key)
+        if key
+        else contextily.providers.Esri.WorldGrayCanvas
+    )
+
+
+BASEMAP = _carto(contextily.providers.CartoDB.Positron)
+BASEMAP_NOLABELS = _carto(
+    contextily.providers.CartoDB.PositronNoLabels
+)
 ```
 ## Spatial Data Analysis
 
@@ -1863,7 +1884,7 @@ joint_axes = seaborn.jointplot(
 contextily.add_basemap(
     joint_axes.ax_joint,
     crs="EPSG:4326",
-    source=contextily.providers.CartoDB.PositronNoLabels,
+    source=BASEMAP_NOLABELS,
 );
 ```
 
@@ -1899,7 +1920,7 @@ hb = ax.hexbin(
     cmap="viridis_r",
 )
 contextily.add_basemap(
-    ax, source=contextily.providers.CartoDB.Positron
+    ax, source=BASEMAP
 )
 plt.colorbar(hb)
 ax.set_axis_off()
@@ -1937,7 +1958,7 @@ plot_density(
     ax=ax,
 )
 contextily.add_basemap(
-    ax, source=contextily.providers.CartoDB.Positron
+    ax, source=BASEMAP
 )
 ax.set_axis_off()
 ```
@@ -1999,7 +2020,7 @@ joint_axes.ax_marg_x.axvline(med_center[0], color="limegreen")
 joint_axes.ax_marg_y.axhline(med_center[1], color="limegreen")
 joint_axes.ax_joint.legend()
 contextily.add_basemap(
-    joint_axes.ax_joint, source=contextily.providers.CartoDB.Positron
+    joint_axes.ax_joint, source=BASEMAP
 )
 joint_axes.ax_joint.set_axis_off()
 plt.show()
@@ -2058,7 +2079,7 @@ ellipse = Ellipse(
 ax.add_patch(ellipse)
 ax.legend()
 contextily.add_basemap(
-    ax, source=contextily.providers.CartoDB.Positron
+    ax, source=BASEMAP
 )
 plt.show()
 ```
@@ -2182,7 +2203,7 @@ ax.scatter(db.x, db.y, s=0.75, color="grey")
 ax.scatter(user.x, user.y, s=100, color="r", marker="x")
 ax.legend(ncol=1, loc="center left")
 contextily.add_basemap(
-    ax, source=contextily.providers.CartoDB.Positron
+    ax, source=BASEMAP
 )
 plt.show()
 ```
@@ -2245,7 +2266,7 @@ for ax, rp, title in [
     )
     ax.scatter(*rp.T, color="r", marker="x", label="Random")
     contextily.add_basemap(
-        ax, source=contextily.providers.CartoDB.Positron
+        ax, source=BASEMAP
     )
     ax.set_title(title)
     ax.set_axis_off()
@@ -2549,7 +2570,7 @@ ax.scatter(
     linewidth=0,
 )
 contextily.add_basemap(
-    ax, source=contextily.providers.CartoDB.Positron
+    ax, source=BASEMAP
 )
 ax.set_axis_off()
 plt.show()
@@ -2589,7 +2610,7 @@ ax.scatter(
     linewidth=0,
 )
 contextily.add_basemap(
-    ax, source=contextily.providers.CartoDB.Positron
+    ax, source=BASEMAP
 )
 ax.set_axis_off()
 plt.show()

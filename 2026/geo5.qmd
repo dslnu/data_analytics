@@ -46,6 +46,24 @@ matplotlib.rcParams["figure.dpi"] = 110
 matplotlib.rcParams["font.size"] = 8
 
 GDS = "../_repos/gdsbook/data"
+
+import os
+import contextily
+
+
+def _carto(variant):
+    """CARTO basemaps now require an API key. Use it when CARTO_API_KEY is
+    set; otherwise fall back to a keyless Esri equivalent so the render
+    never shows the "API KEY REQUIRED" watermark."""
+    key = os.environ.get("CARTO_API_KEY")
+    return (
+        variant(apikey=key)
+        if key
+        else contextily.providers.Esri.WorldGrayCanvas
+    )
+
+
+BASEMAP = _carto(contextily.providers.CartoDB.Voyager)
 ```
 
 ## Geographic Data Science
@@ -840,7 +858,7 @@ max_polys = (
 ```{python}
 ax = max_polys.plot(edgecolor="red", figsize=(7, 7))
 cx.add_basemap(
-    ax, crs=surface.rio.crs, source=cx.providers.CartoDB.Voyager
+    ax, crs=surface.rio.crs, source=BASEMAP
 );
 ```
 :::
