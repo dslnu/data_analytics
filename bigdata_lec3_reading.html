@@ -1,0 +1,2188 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="MSDE">
+
+<title>DAGs and Scheduling — reading notes – Big Data analytics / Applied Data analytics</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-6e268169e3b58a97b39eb04411ed87c3.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">Big Data analytics / Applied Data analytics</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./bigdata.html"> 
+<span class="menu-text">Big Data analytics</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./applied.html"> 
+<span class="menu-text">Applied Data analytics</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./about.html"> 
+<span class="menu-text">About</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#how-to-use-this" id="toc-how-to-use-this" class="nav-link active" data-scroll-target="#how-to-use-this">How to use this</a></li>
+  <li><a href="#from-a-program-to-a-graph" id="toc-from-a-program-to-a-graph" class="nav-link" data-scroll-target="#from-a-program-to-a-graph">1. From a program to a graph</a>
+  <ul class="collapse">
+  <li><a href="#the-source-code-lies-about-the-ordering" id="toc-the-source-code-lies-about-the-ordering" class="nav-link" data-scroll-target="#the-source-code-lies-about-the-ordering">The source code lies about the ordering</a></li>
+  <li><a href="#which-orderings-are-actually-forced" id="toc-which-orderings-are-actually-forced" class="nav-link" data-scroll-target="#which-orderings-are-actually-forced">Which orderings are actually forced</a></li>
+  <li><a href="#choosing-the-nodes" id="toc-choosing-the-nodes" class="nav-link" data-scroll-target="#choosing-the-nodes">Choosing the nodes</a></li>
+  <li><a href="#who-recovers-the-graph" id="toc-who-recovers-the-graph" class="nav-link" data-scroll-target="#who-recovers-the-graph">Who recovers the graph?</a></li>
+  </ul></li>
+  <li><a href="#work-span-and-why-greedy-is-good-enough" id="toc-work-span-and-why-greedy-is-good-enough" class="nav-link" data-scroll-target="#work-span-and-why-greedy-is-good-enough">2. Work, span, and why greedy is good enough</a>
+  <ul class="collapse">
+  <li><a href="#two-numbers-describe-a-computation" id="toc-two-numbers-describe-a-computation" class="nav-link" data-scroll-target="#two-numbers-describe-a-computation">Two numbers describe a computation</a></li>
+  <li><a href="#computing-them" id="toc-computing-them" class="nav-link" data-scroll-target="#computing-them">Computing them</a></li>
+  <li><a href="#the-greedy-bound" id="toc-the-greedy-bound" class="nav-link" data-scroll-target="#the-greedy-bound">The greedy bound</a></li>
+  <li><a href="#when-is-the-bound-tight" id="toc-when-is-the-bound-tight" class="nav-link" data-scroll-target="#when-is-the-bound-tight">When is the bound tight?</a></li>
+  <li><a href="#parallelism-speedup-efficiency" id="toc-parallelism-speedup-efficiency" class="nav-link" data-scroll-target="#parallelism-speedup-efficiency">Parallelism, speedup, efficiency</a></li>
+  <li><a href="#read-it-as-a-design-rule" id="toc-read-it-as-a-design-rule" class="nav-link" data-scroll-target="#read-it-as-a-design-rule">Read it as a design rule</a></li>
+  <li><a href="#where-amdahls-serial-fraction-comes-from" id="toc-where-amdahls-serial-fraction-comes-from" class="nav-link" data-scroll-target="#where-amdahls-serial-fraction-comes-from">Where Amdahl’s serial fraction comes from</a></li>
+  <li><a href="#a-footnote-on-amdahl-and-gustafson" id="toc-a-footnote-on-amdahl-and-gustafson" class="nav-link" data-scroll-target="#a-footnote-on-amdahl-and-gustafson">A footnote on Amdahl and Gustafson</a></li>
+  </ul></li>
+  <li><a href="#how-hard-is-the-scheduling-problem" id="toc-how-hard-is-the-scheduling-problem" class="nav-link" data-scroll-target="#how-hard-is-the-scheduling-problem">3. How hard is the scheduling problem?</a>
+  <ul class="collapse">
+  <li><a href="#how-to-read-the-problem-names" id="toc-how-to-read-the-problem-names" class="nav-link" data-scroll-target="#how-to-read-the-problem-names">How to read the problem names</a></li>
+  <li><a href="#the-tractable-corners" id="toc-the-tractable-corners" class="nav-link" data-scroll-target="#the-tractable-corners">The tractable corners</a></li>
+  <li><a href="#it-contains-partition" id="toc-it-contains-partition" class="nav-link" data-scroll-target="#it-contains-partition">“It contains PARTITION”</a></li>
+  <li><a href="#but-the-mildest-kind-of-intractable" id="toc-but-the-mildest-kind-of-intractable" class="nav-link" data-scroll-target="#but-the-mildest-kind-of-intractable">But the mildest kind of intractable</a></li>
+  <li><a href="#the-bounds-are-not-just-asymptotic-comfort" id="toc-the-bounds-are-not-just-asymptotic-comfort" class="nav-link" data-scroll-target="#the-bounds-are-not-just-asymptotic-comfort">The bounds are not just asymptotic comfort</a></li>
+  </ul></li>
+  <li><a href="#grahams-anomalies" id="toc-grahams-anomalies" class="nav-link" data-scroll-target="#grahams-anomalies">4. Graham’s anomalies</a>
+  <ul class="collapse">
+  <li><a href="#where-they-came-from" id="toc-where-they-came-from" class="nav-link" data-scroll-target="#where-they-came-from">Where they came from</a></li>
+  <li><a href="#the-setup" id="toc-the-setup" class="nav-link" data-scroll-target="#the-setup">The setup</a></li>
+  <li><a href="#reproducing-it" id="toc-reproducing-it" class="nav-link" data-scroll-target="#reproducing-it">Reproducing it</a></li>
+  <li><a href="#baseline-makespan-12" id="toc-baseline-makespan-12" class="nav-link" data-scroll-target="#baseline-makespan-12">Baseline: makespan 12</a></li>
+  <li><a href="#anomaly-1-every-task-gets-faster-13" id="toc-anomaly-1-every-task-gets-faster-13" class="nav-link" data-scroll-target="#anomaly-1-every-task-gets-faster-13">Anomaly 1: every task gets faster → 13</a></li>
+  <li><a href="#anomaly-2-add-a-processor-15" id="toc-anomaly-2-add-a-processor-15" class="nav-link" data-scroll-target="#anomaly-2-add-a-processor-15">Anomaly 2: add a processor → 15</a></li>
+  <li><a href="#anomaly-3-remove-the-dependencies-16" id="toc-anomaly-3-remove-the-dependencies-16" class="nav-link" data-scroll-target="#anomaly-3-remove-the-dependencies-16">Anomaly 3: remove the dependencies → 16</a></li>
+  <li><a href="#the-pattern-in-one-sentence" id="toc-the-pattern-in-one-sentence" class="nav-link" data-scroll-target="#the-pattern-in-one-sentence">The pattern, in one sentence</a></li>
+  <li><a href="#a-fourth-one-change-the-priority-list" id="toc-a-fourth-one-change-the-priority-list" class="nav-link" data-scroll-target="#a-fourth-one-change-the-priority-list">A fourth one: change the priority list</a></li>
+  <li><a href="#checking-grahams-bound-yourself" id="toc-checking-grahams-bound-yourself" class="nav-link" data-scroll-target="#checking-grahams-bound-yourself">Checking Graham’s bound yourself</a></li>
+  <li><a href="#the-bound-on-the-damage" id="toc-the-bound-on-the-damage" class="nav-link" data-scroll-target="#the-bound-on-the-damage">The bound on the damage</a></li>
+  <li><a href="#what-to-take-away" id="toc-what-to-take-away" class="nav-link" data-scroll-target="#what-to-take-away">What to take away</a></li>
+  <li><a href="#things-to-try" id="toc-things-to-try" class="nav-link" data-scroll-target="#things-to-try">Things to try</a></li>
+  </ul></li>
+  <li><a href="#static-scheduling-algorithms" id="toc-static-scheduling-algorithms" class="nav-link" data-scroll-target="#static-scheduling-algorithms">5. Static scheduling algorithms</a>
+  <ul class="collapse">
+  <li><a href="#two-axes-first" id="toc-two-axes-first" class="nav-link" data-scroll-target="#two-axes-first">Two axes first</a></li>
+  <li><a href="#what-heuristic-means-here" id="toc-what-heuristic-means-here" class="nav-link" data-scroll-target="#what-heuristic-means-here">What “heuristic” means here</a></li>
+  <li><a href="#the-families" id="toc-the-families" class="nav-link" data-scroll-target="#the-families">The families</a></li>
+  </ul></li>
+  <li><a href="#dynamic-scheduling" id="toc-dynamic-scheduling" class="nav-link" data-scroll-target="#dynamic-scheduling">6. Dynamic scheduling</a>
+  <ul class="collapse">
+  <li><a href="#why-the-static-picture-breaks" id="toc-why-the-static-picture-breaks" class="nav-link" data-scroll-target="#why-the-static-picture-breaks">Why the static picture breaks</a></li>
+  <li><a href="#the-pivot" id="toc-the-pivot" class="nav-link" data-scroll-target="#the-pivot">The pivot</a></li>
+  <li><a href="#work-sharing-vs.-work-stealing" id="toc-work-sharing-vs.-work-stealing" class="nav-link" data-scroll-target="#work-sharing-vs.-work-stealing">Work sharing vs.&nbsp;work stealing</a></li>
+  <li><a href="#the-deque-discipline" id="toc-the-deque-discipline" class="nav-link" data-scroll-target="#the-deque-discipline">The deque discipline</a></li>
+  <li><a href="#the-theory-blumofe-leiserson-1999blumofe" id="toc-the-theory-blumofe-leiserson-1999blumofe" class="nav-link" data-scroll-target="#the-theory-blumofe-leiserson-1999blumofe">The theory: Blumofe &amp; Leiserson (1999)</a></li>
+  <li><a href="#why-pick-victims-at-random" id="toc-why-pick-victims-at-random" class="nav-link" data-scroll-target="#why-pick-victims-at-random">Why pick victims at random?</a></li>
+  <li><a href="#the-work-first-principle" id="toc-the-work-first-principle" class="nav-link" data-scroll-target="#the-work-first-principle">The work-first principle</a></li>
+  <li><a href="#locality-vs.-load-balance" id="toc-locality-vs.-load-balance" class="nav-link" data-scroll-target="#locality-vs.-load-balance">Locality vs.&nbsp;load balance</a></li>
+  <li><a href="#sampling-instead-of-state" id="toc-sampling-instead-of-state" class="nav-link" data-scroll-target="#sampling-instead-of-state">Sampling instead of state</a></li>
+  <li><a href="#stragglers" id="toc-stragglers" class="nav-link" data-scroll-target="#stragglers">Stragglers</a></li>
+  <li><a href="#the-scheduler-is-itself-a-parallel-program" id="toc-the-scheduler-is-itself-a-parallel-program" class="nav-link" data-scroll-target="#the-scheduler-is-itself-a-parallel-program">The scheduler is itself a parallel program</a></li>
+  <li><a href="#what-the-frameworks-actually-do" id="toc-what-the-frameworks-actually-do" class="nav-link" data-scroll-target="#what-the-frameworks-actually-do">What the frameworks actually do</a></li>
+  </ul></li>
+  <li><a href="#beyond-one-framework" id="toc-beyond-one-framework" class="nav-link" data-scroll-target="#beyond-one-framework">7. Beyond one framework</a>
+  <ul class="collapse">
+  <li><a href="#four-architectures" id="toc-four-architectures" class="nav-link" data-scroll-target="#four-architectures">Four architectures</a></li>
+  <li><a href="#dominant-resource-fairness" id="toc-dominant-resource-fairness" class="nav-link" data-scroll-target="#dominant-resource-fairness">Dominant resource fairness</a></li>
+  <li><a href="#scale-for-perspective" id="toc-scale-for-perspective" class="nav-link" data-scroll-target="#scale-for-perspective">Scale, for perspective</a></li>
+  </ul></li>
+  <li><a href="#the-honest-summary" id="toc-the-honest-summary" class="nav-link" data-scroll-target="#the-honest-summary">8. The honest summary</a></li>
+  <li><a href="#glossary" id="toc-glossary" class="nav-link" data-scroll-target="#glossary">Glossary</a></li>
+  <li><a href="#check-yourself" id="toc-check-yourself" class="nav-link" data-scroll-target="#check-yourself">Check yourself</a></li>
+  <li><a href="#further-reading" id="toc-further-reading" class="nav-link" data-scroll-target="#further-reading">Further reading</a></li>
+  <li><a href="#notes-and-references" id="toc-notes-and-references" class="nav-link" data-scroll-target="#notes-and-references">Notes and references</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">DAGs and Scheduling — reading notes</h1>
+<p class="subtitle lead">Companion to Lecture 3</p>
+</div>
+
+
+<div class="quarto-title-meta-author">
+  <div class="quarto-title-meta-heading">Author</div>
+  <div class="quarto-title-meta-heading">Affiliation</div>
+  
+    <div class="quarto-title-meta-contents">
+    <p class="author">MSDE </p>
+  </div>
+  <div class="quarto-title-meta-contents">
+        <p class="affiliation">
+            Lviv University
+          </p>
+      </div>
+  </div>
+
+<div class="quarto-title-meta">
+
+      
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="how-to-use-this" class="level2">
+<h2 class="anchored" data-anchor-id="how-to-use-this">How to use this</h2>
+<p>The slides move fast and compress a lot into single lines. This document is the prose version: the same material in the same order, with the arguments actually spelled out. Two sections go deeper than the slides do, because they are the two that do not survive compression — <strong>Graham’s anomalies</strong> and <strong>dynamic scheduling</strong>.</p>
+<p>You can read it before the lecture as preparation, or after it as the thing that makes the bullet points make sense. The sections map onto the slide sections like this:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>this document</th>
+<th>slide section(s)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1. From a program to a graph</td>
+<td><em>From sequential to parallel</em></td>
+</tr>
+<tr class="even">
+<td>2. Work, span, and why greedy is good enough</td>
+<td><em>Program as DAG</em> + <em>Scheduling</em></td>
+</tr>
+<tr class="odd">
+<td>3. How hard is the scheduling problem?</td>
+<td><em>How hard is scheduling?</em></td>
+</tr>
+<tr class="even">
+<td>4. Graham’s anomalies</td>
+<td><em>Graham’s anomalies</em></td>
+</tr>
+<tr class="odd">
+<td>5. Static scheduling algorithms</td>
+<td><em>Scheduling algorithms</em></td>
+</tr>
+<tr class="even">
+<td>6. Dynamic scheduling</td>
+<td><em>Dynamic scheduling</em></td>
+</tr>
+<tr class="odd">
+<td>7. Beyond one framework</td>
+<td><em>Beyond one framework</em></td>
+</tr>
+</tbody>
+</table>
+<p>One running convention, used by the slides and here:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>symbol</th>
+<th>meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(W\)</span></td>
+<td><strong>work</strong> — total amount of computation, summed over all tasks</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(S\)</span></td>
+<td><strong>span</strong> — length of the longest dependency chain (the critical path)</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(T_P\)</span></td>
+<td>makespan on <span class="math inline">\(P\)</span> processors</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(w(n_i)\)</span></td>
+<td>computation cost of task <span class="math inline">\(n_i\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(c(n_i, n_j)\)</span></td>
+<td>communication cost on the edge <span class="math inline">\(n_i \to n_j\)</span></td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="from-a-program-to-a-graph" class="level2">
+<h2 class="anchored" data-anchor-id="from-a-program-to-a-graph">1. From a program to a graph</h2>
+<section id="the-source-code-lies-about-the-ordering" class="level3">
+<h3 class="anchored" data-anchor-id="the-source-code-lies-about-the-ordering">The source code lies about the ordering</h3>
+<p>A sequential program is a <strong>total order</strong>: statement 1, then 2, then 3. But that total order is an artefact of how we had to write it down. Most of it is not required by the computation.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>a <span class="op">=</span> f(<span class="dv">1</span>)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>b <span class="op">=</span> g(<span class="dv">2</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>c <span class="op">=</span> h(a, b)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>d <span class="op">=</span> k(a)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>e <span class="op">=</span> m(c, d)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Five statements in a line, but <code>b</code> never needed to wait for <code>a</code>, and <code>d</code> — written <em>after</em> <code>c</code> — depends only on <code>a</code>, so it could run before <code>c</code>, or beside it. The real structure is a graph with only three levels of genuine dependence. The sequential listing was <strong>one linearization</strong> of that graph, and any topological order of the graph computes the same answer.</p>
+<p>That is the shift the whole lecture rests on. We stop asking <em>“what runs next?”</em> and start asking <em>“what is allowed to run now?”</em></p>
+</section>
+<section id="which-orderings-are-actually-forced" class="level3">
+<h3 class="anchored" data-anchor-id="which-orderings-are-actually-forced">Which orderings are actually forced</h3>
+<p>The answer is old and precise. In 1966 A. J. Bernstein<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a> asked exactly this question — when may two successive parts of a program run in parallel and still produce the same result? — and gave three conditions. Writing <span class="math inline">\(I_i\)</span> for the locations statement <span class="math inline">\(i\)</span> reads and <span class="math inline">\(O_i\)</span> for those it writes, two statements are independent when</p>
+<p><span class="math display">\[I_1 \cap O_2 = \emptyset \qquad I_2 \cap O_1 = \emptyset \qquad O_1 \cap O_2 = \emptyset\]</span></p>
+<p>Each violated condition is one kind of dependence:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>kind</th>
+<th>pattern</th>
+<th>forced?</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>true</strong> (flow)</td>
+<td>read-after-write: <span class="math inline">\(B\)</span> consumes <span class="math inline">\(A\)</span>’s result</td>
+<td><strong>yes</strong> — a genuine edge</td>
+</tr>
+<tr class="even">
+<td><strong>anti</strong></td>
+<td>write-after-read: <span class="math inline">\(B\)</span> overwrites what <span class="math inline">\(A\)</span> still needs</td>
+<td>no — an artefact of reusing a name</td>
+</tr>
+<tr class="odd">
+<td><strong>output</strong></td>
+<td>write-after-write: both write the same location</td>
+<td>no — likewise</td>
+</tr>
+</tbody>
+</table>
+<p>Only the first is about data. The other two exist because we reused a <em>name</em>, and they vanish if you rename the variable. This is why they are called <strong>false</strong> or <strong>name</strong> dependences, and why hardware bothers to undo them: Tomasulo’s algorithm (1967)<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a> is register renaming in silicon, and every out-of-order CPU since does the same thing.</p>
+<p>To see how cheap the fix is, here is a fragment with all three kinds at once:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> load()        <span class="co"># S1</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> f(x)          <span class="co"># S2   true dep on S1   (S2 reads what S1 wrote)</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> g()           <span class="co"># S3   anti dep on S2   (S3 overwrites x, which S2 reads)</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>z <span class="op">=</span> h(x)          <span class="co"># S4   true dep on S3</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> k(z)          <span class="co"># S5   output dep on S3 (both write x)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>S3</code> cannot move above <code>S2</code>, and <code>S5</code> cannot move above <code>S3</code> — but neither restriction has anything to do with the computation. Rename and they evaporate:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>x1 <span class="op">=</span> load()       <span class="co"># S1</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>y  <span class="op">=</span> f(x1)        <span class="co"># S2   depends on S1</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>x2 <span class="op">=</span> g()          <span class="co"># S3   depends on nothing --- free to run first, or in parallel</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>z  <span class="op">=</span> h(x2)        <span class="co"># S4   depends on S3</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>x3 <span class="op">=</span> k(z)         <span class="co"># S5   depends on S4</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Now <code>S1 → S2</code> and <code>S3 → S4 → S5</code> are two independent chains, and the span has dropped from 5 to 3. Nothing about the <em>computation</em> changed; we only stopped recycling the name <code>x</code>.</p>
+<p>It is also the reason single-assignment and functional style parallelize more easily. If you never reassign, there are no false dependences to begin with, and what remains <em>is</em> the dataflow. SSA form in compilers<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a> is the same trick applied universally.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The terminology (flow / anti / output) and the dependence <em>graph</em> as a compiler data structure come from David Kuck’s group at Illinois.<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a> Adding <em>control</em> dependence to the picture gives the program dependence graph.<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a></p>
+</div>
+</div>
+</section>
+<section id="choosing-the-nodes" class="level3">
+<h3 class="anchored" data-anchor-id="choosing-the-nodes">Choosing the nodes</h3>
+<p>Nothing so far says how big a node is. It can be one instruction, a loop body, a function call, or “read this 100 MB file”. The theory does not care. The trade-off does:</p>
+<ul>
+<li><strong>fine grain</strong> — more parallelism available, more scheduling overhead per unit of work</li>
+<li><strong>coarse grain</strong> — negligible overhead, less parallelism, worse load balance</li>
+</ul>
+<p>We call a node a <strong>task</strong> and leave its size open. Where you set that dial is one of the few decisions that is genuinely yours; the scheduler’s per-task overhead sets a hard floor on how small a useful task can be.</p>
+<p>It helps to have orders of magnitude in mind. A hardware instruction is sub-nanosecond. A function call is nanoseconds. A Python-level task in a distributed scheduler costs on the order of <strong>hundreds of microseconds to a millisecond</strong> of bookkeeping — graph entry, dependency tracking, serialisation, a message or two. So a task that does 200 µs of real work spends more time being scheduled than running, and a job of a million such tasks spends longer in the scheduler than in your code.</p>
+<p>The rule of thumb that follows: aim for tasks in the <strong>100 ms to a few seconds</strong> range. Below that, overhead dominates; far above it, you lose load balance and you lose the ability to recover cheaply from a failure. When people complain that a distributed framework is “slow”, the cause is very often a graph with a million tiny nodes, not a slow framework.</p>
+<p>This is also the first place the theory bites. Making tasks smaller increases available parallelism (lowers <span class="math inline">\(S\)</span> relative to <span class="math inline">\(W\)</span>) but adds overhead to <span class="math inline">\(W\)</span>. There is an optimum, and it is not at either extreme.</p>
+</section>
+<section id="who-recovers-the-graph" class="level3">
+<h3 class="anchored" data-anchor-id="who-recovers-the-graph">Who recovers the graph?</h3>
+<p>The same idea appears at every level of the stack, which is a good sign it is the right idea:</p>
+<ul>
+<li><strong>CPUs</strong> rebuild it in hardware — out-of-order execution reconstructs the dependence graph over a window of instructions and issues whatever is ready</li>
+<li><strong>Compilers</strong> build it statically — dependence analysis, vectorization, instruction scheduling</li>
+<li><strong>Build systems</strong> are handed it — <code>make</code> is a DAG scheduler with files as nodes</li>
+<li><strong>Parallel frameworks</strong> ask <em>you</em> to build it explicitly, then schedule it</li>
+</ul>
+<hr>
+</section>
+</section>
+<section id="work-span-and-why-greedy-is-good-enough" class="level2">
+<h2 class="anchored" data-anchor-id="work-span-and-why-greedy-is-good-enough">2. Work, span, and why greedy is good enough</h2>
+<section id="two-numbers-describe-a-computation" class="level3">
+<h3 class="anchored" data-anchor-id="two-numbers-describe-a-computation">Two numbers describe a computation</h3>
+<p>For a DAG where each node has a cost:</p>
+<ul>
+<li><strong>work</strong> <span class="math inline">\(W\)</span> — the total cost of all nodes. What one processor would do.</li>
+<li><strong>span</strong> <span class="math inline">\(S\)</span> — the cost of the longest path. What infinitely many processors could not avoid.</li>
+</ul>
+<p>Both are properties of the <em>graph</em>, independent of how many machines you own.</p>
+</section>
+<section id="computing-them" class="level3">
+<h3 class="anchored" data-anchor-id="computing-them">Computing them</h3>
+<p>Both are straightforward graph computations. Span is the longest path, which on a DAG is a single pass in topological order:</p>
+<div id="66bfd206" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> work(cost):</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">sum</span>(cost.values())</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> span(preds, cost):</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Longest cost-weighted path ending at any node."""</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    memo <span class="op">=</span> {}</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> longest_to(n):</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> n <span class="kw">not</span> <span class="kw">in</span> memo:</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>            memo[n] <span class="op">=</span> cost[n] <span class="op">+</span> <span class="bu">max</span>([longest_to(p) <span class="cf">for</span> p <span class="kw">in</span> preds[n]], default<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> memo[n]</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">max</span>(longest_to(n) <span class="cf">for</span> n <span class="kw">in</span> preds)</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="co"># the five-statement example from section 1, one unit each</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>preds <span class="op">=</span> {<span class="st">"a"</span>: [], <span class="st">"b"</span>: [], <span class="st">"c"</span>: [<span class="st">"a"</span>, <span class="st">"b"</span>], <span class="st">"d"</span>: [<span class="st">"a"</span>], <span class="st">"e"</span>: [<span class="st">"c"</span>, <span class="st">"d"</span>]}</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>cost  <span class="op">=</span> {k: <span class="dv">1</span> <span class="cf">for</span> k <span class="kw">in</span> preds}</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>W, S <span class="op">=</span> work(cost), span(preds, cost)</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"W = </span><span class="sc">{</span>W<span class="sc">}</span><span class="ss">, S = </span><span class="sc">{</span>S<span class="sc">}</span><span class="ss">, parallelism W/S = </span><span class="sc">{</span>W<span class="op">/</span>S<span class="sc">:.2f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>W = 5, S = 3, parallelism W/S = 1.67</code></pre>
+</div>
+</div>
+<p>So the little example has work 5 and span 3 — the chains <span class="math inline">\(a \to c \to e\)</span> and <span class="math inline">\(a \to d \to e\)</span> both cost 3. Note what this says: <strong>no number of processors will ever run this in less than 3 units</strong>, and more than about 2 processors is wasted on it.</p>
+</section>
+<section id="the-greedy-bound" class="level3">
+<h3 class="anchored" data-anchor-id="the-greedy-bound">The greedy bound</h3>
+<p>A scheduler is <strong>greedy</strong> if it never leaves a processor idle while some task is ready. That is the whole rule — no lookahead, no cleverness. Remarkably, it is almost enough:</p>
+<p><span class="math display">\[T_P &lt; \frac{W}{P} + S\]</span></p>
+<p>The argument is two lines. Consider any instant. Either <strong>all <span class="math inline">\(P\)</span> processors are busy</strong>, in which case we are consuming work at the maximum rate and there can be at most <span class="math inline">\(W/P\)</span> such time; or <strong>some processor is idle</strong>, which for a greedy scheduler means nothing was ready, which means some task on a critical path is running, and there can be at most <span class="math inline">\(S\)</span> such time. Add them.</p>
+<p>And no schedule can beat</p>
+<p><span class="math display">\[T_P \geq \max\!\left(\frac{W}{P},\, S\right)\]</span></p>
+<p>since you cannot do the work faster than dividing it evenly, nor finish before the longest chain has run. Because <span class="math inline">\(\frac{W}{P} + S\)</span> is never more than twice <span class="math inline">\(\max(\frac{W}{P}, S)\)</span>, <strong>any greedy scheduler is within a factor of 2 of optimal</strong>.</p>
+<p>This result has three names depending on which literature you are reading: the greedy scheduling principle, <strong>Brent’s theorem</strong> (1974),<a href="#fn6" class="footnote-ref" id="fnref6" role="doc-noteref"><sup>6</sup></a> or <strong>Graham’s bound</strong><a href="#fn7" class="footnote-ref" id="fnref7" role="doc-noteref"><sup>7</sup></a>. They are the same statement.</p>
+<p><span class="math display">\[\max\!\left(\frac{W}{P}, S\right) \;\leq\; T_P \;&lt;\; \frac{W}{P} + S \;\leq\; 2\max\!\left(\frac{W}{P}, S\right)\]</span></p>
+</section>
+<section id="when-is-the-bound-tight" class="level3">
+<h3 class="anchored" data-anchor-id="when-is-the-bound-tight">When is the bound tight?</h3>
+<p>That factor of 2 is not an artefact of a loose proof — it is achievable. The worst case looks like this: a long critical chain, plus just enough independent work to keep every processor busy right up until the chain must run alone. Greedy happily fills the processors first, then discovers the chain still has to execute serially at the end.</p>
+<p>That shape is exactly what Graham’s anomalies in Section 4 exploit, and it is also why a scheduler that knows the critical path (the “upward rank” of Section 5) can beat a naive one in practice even though both are within the same factor of 2.</p>
+</section>
+<section id="parallelism-speedup-efficiency" class="level3">
+<h3 class="anchored" data-anchor-id="parallelism-speedup-efficiency">Parallelism, speedup, efficiency</h3>
+<p>Three derived quantities are worth naming, because people use them constantly and sometimes loosely:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>quantity</th>
+<th>definition</th>
+<th>reading</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>parallelism</strong></td>
+<td><span class="math inline">\(W / S\)</span></td>
+<td>the maximum useful number of processors</td>
+</tr>
+<tr class="even">
+<td><strong>speedup</strong></td>
+<td><span class="math inline">\(T_1 / T_P\)</span></td>
+<td>how much faster <span class="math inline">\(P\)</span> processors actually made it</td>
+</tr>
+<tr class="odd">
+<td><strong>efficiency</strong></td>
+<td><span class="math inline">\(T_1 / (P \cdot T_P)\)</span></td>
+<td>what fraction of the hardware you are wasting</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Parallelism is the one to internalise.</strong> It is a property of the graph alone. If <span class="math inline">\(W/S = 4\)</span>, then buying a 64-core machine cannot help you past 4 cores, no matter how good the scheduler is; and the greedy bound says that once <span class="math inline">\(P \ll W/S\)</span> you get close to linear speedup almost for free. Both halves of that sentence are useful.</p>
+</section>
+<section id="read-it-as-a-design-rule" class="level3">
+<h3 class="anchored" data-anchor-id="read-it-as-a-design-rule">Read it as a design rule</h3>
+<p>There are exactly two knobs: <strong>grow the work you can spread</strong> (<span class="math inline">\(W/P\)</span>), and <strong>shorten the critical path</strong> (<span class="math inline">\(S\)</span>). Everything any scheduler does is fighting over the constant factor between those two bounds. If you want a faster parallel program, changing the <em>graph</em> beats changing the scheduler.</p>
+</section>
+<section id="where-amdahls-serial-fraction-comes-from" class="level3">
+<h3 class="anchored" data-anchor-id="where-amdahls-serial-fraction-comes-from">Where Amdahl’s serial fraction comes from</h3>
+<p>Amdahl’s law assumes a program splits into a serial fraction <span class="math inline">\(s\)</span> and a perfectly parallel remainder. The DAG model tells you what <span class="math inline">\(s\)</span> <em>is</em>: it is the span.</p>
+<ul>
+<li>Amdahl’s <span class="math inline">\(s\)</span>: a number you estimate about your program.</li>
+<li>Span: a structural property you can measure, and <strong>change</strong>, by rewriting the graph.</li>
+</ul>
+<p>The canonical example: a reduction written as a chain has <span class="math inline">\(S = \Theta(n)\)</span>; written as a tree it has <span class="math inline">\(S = \Theta(\log n)\)</span>. Same work, same answer, completely different ceiling on how much hardware can help.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th><span class="math inline">\(n\)</span></th>
+<th>work</th>
+<th>chain span</th>
+<th>tree span</th>
+<th>max useful processors (tree)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>8</td>
+<td>7</td>
+<td>7</td>
+<td>3</td>
+<td>~2</td>
+</tr>
+<tr class="even">
+<td>1 024</td>
+<td>1 023</td>
+<td>1 023</td>
+<td>10</td>
+<td>~102</td>
+</tr>
+<tr class="odd">
+<td>1 000 000</td>
+<td>999 999</td>
+<td>999 999</td>
+<td>20</td>
+<td>~50 000</td>
+</tr>
+</tbody>
+</table>
+<p><code>sum(xs)</code> in a loop is the first column. <code>functools.reduce</code> is the first column. A pairwise tree reduction — which is what every parallel framework does internally, and incidentally what <code>math.fsum</code> and NumPy’s pairwise summation do for accuracy reasons — is the second. The work is identical. The ceiling differs by four orders of magnitude.</p>
+<p>This is the single most useful thing in the lecture: <strong>when a parallel program will not go faster, look at the span before you look at the scheduler.</strong></p>
+</section>
+<section id="a-footnote-on-amdahl-and-gustafson" class="level3">
+<h3 class="anchored" data-anchor-id="a-footnote-on-amdahl-and-gustafson">A footnote on Amdahl and Gustafson</h3>
+<p>Amdahl’s 1967 argument<a href="#fn8" class="footnote-ref" id="fnref8" role="doc-noteref"><sup>8</sup></a> is often read as pessimism about parallel computing, and Gustafson’s 1988 reply<a href="#fn9" class="footnote-ref" id="fnref9" role="doc-noteref"><sup>9</sup></a> as the optimistic correction. The difference is what you hold fixed:</p>
+<ul>
+<li><strong>Amdahl</strong> fixes the <em>problem</em> and adds processors. The serial part does not shrink, so speedup saturates at <span class="math inline">\(1/s\)</span>.</li>
+<li><strong>Gustafson</strong> fixes the <em>time budget</em> and asks how much bigger a problem you can solve. The parallel part grows with the machine, so the serial fraction shrinks in relative terms.</li>
+</ul>
+<p>In DAG language: Amdahl asks what happens to <span class="math inline">\(T_P\)</span> for a fixed graph as <span class="math inline">\(P\)</span> grows; Gustafson observes that in practice people grow the graph when they get a bigger machine, and growing <span class="math inline">\(W\)</span> while <span class="math inline">\(S\)</span> stays put is exactly what makes parallelism <span class="math inline">\(W/S\)</span> increase. Both are right about their own question.</p>
+<hr>
+</section>
+</section>
+<section id="how-hard-is-the-scheduling-problem" class="level2">
+<h2 class="anchored" data-anchor-id="how-hard-is-the-scheduling-problem">3. How hard is the scheduling problem?</h2>
+<p>A terminological note first, because the two words get used interchangeably: the <strong>decision</strong> problem (“is there a schedule of length <span class="math inline">\(\leq k\)</span>?”) is NP-<em>complete</em>; the <strong>optimization</strong> problem (“find the shortest schedule”) is NP-<em>hard</em>. The slides say NP-complete where they quote Ullman’s title; both refer to the same difficulty. This document says NP-hard throughout.</p>
+<p>Given the DAG and the costs, finding the <em>optimal</em> schedule is NP-hard in almost every variant that matters. A few corners are tractable (two processors with unit tasks; tree-shaped precedence graphs), and one famous case — fixed <span class="math inline">\(m \geq 3\)</span> with unit tasks and arbitrary precedence — has been open for decades.</p>
+<section id="how-to-read-the-problem-names" class="level3">
+<h3 class="anchored" data-anchor-id="how-to-read-the-problem-names">How to read the problem names</h3>
+<p>The scheduling literature classifies problems with a three-field notation, <span class="math inline">\(\alpha \mid \beta \mid \gamma\)</span>, introduced by Graham, Lawler, Lenstra and Rinnooy Kan.<a href="#fn10" class="footnote-ref" id="fnref10" role="doc-noteref"><sup>10</sup></a> You will meet it in any paper on the subject and it is worth five minutes:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>field</th>
+<th>meaning</th>
+<th>common values</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(\alpha\)</span></td>
+<td>machine environment</td>
+<td><span class="math inline">\(1\)</span> (single), <span class="math inline">\(P\)</span> (identical parallel), <span class="math inline">\(Q\)</span> (uniform, different speeds), <span class="math inline">\(R\)</span> (unrelated)</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(\beta\)</span></td>
+<td>job characteristics</td>
+<td><code>prec</code> (precedence constraints), <span class="math inline">\(p_j = 1\)</span> (unit times), <code>pmtn</code> (preemption allowed), <code>r_j</code> (release dates)</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(\gamma\)</span></td>
+<td>objective</td>
+<td><span class="math inline">\(C_{\max}\)</span> (makespan), <span class="math inline">\(\sum C_j\)</span> (total completion time), <span class="math inline">\(L_{\max}\)</span> (lateness)</td>
+</tr>
+</tbody>
+</table>
+<p>So <span class="math inline">\(P \mid\mid C_{\max}\)</span> is “identical parallel machines, no special constraints, minimise makespan” — the problem in the next subsection. <span class="math inline">\(P \mid \text{prec}, p_j{=}1 \mid C_{\max}\)</span> is the unit-task precedence-constrained version, and <span class="math inline">\(P2 \mid\mid C_{\max}\)</span> fixes two machines.</p>
+</section>
+<section id="the-tractable-corners" class="level3">
+<h3 class="anchored" data-anchor-id="the-tractable-corners">The tractable corners</h3>
+<p>A handful of cases <em>are</em> solvable exactly in polynomial time, and they are worth knowing because they mark the boundary:</p>
+<ul>
+<li><strong><span class="math inline">\(P \mid \text{tree}, p_j{=}1 \mid C_{\max}\)</span></strong> — unit tasks whose precedence graph is a tree. <strong>Hu’s algorithm</strong> (1961)<a href="#fn11" class="footnote-ref" id="fnref11" role="doc-noteref"><sup>11</sup></a> solves this optimally for any number of processors, by scheduling in order of height in the tree.</li>
+<li><strong><span class="math inline">\(P2 \mid \text{prec}, p_j{=}1 \mid C_{\max}\)</span></strong> — unit tasks, arbitrary precedence, exactly two processors. <strong>Coffman–Graham</strong> (1972)<a href="#fn12" class="footnote-ref" id="fnref12" role="doc-noteref"><sup>12</sup></a> is optimal here, in <span class="math inline">\(O(v^2)\)</span>.</li>
+<li><strong>Interval orders</strong>, unit tasks — <strong>Papadimitriou &amp; Yannakakis</strong> (1979)<a href="#fn13" class="footnote-ref" id="fnref13" role="doc-noteref"><sup>13</sup></a>. An interval order is a precedence graph you can draw as intervals on a line, with <span class="math inline">\(a \prec b\)</span> when <span class="math inline">\(a\)</span> ends before <span class="math inline">\(b\)</span> begins; that extra structure is enough to make the problem tractable.</li>
+<li>Most other variants are NP-hard; Ullman (1975)<a href="#fn14" class="footnote-ref" id="fnref14" role="doc-noteref"><sup>14</sup></a> established several of the key completeness results.</li>
+</ul>
+<p>And the famous gap: for a <strong>fixed</strong> <span class="math inline">\(m \geq 3\)</span> with unit tasks and arbitrary precedence, whether the problem is in P or NP-hard has been <strong>open since the 1970s</strong>. It is one of the longest-standing open problems in scheduling.</p>
+<p>And it gets worse once communication enters the model: adding communication costs (<span class="math inline">\(P \mid \text{prec}, c_{ij} \mid C_{\max}\)</span>) makes the problem NP-hard <strong>even with unlimited processors</strong> (Papadimitriou &amp; Yannakakis, 1990).<a href="#fn15" class="footnote-ref" id="fnref15" role="doc-noteref"><sup>15</sup></a> You cannot buy your way out of it with hardware.</p>
+<p>The pattern is instructive. Hardness arrives as soon as you allow <em>either</em> arbitrary task durations, <em>or</em> a third processor with an arbitrary graph, <em>or</em> communication costs. Almost everything you would actually want to schedule is on the wrong side of that line.</p>
+</section>
+<section id="it-contains-partition" class="level3">
+<h3 class="anchored" data-anchor-id="it-contains-partition">“It contains PARTITION”</h3>
+<p>The slides say that scheduling <em>independent</em> tasks is still NP-hard because it “contains <code>PARTITION</code>”. That phrase means: <code>PARTITION</code> is a special case, so an algorithm for this would solve <code>PARTITION</code> too.</p>
+<p><strong>PARTITION</strong> (one of Karp’s 21, 1972)<a href="#fn16" class="footnote-ref" id="fnref16" role="doc-noteref"><sup>16</sup></a>: given positive integers <span class="math inline">\(a_1, \dots, a_n\)</span>, can they be split into two groups with equal sums?</p>
+<p>The reduction is essentially the identity. Take a <code>PARTITION</code> instance with total <span class="math inline">\(T = \sum a_i\)</span>. Build a scheduling instance: <span class="math inline">\(m = 2\)</span> machines, <span class="math inline">\(n\)</span> independent tasks, <span class="math inline">\(p_i = a_i\)</span>. Then the makespan is at least <span class="math inline">\(T/2\)</span> (that is just total work over two machines), and it equals <span class="math inline">\(T/2\)</span> <strong>exactly when</strong> the tasks split into two groups of <span class="math inline">\(T/2\)</span> each. So “is <span class="math inline">\(C_{\max} \leq T/2\)</span>?” <em>is</em> <code>PARTITION</code> in disguise.</p>
+<p>Two identical machines, no dependencies at all, and the problem is already intractable.</p>
+</section>
+<section id="but-the-mildest-kind-of-intractable" class="level3">
+<h3 class="anchored" data-anchor-id="but-the-mildest-kind-of-intractable">But the mildest kind of intractable</h3>
+<p>This looks like it contradicts the good approximation results, and the resolution is worth knowing. <code>PARTITION</code> is only <strong>weakly</strong> NP-complete: a pseudo-polynomial <span class="math inline">\(O(nT)\)</span> dynamic program solves it<a href="#fn17" class="footnote-ref" id="fnref17" role="doc-noteref"><sup>17</sup></a>. The hardness comes from the numbers being large, not from combinatorial structure. Consequently:</p>
+<ul>
+<li><span class="math inline">\(P2 \mid\mid C_{\max}\)</span> admits an FPTAS (Sahni, 1976)<a href="#fn18" class="footnote-ref" id="fnref18" role="doc-noteref"><sup>18</sup></a> — which is why a rule as crude as longest-processing-time-first already lands within <span class="math inline">\(\frac{4}{3} - \frac{1}{3m}\)</span>.</li>
+<li>With <span class="math inline">\(m\)</span> part of the input, <span class="math inline">\(P \mid\mid C_{\max}\)</span> becomes <strong>strongly</strong> NP-hard via <code>3-PARTITION</code><a href="#fn19" class="footnote-ref" id="fnref19" role="doc-noteref"><sup>19</sup></a>. A PTAS still exists (Hochbaum &amp; Shmoys, 1987).<a href="#fn20" class="footnote-ref" id="fnref20" role="doc-noteref"><sup>20</sup></a></li>
+</ul>
+</section>
+<section id="the-bounds-are-not-just-asymptotic-comfort" class="level3">
+<h3 class="anchored" data-anchor-id="the-bounds-are-not-just-asymptotic-comfort">The bounds are not just asymptotic comfort</h3>
+<p>It is worth seeing how small the gap actually is on a concrete instance. Six independent tasks with durations <span class="math inline">\((3,3,2,2,2,2)\)</span> on three processors:</p>
+<ul>
+<li>the <strong>optimal</strong> makespan is 5;</li>
+<li><strong>longest-processing-time-first</strong> also achieves 5;</li>
+<li>the <strong>worst possible list</strong> achieves 6;</li>
+<li>Graham’s general guarantee allows up to <span class="math inline">\((2 - \frac{1}{3}) \times 5 = 8.33\)</span>;</li>
+<li>the LPT guarantee allows up to <span class="math inline">\((\frac{4}{3} - \frac{1}{9}) \times 5 = 6.11\)</span>.</li>
+</ul>
+<p>So the theoretical worst case is a factor of 1.67, the achievable worst case on this instance is 1.2, and a two-line sorting rule gets it exactly right. That ratio — theory pessimistic, practice fine — is typical, and it is why real systems use list scheduling and spend their effort elsewhere.</p>
+<p>So: NP-hard, yes — but the easiest flavour of it. In practice nobody agonises over list scheduling, and this is why.</p>
+<hr>
+</section>
+</section>
+<section id="grahams-anomalies" class="level2">
+<h2 class="anchored" data-anchor-id="grahams-anomalies">4. Graham’s anomalies</h2>
+<p>This is the section that does not compress well, so here it is at length.</p>
+<section id="where-they-came-from" class="level3">
+<h3 class="anchored" data-anchor-id="where-they-came-from">Where they came from</h3>
+<p>Ron Graham was at Bell Labs in the mid-1960s, when multiprocessing systems were new and people were making entirely reasonable-sounding predictions about them: buy a faster machine and your job finishes sooner; add a processor and your job finishes sooner; remove an artificial ordering constraint and your job finishes sooner.</p>
+<p>Graham showed all three are <strong>false</strong>, using one nine-task example, and then proved bounds on how false they can be. The results appear in two papers:</p>
+<ul>
+<li>R. L. Graham, <em>Bounds for certain multiprocessing anomalies</em>, Bell System Technical Journal, <strong>1966</strong><a href="#fn21" class="footnote-ref" id="fnref21" role="doc-noteref"><sup>21</sup></a></li>
+<li>R. L. Graham, <em>Bounds on multiprocessing timing anomalies</em>, SIAM J. Applied Mathematics, <strong>1969</strong><a href="#fn22" class="footnote-ref" id="fnref22" role="doc-noteref"><sup>22</sup></a></li>
+</ul>
+<p>The anomalies are not a curiosity about a contrived example. They are the reason “we upgraded the cluster and it got slower” is a legitimate outcome rather than automatically a bug.</p>
+</section>
+<section id="the-setup" class="level3">
+<h3 class="anchored" data-anchor-id="the-setup">The setup</h3>
+<p>Nine tasks, three processors, list scheduling with the fixed priority list <span class="math inline">\(L = (T_1, T_2, \dots, T_9)\)</span>.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>task</th>
+<th><span class="math inline">\(T_1\)</span></th>
+<th><span class="math inline">\(T_2\)</span></th>
+<th><span class="math inline">\(T_3\)</span></th>
+<th><span class="math inline">\(T_4\)</span></th>
+<th><span class="math inline">\(T_5\)</span></th>
+<th><span class="math inline">\(T_6\)</span></th>
+<th><span class="math inline">\(T_7\)</span></th>
+<th><span class="math inline">\(T_8\)</span></th>
+<th><span class="math inline">\(T_9\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>time</td>
+<td>3</td>
+<td>2</td>
+<td>2</td>
+<td>2</td>
+<td>4</td>
+<td>4</td>
+<td>4</td>
+<td>4</td>
+<td><strong>9</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Precedence: <span class="math inline">\(T_1 \to T_9\)</span>, and <span class="math inline">\(T_4 \to T_5, T_6, T_7, T_8\)</span>. Tasks <span class="math inline">\(T_2\)</span> and <span class="math inline">\(T_3\)</span> are free.</p>
+<p>The rule is the simplest possible: whenever a processor falls idle, give it the <strong>earliest task in <span class="math inline">\(L\)</span> whose predecessors have all finished</strong>. Nothing else changes between the four scenarios below — same list, same rule.</p>
+<p>Two features of this instance do all the work, and everything that follows is a consequence of them:</p>
+<ol type="1">
+<li><span class="math inline">\(T_9\)</span> is <strong>by far the longest</strong> task (9 units against 2–4 for everything else).</li>
+<li><span class="math inline">\(T_9\)</span> is <strong>last in the priority list</strong>.</li>
+</ol>
+<p>So whenever another task is ready at the same moment as <span class="math inline">\(T_9\)</span>, the other task wins the processor, and the long task gets pushed later. Anything that makes the <em>other</em> tasks available <em>earlier</em> hurts.</p>
+</section>
+<section id="reproducing-it" class="level3">
+<h3 class="anchored" data-anchor-id="reproducing-it">Reproducing it</h3>
+<div id="0eb30d5f" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> list_schedule(times, preds, m, order):</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Non-preemptive list scheduling: whenever a processor is free, start the</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co">    highest-priority READY task (one whose predecessors have all finished)."""</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> <span class="bu">len</span>(times)</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    start, finish, assign <span class="op">=</span> [<span class="va">None</span>] <span class="op">*</span> n, [<span class="va">None</span>] <span class="op">*</span> n, [<span class="va">None</span>] <span class="op">*</span> n</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    free <span class="op">=</span> [<span class="fl">0.0</span>] <span class="op">*</span> m               <span class="co"># time at which each processor becomes free</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    running, done, t <span class="op">=</span> [], <span class="bu">set</span>(), <span class="fl">0.0</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> <span class="bu">len</span>(done) <span class="op">&lt;</span> n:</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>        progressed <span class="op">=</span> <span class="va">True</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>        <span class="cf">while</span> progressed:          <span class="co"># fill every idle processor at the current time</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>            progressed <span class="op">=</span> <span class="va">False</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> p <span class="kw">in</span> <span class="bu">range</span>(m):</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> free[p] <span class="op">&lt;=</span> t:</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">for</span> i <span class="kw">in</span> order:</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>                        ready <span class="op">=</span> <span class="bu">all</span>(q <span class="kw">in</span> done <span class="cf">for</span> q <span class="kw">in</span> preds.get(i, []))</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>                        <span class="cf">if</span> start[i] <span class="kw">is</span> <span class="va">None</span> <span class="kw">and</span> ready:</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>                            start[i], finish[i] <span class="op">=</span> t, t <span class="op">+</span> times[i]</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>                            free[p], assign[i] <span class="op">=</span> finish[i], p</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>                            running.append((finish[i], i))</span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>                            progressed <span class="op">=</span> <span class="va">True</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>                            <span class="cf">break</span></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">if</span> progressed:</span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>                        <span class="cf">break</span></span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>        nxt <span class="op">=</span> <span class="bu">min</span>((f <span class="cf">for</span> f, i <span class="kw">in</span> running <span class="cf">if</span> i <span class="kw">not</span> <span class="kw">in</span> done), default<span class="op">=</span><span class="va">None</span>)</span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> nxt <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>            <span class="cf">break</span></span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>        t <span class="op">=</span> nxt                    <span class="co"># advance to the next completion</span></span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>        done <span class="op">|=</span> {i <span class="cf">for</span> f, i <span class="kw">in</span> running <span class="cf">if</span> f <span class="op">&lt;=</span> t}</span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">max</span>(finish), start, assign</span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a>TIMES <span class="op">=</span> [<span class="dv">3</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">4</span>, <span class="dv">4</span>, <span class="dv">4</span>, <span class="dv">9</span>]</span>
+<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a>PRECEDENCE <span class="op">=</span> {<span class="dv">8</span>: [<span class="dv">0</span>], <span class="dv">4</span>: [<span class="dv">3</span>], <span class="dv">5</span>: [<span class="dv">3</span>], <span class="dv">6</span>: [<span class="dv">3</span>], <span class="dv">7</span>: [<span class="dv">3</span>]}   <span class="co"># T1-&gt;T9 ; T4-&gt;T5..T8</span></span>
+<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a>PRIORITY <span class="op">=</span> <span class="bu">list</span>(<span class="bu">range</span>(<span class="dv">9</span>))                                <span class="co"># the list L = T1..T9</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="89328e1f" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> report(label, times, preds, m, order<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    ms, start, assign <span class="op">=</span> list_schedule(times, preds, m, order <span class="kw">or</span> PRIORITY)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>label<span class="sc">}</span><span class="ch">\n</span><span class="ss">  makespan = </span><span class="sc">{</span>ms<span class="sc">:g}</span><span class="ss">"</span>)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> p <span class="kw">in</span> <span class="bu">range</span>(m):</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>        row <span class="op">=</span> <span class="bu">sorted</span>((start[i], i) <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">9</span>) <span class="cf">if</span> assign[i] <span class="op">==</span> p)</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>        line <span class="op">=</span> <span class="st">"  "</span>.join(<span class="ss">f"T</span><span class="sc">{</span>i<span class="op">+</span><span class="dv">1</span><span class="sc">}</span><span class="ss">[</span><span class="sc">{</span>s<span class="sc">:g}</span><span class="ss">,</span><span class="sc">{</span>s<span class="op">+</span>times[i]<span class="sc">:g}</span><span class="ss">)"</span> <span class="cf">for</span> s, i <span class="kw">in</span> row)</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f"    P</span><span class="sc">{</span>p<span class="op">+</span><span class="dv">1</span><span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>line<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>()</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>report(<span class="st">"BASELINE   m=3, original times, original precedence"</span>,</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>       TIMES, PRECEDENCE, <span class="dv">3</span>)</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>report(<span class="st">"ANOMALY 1  every task one unit FASTER"</span>,</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>       [x <span class="op">-</span> <span class="dv">1</span> <span class="cf">for</span> x <span class="kw">in</span> TIMES], PRECEDENCE, <span class="dv">3</span>)</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>report(<span class="st">"ANOMALY 2  one more processor (m=4)"</span>,</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>       TIMES, PRECEDENCE, <span class="dv">4</span>)</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>report(<span class="st">"ANOMALY 3  all precedence constraints REMOVED"</span>,</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>       TIMES, {}, <span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>BASELINE   m=3, original times, original precedence
+  makespan = 12
+    P1: T1[0,3)  T9[3,12)
+    P2: T2[0,2)  T4[2,4)  T5[4,8)  T7[8,12)
+    P3: T3[0,2)  T6[4,8)  T8[8,12)
+
+ANOMALY 1  every task one unit FASTER
+  makespan = 13
+    P1: T1[0,2)  T5[2,5)  T8[5,8)
+    P2: T2[0,1)  T4[1,2)  T6[2,5)  T9[5,13)
+    P3: T3[0,1)  T7[2,5)
+
+ANOMALY 2  one more processor (m=4)
+  makespan = 15
+    P1: T1[0,3)  T8[3,7)
+    P2: T2[0,2)  T5[2,6)  T9[6,15)
+    P3: T3[0,2)  T6[2,6)
+    P4: T4[0,2)  T7[2,6)
+
+ANOMALY 3  all precedence constraints REMOVED
+  makespan = 16
+    P1: T1[0,3)  T6[3,7)  T9[7,16)
+    P2: T2[0,2)  T4[2,4)  T7[4,8)
+    P3: T3[0,2)  T5[2,6)  T8[6,10)
+</code></pre>
+</div>
+</div>
+</section>
+<section id="baseline-makespan-12" class="level3">
+<h3 class="anchored" data-anchor-id="baseline-makespan-12">Baseline: makespan 12</h3>
+<table class="caption-top table">
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(P_1\)</span></td>
+<td><code>T1 [0,3)</code></td>
+<td><code>T9 [3,12)</code></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(P_2\)</span></td>
+<td><code>T2 [0,2)</code> <code>T4 [2,4)</code></td>
+<td><code>T5 [4,8)</code> <code>T7 [8,12)</code></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(P_3\)</span></td>
+<td><code>T3 [0,2)</code> <em>idle [2,4)</em></td>
+<td><code>T6 [4,8)</code> <code>T8 [8,12)</code></td>
+</tr>
+</tbody>
+</table>
+<p><span class="math inline">\(T_1\)</span> finishes at 3, releasing <span class="math inline">\(T_9\)</span>, which runs 3 → 12. The chain <span class="math inline">\(T_1 \to T_9\)</span> costs <span class="math inline">\(3 + 9 = 12\)</span>, and that is also the makespan, so this schedule is <strong>optimal</strong>. One processor idles from 2 to 4 and it costs nothing.</p>
+</section>
+<section id="anomaly-1-every-task-gets-faster-13" class="level3">
+<h3 class="anchored" data-anchor-id="anomaly-1-every-task-gets-faster-13">Anomaly 1: every task gets faster → 13</h3>
+<p>Subtract 1 from every execution time. Every single task now finishes sooner, and the program finishes <strong>later</strong>.</p>
+<table class="caption-top table">
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(P_1\)</span></td>
+<td><code>T1 [0,2)</code></td>
+<td><code>T5 [2,5)</code> <code>T8 [5,8)</code></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(P_2\)</span></td>
+<td><code>T2 [0,1)</code> <code>T4 [1,2)</code></td>
+<td><code>T6 [2,5)</code> <code>T9 [5,13)</code></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(P_3\)</span></td>
+<td><code>T3 [0,1)</code></td>
+<td><code>T7 [2,5)</code></td>
+</tr>
+</tbody>
+</table>
+<p>Follow the mechanism. <span class="math inline">\(T_4\)</span> now takes 1 unit instead of 2, so it finishes at <span class="math inline">\(t = 2\)</span> rather than <span class="math inline">\(t = 4\)</span> — which means <span class="math inline">\(T_5, T_6, T_7, T_8\)</span> become ready at <span class="math inline">\(t=2\)</span>. At that same instant <span class="math inline">\(T_1\)</span> has also finished, so <span class="math inline">\(T_9\)</span> is ready too. Five tasks compete for three processors, and the priority list says <span class="math inline">\(T_5, T_6, T_7\)</span> come before <span class="math inline">\(T_9\)</span>. The long task is shut out until <span class="math inline">\(t = 5\)</span>, and <span class="math inline">\(5 + 8 = 13\)</span>.</p>
+<p>Making the predecessors faster released the <em>competitors</em> earlier. In the baseline, <span class="math inline">\(T_9\)</span>’s only rivals at <span class="math inline">\(t = 3\)</span> were tasks that were not ready yet.</p>
+</section>
+<section id="anomaly-2-add-a-processor-15" class="level3">
+<h3 class="anchored" data-anchor-id="anomaly-2-add-a-processor-15">Anomaly 2: add a processor → 15</h3>
+<p>Same times, same graph, <span class="math inline">\(m = 3 \to 4\)</span>.</p>
+<table class="caption-top table">
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(P_1\)</span></td>
+<td><code>T1 [0,3)</code></td>
+<td><code>T8 [3,7)</code></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(P_2\)</span></td>
+<td><code>T2 [0,2)</code></td>
+<td><code>T5 [2,6)</code> <code>T9 [6,15)</code></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(P_3\)</span></td>
+<td><code>T3 [0,2)</code></td>
+<td><code>T6 [2,6)</code></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(P_4\)</span></td>
+<td><code>T4 [0,2)</code></td>
+<td><code>T7 [2,6)</code></td>
+</tr>
+</tbody>
+</table>
+<p>With only three processors, <span class="math inline">\(T_4\)</span> had to wait for one to free up and did not finish until <span class="math inline">\(t = 4\)</span>. With four, <span class="math inline">\(T_4\)</span> starts immediately and finishes at <span class="math inline">\(t = 2\)</span> — so <span class="math inline">\(T_5 \dots T_8\)</span> are ready at 2 instead of 4. Again they outrank <span class="math inline">\(T_9\)</span>, which cannot start until 6. <span class="math inline">\(6 + 9 = 15\)</span>.</p>
+<p>The extra processor was used to <em>unblock work that then crowded out the critical task</em>.</p>
+</section>
+<section id="anomaly-3-remove-the-dependencies-16" class="level3">
+<h3 class="anchored" data-anchor-id="anomaly-3-remove-the-dependencies-16">Anomaly 3: remove the dependencies → 16</h3>
+<p>Same times, same three processors, but now every task is independent. Strictly fewer constraints.</p>
+<table class="caption-top table">
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(P_1\)</span></td>
+<td><code>T1 [0,3)</code></td>
+<td><code>T6 [3,7)</code> <code>T9 [7,16)</code></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(P_2\)</span></td>
+<td><code>T2 [0,2)</code> <code>T4 [2,4)</code></td>
+<td><code>T7 [4,8)</code></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(P_3\)</span></td>
+<td><code>T3 [0,2)</code> <code>T5 [2,6)</code></td>
+<td><code>T8 [6,10)</code></td>
+</tr>
+</tbody>
+</table>
+<p><span class="math inline">\(T_9\)</span> is now ready at <span class="math inline">\(t = 0\)</span> — but it is <em>last</em> in the list, so all eight other tasks are started ahead of it. It does not begin until <span class="math inline">\(t = 7\)</span>, and <span class="math inline">\(7 + 9 = 16\)</span>.</p>
+<p>This is the purest form of the pathology. The precedence constraints in the baseline were accidentally acting as a <em>scheduling hint</em>: by keeping <span class="math inline">\(T_5 \dots T_8\)</span> blocked, they left a processor free for <span class="math inline">\(T_9\)</span> at exactly the right moment. Remove the constraints and you remove the accidental hint.</p>
+</section>
+<section id="the-pattern-in-one-sentence" class="level3">
+<h3 class="anchored" data-anchor-id="the-pattern-in-one-sentence">The pattern, in one sentence</h3>
+<blockquote class="blockquote">
+<p>List scheduling is <strong>not monotone</strong>: making the instance easier — faster tasks, more processors, fewer constraints — can make the schedule worse, because the priority list is fixed while the set of <em>ready</em> tasks changes underneath it.</p>
+</blockquote>
+<p>The scheduler is greedy over the ready set. Anything that enlarges the ready set earlier gives low-priority-but-long tasks more competition, and a long task started late sets the makespan.</p>
+</section>
+<section id="a-fourth-one-change-the-priority-list" class="level3">
+<h3 class="anchored" data-anchor-id="a-fourth-one-change-the-priority-list">A fourth one: change the priority list</h3>
+<p>The three classic anomalies change the <em>instance</em>. The list itself is just as dangerous, and this is the version you meet in practice — because a real scheduler’s priority order comes from estimates, and estimates drift.</p>
+<p>Keep everything at baseline and merely <strong>reverse</strong> the list to <span class="math inline">\(L' = (T_9, T_8, \dots, T_1)\)</span>:</p>
+<div id="5c1cfa2b" class="cell" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>report(<span class="st">"REVERSED LIST  m=3, original times and precedence"</span>,</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>       TIMES, PRECEDENCE, <span class="dv">3</span>, order<span class="op">=</span><span class="bu">list</span>(<span class="bu">reversed</span>(<span class="bu">range</span>(<span class="dv">9</span>))))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>REVERSED LIST  m=3, original times and precedence
+  makespan = 18
+    P1: T4[0,2)  T8[2,6)  T5[6,10)
+    P2: T3[0,2)  T7[2,6)  T1[6,9)  T9[9,18)
+    P3: T2[0,2)  T6[2,6)
+</code></pre>
+</div>
+</div>
+<p><strong>12 → 18.</strong> Fifty percent worse, from reordering alone — a bigger degradation than any of the three classic anomalies produced.</p>
+<p>And the reason is instructive, because the obvious intuition is wrong. “Put the long task first” cannot work: <span class="math inline">\(T_9\)</span> <strong>depends on</strong> <span class="math inline">\(T_1\)</span>, so it is not ready at <span class="math inline">\(t = 0\)</span> no matter where it sits in the list. Reversing pushes <span class="math inline">\(T_1\)</span> to <em>last</em>, so the one task that unblocks the critical path is scheduled last of all, and <span class="math inline">\(T_9\)</span> starts very late indeed.</p>
+<section id="the-right-list-immunises-against-the-other-three" class="level4">
+<h4 class="anchored" data-anchor-id="the-right-list-immunises-against-the-other-three">The right list immunises against the other three</h4>
+<p>Put <span class="math inline">\(T_1\)</span> first and <span class="math inline">\(T_9\)</span> <em>immediately after it</em> — <span class="math inline">\(L^\star = (T_1, T_9, T_2, \dots, T_8)\)</span> — and something worth noticing happens:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>scenario</th>
+<th>with <span class="math inline">\(L = (T_1 \dots T_9)\)</span></th>
+<th>with <span class="math inline">\(L^\star\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>baseline, <span class="math inline">\(m = 3\)</span></td>
+<td>12</td>
+<td><strong>12</strong></td>
+</tr>
+<tr class="even">
+<td>every task 1 unit faster</td>
+<td>13</td>
+<td><strong>10</strong></td>
+</tr>
+<tr class="odd">
+<td>extra processor, <span class="math inline">\(m = 4\)</span></td>
+<td>15</td>
+<td><strong>12</strong></td>
+</tr>
+<tr class="even">
+<td>precedence removed</td>
+<td>16</td>
+<td><strong>13</strong></td>
+</tr>
+</tbody>
+</table>
+<div id="fd0d3b69" class="cell" data-execution_count="6">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>L_star <span class="op">=</span> [<span class="dv">0</span>, <span class="dv">8</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">6</span>, <span class="dv">7</span>]          <span class="co"># T1, T9, then the rest</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>report(<span class="st">"L* baseline        "</span>, TIMES, PRECEDENCE, <span class="dv">3</span>, order<span class="op">=</span>L_star)</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>report(<span class="st">"L* all times -1    "</span>, [x <span class="op">-</span> <span class="dv">1</span> <span class="cf">for</span> x <span class="kw">in</span> TIMES], PRECEDENCE, <span class="dv">3</span>, order<span class="op">=</span>L_star)</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>report(<span class="st">"L* extra processor "</span>, TIMES, PRECEDENCE, <span class="dv">4</span>, order<span class="op">=</span>L_star)</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>report(<span class="st">"L* no precedence   "</span>, TIMES, {}, <span class="dv">3</span>, order<span class="op">=</span>L_star)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>L* baseline        
+  makespan = 12
+    P1: T1[0,3)  T9[3,12)
+    P2: T2[0,2)  T4[2,4)  T5[4,8)  T7[8,12)
+    P3: T3[0,2)  T6[4,8)  T8[8,12)
+
+L* all times -1    
+  makespan = 10
+    P1: T1[0,2)  T9[2,10)
+    P2: T2[0,1)  T4[1,2)  T5[2,5)  T7[5,8)
+    P3: T3[0,1)  T6[2,5)  T8[5,8)
+
+L* extra processor 
+  makespan = 12
+    P1: T1[0,3)  T9[3,12)
+    P2: T2[0,2)  T5[2,6)  T8[6,10)
+    P3: T3[0,2)  T6[2,6)
+    P4: T4[0,2)  T7[2,6)
+
+L* no precedence   
+  makespan = 13
+    P1: T1[0,3)  T4[3,5)  T6[5,9)  T8[9,13)
+    P2: T9[0,9)
+    P3: T2[0,2)  T3[2,4)  T5[4,8)  T7[8,12)
+</code></pre>
+</div>
+</div>
+<p>The baseline 12 is optimal (a brute-force search over all <span class="math inline">\(9!\)</span> lists finds nothing better, and the chain <span class="math inline">\(T_1 \to T_9\)</span> costs 12, so it cannot be beaten). But now making the tasks faster genuinely <em>helps</em>, and adding a processor no longer hurts.</p>
+<p>This is the useful lesson hiding behind the whole section: the anomalies were not really about processors or task durations. They were about <strong>a long task with low priority</strong>. Fix the priority and most of the pathology goes with it — which is precisely what every list-scheduling heuristic in Section 5 is trying to do, and what “static level” and “upward rank” compute.</p>
+</section>
+</section>
+<section id="checking-grahams-bound-yourself" class="level3">
+<h3 class="anchored" data-anchor-id="checking-grahams-bound-yourself">Checking Graham’s bound yourself</h3>
+<p>The bound below is easy to test empirically, and doing so is a good way to convince yourself the anomalies are bounded rather than arbitrary:</p>
+<div id="f1895516" class="cell" data-execution_count="7">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> random</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> random_dag(n, edge_p, rng):</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    times <span class="op">=</span> [rng.randint(<span class="dv">1</span>, <span class="dv">9</span>) <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(n)]</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    preds <span class="op">=</span> {}</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(n):                       <span class="co"># only edges j -&gt; i with j &lt; i, so acyclic</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>        ps <span class="op">=</span> [j <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(i) <span class="cf">if</span> rng.random() <span class="op">&lt;</span> edge_p]</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> ps:</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>            preds[i] <span class="op">=</span> ps</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> times, preds</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>rng <span class="op">=</span> random.Random(<span class="dv">7</span>)</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>worst_ratio, worst_at <span class="op">=</span> <span class="fl">0.0</span>, <span class="va">None</span></span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">4000</span>):</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> rng.randint(<span class="dv">5</span>, <span class="dv">12</span>)</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>    times, preds <span class="op">=</span> random_dag(n, <span class="fl">0.25</span>, rng)</span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>    m, m_prime <span class="op">=</span> rng.randint(<span class="dv">2</span>, <span class="dv">4</span>), rng.randint(<span class="dv">2</span>, <span class="dv">6</span>)</span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>    order <span class="op">=</span> <span class="bu">list</span>(<span class="bu">range</span>(n))</span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>    t_m,  _, _ <span class="op">=</span> list_schedule(times, preds, m,       order)</span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>    t_mp, _, _ <span class="op">=</span> list_schedule(times, preds, m_prime, order)</span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>    ratio, bound <span class="op">=</span> t_mp <span class="op">/</span> t_m, <span class="dv">1</span> <span class="op">+</span> (m <span class="op">-</span> <span class="dv">1</span>) <span class="op">/</span> m_prime</span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> ratio <span class="op">&lt;=</span> bound <span class="op">+</span> <span class="fl">1e-9</span>, <span class="st">"Graham's bound violated!"</span></span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> ratio <span class="op">&gt;</span> worst_ratio:</span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>        worst_ratio, worst_at <span class="op">=</span> ratio, (m, m_prime, bound)</span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>m, m_prime, bound <span class="op">=</span> worst_at</span>
+<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"4000 random DAGs, bound never violated."</span>)</span>
+<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"worst observed T_m'/T_m = </span><span class="sc">{</span>worst_ratio<span class="sc">:.3f}</span><span class="ss">  "</span></span>
+<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"(m=</span><span class="sc">{</span>m<span class="sc">}</span><span class="ss"> -&gt; m'=</span><span class="sc">{</span>m_prime<span class="sc">}</span><span class="ss">, bound 1+(m-1)/m' = </span><span class="sc">{</span>bound<span class="sc">:.3f}</span><span class="ss">)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>4000 random DAGs, bound never violated.
+worst observed T_m'/T_m = 2.000  (m=4 -&gt; m'=2, bound 1+(m-1)/m' = 2.500)</code></pre>
+</div>
+</div>
+<p>Note the assertion never fires — but the worst observed ratio is <strong>2.0</strong>, i.e. one of those random graphs took <em>twice as long</em> after the processor count changed. The anomalies are not rare pathologies you can ignore; they are ordinary behaviour of a greedy scheduler on a random graph.</p>
+</section>
+<section id="the-bound-on-the-damage" class="level3">
+<h3 class="anchored" data-anchor-id="the-bound-on-the-damage">The bound on the damage</h3>
+<p>Graham also proved the anomalies are bounded.<a href="#fn23" class="footnote-ref" id="fnref23" role="doc-noteref"><sup>23</sup></a> Going from <span class="math inline">\(m\)</span> to <span class="math inline">\(m'\)</span> processors with the same list:</p>
+<p><span class="math display">\[\frac{T_{m'}}{T_{m}} \;\leq\; 1 + \frac{m-1}{m'}\]</span></p>
+<p>So the damage is limited — doubling the cluster can never more than roughly halve your gains — but it is emphatically not zero.</p>
+</section>
+<section id="what-to-take-away" class="level3">
+<h3 class="anchored" data-anchor-id="what-to-take-away">What to take away</h3>
+<ul>
+<li>Greedy is within <span class="math inline">\(2\times\)</span>, but <strong>not monotone</strong>: local improvements are not safe.</li>
+<li>“It got slower after we upgraded” is a legitimate scheduling outcome.</li>
+<li>All of this assumed <strong>exact, known</strong> execution times. That assumption is about to collapse.</li>
+</ul>
+</section>
+<section id="things-to-try" class="level3">
+<h3 class="anchored" data-anchor-id="things-to-try">Things to try</h3>
+<p>The code above is a complete list scheduler; change one thing at a time:</p>
+<ol type="1">
+<li>Move <span class="math inline">\(T_9\)</span> to the <strong>front</strong> of <code>PRIORITY</code>. Do the anomalies survive?</li>
+<li>Use the <strong>longest-processing-time-first</strong> list. What happens to each of the four cases?</li>
+<li>Find the smallest change to <code>TIMES</code> that triggers an anomaly.</li>
+<li>Verify Graham’s <span class="math inline">\(1 + \frac{m-1}{m'}\)</span> bound empirically on random DAGs.</li>
+</ol>
+<hr>
+</section>
+</section>
+<section id="static-scheduling-algorithms" class="level2">
+<h2 class="anchored" data-anchor-id="static-scheduling-algorithms">5. Static scheduling algorithms</h2>
+<section id="two-axes-first" class="level3">
+<h3 class="anchored" data-anchor-id="two-axes-first">Two axes first</h3>
+<p>Before the algorithms, two distinctions that the literature assumes you know.</p>
+<p><strong>Static vs.&nbsp;dynamic.</strong> A <em>static</em> scheduler decides everything before execution starts, from a cost model. A <em>dynamic</em> one decides while running, from what it observes. Sections 5 and 6 of this document are exactly that split.</p>
+<p><strong>Preemptive vs.&nbsp;non-preemptive.</strong> A <em>preemptive</em> scheduler may interrupt a running task and resume it later (or elsewhere); a <em>non-preemptive</em> one, once started, must let a task run to completion. Everything in this lecture is non-preemptive — which is why a badly-placed long task, as in Section 4, cannot be rescued once it starts.</p>
+</section>
+<section id="what-heuristic-means-here" class="level3">
+<h3 class="anchored" data-anchor-id="what-heuristic-means-here">What “heuristic” means here</h3>
+<p>A heuristic is what you use when exact methods are too slow, or fail to find any solution at all in the search space. It trades <strong>optimality, completeness, accuracy or precision</strong> for <strong>speed</strong>. Every algorithm below is a heuristic in that sense: none of them is guaranteed optimal, and all of them run in something like <span class="math inline">\(O(v \log v + e)\)</span> rather than exponential time.</p>
+</section>
+<section id="the-families" class="level3">
+<h3 class="anchored" data-anchor-id="the-families">The families</h3>
+<p>Given that optimality is out of reach, the literature is a catalogue of heuristics.<a href="#fn24" class="footnote-ref" id="fnref24" role="doc-noteref"><sup>24</sup></a> They fall into a few families.</p>
+<p><strong>List scheduling.</strong> Assign every node a priority, sort, and repeatedly place the highest-priority ready node on the processor that allows the earliest start. Cheap, and the source of the <span class="math inline">\(2\times\)</span> bound. Everything above is list scheduling.</p>
+<p>The whole family differs only in <strong>how the priority is computed</strong>, and Section 4 tells you what a good priority must do: get long, critical tasks started early. The standard ones, roughly in order of sophistication:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>heuristic</th>
+<th>priority</th>
+<th>idea</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>random / FIFO</td>
+<td>arbitrary</td>
+<td>the baseline; what Graham’s anomalies attack</td>
+</tr>
+<tr class="even">
+<td><strong>LPT</strong></td>
+<td>longest processing time</td>
+<td>for <em>independent</em> tasks only; gives the <span class="math inline">\(\frac{4}{3} - \frac{1}{3m}\)</span> bound</td>
+</tr>
+<tr class="odd">
+<td><strong>HLFET</strong></td>
+<td>static level (longest path to an exit, ignoring communication)</td>
+<td>“highest level first with estimated times”</td>
+</tr>
+<tr class="even">
+<td><strong>MCP</strong></td>
+<td>as-late-as-possible start time</td>
+<td>modified critical path; break ties by successors</td>
+</tr>
+<tr class="odd">
+<td><strong>ETF</strong></td>
+<td>earliest start time over all ready tasks</td>
+<td>recomputed each step, so it reacts to the partial schedule</td>
+</tr>
+<tr class="even">
+<td><strong>DLS</strong></td>
+<td>dynamic level = static level minus earliest start</td>
+<td>balances criticality against availability</td>
+</tr>
+</tbody>
+</table>
+<p>The important observation: these differ <em>only</em> in priority, all are <span class="math inline">\(O(v \log v + e)\)</span> or thereabouts, and all sit inside the same factor-of-2 guarantee. The guarantee does not distinguish them — measurement does.</p>
+<section id="static-level-the-common-ingredient" class="level4">
+<h4 class="anchored" data-anchor-id="static-level-the-common-ingredient">Static level, the common ingredient</h4>
+<p>Most of the table is a variation on one quantity. The <strong>static level</strong> of a node is the longest path from it to any exit node, counting computation only:</p>
+<p><span class="math display">\[\text{sl}(n_i) = w(n_i) + \max_{n_j \in \text{succ}(n_i)} \text{sl}(n_j)\]</span></p>
+<p>A node’s static level is how much work is <em>still ahead of it</em> on the worst path. Scheduling high-static-level nodes first is the direct antidote to the “long task, low priority” failure. Add communication costs to the recurrence and you get the <strong>upward rank</strong> that HEFT uses.</p>
+<p><strong>Clustering.</strong> Instead of assigning tasks to processors directly, first group tasks that communicate heavily into <em>clusters</em>, then map clusters onto machines. The idea is to zero out the expensive edges by putting their endpoints on the same processor — an edge whose endpoints share a processor costs nothing.</p>
+<p>Clustering assumes, initially, an <strong>unbounded</strong> number of processors, which makes the problem cleaner: decide only <em>what runs together</em>, not <em>where</em>. Then a second phase maps the resulting clusters onto the machines you actually have, and a third orders the tasks within each cluster. <strong>DSC</strong> (Dominant Sequence Clustering, Yang &amp; Gerasoulis 1994)<a href="#fn25" class="footnote-ref" id="fnref25" role="doc-noteref"><sup>25</sup></a> is the best-known algorithm: it repeatedly merges the two endpoints of the edge that currently lies on the critical path, as long as doing so does not lengthen the path.</p>
+<p>Clustering shines when the <strong>communication-to-computation ratio (CCR)</strong> is high. CCR is a program’s average edge weight divided by its average node weight: a high CCR means moving data dominates doing arithmetic. That is precisely the regime a data-analytics cluster lives in, which is why “co-locate the stages that shuffle between them” is such an effective optimisation in practice.</p>
+<p><strong>Guided random search.</strong> Genetic algorithms, simulated annealing. Expensive, and only worth it when the schedule will be reused many times.</p>
+<p><strong>HEFT / CPOP</strong> (Topcuoglu, Hariri &amp; Wu, 2002)<a href="#fn26" class="footnote-ref" id="fnref26" role="doc-noteref"><sup>26</sup></a> are the well-known list-scheduling algorithms for <em>heterogeneous</em> machines. They need a full cost matrix <span class="math inline">\(w(n_i, p_k)\)</span> — every task’s runtime on every processor — plus the communication costs <span class="math inline">\(c(n_i, n_j)\)</span>. They then rank tasks by <strong>upward rank</strong> (the longest path from the task to any exit, including its own cost) and greedily assign each in turn to whichever processor finishes it earliest.</p>
+</section>
+<section id="heft-worked" class="level4">
+<h4 class="anchored" data-anchor-id="heft-worked">HEFT, worked</h4>
+<p>The ranking is the interesting half. Upward rank is the static level with communication folded in, using the <em>average</em> cost across processors (since we do not yet know where anything will run):</p>
+<p><span class="math display">\[\text{rank}_u(n_i) = \overline{w}(n_i) + \max_{n_j \in \text{succ}(n_i)}\Big( c(n_i,n_j) + \text{rank}_u(n_j) \Big)\]</span></p>
+<p>Take five tasks on two heterogeneous processors:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>task</th>
+<th>on <span class="math inline">\(P_1\)</span></th>
+<th>on <span class="math inline">\(P_2\)</span></th>
+<th><span class="math inline">\(\overline{w}\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>A</td>
+<td>4</td>
+<td>6</td>
+<td>5.0</td>
+</tr>
+<tr class="even">
+<td>B</td>
+<td>5</td>
+<td>3</td>
+<td>4.0</td>
+</tr>
+<tr class="odd">
+<td>C</td>
+<td>7</td>
+<td>5</td>
+<td>6.0</td>
+</tr>
+<tr class="even">
+<td>D</td>
+<td>3</td>
+<td>4</td>
+<td>3.5</td>
+</tr>
+<tr class="odd">
+<td>E</td>
+<td>6</td>
+<td>8</td>
+<td>7.0</td>
+</tr>
+</tbody>
+</table>
+<p>with edges <span class="math inline">\(A\to B\)</span> (cost 2), <span class="math inline">\(A\to C\)</span> (3), <span class="math inline">\(B\to D\)</span> (1), <span class="math inline">\(C\to D\)</span> (4), <span class="math inline">\(D\to E\)</span> (2).</p>
+<div id="556c88f1" class="cell" data-execution_count="8">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>WCOST <span class="op">=</span> {<span class="st">"A"</span>: (<span class="dv">4</span>, <span class="dv">6</span>), <span class="st">"B"</span>: (<span class="dv">5</span>, <span class="dv">3</span>), <span class="st">"C"</span>: (<span class="dv">7</span>, <span class="dv">5</span>), <span class="st">"D"</span>: (<span class="dv">3</span>, <span class="dv">4</span>), <span class="st">"E"</span>: (<span class="dv">6</span>, <span class="dv">8</span>)}</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>SUCC  <span class="op">=</span> {<span class="st">"A"</span>: [<span class="st">"B"</span>, <span class="st">"C"</span>], <span class="st">"B"</span>: [<span class="st">"D"</span>], <span class="st">"C"</span>: [<span class="st">"D"</span>], <span class="st">"D"</span>: [<span class="st">"E"</span>], <span class="st">"E"</span>: []}</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>CCOST <span class="op">=</span> {(<span class="st">"A"</span>, <span class="st">"B"</span>): <span class="dv">2</span>, (<span class="st">"A"</span>, <span class="st">"C"</span>): <span class="dv">3</span>, (<span class="st">"B"</span>, <span class="st">"D"</span>): <span class="dv">1</span>,</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>         (<span class="st">"C"</span>, <span class="st">"D"</span>): <span class="dv">4</span>, (<span class="st">"D"</span>, <span class="st">"E"</span>): <span class="dv">2</span>}</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>wbar <span class="op">=</span> {t: <span class="bu">sum</span>(v) <span class="op">/</span> <span class="bu">len</span>(v) <span class="cf">for</span> t, v <span class="kw">in</span> WCOST.items()}</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>rank <span class="op">=</span> {}</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> rank_u(t):</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> t <span class="kw">not</span> <span class="kw">in</span> rank:</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>        rank[t] <span class="op">=</span> wbar[t] <span class="op">+</span> <span class="bu">max</span>(</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>            [CCOST[(t, s)] <span class="op">+</span> rank_u(s) <span class="cf">for</span> s <span class="kw">in</span> SUCC[t]], default<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> rank[t]</span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> t <span class="kw">in</span> WCOST:</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>    rank_u(t)</span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> t, r <span class="kw">in</span> <span class="bu">sorted</span>(rank.items(), key<span class="op">=</span><span class="kw">lambda</span> kv: <span class="op">-</span>kv[<span class="dv">1</span>]):</span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"  rank_u(</span><span class="sc">{</span>t<span class="sc">}</span><span class="ss">) = </span><span class="sc">{</span>r<span class="sc">:5.1f}</span><span class="ss">"</span>)</span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">HEFT priority order:"</span>,</span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>      [t <span class="cf">for</span> t, _ <span class="kw">in</span> <span class="bu">sorted</span>(rank.items(), key<span class="op">=</span><span class="kw">lambda</span> kv: <span class="op">-</span>kv[<span class="dv">1</span>])])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  rank_u(A) =  30.5
+  rank_u(C) =  22.5
+  rank_u(B) =  17.5
+  rank_u(D) =  12.5
+  rank_u(E) =   7.0
+
+HEFT priority order: ['A', 'C', 'B', 'D', 'E']</code></pre>
+</div>
+</div>
+<p>Read the result: <span class="math inline">\(A\)</span> ranks highest (30.5) because everything is downstream of it; <span class="math inline">\(C\)</span> outranks <span class="math inline">\(B\)</span> (22.5 vs 17.5) even though <span class="math inline">\(B\)</span> is cheaper <em>on its best processor</em>, because <span class="math inline">\(C\)</span> sits on the more expensive path to <span class="math inline">\(D\)</span>. That is the algorithm noticing the critical path for you.</p>
+<p>The second half of HEFT is then plain greedy: take tasks in rank order and assign each to whichever processor gives the <strong>earliest finish time</strong>, accounting for when its inputs will have arrived. <strong>CPOP</strong> is the same machinery with a twist — it computes both upward <em>and</em> <strong>downward</strong> rank and adds them. Downward rank is the mirror image — the longest path from the <em>entry</em> node down to <span class="math inline">\(n_i\)</span>, excluding <span class="math inline">\(n_i\)</span>’s own cost:</p>
+<p><span class="math display">\[\text{rank}_d(n_i) = \max_{n_j \in \text{pred}(n_i)}\Big( \text{rank}_d(n_j) + \overline{w}(n_j) + c(n_j,n_i) \Big)\]</span></p>
+<p>The sum <span class="math inline">\(\text{rank}_d + \text{rank}_u\)</span> is constant along the critical path and smaller everywhere else, so it identifies that path exactly. CPOP pins every task on it to whichever single processor minimises the path’s total cost, and schedules the rest greedily around them.</p>
+</section>
+<section id="which-to-use" class="level4">
+<h4 class="anchored" data-anchor-id="which-to-use">Which to use</h4>
+<ul>
+<li><strong>Homogeneous machines, cheap communication</strong> — plain list scheduling with static levels. Anything fancier is noise.</li>
+<li><strong>High communication-to-computation ratio</strong> — clustering.</li>
+<li><strong>Heterogeneous machines, known costs</strong> — HEFT or CPOP.</li>
+<li><strong>Costs unknown or changing</strong> — none of the above. That is Section 6.</li>
+</ul>
+<p>HEFT is a good algorithm. Keep the cost matrix in mind though — it is exactly what the next section takes away.</p>
+<hr>
+</section>
+</section>
+</section>
+<section id="dynamic-scheduling" class="level2">
+<h2 class="anchored" data-anchor-id="dynamic-scheduling">6. Dynamic scheduling</h2>
+<p>This is the other section that reads badly on slides, because it is a chain of arguments rather than a list of facts. The chain is: <em>static scheduling assumes information nobody has → so stop computing schedules and compute policies → here are the policies, and what each one costs.</em></p>
+<section id="why-the-static-picture-breaks" class="level3">
+<h3 class="anchored" data-anchor-id="why-the-static-picture-breaks">Why the static picture breaks</h3>
+<p>HEFT wants <span class="math inline">\(w(n_i, p_k)\)</span> and <span class="math inline">\(c(n_i, n_j)\)</span> for every task and processor <strong>before anything runs</strong>. Ask where those numbers would come from in a real analytics cluster:</p>
+<ul>
+<li>A task’s duration depends on <strong>data it has not read yet</strong>. How many rows survive that filter? You find out by running it.</li>
+<li>The machine is <strong>shared</strong> — noisy neighbours, thermal throttling, a cold page cache.</li>
+<li>The first execution includes <strong>JIT warm-up</strong> and import time, so it is not representative of the second.</li>
+<li>Workers <strong>appear and disappear</strong>: autoscaling, spot instance reclamation, OOM kills.</li>
+<li><span class="math inline">\(c(n_i, n_j)\)</span> is zero if the data is already on that worker and seconds if it is not — which is the very thing you are trying to decide.</li>
+</ul>
+<p>And the graph itself may not be finished. <code>dask.dataframe</code> does not know partition sizes until it reads them; shuffles produce structure that depends on the data; interactive users append to the graph while earlier parts are still running.</p>
+</section>
+<section id="the-pivot" class="level3">
+<h3 class="anchored" data-anchor-id="the-pivot">The pivot</h3>
+<blockquote class="blockquote">
+<p>Stop computing a <strong>schedule</strong>. Compute a <strong>policy</strong>: a cheap rule, re-evaluated constantly, that is good on average and recovers from being wrong.</p>
+</blockquote>
+<p>Everything in the rest of this section is one such policy, plus the price it charges.</p>
+</section>
+<section id="work-sharing-vs.-work-stealing" class="level3">
+<h3 class="anchored" data-anchor-id="work-sharing-vs.-work-stealing">Work sharing vs.&nbsp;work stealing</h3>
+<p>Two ways to balance load:</p>
+<ul>
+<li><strong>Work sharing</strong> — when a processor creates new work, it <em>pushes</em> it out to a central pool or another processor. Migration happens whenever work is <strong>created</strong>.</li>
+<li><strong>Work stealing</strong> — an idle processor <em>pulls</em> work from a busy one. Migration happens only when a processor <strong>runs dry</strong>.</li>
+</ul>
+<p>Stealing wins for a reason that is easy to state and easy to underrate: <strong>when everybody is busy, stealing costs nothing at all</strong>. No messages, no contention, no shared state touched. Communication is proportional to the <em>imbalance</em>, not to the amount of work. Work sharing pays a cost on every task creation, which is exactly the common case.</p>
+</section>
+<section id="the-deque-discipline" class="level3">
+<h3 class="anchored" data-anchor-id="the-deque-discipline">The deque discipline</h3>
+<p>Each worker owns a double-ended queue of tasks, and the two ends are used differently. This is the detail that makes work stealing fast, and it is worth being precise about.</p>
+<p><strong>The owner pushes and pops its own bottom end — LIFO.</strong> Last in, first out is a depth-first traversal of the computation. That means the data the worker needs next is the data it just produced, still sitting in L1/L2 cache. Depth-first also keeps the memory footprint small, because you finish subtrees rather than accumulating a frontier of half-done ones.</p>
+<p><strong>The thief takes from the top end — FIFO.</strong> The oldest entry in the deque sits nearest the <em>root</em> of the computation, so it is usually the <strong>largest remaining subtree</strong>. One expensive steal therefore buys a long stretch of work the thief can then run locally without stealing again. Stealing small recent tasks would mean stealing constantly.</p>
+<p><strong>And because the two ends are different, owner and thief almost never touch the same slot.</strong> The common path — owner pushing and popping its own end — needs no lock at all. That is Cilk’s THE protocol<a href="#fn27" class="footnote-ref" id="fnref27" role="doc-noteref"><sup>27</sup></a>: synchronisation only when the deque is nearly empty and the two ends might actually meet.</p>
+<p>So the deque is not an arbitrary data-structure choice. Each end is doing a different job: one optimises <strong>locality</strong>, the other optimises <strong>how much a steal is worth</strong>, and their separation is what removes the lock.</p>
+<section id="why-the-lock-disappears" class="level4">
+<h4 class="anchored" data-anchor-id="why-the-lock-disappears">Why the lock disappears</h4>
+<p>It is worth being concrete about the last point, because “needs no lock” sounds like hand-waving. The owner works at the bottom of the deque, thieves at the top. Each keeps an index; the owner’s <code>pop</code> decrements its index and the thief’s steal increments its own, and each then checks whether the two have crossed.</p>
+<ul>
+<li>If they have <strong>not</strong> crossed, there were at least two items, the two parties touched different slots, and no synchronisation was needed at all.</li>
+<li>If they <strong>have</strong> crossed, the deque is nearly empty and there is a genuine race over the last item — so fall back to a real lock, which happens rarely.</li>
+</ul>
+<p>That is Cilk’s <strong>THE protocol</strong><a href="#fn28" class="footnote-ref" id="fnref28" role="doc-noteref"><sup>28</sup></a> in outline. The point is the shape of the argument, and it recurs everywhere in this section: make the common case synchronisation-free, and pay only in the rare case.</p>
+</section>
+</section>
+<section id="the-theory-blumofe-leiserson-1999blumofe" class="level3">
+<h3 class="anchored" data-anchor-id="the-theory-blumofe-leiserson-1999blumofe">The theory: Blumofe &amp; Leiserson (1999)<a href="#fn29" class="footnote-ref" id="fnref29" role="doc-noteref"><sup>29</sup></a></h3>
+<p>For a <em>fully strict</em> computation — one where a task’s results are used only by its parent, the shape that <code>spawn</code>/<code>sync</code> code produces — with work <span class="math inline">\(T_1\)</span> and span <span class="math inline">\(T_\infty\)</span>, randomized work stealing on <span class="math inline">\(P\)</span> processors achieves</p>
+<p><span class="math display">\[\mathbb{E}[T_P] \;=\; \frac{T_1}{P} + O(T_\infty)\]</span></p>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Warning
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Notation.</strong> This is Cilk’s convention: <span class="math inline">\(T_1 = W\)</span> (time on one processor <span class="math inline">\(=\)</span> work) and <span class="math inline">\(T_\infty = S\)</span> (time on unlimited processors <span class="math inline">\(=\)</span> span). Note this <span class="math inline">\(T_1\)</span> is unrelated to task <span class="math inline">\(T_1\)</span> in Section 4.</p>
+</div>
+</div>
+<p>Compare that with the greedy bound from Section 2: it is the same shape. Work stealing is <strong>provably within a constant factor of optimal</strong> — while knowing <em>nothing</em> about task durations, which is precisely what HEFT needed and could not get.</p>
+<p>Two further bounds matter more in practice than the headline one:</p>
+<ul>
+<li><strong>Space</strong>: <span class="math inline">\(S_P \leq P \cdot S_1\)</span>. Stealing cannot blow memory up more than linearly in <span class="math inline">\(P\)</span>. (This is the depth-first discipline paying off.)</li>
+<li><strong>Communication</strong>: expected <span class="math inline">\(O(P \, T_\infty \, S_{\max})\)</span> bytes, where <span class="math inline">\(S_{\max}\)</span> is the largest stack frame — proportional to the <em>span</em>, not the work.</li>
+</ul>
+</section>
+<section id="why-pick-victims-at-random" class="level3">
+<h3 class="anchored" data-anchor-id="why-pick-victims-at-random">Why pick victims at random?</h3>
+<p>A thief picks its victim <strong>uniformly at random</strong>: no load table, no coordination, no central state.</p>
+<p>The justification is a probabilistic one. If a constant fraction of deques are non-empty, a random steal succeeds with constant probability, so <span class="math inline">\(O(P)\)</span> steal attempts suffice per unit of progress — which is exactly what the bound above needs. And any attempt to be cleverer — “steal from the <em>most</em> loaded worker” — reintroduces the shared, contended state that stealing existed to avoid.</p>
+</section>
+<section id="the-work-first-principle" class="level3">
+<h3 class="anchored" data-anchor-id="the-work-first-principle">The work-first principle</h3>
+<p>Cilk’s design rule:<a href="#fn30" class="footnote-ref" id="fnref30" role="doc-noteref"><sup>30</sup></a> <strong>move overhead off the work path and onto the critical path.</strong> The work path executes <span class="math inline">\(T_1\)</span> times; the steal path executes only <span class="math inline">\(O(P \, T_\infty)\)</span> times. So make the common case free and let stealing be expensive. Almost every fast work-stealing runtime is an application of this one principle.</p>
+</section>
+<section id="locality-vs.-load-balance" class="level3">
+<h3 class="anchored" data-anchor-id="locality-vs.-load-balance">Locality vs.&nbsp;load balance</h3>
+<p>Two goals pull in opposite directions:</p>
+<ul>
+<li><strong>balance</strong> — keep every processor busy <span class="math inline">\(\Rightarrow\)</span> move tasks freely</li>
+<li><strong>locality</strong> — run a task where its input already is <span class="math inline">\(\Rightarrow\)</span> never move tasks</li>
+</ul>
+<p>Moving a task is cheap. Moving its 200 MB input is not.</p>
+<p><strong>Delay scheduling</strong> (Zaharia et al., 2010)<a href="#fn31" class="footnote-ref" id="fnref31" role="doc-noteref"><sup>31</sup></a> resolves this with almost embarrassing simplicity: when the next task’s preferred node is busy, <strong>wait a few seconds</strong> instead of launching it elsewhere. Slots free up constantly, so a short wait almost always wins the local slot. In the Hadoop fair scheduler this raised data locality to nearly 100% and roughly <strong>doubled</strong> throughput — from about five lines of policy.</p>
+</section>
+<section id="sampling-instead-of-state" class="level3">
+<h3 class="anchored" data-anchor-id="sampling-instead-of-state">Sampling instead of state</h3>
+<p><strong>The power of two choices.</strong><a href="#fn32" class="footnote-ref" id="fnref32" role="doc-noteref"><sup>32</sup></a> Place a task on a uniformly random worker out of <span class="math inline">\(n\)</span>, and the maximum queue length is <span class="math inline">\(\Theta(\log n / \log\log n)\)</span>. Sample <strong>two</strong> at random and take the shorter queue, and it drops to <span class="math inline">\(\Theta(\log\log n)\)</span> — an exponential improvement for one extra probe.</p>
+<p>Why schedulers care: it means you can get near-centralized placement quality with <strong>no centralized state at all</strong>. Sparrow<a href="#fn33" class="footnote-ref" id="fnref33" role="doc-noteref"><sup>33</sup></a> builds an entire distributed scheduler from this, adding <em>batch sampling</em> and <em>late binding</em> — place reservations on several workers and let whichever frees up first actually claim the task.</p>
+</section>
+<section id="stragglers" class="level3">
+<h3 class="anchored" data-anchor-id="stragglers">Stragglers</h3>
+<p>In a 10 000-task stage the makespan is set by the <strong>slowest</strong> task, not the average one. Causes are mundane: a failing disk, a hot node, skewed data, a background daemon, a GC pause.</p>
+<p><strong>Speculative execution</strong> is the standard answer — once a stage is nearly done, launch duplicate copies of the laggards and take whichever finishes first. The refinements are a nice illustration of a policy being tuned over a decade:</p>
+<ul>
+<li><strong>MapReduce (2004)</strong> — back up the last few tasks near the end of a phase<a href="#fn34" class="footnote-ref" id="fnref34" role="doc-noteref"><sup>34</sup></a></li>
+<li><strong>LATE (2008)</strong> — rank by <em>longest approximate time to end</em>, not progress so far; crucial on heterogeneous nodes</li>
+<li><strong>Mantri (2010)</strong> — diagnose the <em>cause</em> (data skew vs.&nbsp;slow node) before acting</li>
+<li><strong>Dolly (2013)</strong> — for small jobs, just clone every task up front; cheaper than detecting stragglers</li>
+</ul>
+<p>Speculation is not free, and the trade-off is worth stating plainly: you are spending <strong>cluster capacity</strong> to buy <strong>latency</strong>. Duplicating the last 5% of a stage costs at most 5% extra work; duplicating aggressively on a busy cluster can cost far more and slow down everyone else’s jobs. Every refinement in the list above is really an attempt to spend that budget more precisely — which is why they progress from “back up the last few” to “diagnose the cause first”.</p>
+<p><strong>The tail at scale</strong> (Dean &amp; Barroso, 2013)<a href="#fn35" class="footnote-ref" id="fnref35" role="doc-noteref"><sup>35</sup></a> explains why this matters so much more at scale than intuition suggests. If one machine answers within 10 ms 99% of the time, a request fanning out to <strong>100</strong> machines waits longer than 10 ms <strong>63%</strong> of the time. Rare slowness at the component level is the <em>common case</em> at the system level. Hence hedged requests, tied requests, micro-partitioning, and “good enough” partial answers.</p>
+</section>
+<section id="the-scheduler-is-itself-a-parallel-program" class="level3">
+<h3 class="anchored" data-anchor-id="the-scheduler-is-itself-a-parallel-program">The scheduler is itself a parallel program</h3>
+<p>Every policy above is work the scheduler does <strong>while jobs are running</strong>, and you now own its costs:</p>
+<ul>
+<li>A <strong>decision must be cheaper than the task it schedules</strong> — this is what sets your minimum useful task size, and it is why the granularity dial from Section 1 matters.</li>
+<li>The scheduler holds state proportional to the <strong>graph</strong>, not the cluster. A million tasks means a million objects in one process.</li>
+<li>Each policy can misfire: stealing can thrash, speculation can double your cluster load, locality delay can idle machines.</li>
+</ul>
+</section>
+<section id="what-the-frameworks-actually-do" class="level3">
+<h3 class="anchored" data-anchor-id="what-the-frameworks-actually-do">What the frameworks actually do</h3>
+<p>The theory above describes shared-memory work stealing, where a “task” is a function call and a steal is a pointer swap. Distributed analytics frameworks face the same problem with tasks that are milliseconds to seconds long and data that must cross a network, so they mix the ideas rather than adopting one:</p>
+<ul>
+<li><strong>Cilk, Intel TBB, Java’s <code>ForkJoinPool</code>, Rust’s Rayon</strong> are work stealing in the textbook sense — per-worker deques, random victims, LIFO/FIFO ends.</li>
+<li><strong>Dask</strong> uses a <em>central</em> scheduler that holds the whole graph and assigns tasks to workers, with work stealing layered on top for balance. Because the scheduler sees the graph, it can also order tasks to keep memory small — the depth-first preference a deque gives you for free, <code>dask.order</code> has to compute explicitly. (This is the subject of Lecture 5.)</li>
+<li><strong>Spark</strong> is more static: the DAG scheduler splits the job into <em>stages</em> at shuffle boundaries, and a task scheduler places each stage’s tasks using locality preferences, delay scheduling and speculation.</li>
+</ul>
+<p>The common thread is that none of them computes a schedule up front. They all maintain a ready set and apply a cheap rule to it — which is exactly the pivot above.</p>
+<hr>
+</section>
+</section>
+<section id="beyond-one-framework" class="level2">
+<h2 class="anchored" data-anchor-id="beyond-one-framework">7. Beyond one framework</h2>
+<p>There are really <strong>two</strong> scheduling problems, and they are mostly independent.</p>
+<p>The first is the one above: given workers, place tasks. The second is <strong>cluster resource management</strong> — those workers are processes on machines somebody has to hand out, to this job and to fifty other tenants at the same time.</p>
+<p>The second problem is harder, not easier, because it adds multi-tenancy, fairness, preemption and failure across jobs that know nothing about each other. Your framework’s scheduler optimises one job; the cluster manager arbitrates between jobs that would each happily take everything.</p>
+<section id="four-architectures" class="level3">
+<h3 class="anchored" data-anchor-id="four-architectures">Four architectures</h3>
+<p>They differ mainly in <em>who holds the state and who makes the decision</em>. The trade-off is always the same: decision quality against decision latency and contention.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>architecture</th>
+<th>who decides</th>
+<th>example</th>
+<th>trade-off</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>monolithic</strong></td>
+<td>one scheduler, full cluster state</td>
+<td>Borg<a href="#fn36" class="footnote-ref" id="fnref36" role="doc-noteref"><sup>36</sup></a>, early Hadoop</td>
+<td>best decisions, single bottleneck, hard to evolve</td>
+</tr>
+<tr class="even">
+<td><strong>two-level</strong></td>
+<td>a resource manager <em>offers</em> slices; frameworks accept or decline</td>
+<td>Mesos<a href="#fn37" class="footnote-ref" id="fnref37" role="doc-noteref"><sup>37</sup></a>, YARN</td>
+<td>frameworks stay independent; each sees only what it is offered</td>
+</tr>
+<tr class="odd">
+<td><strong>shared-state</strong></td>
+<td>many schedulers, each with an optimistic copy of full state</td>
+<td>Omega<a href="#fn38" class="footnote-ref" id="fnref38" role="doc-noteref"><sup>38</sup></a></td>
+<td>parallel decisions resolved by atomic commit; conflicts under contention</td>
+</tr>
+<tr class="even">
+<td><strong>distributed</strong></td>
+<td>many independent schedulers, no shared state, sampling</td>
+<td>Sparrow<a href="#fn39" class="footnote-ref" id="fnref39" role="doc-noteref"><sup>39</sup></a></td>
+<td>millisecond decisions at scale; no global view, so no global guarantees</td>
+</tr>
+</tbody>
+</table>
+<p>A few more worth knowing by name:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>system</th>
+<th>idea</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>YARN</strong> (2013)</td>
+<td>two-level, but by <em>request</em> rather than by offer; a per-application master negotiates with a global resource manager</td>
+</tr>
+<tr class="even">
+<td><strong>Kubernetes</strong></td>
+<td>filter (predicates) <span class="math inline">\(\to\)</span> score (priorities) <span class="math inline">\(\to\)</span> bind; a pluggable scheduling framework, and the open descendant of Borg and Omega<a href="#fn40" class="footnote-ref" id="fnref40" role="doc-noteref"><sup>40</sup></a></td>
+</tr>
+<tr class="odd">
+<td><strong>Quincy</strong> (2009)<a href="#fn41" class="footnote-ref" id="fnref41" role="doc-noteref"><sup>41</sup></a> / <strong>Firmament</strong> (2016)<a href="#fn42" class="footnote-ref" id="fnref42" role="doc-noteref"><sup>42</sup></a></td>
+<td>encode fairness <em>and</em> locality as a <strong>min-cost flow</strong> problem and solve it exactly — optimal placement, at the cost of solving a flow problem per scheduling round</td>
+</tr>
+</tbody>
+</table>
+<p>Notice this is the same progression as Section 6, one level up: from a central authority with perfect information toward cheap local decisions with statistical guarantees — and for the same reason. At scale, the cost of <em>knowing</em> exceeds the value of knowing.</p>
+</section>
+<section id="dominant-resource-fairness" class="level3">
+<h3 class="anchored" data-anchor-id="dominant-resource-fairness">Dominant resource fairness</h3>
+<p>What does “half the cluster” mean when one job wants CPU and another wants memory? <strong>DRF</strong><a href="#fn43" class="footnote-ref" id="fnref43" role="doc-noteref"><sup>43</sup></a> answers it. Each job’s <strong>dominant resource</strong> is whichever it uses the largest <em>share</em> of; its <strong>dominant share</strong> is that fraction. DRF then equalises dominant shares across jobs.</p>
+<p>The canonical example: a cluster with <strong>9 CPUs and 18 GB</strong> of memory, and two users whose tasks demand</p>
+<ul>
+<li>user <strong>A</strong>: ⟨1 CPU, 4 GB⟩ per task — 1/9 of the CPU, 2/9 of the memory, so <strong>memory</strong> is dominant</li>
+<li>user <strong>B</strong>: ⟨3 CPU, 1 GB⟩ per task — 1/3 of the CPU, 1/18 of the memory, so <strong>CPU</strong> is dominant</li>
+</ul>
+<div id="8cd21fc1" class="cell" data-execution_count="9">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>CPU, MEM <span class="op">=</span> <span class="dv">9</span>, <span class="dv">18</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>DEMAND <span class="op">=</span> {<span class="st">"A"</span>: (<span class="dv">1</span>, <span class="dv">4</span>), <span class="st">"B"</span>: (<span class="dv">3</span>, <span class="dv">1</span>)}</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> dominant_share(n, demand):</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">max</span>(n <span class="op">*</span> demand[<span class="dv">0</span>] <span class="op">/</span> CPU, n <span class="op">*</span> demand[<span class="dv">1</span>] <span class="op">/</span> MEM)</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>feasible <span class="op">=</span> [</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>    (a, b)</span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> a <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">10</span>) <span class="cf">for</span> b <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">10</span>)</span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> a <span class="op">*</span> DEMAND[<span class="st">"A"</span>][<span class="dv">0</span>] <span class="op">+</span> b <span class="op">*</span> DEMAND[<span class="st">"B"</span>][<span class="dv">0</span>] <span class="op">&lt;=</span> CPU</span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">and</span> a <span class="op">*</span> DEMAND[<span class="st">"A"</span>][<span class="dv">1</span>] <span class="op">+</span> b <span class="op">*</span> DEMAND[<span class="st">"B"</span>][<span class="dv">1</span>] <span class="op">&lt;=</span> MEM</span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">and</span> <span class="bu">abs</span>(dominant_share(a, DEMAND[<span class="st">"A"</span>])</span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>            <span class="op">-</span> dominant_share(b, DEMAND[<span class="st">"B"</span>])) <span class="op">&lt;</span> <span class="fl">1e-9</span></span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>a, b <span class="op">=</span> <span class="bu">max</span>(feasible, key<span class="op">=</span><span class="kw">lambda</span> ab: dominant_share(ab[<span class="dv">0</span>], DEMAND[<span class="st">"A"</span>]))</span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"A runs </span><span class="sc">{</span>a<span class="sc">}</span><span class="ss"> tasks, B runs </span><span class="sc">{</span>b<span class="sc">}</span><span class="ss"> tasks"</span>)</span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"equal dominant share = </span><span class="sc">{</span>dominant_share(a, DEMAND[<span class="st">'A'</span>])<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
+<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"CPU used </span><span class="sc">{</span>a<span class="op">*</span><span class="dv">1</span> <span class="op">+</span> b<span class="op">*</span><span class="dv">3</span><span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>CPU<span class="sc">}</span><span class="ss">, memory used </span><span class="sc">{</span>a<span class="op">*</span><span class="dv">4</span> <span class="op">+</span> b<span class="op">*</span><span class="dv">1</span><span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>MEM<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>A runs 3 tasks, B runs 2 tasks
+equal dominant share = 0.667
+CPU used 9/9, memory used 14/18</code></pre>
+</div>
+</div>
+<p>A gets 3 tasks and B gets 2, each ending with a dominant share of 2/3 — A using 12 of the 18 GB, B using 6 of the 9 CPUs. Between them they saturate the CPU exactly, and neither can be given more without pushing the other’s dominant share below the shared value.</p>
+<p>DRF caught on because it does the obvious right thing in the easy cases (with one resource it reduces to ordinary fair sharing) while being <strong>strategy-proof</strong>: a user cannot get more by lying about their demands. It is the default in Mesos and YARN.</p>
+</section>
+<section id="scale-for-perspective" class="level3">
+<h3 class="anchored" data-anchor-id="scale-for-perspective">Scale, for perspective</h3>
+<p>The numbers explain why the cheap policies win:</p>
+<ul>
+<li>a <strong>Borg cell</strong>: <em>tens of thousands</em> of machines, one logically centralized scheduler, placing on the order of <strong>10 000 tasks per minute</strong></li>
+<li><strong>Sparrow</strong>: sub-second tasks with <strong>millisecond</strong> placement decisions, spread over many independent schedulers</li>
+<li>a <strong>Dask scheduler</strong>: <em>a few thousand</em> tasks per second, single-threaded Python</li>
+</ul>
+<p>Four orders of magnitude apart in task size — which is why they are different problems with different answers, not one problem solved better or worse.</p>
+<p>At those rates a scheduler that takes 100 ms to make a good decision is worse than one that takes 1 ms to make a decent one — which is the whole argument for the right-hand end of the architecture table.</p>
+<hr>
+</section>
+</section>
+<section id="the-honest-summary" class="level2">
+<h2 class="anchored" data-anchor-id="the-honest-summary">8. The honest summary</h2>
+<p>Scheduling turned out to mean four different things, and the lecture visits them in order:</p>
+<ol type="1">
+<li><strong>A graph problem</strong> — recover the partial order hiding inside a total order.</li>
+<li><strong>A theory</strong> — work, span, and a greedy bound that is within <span class="math inline">\(2\times\)</span> and cannot be much improved.</li>
+<li><strong>A collection of heuristics</strong> — because optimality is NP-hard, and because the inputs the heuristics want do not exist.</li>
+<li><strong>A running system</strong> — policies that are cheap, wrong sometimes, and recover.</li>
+</ol>
+<p>Where the theory still earns its keep: <span class="math inline">\(W\)</span> and <span class="math inline">\(S\)</span> tell you the ceiling before you write any code, and they tell you which of your two knobs to turn. Graham’s anomalies tell you not to trust local improvements. And the Blumofe–Leiserson bound tells you that a scheduler which knows nothing about your task durations can still be within a constant factor of one that knows everything — which is why every modern framework schedules dynamically.</p>
+<hr>
+</section>
+<section id="glossary" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="glossary">Glossary</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>term</th>
+<th>meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>anti dependence</strong></td>
+<td>write-after-read; a false dependence, removable by renaming</td>
+</tr>
+<tr class="even">
+<td><strong>critical path</strong></td>
+<td>the longest dependency chain; its length is the span</td>
+</tr>
+<tr class="odd">
+<td><strong>CCR</strong></td>
+<td>communication-to-computation ratio: average edge weight / average node weight</td>
+</tr>
+<tr class="even">
+<td><strong>deque</strong></td>
+<td>double-ended queue; a work-stealing worker owns one</td>
+</tr>
+<tr class="odd">
+<td><strong>dominant share</strong></td>
+<td>the largest fraction of any single resource a job holds</td>
+</tr>
+<tr class="even">
+<td><strong>downward rank</strong></td>
+<td>longest path from the entry node to a task, excluding its own cost</td>
+</tr>
+<tr class="odd">
+<td><strong>fully strict</strong></td>
+<td>a computation in which a task’s results are used only by its parent</td>
+</tr>
+<tr class="even">
+<td><strong>efficiency</strong></td>
+<td><span class="math inline">\(T_1 / (P \cdot T_P)\)</span>; how much of the hardware you are wasting</td>
+</tr>
+<tr class="odd">
+<td><strong>entry / exit node</strong></td>
+<td>a node with no parent / no child</td>
+</tr>
+<tr class="even">
+<td><strong>greedy scheduler</strong></td>
+<td>never idles a processor while a task is ready</td>
+</tr>
+<tr class="odd">
+<td><strong>list scheduling</strong></td>
+<td>order tasks by a priority, place each on the earliest-available processor</td>
+</tr>
+<tr class="even">
+<td><strong>makespan</strong></td>
+<td>overall finish time; <span class="math inline">\(\max_i FT(n_i)\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>output dependence</strong></td>
+<td>write-after-write; a false dependence</td>
+</tr>
+<tr class="even">
+<td><strong>parallelism</strong></td>
+<td><span class="math inline">\(W / S\)</span>; the maximum number of processors that can help</td>
+</tr>
+<tr class="odd">
+<td><strong>preemption</strong></td>
+<td>interrupting a running task and resuming it later</td>
+</tr>
+<tr class="even">
+<td><strong>static vs.&nbsp;dynamic</strong></td>
+<td>scheduling decided before execution vs.&nbsp;while it runs</td>
+</tr>
+<tr class="odd">
+<td><strong>span (<span class="math inline">\(S\)</span>)</strong></td>
+<td>cost of the longest path through the DAG; <span class="math inline">\(= T_\infty\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>speculative execution</strong></td>
+<td>running duplicate copies of slow tasks and taking the first to finish</td>
+</tr>
+<tr class="odd">
+<td><strong>static level</strong></td>
+<td>longest path from a node to any exit, computation only</td>
+</tr>
+<tr class="even">
+<td><strong>straggler</strong></td>
+<td>the abnormally slow task that sets a stage’s makespan</td>
+</tr>
+<tr class="odd">
+<td><strong>true (flow) dependence</strong></td>
+<td>read-after-write; the only dependence forced by the data</td>
+</tr>
+<tr class="even">
+<td><strong>upward rank</strong></td>
+<td>static level with communication costs included; HEFT’s priority</td>
+</tr>
+<tr class="odd">
+<td><strong>work (<span class="math inline">\(W\)</span>)</strong></td>
+<td>total cost of all nodes; <span class="math inline">\(= T_1\)</span> in Cilk’s notation</td>
+</tr>
+<tr class="even">
+<td><strong>work sharing / stealing</strong></td>
+<td>busy pushes work out / idle pulls work in</td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="check-yourself" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="check-yourself">Check yourself</h2>
+<p>If you can answer these without looking, you have the lecture.</p>
+<ol type="1">
+<li>A program has <span class="math inline">\(W = 1000\)</span> and <span class="math inline">\(S = 50\)</span>. What is the most processors worth buying, and what makespan should you expect on 10?</li>
+<li>Why does renaming a variable sometimes make a program more parallel, when it changes nothing about what is computed?</li>
+<li>Greedy list scheduling is within a factor of 2 of optimal. Why is that <em>not</em> enough to make it safe to add a processor?</li>
+<li>In Graham’s example, what single property of <span class="math inline">\(T_9\)</span> causes all three anomalies?</li>
+<li><code>PARTITION</code> is NP-complete, yet LPT gets within <span class="math inline">\(\frac{4}{3}\)</span> of optimal. Explain why these are consistent.</li>
+<li>HEFT needs <span class="math inline">\(w(n_i, p_k)\)</span> for every task and processor. Name three reasons that matrix does not exist in a real cluster.</li>
+<li>Why does a work-stealing owner pop from the <em>same</em> end it pushes to, while a thief takes from the other end? Give one reason for each end.</li>
+<li>Blumofe &amp; Leiserson bound work stealing by <span class="math inline">\(T_1/P + O(T_\infty)\)</span>. Compare that with the greedy bound from Section 2 — what is different about the <em>assumptions</em>?</li>
+<li>Why does sampling two workers at random beat sampling one, by so much more than sampling three beats two?</li>
+<li>Your job got slower after the cluster was upgraded. Name two mechanisms from this lecture that could explain it without anything being broken.</li>
+</ol>
+<hr>
+</section>
+<section id="further-reading" class="level2">
+<h2 class="anchored" data-anchor-id="further-reading">Further reading</h2>
+<p>The slides carry a full reference list. The short version, if you read only a few:</p>
+<ul>
+<li><strong>R. L. Graham</strong>, <em>Bounds on multiprocessing timing anomalies</em>, SIAM J. Appl. Math., 1969 — Section 4 of this document, in the original.</li>
+<li><strong>R. Blumofe &amp; C. Leiserson</strong>, <em>Scheduling multithreaded computations by work stealing</em>, JACM, 1999 — Section 6.</li>
+<li><strong>A. J. Bernstein</strong>, <em>Analysis of programs for parallel processing</em>, IEEE Trans. Electronic Computers, 1966 — Section 1.</li>
+<li><strong>J. Dean &amp; L. Barroso</strong>, <em>The tail at scale</em>, CACM, 2013 — short, and it will change how you read latency numbers.</li>
+<li><strong>Y.-K. Kwok &amp; I. Ahmad</strong>, <em>Static scheduling algorithms for allocating directed task graphs to multiprocessors</em>, ACM Computing Surveys, 1999 — the survey for Section 5.</li>
+</ul>
+</section>
+<section id="notes-and-references" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="notes-and-references">Notes and references</h2>
+<p>All DOIs below were resolved against Crossref; the four USENIX papers are not indexed there and are cited by venue (all are freely available from <code>usenix.org</code>).</p>
+
+
+</section>
+
+
+<div id="quarto-appendix" class="default"><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><h2 class="anchored quarto-appendix-heading">Footnotes</h2>
+
+<ol>
+<li id="fn1"><p>A. J. Bernstein, “Analysis of Programs for Parallel Processing,” <em>IEEE Transactions on Electronic Computers</em> EC-15(5), 1966, 757–763. <a href="https://doi.org/10.1109/PGEC.1966.264565" class="uri">https://doi.org/10.1109/PGEC.1966.264565</a><a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>R. M. Tomasulo, “An Efficient Algorithm for Exploiting Multiple Arithmetic Units,” <em>IBM Journal of Research and Development</em> 11(1), 1967, 25–33. <a href="https://doi.org/10.1147/rd.111.0025" class="uri">https://doi.org/10.1147/rd.111.0025</a><a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>R. Cytron, J. Ferrante, B. K. Rosen, M. N. Wegman &amp; F. K. Zadeck, “Efficiently computing static single assignment form and the control dependence graph,” <em>ACM TOPLAS</em> 13(4), 1991, 451–490. <a href="https://doi.org/10.1145/115372.115320" class="uri">https://doi.org/10.1145/115372.115320</a><a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p>D. J. Kuck, R. H. Kuhn, D. A. Padua, B. Leasure &amp; M. Wolfe, “Dependence graphs and compiler optimizations,” <em>POPL</em>, 1981, 207–218. <a href="https://doi.org/10.1145/567532.567555" class="uri">https://doi.org/10.1145/567532.567555</a> — the flow/anti/output terminology itself is developed in D. J. Kuck, <em>The Structure of Computers and Computations</em>, Vol. 1, Wiley, 1978. The standard modern textbook is R. Allen &amp; K. Kennedy, <em>Optimizing Compilers for Modern Architectures: A Dependence-based Approach</em>, Morgan Kaufmann, 2001.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p>J. Ferrante, K. J. Ottenstein &amp; J. D. Warren, “The program dependence graph and its use in optimization,” <em>ACM TOPLAS</em> 9(3), 1987, 319–349. <a href="https://doi.org/10.1145/24039.24041" class="uri">https://doi.org/10.1145/24039.24041</a><a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn6"><p>R. P. Brent, “The Parallel Evaluation of General Arithmetic Expressions,” <em>Journal of the ACM</em> 21(2), 1974, 201–206. <a href="https://doi.org/10.1145/321812.321815" class="uri">https://doi.org/10.1145/321812.321815</a><a href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn7"><p>R. L. Graham, “Bounds for Certain Multiprocessing Anomalies,” <em>Bell System Technical Journal</em> 45(9), 1966, 1563–1581. <a href="https://doi.org/10.1002/j.1538-7305.1966.tb01709.x" class="uri">https://doi.org/10.1002/j.1538-7305.1966.tb01709.x</a><a href="#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn8"><p>G. M. Amdahl, “Validity of the single processor approach to achieving large scale computing capabilities,” <em>AFIPS Spring Joint Computer Conference</em>, 1967, 483–485. <a href="https://doi.org/10.1145/1465482.1465560" class="uri">https://doi.org/10.1145/1465482.1465560</a><a href="#fnref8" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn9"><p>J. L. Gustafson, “Reevaluating Amdahl’s law,” <em>Communications of the ACM</em> 31(5), 1988, 532–533. <a href="https://doi.org/10.1145/42411.42415" class="uri">https://doi.org/10.1145/42411.42415</a><a href="#fnref9" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn10"><p>R. L. Graham, “Bounds on Multiprocessing Timing Anomalies,” <em>SIAM Journal on Applied Mathematics</em> 17(2), 1969, 416–429. <a href="https://doi.org/10.1137/0117039" class="uri">https://doi.org/10.1137/0117039</a> — the fuller treatment, including the <span class="math inline">\(1 + (m-1)/m'\)</span> bound. For the <span class="math inline">\(\alpha \mid \beta \mid \gamma\)</span> classification of scheduling problems, see R. L. Graham, E. L. Lawler, J. K. Lenstra &amp; A. H. G. Rinnooy Kan, “Optimization and Approximation in Deterministic Sequencing and Scheduling: a Survey,” <em>Annals of Discrete Mathematics</em> 5, 1979, 287–326. <a href="https://doi.org/10.1016/S0167-5060(08)70356-X" class="uri">https://doi.org/10.1016/S0167-5060(08)70356-X</a><a href="#fnref10" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn11"><p>T. C. Hu, “Parallel Sequencing and Assembly Line Problems,” <em>Operations Research</em> 9(6), 1961, 841–848. <a href="https://doi.org/10.1287/opre.9.6.841" class="uri">https://doi.org/10.1287/opre.9.6.841</a><a href="#fnref11" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn12"><p>E. G. Coffman &amp; R. L. Graham, “Optimal scheduling for two-processor systems,” <em>Acta Informatica</em> 1(3), 1972, 200–213. <a href="https://doi.org/10.1007/BF00288685" class="uri">https://doi.org/10.1007/BF00288685</a><a href="#fnref12" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn13"><p>C. H. Papadimitriou &amp; M. Yannakakis, “Scheduling Interval-Ordered Tasks,” <em>SIAM Journal on Computing</em> 8(3), 1979, 405–409. <a href="https://doi.org/10.1137/0208031" class="uri">https://doi.org/10.1137/0208031</a><a href="#fnref13" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn14"><p>J. D. Ullman, “NP-complete scheduling problems,” <em>Journal of Computer and System Sciences</em> 10(3), 1975, 384–393. <a href="https://doi.org/10.1016/S0022-0000(75)80008-0" class="uri">https://doi.org/10.1016/S0022-0000(75)80008-0</a><a href="#fnref14" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn15"><p>C. H. Papadimitriou &amp; M. Yannakakis, “Towards an Architecture-Independent Analysis of Parallel Algorithms,” <em>SIAM Journal on Computing</em> 19(2), 1990, 322–328. <a href="https://doi.org/10.1137/0219021" class="uri">https://doi.org/10.1137/0219021</a><a href="#fnref15" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn16"><p>R. M. Karp, “Reducibility among Combinatorial Problems,” in <em>Complexity of Computer Computations</em>, Plenum Press, 1972, 85–103. <a href="https://doi.org/10.1007/978-1-4684-2001-2_9" class="uri">https://doi.org/10.1007/978-1-4684-2001-2_9</a><a href="#fnref16" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn17"><p>M. R. Garey &amp; D. S. Johnson, <em>Computers and Intractability: A Guide to the Theory of NP-Completeness</em>, W. H. Freeman, 1979 — the source for <code>3-PARTITION</code> and for the weak/strong NP-hardness distinction.<a href="#fnref17" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn18"><p>S. Sahni, “Algorithms for Scheduling Independent Tasks,” <em>Journal of the ACM</em> 23(1), 1976, 116–127. <a href="https://doi.org/10.1145/321921.321934" class="uri">https://doi.org/10.1145/321921.321934</a><a href="#fnref18" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn19"><p>M. R. Garey &amp; D. S. Johnson, <em>Computers and Intractability: A Guide to the Theory of NP-Completeness</em>, W. H. Freeman, 1979 — the source for <code>3-PARTITION</code> and for the weak/strong NP-hardness distinction.<a href="#fnref19" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn20"><p>D. S. Hochbaum &amp; D. B. Shmoys, “Using dual approximation algorithms for scheduling problems: theoretical and practical results,” <em>Journal of the ACM</em> 34(1), 1987, 144–162. <a href="https://doi.org/10.1145/7531.7535" class="uri">https://doi.org/10.1145/7531.7535</a><a href="#fnref20" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn21"><p>R. L. Graham, “Bounds for Certain Multiprocessing Anomalies,” <em>Bell System Technical Journal</em> 45(9), 1966, 1563–1581. <a href="https://doi.org/10.1002/j.1538-7305.1966.tb01709.x" class="uri">https://doi.org/10.1002/j.1538-7305.1966.tb01709.x</a><a href="#fnref21" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn22"><p>R. L. Graham, “Bounds on Multiprocessing Timing Anomalies,” <em>SIAM Journal on Applied Mathematics</em> 17(2), 1969, 416–429. <a href="https://doi.org/10.1137/0117039" class="uri">https://doi.org/10.1137/0117039</a> — the fuller treatment, including the <span class="math inline">\(1 + (m-1)/m'\)</span> bound. For the <span class="math inline">\(\alpha \mid \beta \mid \gamma\)</span> classification of scheduling problems, see R. L. Graham, E. L. Lawler, J. K. Lenstra &amp; A. H. G. Rinnooy Kan, “Optimization and Approximation in Deterministic Sequencing and Scheduling: a Survey,” <em>Annals of Discrete Mathematics</em> 5, 1979, 287–326. <a href="https://doi.org/10.1016/S0167-5060(08)70356-X" class="uri">https://doi.org/10.1016/S0167-5060(08)70356-X</a><a href="#fnref22" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn23"><p>R. L. Graham, “Bounds on Multiprocessing Timing Anomalies,” <em>SIAM Journal on Applied Mathematics</em> 17(2), 1969, 416–429. <a href="https://doi.org/10.1137/0117039" class="uri">https://doi.org/10.1137/0117039</a> — the fuller treatment, including the <span class="math inline">\(1 + (m-1)/m'\)</span> bound. For the <span class="math inline">\(\alpha \mid \beta \mid \gamma\)</span> classification of scheduling problems, see R. L. Graham, E. L. Lawler, J. K. Lenstra &amp; A. H. G. Rinnooy Kan, “Optimization and Approximation in Deterministic Sequencing and Scheduling: a Survey,” <em>Annals of Discrete Mathematics</em> 5, 1979, 287–326. <a href="https://doi.org/10.1016/S0167-5060(08)70356-X" class="uri">https://doi.org/10.1016/S0167-5060(08)70356-X</a><a href="#fnref23" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn24"><p>Y.-K. Kwok &amp; I. Ahmad, “Static scheduling algorithms for allocating directed task graphs to multiprocessors,” <em>ACM Computing Surveys</em> 31(4), 1999, 406–471. <a href="https://doi.org/10.1145/344588.344618" class="uri">https://doi.org/10.1145/344588.344618</a> — the survey that organises this whole family of heuristics.<a href="#fnref24" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn25"><p>T. Yang &amp; A. Gerasoulis, “DSC: scheduling parallel tasks on an unbounded number of processors,” <em>IEEE Transactions on Parallel and Distributed Systems</em> 5(9), 1994, 951–967. <a href="https://doi.org/10.1109/71.308533" class="uri">https://doi.org/10.1109/71.308533</a><a href="#fnref25" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn26"><p>H. Topcuoglu, S. Hariri &amp; M.-Y. Wu, “Performance-effective and low-complexity task scheduling for heterogeneous computing,” <em>IEEE Transactions on Parallel and Distributed Systems</em> 13(3), 2002, 260–274. <a href="https://doi.org/10.1109/71.993206" class="uri">https://doi.org/10.1109/71.993206</a><a href="#fnref26" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn27"><p>M. Frigo, C. E. Leiserson &amp; K. H. Randall, “The implementation of the Cilk-5 multithreaded language,” <em>PLDI</em>, 1998, 212–223. <a href="https://doi.org/10.1145/277650.277725" class="uri">https://doi.org/10.1145/277650.277725</a> — the THE protocol and the work-first principle.<a href="#fnref27" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn28"><p>M. Frigo, C. E. Leiserson &amp; K. H. Randall, “The implementation of the Cilk-5 multithreaded language,” <em>PLDI</em>, 1998, 212–223. <a href="https://doi.org/10.1145/277650.277725" class="uri">https://doi.org/10.1145/277650.277725</a> — the THE protocol and the work-first principle.<a href="#fnref28" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn29"><p>R. D. Blumofe &amp; C. E. Leiserson, “Scheduling multithreaded computations by work stealing,” <em>Journal of the ACM</em> 46(5), 1999, 720–748. <a href="https://doi.org/10.1145/324133.324234" class="uri">https://doi.org/10.1145/324133.324234</a><a href="#fnref29" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn30"><p>M. Frigo, C. E. Leiserson &amp; K. H. Randall, “The implementation of the Cilk-5 multithreaded language,” <em>PLDI</em>, 1998, 212–223. <a href="https://doi.org/10.1145/277650.277725" class="uri">https://doi.org/10.1145/277650.277725</a> — the THE protocol and the work-first principle.<a href="#fnref30" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn31"><p>M. Zaharia, D. Borthakur, J. Sen Sarma, K. Elmeleegy, S. Shenker &amp; I. Stoica, “Delay scheduling: a simple technique for achieving locality and fairness in cluster scheduling,” <em>EuroSys</em>, 2010, 265–278. <a href="https://doi.org/10.1145/1755913.1755940" class="uri">https://doi.org/10.1145/1755913.1755940</a><a href="#fnref31" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn32"><p>M. Mitzenmacher, “The power of two choices in randomized load balancing,” <em>IEEE Transactions on Parallel and Distributed Systems</em> 12(10), 2001, 1094–1104. <a href="https://doi.org/10.1109/71.963420" class="uri">https://doi.org/10.1109/71.963420</a><a href="#fnref32" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn33"><p>K. Ousterhout, P. Wendell, M. Zaharia &amp; I. Stoica, “Sparrow: distributed, low latency scheduling,” <em>SOSP</em>, 2013, 69–84. <a href="https://doi.org/10.1145/2517349.2522716" class="uri">https://doi.org/10.1145/2517349.2522716</a><a href="#fnref33" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn34"><p><strong>MapReduce:</strong> J. Dean &amp; S. Ghemawat, <em>OSDI</em>, 2004; revised as “MapReduce: simplified data processing on large clusters,” <em>Communications of the ACM</em> 51(1), 2008, 107–113, <a href="https://doi.org/10.1145/1327452.1327492" class="uri">https://doi.org/10.1145/1327452.1327492</a>. <strong>LATE:</strong> M. Zaharia, A. Konwinski, A. D. Joseph, R. Katz &amp; I. Stoica, “Improving MapReduce Performance in Heterogeneous Environments,” <em>OSDI</em>, 2008. <strong>Mantri:</strong> G. Ananthanarayanan, S. Kandula, A. Greenberg, I. Stoica, Y. Lu, B. Saha &amp; E. Harris, “Reining in the Outliers in Map-Reduce Clusters using Mantri,” <em>OSDI</em>, 2010. <strong>Dolly:</strong> G. Ananthanarayanan, A. Ghodsi, S. Shenker &amp; I. Stoica, “Effective Straggler Mitigation: Attack of the Clones,” <em>NSDI</em>, 2013.<a href="#fnref34" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn35"><p>J. Dean &amp; L. A. Barroso, “The tail at scale,” <em>Communications of the ACM</em> 56(2), 2013, 74–80. <a href="https://doi.org/10.1145/2408776.2408794" class="uri">https://doi.org/10.1145/2408776.2408794</a><a href="#fnref35" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn36"><p>A. Verma, L. Pedrosa, M. Korupolu, D. Oppenheimer, E. Tune &amp; J. Wilkes, “Large-scale cluster management at Google with Borg,” <em>EuroSys</em>, 2015, 1–17. <a href="https://doi.org/10.1145/2741948.2741964" class="uri">https://doi.org/10.1145/2741948.2741964</a><a href="#fnref36" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn37"><p>B. Hindman, A. Konwinski, M. Zaharia, A. Ghodsi, A. D. Joseph, R. Katz, S. Shenker &amp; I. Stoica, “Mesos: A Platform for Fine-Grained Resource Sharing in the Data Center,” <em>NSDI</em>, 2011.<a href="#fnref37" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn38"><p>M. Schwarzkopf, A. Konwinski, M. Abd-El-Malek &amp; J. Wilkes, “Omega: flexible, scalable schedulers for large compute clusters,” <em>EuroSys</em>, 2013, 351–364. <a href="https://doi.org/10.1145/2465351.2465386" class="uri">https://doi.org/10.1145/2465351.2465386</a><a href="#fnref38" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn39"><p>K. Ousterhout, P. Wendell, M. Zaharia &amp; I. Stoica, “Sparrow: distributed, low latency scheduling,” <em>SOSP</em>, 2013, 69–84. <a href="https://doi.org/10.1145/2517349.2522716" class="uri">https://doi.org/10.1145/2517349.2522716</a><a href="#fnref39" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn40"><p>B. Burns, B. Grant, D. Oppenheimer, E. Brewer &amp; J. Wilkes, “Borg, Omega, and Kubernetes,” <em>Communications of the ACM</em> 59(5), 2016, 50–57. <a href="https://doi.org/10.1145/2890784" class="uri">https://doi.org/10.1145/2890784</a><a href="#fnref40" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn41"><p>M. Isard, V. Prabhakaran, J. Currey, U. Wieder, K. Talwar &amp; A. Goldberg, “Quincy: fair scheduling for distributed computing clusters,” <em>SOSP</em>, 2009, 261–276. <a href="https://doi.org/10.1145/1629575.1629601" class="uri">https://doi.org/10.1145/1629575.1629601</a><a href="#fnref41" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn42"><p>I. Gog, M. Schwarzkopf, A. Gleave, R. N. M. Watson &amp; S. Hand, “Firmament: fast, centralized cluster scheduling at scale,” <em>OSDI</em>, 2016. Freely available from <code>usenix.org</code>.<a href="#fnref42" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn43"><p>A. Ghodsi, M. Zaharia, B. Hindman, A. Konwinski, S. Shenker &amp; I. Stoica, “Dominant Resource Fairness: Fair Allocation of Multiple Resource Types,” <em>NSDI</em>, 2011.<a href="#fnref43" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section></div></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/dslnu\.github\.io\/data_analytics\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

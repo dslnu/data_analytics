@@ -162,6 +162,7 @@ MSDE
 <div class="callout-content">
 <p>Statements are written one after another, so they <em>appear</em> to be totally ordered: line 1, then line 2, then line 3.</p>
 <p>But most of that order is an <strong>artefact of writing the program down</strong>. It is not required by the computation.</p>
+<p><em>(“Total” and “partial” order are defined formally in the next section.)</em></p>
 </div>
 </div>
 </div>
@@ -180,16 +181,34 @@ B \text{ reads what } A \text{ wrote.}
 </section>
 <section id="which-orderings-are-actually-forced" class="slide level2">
 <h2>Which orderings are actually forced?</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Bernstein’s conditions (1966)</strong></p>
+</div>
+<div class="callout-content">
+<p>Write <span class="math inline">\(I_i\)</span> for the locations statement <span class="math inline">\(i\)</span> <strong>reads</strong>, <span class="math inline">\(O_i\)</span> for those it <strong>writes</strong>. Statements <span class="math inline">\(1\)</span> and <span class="math inline">\(2\)</span> may run in parallel iff all three hold: <span class="math display">\[
+\underbrace{I_1 \cap O_2 = \emptyset}_{\text{no anti}} \qquad
+\underbrace{I_2 \cap O_1 = \emptyset}_{\text{no true}} \qquad
+\underbrace{O_1 \cap O_2 = \emptyset}_{\text{no output}}
+\]</span> <em>No two concurrent computations may touch the same location if at least one of them writes.</em></p>
+</div>
+</div>
+</div>
+</section>
+<section id="which-orderings-are-actually-forced-1" class="slide level2">
+<h2>Which orderings are actually forced?</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
 <p><strong>Three kinds of dependence</strong></p>
 </div>
 <div class="callout-content">
+<p>One violated condition each:</p>
 <ul>
-<li><strong>true</strong> (read-after-write): <span class="math inline">\(B\)</span> consumes <span class="math inline">\(A\)</span>’s result — <strong>a genuine edge</strong></li>
-<li><strong>anti</strong> (write-after-read): <span class="math inline">\(B\)</span> overwrites something <span class="math inline">\(A\)</span> still needs</li>
-<li><strong>output</strong> (write-after-write): <span class="math inline">\(A\)</span> and <span class="math inline">\(B\)</span> write the same location</li>
+<li><strong>true</strong> (read-after-write, <span class="math inline">\(I_2 \cap O_1\)</span>): <span class="math inline">\(B\)</span> consumes <span class="math inline">\(A\)</span>’s result — <strong>a genuine edge</strong></li>
+<li><strong>anti</strong> (write-after-read, <span class="math inline">\(I_1 \cap O_2\)</span>): <span class="math inline">\(B\)</span> overwrites something <span class="math inline">\(A\)</span> still needs</li>
+<li><strong>output</strong> (write-after-write, <span class="math inline">\(O_1 \cap O_2\)</span>): <span class="math inline">\(A\)</span> and <span class="math inline">\(B\)</span> write the same location</li>
 </ul>
 <p>Only the first is about data. The other two come from <strong>reusing a name</strong>, and disappear if you rename — or never reassign at all.</p>
 </div>
@@ -208,7 +227,7 @@ B \text{ reads what } A \text{ wrote.}
 </section>
 <section id="from-one-order-to-many" class="slide level2">
 <h2>From one order to many</h2>
-<img data-src="bigdata_lec3_files/mediabag/57675973ce09da4ccc688fc3c5e6b460818aad74.svg">
+<img data-src="bigdata_lec3_files/mediabag/e93ac3b878055f2600abb85f3fda6e91ecd9619e.svg">
 </section>
 <section id="from-one-order-to-many-1" class="slide level2">
 <h2>From one order to many</h2>
@@ -273,16 +292,6 @@ B \text{ reads what } A \text{ wrote.}
 </div>
 </div>
 </div>
-<div class="callout callout-important no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>From here on</strong></p>
-</div>
-<div class="callout-content">
-<p>We assume the graph exists. The rest of the lecture is about what to <strong>do</strong> with it.</p>
-</div>
-</div>
-</div>
 </section></section>
 <section>
 <section id="program-as-dag" class="title-slide slide level1 center">
@@ -312,6 +321,25 @@ B \text{ reads what } A \text{ wrote.}
 <img data-src="img/dag.png" class="r-stretch"></section>
 <section id="program-as-dag-3" class="slide level2">
 <h2>Program as DAG</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Ordering re-cap</strong></p>
+</div>
+<div class="callout-content">
+<p>A binary relation <span class="math inline">\(\preccurlyeq\)</span> on some set <span class="math inline">\(X\)</span> is called a <strong>partial order</strong> if <span class="math inline">\(\forall a,b,c \in X\)</span> the following is true:</p>
+<ul>
+<li><strong>Reflexivity:</strong> <span class="math inline">\(a \preccurlyeq a\)</span></li>
+<li><strong>Transitivity:</strong> <span class="math inline">\(a \preccurlyeq b, b \preccurlyeq c \Rightarrow a \preccurlyeq c\)</span></li>
+<li><strong>Antisymmetry:</strong> <span class="math inline">\(a \preccurlyeq b, b \preccurlyeq a \Rightarrow a = b\)</span></li>
+</ul>
+<p>If, additionally, <span class="math inline">\(\forall a,b \in X\)</span> either <span class="math inline">\(a \preccurlyeq b\)</span> or <span class="math inline">\(b \preccurlyeq a\)</span>, then the order is total.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="program-as-dag-4" class="slide level2">
+<h2>Program as DAG</h2>
 <div class="callout callout-note no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
@@ -323,25 +351,6 @@ B \text{ reads what } A \text{ wrote.}
 <li>in <strong>sequential computing</strong>, a computation can be defined as a totally ordered set of instructions, where the ordering corresponds to the sequential execution order;</li>
 <li><strong>in multithreaded computing</strong>, a computation can be viewed as a partially ordered set of instructions (as specified by the DAG), where the instructions may be executed in any order compatible with the specified partial order.</li>
 </ul>
-</div>
-</div>
-</div>
-</section>
-<section id="program-as-dag-4" class="slide level2">
-<h2>Program as DAG</h2>
-<div class="callout callout-important no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Ordering re-cap</strong></p>
-</div>
-<div class="callout-content">
-<p>A binary relation <span class="math inline">\(\preccurlyeq\)</span> on some set <span class="math inline">\(X\)</span> is called a <strong>partial order</strong> if <span class="math inline">\(\forall a,b,c \in X\)</span> the following is true:</p>
-<ul>
-<li><strong>Reflexivity:</strong> <span class="math inline">\(a \preccurlyeq a\)</span></li>
-<li><strong>Transitiity:</strong> <span class="math inline">\(a \preccurlyeq b, b \preccurlyeq c \Rightarrow a \preccurlyeq c\)</span></li>
-<li><strong>Antisymmetricity:</strong> <span class="math inline">\(a \preccurlyeq b, b \preccurlyeq a \Rightarrow a = b\)</span></li>
-</ul>
-<p>If, additionally, <span class="math inline">\(\forall a,b \ in X\)</span> either <span class="math inline">\(a \preccurlyeq b\)</span> or <span class="math inline">\(b \preccurlyeq a\)</span>, then the order is total.</p>
 </div>
 </div>
 </div>
@@ -392,7 +401,7 @@ G=(V,E),
 <p><strong>Scheduling</strong> involves executing a parallel program by mapping the computation over the processors so that:</p>
 <ul>
 <li>completion time is minimized</li>
-<li>use of other resources such as storage as energy is optimal.</li>
+<li>use of other resources such as storage and energy is optimal.</li>
 </ul>
 </div>
 </div>
@@ -426,7 +435,7 @@ G=(V,E),
 <h2>Program as DAG</h2>
 
 <img data-src="img/full_scheduling.png" class="r-stretch"></section>
-<section id="program-as-dag-12" class="slide level2">
+<section id="program-as-dag-12" class="slide level2 scrollable">
 <h2>Program as DAG</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -434,8 +443,9 @@ G=(V,E),
 <p><strong>Work</strong></p>
 </div>
 <div class="callout-content">
-<p><strong>Work</strong> is defined as the number of vertices in the DAG.</p>
-<p>Work of a computation corresponds to the total number of operations it performs.</p>
+<p><strong>Work</strong> is the total computation cost of the DAG: <span class="math display">\[
+W = \sum_{n_i \in V} w(n_i).
+\]</span> Work corresponds to the total amount of computation performed — what a <em>single</em> processor would have to do. With unit-cost nodes this is just the number of vertices.</p>
 </div>
 </div>
 </div>
@@ -445,8 +455,8 @@ G=(V,E),
 <p><strong>Span</strong></p>
 </div>
 <div class="callout-content">
-<p><strong>Span</strong> is the length of the longest path in the DAG.</p>
-<p>Span corresponds to the longest chain of dependencies in the computation.</p>
+<p><strong>Span</strong> is the <em>weight</em> of the longest path in the DAG — the sum of <span class="math inline">\(w(n_i)\)</span> along it.</p>
+<p>Span corresponds to the longest chain of dependencies: what <strong>infinitely many</strong> processors still could not avoid. With unit-cost nodes this is just the path length.</p>
 </div>
 </div>
 </div>
@@ -457,6 +467,33 @@ G=(V,E),
 </div>
 <div class="callout-content">
 <p>The overall finish-time of a parallel program is commonly called the <strong>schedule length</strong> or <strong>makespan</strong>.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="three-numbers-that-follow" class="slide level2">
+<h2>Three numbers that follow</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Parallelism</strong></p>
+</div>
+<div class="callout-content">
+<p><span class="math display">\[
+\text{parallelism} = \frac{W}{S}
+\]</span> The <strong>maximum useful number of processors</strong>. It is a property of the <em>graph alone</em>: if <span class="math inline">\(W/S = 4\)</span>, a 64-core machine cannot help you past 4 cores, however good the scheduler is.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Speedup and efficiency</strong></p>
+</div>
+<div class="callout-content">
+<p><span class="math display">\[
+\text{speedup} = \frac{T_1}{T_P} \qquad\qquad \text{efficiency} = \frac{T_1}{P \cdot T_P}
+\]</span> Speedup: how much faster <span class="math inline">\(P\)</span> processors actually made it. Efficiency: what fraction of the hardware you are <em>not</em> wasting. Here <span class="math inline">\(T_1\)</span> is the time on one processor, i.e.&nbsp;<span class="math inline">\(W\)</span>.</p>
 </div>
 </div>
 </div>
@@ -547,6 +584,62 @@ G=(V,E),
 </div>
 </div>
 </section>
+<section id="what-a-scheduler-actually-has-to-decide" class="slide level2">
+<h2>What a scheduler actually has to decide</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Two decisions, per task</strong></p>
+</div>
+<div class="callout-content">
+<p>Given the DAG and <span class="math inline">\(m\)</span> processors, a scheduler must answer, for every node:</p>
+<ol type="1">
+<li><strong>When?</strong> – in what <em>order</em> do the tasks go</li>
+<li><strong>Where?</strong> – on which <em>processor</em> does each one run</li>
+</ol>
+<p>That is the entire problem. Everything else — priorities, ranks, clustering, stealing — is machinery for answering those two questions cheaply.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The one hard constraint</strong></p>
+</div>
+<div class="callout-content">
+<p>A task may only start once <strong>all its parents have finished</strong>. So at any instant the scheduler is not choosing from <em>all</em> tasks, only from the <strong>ready set</strong> — and that set changes as the schedule unfolds.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="what-a-scheduler-actually-has-to-decide-1" class="slide level2">
+<h2>What a scheduler actually has to decide</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Why a <em>list</em>?</strong></p>
+</div>
+<div class="callout-content">
+<p>Searching over (order <span class="math inline">\(\times\)</span> placement) jointly is the NP-hard problem. So we split it:</p>
+<ul>
+<li>decide the <strong>order once</strong>, up front, by giving every node a priority</li>
+<li>then place greedily: take the highest-priority <em>ready</em> node, put it wherever it can start earliest</li>
+</ul>
+<p>The priority list collapses decision 1 into a single sort, and decision 2 into a local rule.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-warning no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>And that is the whole trick</strong></p>
+</div>
+<div class="callout-content">
+<p>Every scheduler in the rest of this lecture has this shape. They differ <strong>only in how the priority is computed</strong> — and, as Graham’s anomalies will show, the priority is where the damage lives.</p>
+</div>
+</div>
+</div>
+</section>
 <section id="scheduling-4" class="slide level2">
 <h2>Scheduling</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
@@ -629,6 +722,97 @@ T_P \geq \max\left(\frac{W}{P},S\right).
 </div>
 </div>
 </section>
+<section id="why-the-bound-holds" class="slide level2">
+<h2>Why the bound holds</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The two-line argument</strong></p>
+</div>
+<div class="callout-content">
+<p>Look at any instant of a greedy schedule. Exactly one of two things is true:</p>
+<ul>
+<li><strong>all <span class="math inline">\(P\)</span> processors are busy</strong> — we are consuming work at the maximum possible rate, and there can be at most <span class="math inline">\(W/P\)</span> such time in total;</li>
+<li><strong>some processor is idle</strong> — for a greedy scheduler that means <em>nothing was ready</em>, so a task on a critical path must be running, and there can be at most <span class="math inline">\(S\)</span> such time.</li>
+</ul>
+<p>Add the two cases: <span class="math inline">\(T_P &lt; \dfrac{W}{P} + S\)</span>.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="when-is-the-bound-tight" class="slide level2">
+<h2>When is the bound tight?</h2>
+<div class="callout callout-warning no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The factor of 2 is achievable</strong></p>
+</div>
+<div class="callout-content">
+<p>It is not an artefact of a loose proof. The worst case is a <strong>long critical chain plus just enough independent work</strong> to keep every processor busy right until the chain has to run alone.</p>
+<p>Greedy cheerfully fills the processors first — and only then discovers that the chain still has to execute serially at the end.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Which is why priorities matter</strong></p>
+</div>
+<div class="callout-content">
+<p>Both a naive scheduler and a critical-path-aware one sit inside the same factor of 2. The guarantee does not distinguish them — <strong>measurement does</strong>.</p>
+<p>That worst-case shape is exactly what Graham’s anomalies exploit next.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="grahams-bound-list-scheduling-form" class="slide level2 scrollable">
+<h2>Graham’s bound: list-scheduling form</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The same result, stated for <span class="math inline">\(m\)</span> processors</strong></p>
+</div>
+<div class="callout-content">
+<p>The list-scheduling literature writes the guarantee as a <em>ratio to the optimum</em> rather than in terms of <span class="math inline">\(W\)</span> and <span class="math inline">\(S\)</span>: <span class="math display">\[
+\frac{T_{\text{list}}}{T_{\text{opt}}} \;\leq\; 2 - \frac{1}{m}
+\qquad \text{(Graham, 1966)}
+\]</span> <em>Any</em> list — no cleverness at all, just “never leave a processor idle if a task is ready”.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Two forms, one theorem</strong></p>
+</div>
+<div class="callout-content">
+<table class="caption-top">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>form</th>
+<th>says</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(T_P &lt; \frac{W}{P} + S\)</span></td>
+<td>how long a greedy schedule takes, from graph properties</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(\frac{T_{\text{list}}}{T_{\text{opt}}} \leq 2 - \frac{1}{m}\)</span></td>
+<td>how far from optimal it can be</td>
+</tr>
+</tbody>
+</table>
+<p>The <span class="math inline">\(-\frac{1}{m}\)</span> is the sharper accounting: with <span class="math inline">\(m\)</span> processors you cannot waste a <em>full</em> <span class="math inline">\(S\)</span> on top of a full <span class="math inline">\(W/m\)</span>, because the critical task occupies one of the <span class="math inline">\(m\)</span> processors while it runs.</p>
+</div>
+</div>
+</div>
+</section>
 <section id="scheduling-8" class="slide level2">
 <h2>Scheduling</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
@@ -652,6 +836,51 @@ T_P \geq \max\left(\frac{W}{P},S\right).
 <h1>How hard is scheduling?</h1>
 
 </section>
+<section id="how-to-read-the-problem-names" class="slide level2 scrollable">
+<h2>How to read the problem names</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The <span class="math inline">\(\alpha \mid \beta \mid \gamma\)</span> notation</strong></p>
+</div>
+<div class="callout-content">
+<p>Graham, Lawler, Lenstra &amp; Rinnooy Kan (1979). Every scheduling problem is named by three fields:</p>
+<table class="caption-top">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>field</th>
+<th>means</th>
+<th>common values</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(\alpha\)</span></td>
+<td>machine environment</td>
+<td><span class="math inline">\(1\)</span> single, <span class="math inline">\(P\)</span> identical parallel, <span class="math inline">\(Q\)</span> uniform (different speeds), <span class="math inline">\(R\)</span> unrelated</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(\beta\)</span></td>
+<td>job characteristics</td>
+<td><span class="math inline">\(prec\)</span> precedence, <span class="math inline">\(p_j{=}1\)</span> unit times, <span class="math inline">\(pmtn\)</span> preemption allowed, <span class="math inline">\(r_j\)</span> release dates</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(\gamma\)</span></td>
+<td>objective</td>
+<td><span class="math inline">\(C_{\max}\)</span> makespan, <span class="math inline">\(\sum C_j\)</span> total completion time, <span class="math inline">\(L_{\max}\)</span> lateness</td>
+</tr>
+</tbody>
+</table>
+<p>So <span class="math inline">\(P \mid prec \mid C_{\max}\)</span> is <em>“identical parallel machines, precedence constraints, minimise makespan”</em>, and <span class="math inline">\(P2 \mid\mid C_{\max}\)</span> fixes two machines with no special constraints.</p>
+</div>
+</div>
+</div>
+</section>
 <section id="complexity" class="slide level2">
 <h2>Complexity</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
@@ -661,6 +890,7 @@ T_P \geq \max\left(\frac{W}{P},S\right).
 </div>
 <div class="callout-content">
 <p>Minimizing makespan on <span class="math inline">\(P\)</span> processors under precedence constraints – <span class="math inline">\(P \mid prec \mid C_{\max}\)</span> – is <strong>NP-complete</strong> (Ullman, 1975).</p>
+<p><em>Strictly: the <strong>decision</strong> problem (“is there a schedule of length <span class="math inline">\(\leq k\)</span>?”) is NP-complete; the <strong>optimization</strong> problem is NP-hard. We use “NP-hard” from here on.</em></p>
 <p>It stays NP-complete even when every task takes exactly <strong>one</strong> time unit – the durations are not what makes it hard, the <em>precedence structure</em> is.</p>
 <p>Adding <strong>communication costs</strong> (<span class="math inline">\(P \mid prec, c_{ij} \mid C_{\max}\)</span>) makes it NP-hard even with <em>unlimited</em> processors (Papadimitriou &amp; Yannakakis, 1990).</p>
 </div>
@@ -703,25 +933,14 @@ T_P \geq \max\left(\frac{W}{P},S\right).
 <p><strong>So why bother with the theory?</strong></p>
 </div>
 <div class="callout-content">
-<p>Because the approximation results are surprisingly strong.</p>
-<p><strong>Graham (1966):</strong> <em>any</em> list schedule – no cleverness at all, just “never leave a processor idle if a task is ready” – satisfies <span class="math display">\[
-\frac{T_{\text{list}}}{T_{\text{opt}}} \leq 2 - \frac{1}{m}.
-\]</span></p>
-</div>
-</div>
-</div>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Why it works</strong></p>
-</div>
-<div class="callout-content">
-<p>At every instant, either all <span class="math inline">\(m\)</span> processors are busy (we are burning through <span class="math inline">\(W\)</span>), or some processor is idle – and then a task on a critical path must be running (we are burning through <span class="math inline">\(S\)</span>).</p>
+<p>Because the approximation results are surprisingly strong — and we already have one.</p>
+<p>Recall <strong>Graham’s bound</strong> from the previous section: <em>any</em> list schedule, with no cleverness at all, satisfies <span class="math inline">\(\frac{T_{\text{list}}}{T_{\text{opt}}} \leq 2 - \frac{1}{m}\)</span>.</p>
+<p>So an NP-hard problem has a <strong>trivial</strong> <span class="math inline">\(2\times\)</span> approximation. The question for the rest of this section is how much better we can do, and in which special cases.</p>
 </div>
 </div>
 </div>
 </section>
-<section id="complexity-3" class="slide level2">
+<section id="complexity-3" class="slide level2 scrollable">
 <h2>Complexity</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -733,6 +952,18 @@ T_P \geq \max\left(\frac{W}{P},S\right).
 \frac{T_{\text{LPT}}}{T_{\text{opt}}} \leq \frac{4}{3} - \frac{1}{3m} \qquad \text{(Graham, 1969)}
 \]</span> but the problem is <em>still</em> NP-hard – it contains <code>PARTITION</code>.</p>
 <p><strong>Scheduling two identical machines with no dependencies at all is already intractable.</strong></p>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>But the mildest kind of intractable</strong></p>
+</div>
+<div class="callout-content">
+<p><code>PARTITION</code> is only <em>weakly</em> NP-complete: a pseudo-polynomial <span class="math inline">\(O(nT)\)</span> dynamic program solves it, and the hardness comes from the <strong>numbers being large</strong>, not from combinatorial structure.</p>
+<p>So <span class="math inline">\(P2 \mid\mid C_{\max}\)</span> admits an FPTAS (Sahni, 1976) — which is exactly why a rule as crude as LPT already lands within <span class="math inline">\(4/3\)</span>.</p>
+<p>With <span class="math inline">\(m\)</span> part of the input, <span class="math inline">\(P \mid\mid C_{\max}\)</span> becomes <strong>strongly</strong> NP-hard via <code>3-PARTITION</code>: no pseudo-polynomial algorithm unless P <span class="math inline">\(=\)</span> NP. A PTAS still exists (Hochbaum &amp; Shmoys, 1987).</p>
 </div>
 </div>
 </div>
@@ -904,6 +1135,87 @@ T_P \geq \max\left(\frac{W}{P},S\right).
 </div>
 </div>
 </section>
+<section id="a-fourth-anomaly-the-list-itself" class="slide level2">
+<h2>A fourth anomaly: the list itself</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Change nothing but the priority order</strong></p>
+</div>
+<div class="callout-content">
+<p>The three above change the <em>instance</em>. The <strong>list</strong> is just as dangerous — and this is the version you meet in practice, because a real scheduler’s priority order comes from estimates, and estimates drift.</p>
+<p>Keep everything at baseline and merely <strong>reverse</strong> the list to <span class="math inline">\(L' = (T_9, T_8, \dots, T_1)\)</span>: <span class="math display">\[
+12 \;\longrightarrow\; 18.
+\]</span> Fifty percent worse, from reordering alone.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-warning no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Why reversing is so bad</strong></p>
+</div>
+<div class="callout-content">
+<p>“Put the long task first” sounds right and is wrong: <span class="math inline">\(T_9\)</span> <strong>depends on</strong> <span class="math inline">\(T_1\)</span>, so it is not ready at <span class="math inline">\(t=0\)</span>. Reversing pushes <span class="math inline">\(T_1\)</span> to <em>last</em> — so the task that unblocks the critical path is scheduled last, and <span class="math inline">\(T_9\)</span> starts very late.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="a-fourth-anomaly-the-list-itself-1" class="slide level2">
+<h2>A fourth anomaly: the list itself</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The right list immunises against the other three</strong></p>
+</div>
+<div class="callout-content">
+<p>Put <span class="math inline">\(T_1\)</span> first and <span class="math inline">\(T_9\)</span> <strong>immediately after it</strong>: <span class="math inline">\(L^\star = (T_1, T_9, T_2, \dots, T_8)\)</span>. Then the baseline is still the optimal 12 — and the other anomalies mostly disappear:</p>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>scenario</th>
+<th>with <span class="math inline">\(L = (T_1 \dots T_9)\)</span></th>
+<th>with <span class="math inline">\(L^\star\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>baseline, <span class="math inline">\(m=3\)</span></td>
+<td>12</td>
+<td><strong>12</strong></td>
+</tr>
+<tr class="even">
+<td>every task 1 unit faster</td>
+<td>13</td>
+<td><strong>10</strong></td>
+</tr>
+<tr class="odd">
+<td>extra processor, <span class="math inline">\(m=4\)</span></td>
+<td>15</td>
+<td><strong>12</strong></td>
+</tr>
+<tr class="even">
+<td>precedence removed</td>
+<td>16</td>
+<td><strong>13</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Which is the actual lesson</strong></p>
+</div>
+<div class="callout-content">
+<p>The anomalies were never really about processors or task durations. They were about <strong>a long task with low priority</strong>.</p>
+<p>Every list-scheduling heuristic in the next section computes a priority order that puts long-and-critical tasks first. That is exactly what <strong>static level</strong> and <strong>upward rank</strong> are for.</p>
+</div>
+</div>
+</div>
+</section>
 <section id="grahams-anomalies-4" class="slide level2">
 <h2>Graham’s anomalies</h2>
 <div class="callout callout-note no-icon callout-titled callout-style-default">
@@ -1038,7 +1350,7 @@ T_P \geq \max\left(\frac{W}{P},S\right).
 </div>
 <div class="callout-content">
 <ul>
-<li>a cluster <strong>merging</strong> step for merging the clusters so that the remaining number of clusters equal the number of processors</li>
+<li>a cluster <strong>merging</strong> step for merging the clusters so that the remaining number of clusters equals the number of processors</li>
 <li>a cluster <strong>mapping</strong> step for mapping the clusters on the available processors</li>
 <li>a task <strong>ordering</strong> step for ordering the mapped tasks within each processor</li>
 </ul>
@@ -1091,7 +1403,7 @@ T_P \geq \max\left(\frac{W}{P},S\right).
 <li><span class="math inline">\(data\)</span> – a <span class="math inline">\(v \times v\)</span> matrix of communication data</li>
 <li><span class="math inline">\(data_{i,k}\)</span> – amount of data to be transmitted from <span class="math inline">\(n_i\)</span> to <span class="math inline">\(n_k\)</span></li>
 <li><span class="math inline">\(Q\)</span> – set of <span class="math inline">\(q\)</span> processors</li>
-<li><span class="math inline">\(W\)</span> – a <span class="math inline">\(v \times q\)</span> computation cost matrix, in which each <span class="math inline">\(w_{i,j}\)</span> gives the estimated execution cost to complete task <span class="math inline">\(n_i\)</span> on processor <span class="math inline">\(p_j\)</span></li>
+<li><span class="math inline">\(W\)</span> – a <span class="math inline">\(v \times q\)</span> computation cost matrix, in which each <span class="math inline">\(w_{i,j}\)</span> gives the estimated execution cost to complete task <span class="math inline">\(n_i\)</span> on processor <span class="math inline">\(p_j\)</span> <em>(Topcuoglu et al.’s notation — unrelated to <span class="math inline">\(W\)</span> = work in the greedy bound)</em></li>
 <li><span class="math inline">\(B\)</span> – <span class="math inline">\(q \times q\)</span> data transfer rates matrix</li>
 <li><span class="math inline">\(L\)</span> – <span class="math inline">\(q\)</span>-dimensional vector of communication startup costs</li>
 </ul>
@@ -1109,7 +1421,7 @@ T_P \geq \max\left(\frac{W}{P},S\right).
 <div class="callout-content">
 <p><strong>Average execution cost</strong>: <span class="math display">\[
   \overline{w_i} = \sum\limits_{j=1}^q \frac{w_{i,j}}{q}.
-\]</span> <strong>Communication cost</strong> of the edge <span class="math inline">\((i,k)\)</span> for transfering data from task <span class="math inline">\(n_i\)</span> scheduled on processor <span class="math inline">\(p_m\)</span> to task <span class="math inline">\(n_k\)</span> scheduled on processor <span class="math inline">\(p_n\)</span>: <span class="math display">\[
+\]</span> <strong>Communication cost</strong> of the edge <span class="math inline">\((i,k)\)</span> for transferring data from task <span class="math inline">\(n_i\)</span> scheduled on processor <span class="math inline">\(p_m\)</span> to task <span class="math inline">\(n_k\)</span> scheduled on processor <span class="math inline">\(p_n\)</span>: <span class="math display">\[
 c_{i,k} = L_m + \frac{data_{i,k}}{B_{m,n}}
 \]</span> <strong>Average communication cost:</strong> <span class="math display">\[
 \overline{c_{i,k}} = \overline{L} + \frac{data_{i,k}}{\overline{B}}
@@ -1161,6 +1473,61 @@ makespan = \max \left\{AFT(n_{exit})\right\}
 </div>
 <div class="callout-content">
 <p>The <strong>objective function</strong> of the task scheduling problem is to determine the assignment of tasks to processors such that its <strong>makespan is minimized</strong>.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="priorities-before-heft" class="slide level2">
+<h2>Priorities before HEFT</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Static level — the common ingredient</strong></p>
+</div>
+<div class="callout-content">
+<p>Most list heuristics are variations on one quantity. The <strong>static level</strong> of a node is the longest path from it to any exit, counting <em>computation only</em>: <span class="math display">\[
+\text{sl}(n_i) = w(n_i) + \max_{n_j \in succ(n_i)} \text{sl}(n_j)
+\]</span> It is how much work is still <strong>ahead</strong> of a node on its worst path — the direct antidote to the “long task, low priority” failure.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The family</strong></p>
+</div>
+<div class="callout-content">
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>heuristic</th>
+<th>priority</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>LPT</strong></td>
+<td>longest processing time (independent tasks only)</td>
+</tr>
+<tr class="even">
+<td><strong>HLFET</strong></td>
+<td>static level</td>
+</tr>
+<tr class="odd">
+<td><strong>MCP</strong></td>
+<td>as-late-as-possible start time</td>
+</tr>
+<tr class="even">
+<td><strong>ETF</strong></td>
+<td>earliest start time over all ready tasks</td>
+</tr>
+<tr class="odd">
+<td><strong>DLS</strong></td>
+<td>static level <span class="math inline">\(-\)</span> earliest start time</td>
+</tr>
+</tbody>
+</table>
+<p>Add <em>communication</em> costs to the static-level recurrence and you get HEFT’s <strong>upward rank</strong>.</p>
 </div>
 </div>
 </div>
@@ -1227,7 +1594,7 @@ rank_u(n_{exit}) = \overline{w_{exit}}
 <li><strong>while</strong> there are unscheduled tasks in the list <strong>do</strong>:</li>
 <li>   select the task <span class="math inline">\(n_i\)</span> from the scheduling list</li>
 <li>   <strong>for</strong> each processor <span class="math inline">\(p_k\)</span> in the processor set <span class="math inline">\(Q\)</span> <strong>do</strong>:</li>
-<li>     Compute <span class="math inline">\(EFT(n_i,p_k)\)</span> using the insertion-based scheduling policy</li>
+<li>     Compute <span class="math inline">\(EFT(n_i,p_k)\)</span> using the <em>insertion-based</em> policy (a task may be slotted into an idle gap between two already-scheduled tasks, not only appended at the end)</li>
 <li>   Assign task <span class="math inline">\(n_i\)</span> to the processor <span class="math inline">\(p_j\)</span> minimizing <span class="math inline">\(EFT(n_i, p_j)\)</span></li>
 </ol>
 </div>
@@ -1284,9 +1651,9 @@ rank_u(n_{exit}) = \overline{w_{exit}}
 </div>
 <div class="callout-content">
 <ol start="14" type="1">
-<li><strong>while</strong> there are unscheduled tasks in the <span class="math inline">\(PQ\)</span><strong>do</strong></li>
+<li><strong>while</strong> there are unscheduled tasks in the <span class="math inline">\(PQ\)</span> <strong>do</strong></li>
 <li>   select the highest priority task <span class="math inline">\(n_i\)</span> from <span class="math inline">\(PQ\)</span></li>
-<li>   <strong>if</strong> <span class="math inline">\(n_i \ in SET_{CP}\)</span> <strong>then</strong></li>
+<li>   <strong>if</strong> <span class="math inline">\(n_i \in SET_{CP}\)</span> <strong>then</strong></li>
 <li>     assign <span class="math inline">\(n_i\)</span> to <span class="math inline">\(p_{CP}\)</span></li>
 <li>   <strong>else</strong></li>
 <li>     assign <span class="math inline">\(n_i\)</span> to <span class="math inline">\(p_j\)</span> minimizing <span class="math inline">\(EFT(n_i,p_j)\)</span></li>
@@ -1384,7 +1751,7 @@ rank_u(n_{exit}) = \overline{w_{exit}}
 </section>
 <section id="the-deque-discipline" class="slide level2">
 <h2>The deque discipline</h2>
-<img data-src="bigdata_lec3_files/mediabag/77f3bc4c9852375d56bef0f7cd42779982871273.svg">
+<img data-src="bigdata_lec3_files/mediabag/795b10e5740013cb2be6d3474e6c9cef8400b246.svg">
 </section>
 <section id="the-deque-discipline-1" class="slide level2">
 <h2>The deque discipline</h2>
@@ -1403,7 +1770,7 @@ rank_u(n_{exit}) = \overline{w_{exit}}
 </div>
 </div>
 </section>
-<section id="work-stealing-the-theory" class="slide level2">
+<section id="work-stealing-the-theory" class="slide level2 scrollable">
 <h2>Work stealing: the theory</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1411,9 +1778,19 @@ rank_u(n_{exit}) = \overline{w_{exit}}
 <p><strong>Blumofe &amp; Leiserson (1999)</strong></p>
 </div>
 <div class="callout-content">
-<p>For a fully strict computation with work <span class="math inline">\(T_1\)</span> and span <span class="math inline">\(T_\infty\)</span>, randomized work stealing on <span class="math inline">\(P\)</span> processors achieves <span class="math display">\[
+<p>For a <strong>fully strict</strong> computation (every task’s results are used only by its parent — the shape <code>spawn</code>/<code>sync</code> code produces) with work <span class="math inline">\(T_1\)</span> and span <span class="math inline">\(T_\infty\)</span>, randomized work stealing on <span class="math inline">\(P\)</span> processors achieves <span class="math display">\[
 \mathbb{E}[T_P] \;=\; \frac{T_1}{P} + O(T_\infty)
 \]</span> – <strong>provably within a constant factor of optimal</strong>, with no knowledge of task durations at all.</p>
+<div class="callout callout-warning no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Notation</strong></p>
+</div>
+<div class="callout-content">
+<p>This is Cilk’s notation: <span class="math inline">\(T_1 = W\)</span> (time on one processor <span class="math inline">\(=\)</span> work) and <span class="math inline">\(T_\infty = S\)</span> (time on unlimited processors <span class="math inline">\(=\)</span> span). It is the <em>same bound</em> as the greedy one. Note this <span class="math inline">\(T_1\)</span> has nothing to do with task <span class="math inline">\(T_1\)</span> in Graham’s example.</p>
+</div>
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -1425,7 +1802,7 @@ rank_u(n_{exit}) = \overline{w_{exit}}
 <div class="callout-content">
 <ul>
 <li><strong>Space</strong>: <span class="math inline">\(S_P \leq P \cdot S_1\)</span> – stealing cannot blow up memory more than linearly in <span class="math inline">\(P\)</span></li>
-<li><strong>Communication</strong>: expected <span class="math inline">\(O(P \, T_\infty \, S_{\max})\)</span> bytes – again proportional to the <em>span</em>, not the work</li>
+<li><strong>Communication</strong>: expected <span class="math inline">\(O(P \, T_\infty \, S_{\max})\)</span> bytes, where <span class="math inline">\(S_{\max}\)</span> is the largest stack frame – again proportional to the <em>span</em>, not the work</li>
 </ul>
 </div>
 </div>
@@ -1508,7 +1885,7 @@ rank_u(n_{exit}) = \overline{w_{exit}}
 </div>
 </div>
 </section>
-<section id="stragglers" class="slide level2">
+<section id="stragglers" class="slide level2 scrollable">
 <h2>Stragglers</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1533,6 +1910,17 @@ rank_u(n_{exit}) = \overline{w_{exit}}
 <li><strong>Mantri (2010)</strong>: diagnose the <em>cause</em> (data skew vs slow node) before acting</li>
 <li><strong>Dolly (2013)</strong>: for small jobs, just clone every task up front – cheaper than detecting stragglers</li>
 </ul>
+</div>
+</div>
+</div>
+<div class="callout callout-warning no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>What it costs</strong></p>
+</div>
+<div class="callout-content">
+<p>Speculation spends <strong>cluster capacity</strong> to buy <strong>latency</strong>. Duplicating the last 5% of a stage costs at most 5% extra work; duplicating aggressively on a busy cluster costs far more and slows down everyone else’s jobs.</p>
+<p>Every refinement above is an attempt to spend that budget more precisely — which is why they progress from <em>“back up the last few”</em> to <em>“diagnose the cause first”</em>.</p>
 </div>
 </div>
 </div>
@@ -1561,8 +1949,8 @@ rank_u(n_{exit}) = \overline{w_{exit}}
 </div>
 </div>
 </section>
-<section id="the-scheduler-is-itself-a-parallel-program" class="slide level2">
-<h2>The scheduler is itself a parallel program</h2>
+<section id="the-scheduler-is-a-parallel-program" class="slide level2">
+<h2>The scheduler is a parallel program</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
@@ -1575,16 +1963,6 @@ rank_u(n_{exit}) = \overline{w_{exit}}
 <li>every policy above (stealing, speculation, locality delay) is <strong>work the scheduler does while jobs are running</strong></li>
 <li>and each one can misfire: stealing can thrash, speculation can double your cluster load, locality delay can idle machines</li>
 </ul>
-</div>
-</div>
-</div>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Where we see this concretely</strong></p>
-</div>
-<div class="callout-content">
-<p>Lecture 5 walks through one real implementation — Dask’s ordering pass, placement rule, stealing loop, state machine and memory policy. First, one level up.</p>
 </div>
 </div>
 </div>
@@ -1626,7 +2004,7 @@ rank_u(n_{exit}) = \overline{w_{exit}}
 </section>
 <section id="four-architectures" class="slide level2">
 <h2>Four architectures</h2>
-<img data-src="bigdata_lec3_files/mediabag/a3ee08555bcb10461692af2794b3e910557a77c4.svg">
+<img data-src="bigdata_lec3_files/mediabag/99923a57110fe675326ba96981da9419bea40726.svg">
 </section>
 <section id="four-architectures-1" class="slide level2">
 <h2>Four architectures</h2>
@@ -1647,7 +2025,7 @@ rank_u(n_{exit}) = \overline{w_{exit}}
 </div>
 </div>
 </section>
-<section id="the-zoo" class="slide level2">
+<section id="the-zoo" class="slide level2 scrollable">
 <h2>The zoo</h2>
 <div class="callout callout-note no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1744,56 +2122,6 @@ rank_u(n_{exit}) = \overline{w_{exit}}
 </div>
 </div>
 </div>
-</section>
-<section id="the-honest-summary" class="slide level2">
-<h2>The honest summary</h2>
-<div class="callout callout-important no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>What “scheduling” turned out to mean</strong></p>
-</div>
-<div class="callout-content">
-<p>We started with a clean statement – minimize <span class="math inline">\(\max_i FT(n_i)\)</span> over a weighted DAG – and found:</p>
-<ol type="1">
-<li>it is <strong>NP-complete</strong>, and stays so under almost every simplification</li>
-<li>the trivial greedy algorithm is already within <span class="math inline">\(2\times\)</span> of optimal</li>
-<li>…but is <strong>not monotone</strong>: more processors can be slower</li>
-<li>the inputs it needs (durations, communication costs) <strong>do not exist</strong> at run time</li>
-<li>so real systems <strong>measure</strong> instead, and re-decide continuously</li>
-<li>and then spend most of their code on memory, failure, elasticity and observability – none of which appear in the model at all</li>
-</ol>
-</div>
-</div>
-</div>
-</section>
-<section id="the-honest-summary-1" class="slide level2">
-<h2>The honest summary</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Where the theory still earns its keep</strong></p>
-</div>
-<div class="callout-content">
-<ul>
-<li><strong>work and span</strong> tell you the ceiling before you write any code</li>
-<li><strong>Graham’s bound</strong> says a simple greedy policy is not the thing holding you back</li>
-<li><strong>Graham’s anomalies</strong> say to measure, not to reason, about “improvements”</li>
-<li><strong>list scheduling’s two phases</strong> – pick a task, pick a processor – are exactly the two halves of every real scheduler: a static ordering pass and a placement rule</li>
-<li><strong>work stealing’s bounds</strong> are why the decentralized version is respectable and not a hack</li>
-</ul>
-</div>
-</div>
-</div>
-<div class="callout callout-note no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>The practical rule</strong></p>
-</div>
-<div class="callout-content">
-<p>Your job is to hand the scheduler a graph it can do well on: <strong>few enough tasks, big enough tasks, short enough span, small enough intermediates.</strong></p>
-</div>
-</div>
-</div>
 </section></section>
 <section>
 <section id="references" class="title-slide slide level1 center">
@@ -1805,7 +2133,7 @@ rank_u(n_{exit}) = \overline{w_{exit}}
 <div class="callout callout-note no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
-<p><strong>Where this lecture comes from</strong></p>
+<p><strong>Fundamentals</strong></p>
 </div>
 <div class="callout-content">
 <ul>
@@ -1898,6 +2226,46 @@ rank_u(n_{exit}) = \overline{w_{exit}}
 <div class="callout callout-note no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
+<p><strong>Complexity and approximation</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>R. M. Karp, <em>Reducibility among combinatorial problems</em>, Complexity of Computer Computations, 1972 — <code>PARTITION</code> is one of the original 21</li>
+<li>M. R. Garey &amp; D. S. Johnson, <em>Computers and Intractability: A Guide to the Theory of NP-Completeness</em>, Freeman, 1979 — <code>3-PARTITION</code>, and the weak/strong NP-hardness distinction</li>
+<li>S. Sahni, <em>Algorithms for scheduling independent tasks</em>, JACM, 1976 — pseudo-polynomial schemes and an FPTAS for fixed <span class="math inline">\(m\)</span></li>
+<li>D. Hochbaum &amp; D. Shmoys, <em>Using dual approximation algorithms for scheduling problems</em>, JACM, 1987 — a PTAS for <span class="math inline">\(P \mid\mid C_{\max}\)</span></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="papers-2" class="slide level2">
+<h2>Papers</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Dependence analysis</strong></p>
+</div>
+<div class="callout-content">
+<p>Where the true/anti/output taxonomy comes from:</p>
+<ul>
+<li>A. J. Bernstein, <em>Analysis of programs for parallel processing</em>, IEEE Trans. Electronic Computers, EC-15(5), 1966 — the original three conditions</li>
+<li>D. J. Kuck, <em>The Structure of Computers and Computations</em>, Vol. 1, Wiley, 1978 — the flow/anti/output terminology</li>
+<li>D. J. Kuck, R. H. Kuhn, D. A. Padua, B. Leasure &amp; M. Wolfe, <em>Dependence graphs and compiler optimizations</em>, POPL, 1981 — dependence graphs, and which arcs a rewrite can remove</li>
+<li>J. Ferrante, K. Ottenstein &amp; J. Warren, <em>The program dependence graph and its use in optimization</em>, ACM TOPLAS, 1987 — adds <strong>control</strong> dependence</li>
+<li>R. Cytron, J. Ferrante, B. Rosen, M. Wegman &amp; F. K. Zadeck, <em>Efficiently computing static single assignment form and the control dependence graph</em>, ACM TOPLAS, 1991 — why single-assignment has no false dependences</li>
+<li>R. Allen &amp; K. Kennedy, <em>Optimizing Compilers for Modern Architectures: A Dependence-based Approach</em>, Morgan Kaufmann, 2001 — the standard textbook</li>
+<li>R. M. Tomasulo, <em>An efficient algorithm for exploiting multiple arithmetic units</em>, IBM J. R&amp;D, 1967 — renaming false dependences away in hardware</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="papers-3" class="slide level2">
+<h2>Papers</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
 <p><strong>DAG scheduling and heuristics</strong></p>
 </div>
 <div class="callout-content">
@@ -1924,7 +2292,7 @@ rank_u(n_{exit}) = \overline{w_{exit}}
 </div>
 </div>
 </section>
-<section id="papers-2" class="slide level2">
+<section id="papers-4" class="slide level2">
 <h2>Papers</h2>
 <div class="callout callout-note no-icon callout-titled callout-style-default">
 <div class="callout-body">
