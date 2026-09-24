@@ -1,5 +1,5 @@
 ---
-title: "Big Data: Dask intro"
+title: "Big Data: DAGs and Scheduling"
 author: 
   - name: MSDE
     affiliation: Lviv University
@@ -31,7 +31,120 @@ format:
 ---
 
 
-# Intro to DAGs and Dask
+# From sequential to parallel
+
+## A sequential program is a total order
+:::{.callout-note icon=false}
+## What the source code says
+Statements are written one after another, so they *appear* to be totally ordered: line 1, then line 2, then line 3.
+
+But most of that order is an **artefact of writing the program down**. It is not required by the computation.
+
+*("Total" and "partial" order are defined formally in the next section.)*
+:::
+
+:::{.callout-tip icon=false}
+## The real constraint
+Statement $B$ must come after statement $A$ only if
+$$
+B \text{ reads what } A \text{ wrote.}
+$$
+Everything else is free.
+:::
+
+## Which orderings are actually forced?
+:::{.callout-note icon=false}
+## Bernstein's conditions (1966)
+Write $I_i$ for the locations statement $i$ **reads**, $O_i$ for those it **writes**. Statements $1$ and $2$ may run in parallel iff all three hold:
+$$
+\underbrace{I_1 \cap O_2 = \emptyset}_{\text{no anti}} \qquad
+\underbrace{I_2 \cap O_1 = \emptyset}_{\text{no true}} \qquad
+\underbrace{O_1 \cap O_2 = \emptyset}_{\text{no output}}
+$$
+*No two concurrent computations may touch the same location if at least one of them writes.*
+:::
+
+## Which orderings are actually forced?
+:::{.callout-important icon=false}
+## Three kinds of dependence
+One violated condition each:
+
+- **true** (read-after-write, $I_2 \cap O_1$): $B$ consumes $A$'s result --- **a genuine edge**
+- **anti** (write-after-read, $I_1 \cap O_2$): $B$ overwrites something $A$ still needs
+- **output** (write-after-write, $O_1 \cap O_2$): $A$ and $B$ write the same location
+
+Only the first is about data. The other two come from **reusing a name**, and disappear if you rename --- or never reassign at all.
+:::
+
+:::{.callout-tip icon=false}
+## Which is why
+Single-assignment and functional style parallelize more easily: with no reassignment there are no false dependences, and what is left *is* the dataflow.
+:::
+
+## From one order to many
+```{.tikz}
+\usetikzlibrary{arrows.meta}
+\begin{tikzpicture}[
+  scale=1.8, every node/.style={scale=1.4},
+  code/.style={draw, very thick, rounded corners, align=left, font=\ttfamily\small, fill=gray!8, inner sep=9pt},
+  op/.style={draw, very thick, circle, minimum size=0.95cm, fill=gray!18, font=\small},
+  arr/.style={-{Latex[length=2.2mm]}, thick}
+]
+  \node[code] (c) at (0,0) {a = f(1)\\b = g(2)\\c = h(a, b)\\d = k(a)\\e = m(c, d)};
+  \node[font=\small] at (0,-2.3) {one total order};
+
+  \node[op] (na) at (5.0,1.6)  {$a$};
+  \node[op] (nb) at (7.0,1.6)  {$b$};
+  \node[op] (nc) at (6.0,0.2)  {$c$};
+  \node[op] (nd) at (4.0,0.2)  {$d$};
+  \node[op] (ne) at (5.0,-1.2) {$e$};
+  \draw[arr] (na) -- (nc);
+  \draw[arr] (nb) -- (nc);
+  \draw[arr] (na) -- (nd);
+  \draw[arr] (nc) -- (ne);
+  \draw[arr] (nd) -- (ne);
+  \node[font=\small] at (5.5,-2.3) {the partial order it was hiding};
+
+  \draw[arr, very thick] (2.0,0) -- (2.8,0);
+\end{tikzpicture}
+```
+
+## From one order to many
+:::{.callout-tip icon=false}
+## What the graph tells us that the listing did not
+- `b` never needed to wait for `a` --- they can run **at the same time**
+- `d` was written after `c`, but depends only on `a`; it can run **before** `c`, or beside it
+- five statements, but only **three** levels of real dependence
+:::
+
+:::{.callout-important icon=false}
+## The shift
+The sequential program was **one linearization** of this graph. Any topological order of the graph computes the same result.
+
+We stop asking *"what runs next?"* and start asking *"what is allowed to run now?"*
+:::
+
+## Choosing the nodes
+:::{.callout-note icon=false}
+## Granularity is ours to pick
+A node can be a single instruction, a loop body, a function call, or "read this 100 MB file". The theory does not care; the trade-off does:
+
+- **fine grain**: more parallelism to exploit, more scheduling overhead per unit of work
+- **coarse grain**: negligible overhead, less parallelism, worse load balance
+
+We call a node a **task** and leave its size open for now.
+:::
+
+## Who recovers the graph?
+:::{.callout-tip icon=false}
+## The same idea, at every level
+- **CPUs** do it in hardware: out-of-order execution rebuilds the dependence graph over a window of instructions and issues whatever is ready
+- **Compilers** do it statically: dependence analysis, vectorization, instruction scheduling
+- **Build systems** are given it: `make` is a DAG scheduler with files as nodes
+- **Parallel frameworks** ask *you* to build it explicitly, then schedule it
+:::
+
+# Program as DAG
 
 ## Program as DAG
 :::{.callout-tip icon=false}
@@ -46,24 +159,24 @@ A parallel program can be represented by a node- and edge-weighted **directed ac
 ![](img/dag)
 
 ## Program as DAG
+:::{.callout-important icon=false}
+## Ordering re-cap
+A binary relation $\preccurlyeq$ on some set $X$ is called a **partial order** if $\forall a,b,c \in X$ the following is true:
+
+- **Reflexivity:** $a \preccurlyeq a$
+- **Transitivity:** $a \preccurlyeq b, b \preccurlyeq c \Rightarrow a \preccurlyeq c$
+- **Antisymmetry:** $a \preccurlyeq b, b \preccurlyeq a \Rightarrow a = b$
+
+If, additionally, $\forall a,b \in X$ either $a \preccurlyeq b$ or $b \preccurlyeq a$, then the order is total.
+:::
+
+## Program as DAG
 :::{.callout-note icon=false}
 ## Generalization
 Multithreaded computing can be viewed as a natural generalization of sequential computing in the following sense: 
 
 - in **sequential computing**, a computation can be defined as a totally ordered set of instructions, where the ordering corresponds to the sequential execution order; 
 - **in multithreaded computing**, a computation can be viewed as a partially ordered set of instructions (as specified by the DAG), where the instructions may be executed in any order compatible with the specified partial order.
-:::
-
-## Program as DAG
-:::{.callout-important icon=false}
-## Ordering re-cap
-A binary relation $\preccurlyeq$ on some set $X$ is called a **partial order** if $\forall a,b,c \in X$ the following is true:
-
-- **Reflexivity:** $a \preccurlyeq a$
-- **Transitiity:** $a \preccurlyeq b, b \preccurlyeq c \Rightarrow a \preccurlyeq c$
-- **Antisymmetricity:** $a \preccurlyeq b, b \preccurlyeq a \Rightarrow a = b$
-
-If, additionally, $\forall a,b \ in X$ either $a \preccurlyeq b$ or $b \preccurlyeq a$, then the order is total.
 :::
 
 ## Program as DAG
@@ -101,7 +214,7 @@ The **communication-to-computation-ratio (CCR)** of a parallel program is define
 **Scheduling** involves executing a parallel program by mapping the computation over the processors so that:
 
 - completion time is minimized
-- use of other resources such as storage as energy is optimal.
+- use of other resources such as storage and energy is optimal.
 :::
 
 ## Program as DAG
@@ -125,24 +238,45 @@ Scheduling is done in such a manner that the precedence constraints among the pr
 ## Program as DAG
 ![](img/full_scheduling)
 
-## Program as DAG
+## Program as DAG {.scrollable}
 :::{.callout-tip icon=false}
 ## Work
-**Work** is defined as the number of vertices in the DAG.
-
-Work of a computation corresponds to the total number of operations it performs.
+**Work** is the total computation cost of the DAG:
+$$
+W = \sum_{n_i \in V} w(n_i).
+$$
+Work corresponds to the total amount of computation performed --- what a *single*
+processor would have to do. With unit-cost nodes this is just the number of vertices.
 :::
 
 :::{.callout-important icon=false}
 ## Span
-**Span** is the length of the longest path in the DAG.
+**Span** is the *weight* of the longest path in the DAG --- the sum of $w(n_i)$ along it.
 
-Span corresponds to the longest chain of dependencies in the computation.
+Span corresponds to the longest chain of dependencies: what **infinitely many**
+processors still could not avoid. With unit-cost nodes this is just the path length.
 :::
 
 :::{.callout-note icon=false}
 ## Work\[make\]span
 The overall finish-time of a parallel program is commonly called the **schedule length** or **makespan**. 
+:::
+
+## Three numbers that follow
+:::{.callout-important icon=false}
+## Parallelism
+$$
+\text{parallelism} = \frac{W}{S}
+$$
+The **maximum useful number of processors**. It is a property of the *graph alone*: if $W/S = 4$, a 64-core machine cannot help you past 4 cores, however good the scheduler is.
+:::
+
+:::{.callout-tip icon=false}
+## Speedup and efficiency
+$$
+\text{speedup} = \frac{T_1}{T_P} \qquad\qquad \text{efficiency} = \frac{T_1}{P \cdot T_P}
+$$
+Speedup: how much faster $P$ processors actually made it. Efficiency: what fraction of the hardware you are *not* wasting. Here $T_1$ is the time on one processor, i.e. $W$.
 :::
 
 # Scheduling
@@ -188,6 +322,38 @@ The overall finish-time of a parallel program is commonly called the **schedule 
 In conditional model, each edge in the DAG is associated with a non-zero probability that the child will be executed immediately after the parent.
 :::
 
+## What a scheduler actually has to decide
+:::{.callout-important icon=false}
+## Two decisions, per task
+Given the DAG and $m$ processors, a scheduler must answer, for every node:
+
+1. **When?** -- in what *order* do the tasks go
+2. **Where?** -- on which *processor* does each one run
+
+That is the entire problem. Everything else --- priorities, ranks, clustering, stealing --- is machinery for answering those two questions cheaply.
+:::
+
+:::{.callout-tip icon=false}
+## The one hard constraint
+A task may only start once **all its parents have finished**. So at any instant the scheduler is not choosing from *all* tasks, only from the **ready set** --- and that set changes as the schedule unfolds.
+:::
+
+## What a scheduler actually has to decide
+:::{.callout-note icon=false}
+## Why a *list*?
+Searching over (order $\times$ placement) jointly is the NP-hard problem. So we split it:
+
+- decide the **order once**, up front, by giving every node a priority
+- then place greedily: take the highest-priority *ready* node, put it wherever it can start earliest
+
+The priority list collapses decision 1 into a single sort, and decision 2 into a local rule.
+:::
+
+:::{.callout-warning icon=false}
+## And that is the whole trick
+Every scheduler in the rest of this lecture has this shape. They differ **only in how the priority is computed** --- and, as Graham's anomalies will show, the priority is where the damage lives.
+:::
+
 ## Scheduling
 :::{.callout-important icon=false}
 ## List scheduling
@@ -221,6 +387,476 @@ $$
 T_P \geq \max\left(\frac{W}{P},S\right).
 $$
 We therefore see that a greedy scheduler does reasonably close to the best possible. In particular, $\frac{W}{P} +S$ is never more than twice $\max\left(\frac{W}{P} ,S\right)$.
+:::
+
+## Scheduling
+:::{.callout-note icon=false}
+## The same bound, other names
+The greedy scheduling principle is also known as **Brent's theorem** (Brent, 1974) and, in the list-scheduling literature, as **Graham's bound**:
+$$
+\max\left(\frac{W}{P}, S\right) \;\leq\; T_P \;<\; \frac{W}{P} + S \;\leq\; 2\max\left(\frac{W}{P}, S\right).
+$$
+:::
+
+:::{.callout-tip icon=false}
+## Read it as a design rule
+Two knobs, and only two: **grow the work** you can spread ($W/P$), **shorten the critical path** ($S$). Everything a scheduler does is fighting for the constant factor between those bounds.
+:::
+
+## Why the bound holds
+:::{.callout-important icon=false}
+## The two-line argument
+Look at any instant of a greedy schedule. Exactly one of two things is true:
+
+- **all $P$ processors are busy** --- we are consuming work at the maximum possible rate, and there can be at most $W/P$ such time in total;
+- **some processor is idle** --- for a greedy scheduler that means *nothing was ready*, so a task on a critical path must be running, and there can be at most $S$ such time.
+
+Add the two cases: $T_P < \dfrac{W}{P} + S$.
+:::
+
+## When is the bound tight?
+:::{.callout-warning icon=false}
+## The factor of 2 is achievable
+It is not an artefact of a loose proof. The worst case is a **long critical chain plus just enough independent work** to keep every processor busy right until the chain has to run alone.
+
+Greedy cheerfully fills the processors first --- and only then discovers that the chain still has to execute serially at the end.
+:::
+
+:::{.callout-tip icon=false}
+## Which is why priorities matter
+Both a naive scheduler and a critical-path-aware one sit inside the same factor of 2. The guarantee does not distinguish them --- **measurement does**.
+
+That worst-case shape is exactly what Graham's anomalies exploit next.
+:::
+
+## Graham's bound: list-scheduling form {.scrollable}
+:::{.callout-note icon=false}
+## The same result, stated for $m$ processors
+The list-scheduling literature writes the guarantee as a *ratio to the optimum* rather than in terms of $W$ and $S$:
+$$
+\frac{T_{\text{list}}}{T_{\text{opt}}} \;\leq\; 2 - \frac{1}{m}
+\qquad \text{(Graham, 1966)}
+$$
+*Any* list --- no cleverness at all, just "never leave a processor idle if a task is ready".
+:::
+
+:::{.callout-important icon=false}
+## Two forms, one theorem
+| form | says |
+|---|---|
+| $T_P < \frac{W}{P} + S$ | how long a greedy schedule takes, from graph properties |
+| $\frac{T_{\text{list}}}{T_{\text{opt}}} \leq 2 - \frac{1}{m}$ | how far from optimal it can be |
+
+The $-\frac{1}{m}$ is the sharper accounting: with $m$ processors you cannot waste a *full* $S$ on top of a full $W/m$, because the critical task occupies one of the $m$ processors while it runs.
+:::
+
+## Scheduling
+:::{.callout-important icon=false}
+## Relation to Amdahl
+Amdahl's law assumes a program splits into a serial fraction $s$ and a perfectly parallel rest. The DAG model says where $s$ *comes from*: it is the **span**.
+
+- Amdahl: a number you guess about your program
+- Span: a structural property you can measure, and change, by rewriting the graph
+
+A reduction written as a chain has $S = \Theta(n)$; written as a tree, $S = \Theta(\log n)$. Same work, same answer, different ceiling.
+:::
+
+# How hard is scheduling?
+
+## How to read the problem names {.scrollable}
+:::{.callout-tip icon=false}
+## The $\alpha \mid \beta \mid \gamma$ notation
+Graham, Lawler, Lenstra & Rinnooy Kan (1979). Every scheduling problem is named by three fields:
+
+| field | means | common values |
+|---|---|---|
+| $\alpha$ | machine environment | $1$ single, $P$ identical parallel, $Q$ uniform (different speeds), $R$ unrelated |
+| $\beta$ | job characteristics | $prec$ precedence, $p_j{=}1$ unit times, $pmtn$ preemption allowed, $r_j$ release dates |
+| $\gamma$ | objective | $C_{\max}$ makespan, $\sum C_j$ total completion time, $L_{\max}$ lateness |
+
+So $P \mid prec \mid C_{\max}$ is *"identical parallel machines, precedence constraints, minimise makespan"*, and $P2 \mid\mid C_{\max}$ fixes two machines with no special constraints.
+:::
+
+## Complexity
+:::{.callout-important icon=false}
+## The bad news
+Minimizing makespan on $P$ processors under precedence constraints -- $P \mid prec \mid C_{\max}$ -- is **NP-complete** (Ullman, 1975).
+
+*Strictly: the **decision** problem ("is there a schedule of length $\leq k$?") is NP-complete; the **optimization** problem is NP-hard. We use "NP-hard" from here on.*
+
+It stays NP-complete even when every task takes exactly **one** time unit -- the durations are not what makes it hard, the *precedence structure* is.
+
+Adding **communication costs** ($P \mid prec, c_{ij} \mid C_{\max}$) makes it NP-hard even with *unlimited* processors (Papadimitriou & Yannakakis, 1990).
+:::
+
+## Complexity
+:::{.callout-tip icon=false}
+## The tractable corners
+A handful of special cases *are* solvable exactly in polynomial time:
+
+- **Trees**, unit tasks, $m$ processors -- Hu's level algorithm (1961)
+- **Two processors**, unit tasks, arbitrary DAG -- Coffman--Graham (1972), $O(v^2)$
+- **Interval orders**, unit tasks -- Papadimitriou & Yannakakis (1979)
+:::
+
+:::{.callout-note icon=false}
+## Still open
+For a *fixed* number of processors $m \geq 3$ with unit tasks and arbitrary precedence, the complexity is **still an open problem** -- one of the oldest in scheduling theory.
+:::
+
+## Complexity
+:::{.callout-note icon=false}
+## So why bother with the theory?
+Because the approximation results are surprisingly strong --- and we already have one.
+
+Recall **Graham's bound** from the previous section: *any* list schedule, with no cleverness at all, satisfies $\frac{T_{\text{list}}}{T_{\text{opt}}} \leq 2 - \frac{1}{m}$.
+
+So an NP-hard problem has a **trivial** $2\times$ approximation. The question for the rest of this section is how much better we can do, and in which special cases.
+:::
+
+## Complexity {.scrollable}
+:::{.callout-important icon=false}
+## And yet
+For **independent** tasks (no precedence at all), sorting by longest-processing-time-first gives
+$$
+\frac{T_{\text{LPT}}}{T_{\text{opt}}} \leq \frac{4}{3} - \frac{1}{3m} \qquad \text{(Graham, 1969)}
+$$
+but the problem is *still* NP-hard -- it contains `PARTITION`.
+
+**Scheduling two identical machines with no dependencies at all is already intractable.**
+:::
+
+:::{.callout-note icon=false}
+## But the mildest kind of intractable
+`PARTITION` is only *weakly* NP-complete: a pseudo-polynomial $O(nT)$ dynamic program solves it, and the hardness comes from the **numbers being large**, not from combinatorial structure.
+
+So $P2 \mid\mid C_{\max}$ admits an FPTAS (Sahni, 1976) --- which is exactly why a rule as crude as LPT already lands within $4/3$.
+
+With $m$ part of the input, $P \mid\mid C_{\max}$ becomes **strongly** NP-hard via `3-PARTITION`: no pseudo-polynomial algorithm unless P $=$ NP. A PTAS still exists (Hochbaum & Shmoys, 1987).
+:::
+
+# Graham's anomalies
+
+## Graham's anomalies
+:::{.callout-important icon=false}
+## The most useful counterexample in scheduling
+List scheduling is within a factor of 2. But it is **not monotone**. Fix the priority list and then make the problem *easier*: the schedule can get **worse**.
+:::
+
+:::{.callout-tip icon=false}
+## An instance (Graham, 1969)
+Nine tasks, priority list $L = (T_1, \dots, T_9)$, three processors.
+
+| task | $T_1$ | $T_2$ | $T_3$ | $T_4$ | $T_5$ | $T_6$ | $T_7$ | $T_8$ | $T_9$ |
+|---|---|---|---|---|---|---|---|---|---|
+| time | 3 | 2 | 2 | 2 | 4 | 4 | 4 | 4 | 9 |
+
+:::
+
+## Graham's anomalies
+```{.tikz}
+\usetikzlibrary{arrows.meta}
+\begin{tikzpicture}[
+  scale=1.4, every node/.style={scale=1.4},
+  t/.style={draw, very thick, rounded corners, minimum width=1.0cm, minimum height=1.0cm, fill=gray!15, align=center, font=\small},
+  arr/.style={-{Latex[length=2.5mm]}, thick}
+]
+  \node[t] (t1) at (0,2.6)   {$T_1$\\[-2pt]{\scriptsize 3}};
+  \node[t] (t9) at (0,0.6)   {$T_9$\\[-2pt]{\scriptsize 9}};
+  \draw[arr] (t1) -- (t9);
+
+  \node[t] (t2) at (1.8,2.6) {$T_2$\\[-2pt]{\scriptsize 2}};
+  \node[t] (t3) at (3.1,2.6) {$T_3$\\[-2pt]{\scriptsize 2}};
+
+  \node[t] (t4) at (5.6,2.6) {$T_4$\\[-2pt]{\scriptsize 2}};
+  \node[t] (t5) at (3.8,0.6) {$T_5$\\[-2pt]{\scriptsize 4}};
+  \node[t] (t6) at (5.0,0.6) {$T_6$\\[-2pt]{\scriptsize 4}};
+  \node[t] (t7) at (6.2,0.6) {$T_7$\\[-2pt]{\scriptsize 4}};
+  \node[t] (t8) at (7.4,0.6) {$T_8$\\[-2pt]{\scriptsize 4}};
+  \draw[arr] (t4) -- (t5);
+  \draw[arr] (t4) -- (t6);
+  \draw[arr] (t4) -- (t7);
+  \draw[arr] (t4) -- (t8);
+\end{tikzpicture}
+```
+
+## Graham's anomalies: baseline
+::: {.r-stack}
+```{.tikz}
+\usetikzlibrary{arrows.meta}
+\begin{tikzpicture}[
+  scale=1.5, every node/.style={scale=1.5},
+  job/.style={draw, very thick, rounded corners=1pt, fill=gray!20, font=\small},
+  crit/.style={draw, very thick, rounded corners=1pt, fill=gray!45, font=\small},
+  idle/.style={draw, thick, dashed, fill=white, font=\scriptsize, text=gray}
+]
+  \node[anchor=east, font=\small] at (-0.15,2.12) {$P_1$};
+  \draw[job] (0.00,1.76) rectangle (1.86,2.49);
+  \node[font=\scriptsize] at (0.93,2.12) {T1};
+  \draw[crit] (1.86,1.76) rectangle (7.44,2.49);
+  \node[font=\scriptsize] at (4.65,2.12) {T9};
+  \node[anchor=east, font=\small] at (-0.15,1.27) {$P_2$};
+  \draw[job] (0.00,0.91) rectangle (1.24,1.64);
+  \node[font=\scriptsize] at (0.62,1.27) {T2};
+  \draw[job] (1.24,0.91) rectangle (2.48,1.64);
+  \node[font=\scriptsize] at (1.86,1.27) {T4};
+  \draw[job] (2.48,0.91) rectangle (4.96,1.64);
+  \node[font=\scriptsize] at (3.72,1.27) {T5};
+  \draw[job] (4.96,0.91) rectangle (7.44,1.64);
+  \node[font=\scriptsize] at (6.20,1.27) {T7};
+  \node[anchor=east, font=\small] at (-0.15,0.42) {$P_3$};
+  \draw[job] (0.00,0.06) rectangle (1.24,0.79);
+  \node[font=\scriptsize] at (0.62,0.42) {T3};
+  \draw[idle] (1.24,0.06) rectangle (2.48,0.79);
+  \node[font=\scriptsize] at (1.86,0.42) {};
+  \draw[job] (2.48,0.06) rectangle (4.96,0.79);
+  \node[font=\scriptsize] at (3.72,0.42) {T6};
+  \draw[job] (4.96,0.06) rectangle (7.44,0.79);
+  \node[font=\scriptsize] at (6.20,0.42) {T8};
+  \draw[->, thick] (0,-0.15) -- (7.94,-0.15);
+  \draw[thick] (0.00,-0.1) -- (0.00,-0.22) node[below,font=\scriptsize]{0};
+  \draw[thick] (1.24,-0.1) -- (1.24,-0.22) node[below,font=\scriptsize]{2};
+  \draw[thick] (2.48,-0.1) -- (2.48,-0.22) node[below,font=\scriptsize]{4};
+  \draw[thick] (3.72,-0.1) -- (3.72,-0.22) node[below,font=\scriptsize]{6};
+  \draw[thick] (4.96,-0.1) -- (4.96,-0.22) node[below,font=\scriptsize]{8};
+  \draw[thick] (6.20,-0.1) -- (6.20,-0.22) node[below,font=\scriptsize]{10};
+  \draw[thick] (7.44,-0.1) -- (7.44,-0.22) node[below,font=\scriptsize]{12};
+  \draw[very thick, densely dotted] (7.44,-0.25) -- (7.44,2.80);
+  \node[font=\small\bfseries] at (7.44,3.05) {makespan = 12};
+\end{tikzpicture}
+```
+:::
+
+::: {.callout-note icon=false}
+## $m = 3$, original times, original precedence
+$T_9$ (the long task) is the critical path. One processor idles from $t=2$ to $t=4$. This is optimal here.
+:::
+
+## Anomaly 1: every task gets *faster*
+::: {.r-stack}
+```{.tikz}
+\usetikzlibrary{arrows.meta}
+\begin{tikzpicture}[
+  scale=1.5, every node/.style={scale=1.5},
+  job/.style={draw, very thick, rounded corners=1pt, fill=gray!20, font=\small},
+  crit/.style={draw, very thick, rounded corners=1pt, fill=gray!45, font=\small},
+  idle/.style={draw, thick, dashed, fill=white, font=\scriptsize, text=gray}
+]
+  \node[anchor=east, font=\small] at (-0.15,2.12) {$P_1$};
+  \draw[job] (0.00,1.76) rectangle (1.24,2.49);
+  \node[font=\scriptsize] at (0.62,2.12) {T1};
+  \draw[job] (1.24,1.76) rectangle (3.10,2.49);
+  \node[font=\scriptsize] at (2.17,2.12) {T5};
+  \draw[job] (3.10,1.76) rectangle (4.96,2.49);
+  \node[font=\scriptsize] at (4.03,2.12) {T8};
+  \node[anchor=east, font=\small] at (-0.15,1.27) {$P_2$};
+  \draw[job] (0.00,0.91) rectangle (0.62,1.64);
+  \node[font=\scriptsize] at (0.31,1.27) {T2};
+  \draw[job] (0.62,0.91) rectangle (1.24,1.64);
+  \node[font=\scriptsize] at (0.93,1.27) {T4};
+  \draw[job] (1.24,0.91) rectangle (3.10,1.64);
+  \node[font=\scriptsize] at (2.17,1.27) {T6};
+  \draw[crit] (3.10,0.91) rectangle (8.06,1.64);
+  \node[font=\scriptsize] at (5.58,1.27) {T9};
+  \node[anchor=east, font=\small] at (-0.15,0.42) {$P_3$};
+  \draw[job] (0.00,0.06) rectangle (0.62,0.79);
+  \node[font=\scriptsize] at (0.31,0.42) {T3};
+  \draw[idle] (0.62,0.06) rectangle (1.24,0.79);
+  \node[font=\scriptsize] at (0.93,0.42) {};
+  \draw[job] (1.24,0.06) rectangle (3.10,0.79);
+  \node[font=\scriptsize] at (2.17,0.42) {T7};
+  \draw[->, thick] (0,-0.15) -- (8.56,-0.15);
+  \draw[thick] (0.00,-0.1) -- (0.00,-0.22) node[below,font=\scriptsize]{0};
+  \draw[thick] (1.24,-0.1) -- (1.24,-0.22) node[below,font=\scriptsize]{2};
+  \draw[thick] (2.48,-0.1) -- (2.48,-0.22) node[below,font=\scriptsize]{4};
+  \draw[thick] (3.72,-0.1) -- (3.72,-0.22) node[below,font=\scriptsize]{6};
+  \draw[thick] (4.96,-0.1) -- (4.96,-0.22) node[below,font=\scriptsize]{8};
+  \draw[thick] (6.20,-0.1) -- (6.20,-0.22) node[below,font=\scriptsize]{10};
+  \draw[thick] (7.44,-0.1) -- (7.44,-0.22) node[below,font=\scriptsize]{12};
+  \draw[very thick, densely dotted] (8.06,-0.25) -- (8.06,2.80);
+  \node[font=\small\bfseries] at (8.06,3.05) {makespan = 13};
+\end{tikzpicture}
+```
+:::
+
+::: {.callout-important icon=false}
+## Subtract 1 from every execution time
+Makespan **12 $\to$ 13**. Every single task finished sooner, and the program finished later.
+:::
+
+## Anomaly 2: *add* a processor
+::: {.r-stack}
+```{.tikz}
+\usetikzlibrary{arrows.meta}
+\begin{tikzpicture}[
+  scale=1.5, every node/.style={scale=1.5},
+  job/.style={draw, very thick, rounded corners=1pt, fill=gray!20, font=\small},
+  crit/.style={draw, very thick, rounded corners=1pt, fill=gray!45, font=\small},
+  idle/.style={draw, thick, dashed, fill=white, font=\scriptsize, text=gray}
+]
+  \node[anchor=east, font=\small] at (-0.15,2.97) {$P_1$};
+  \draw[job] (0.00,2.61) rectangle (1.86,3.34);
+  \node[font=\scriptsize] at (0.93,2.97) {T1};
+  \draw[job] (1.86,2.61) rectangle (4.34,3.34);
+  \node[font=\scriptsize] at (3.10,2.97) {T8};
+  \node[anchor=east, font=\small] at (-0.15,2.12) {$P_2$};
+  \draw[job] (0.00,1.76) rectangle (1.24,2.49);
+  \node[font=\scriptsize] at (0.62,2.12) {T2};
+  \draw[job] (1.24,1.76) rectangle (3.72,2.49);
+  \node[font=\scriptsize] at (2.48,2.12) {T5};
+  \draw[crit] (3.72,1.76) rectangle (9.30,2.49);
+  \node[font=\scriptsize] at (6.51,2.12) {T9};
+  \node[anchor=east, font=\small] at (-0.15,1.27) {$P_3$};
+  \draw[job] (0.00,0.91) rectangle (1.24,1.64);
+  \node[font=\scriptsize] at (0.62,1.27) {T3};
+  \draw[job] (1.24,0.91) rectangle (3.72,1.64);
+  \node[font=\scriptsize] at (2.48,1.27) {T6};
+  \node[anchor=east, font=\small] at (-0.15,0.42) {$P_4$};
+  \draw[job] (0.00,0.06) rectangle (1.24,0.79);
+  \node[font=\scriptsize] at (0.62,0.42) {T4};
+  \draw[job] (1.24,0.06) rectangle (3.72,0.79);
+  \node[font=\scriptsize] at (2.48,0.42) {T7};
+  \draw[->, thick] (0,-0.15) -- (9.80,-0.15);
+  \draw[thick] (0.00,-0.1) -- (0.00,-0.22) node[below,font=\scriptsize]{0};
+  \draw[thick] (1.24,-0.1) -- (1.24,-0.22) node[below,font=\scriptsize]{2};
+  \draw[thick] (2.48,-0.1) -- (2.48,-0.22) node[below,font=\scriptsize]{4};
+  \draw[thick] (3.72,-0.1) -- (3.72,-0.22) node[below,font=\scriptsize]{6};
+  \draw[thick] (4.96,-0.1) -- (4.96,-0.22) node[below,font=\scriptsize]{8};
+  \draw[thick] (6.20,-0.1) -- (6.20,-0.22) node[below,font=\scriptsize]{10};
+  \draw[thick] (7.44,-0.1) -- (7.44,-0.22) node[below,font=\scriptsize]{12};
+  \draw[thick] (8.68,-0.1) -- (8.68,-0.22) node[below,font=\scriptsize]{14};
+  \draw[very thick, densely dotted] (9.30,-0.25) -- (9.30,3.65);
+  \node[font=\small\bfseries] at (9.30,3.90) {makespan = 15};
+\end{tikzpicture}
+```
+:::
+
+::: {.callout-important icon=false}
+## $m = 3 \to 4$
+Makespan **12 $\to$ 15**. The fourth processor grabs $T_4$ early, which releases $T_5 \dots T_8$ early, which pushes the 9-unit $T_9$ to the back of the list.
+:::
+
+## Anomaly 3: *remove* the dependencies
+::: {.r-stack}
+```{.tikz}
+\usetikzlibrary{arrows.meta}
+\begin{tikzpicture}[
+  scale=1.5, every node/.style={scale=1.5},
+  job/.style={draw, very thick, rounded corners=1pt, fill=gray!20, font=\small},
+  crit/.style={draw, very thick, rounded corners=1pt, fill=gray!45, font=\small},
+  idle/.style={draw, thick, dashed, fill=white, font=\scriptsize, text=gray}
+]
+  \node[anchor=east, font=\small] at (-0.15,2.12) {$P_1$};
+  \draw[job] (0.00,1.76) rectangle (1.86,2.49);
+  \node[font=\scriptsize] at (0.93,2.12) {T1};
+  \draw[job] (1.86,1.76) rectangle (4.34,2.49);
+  \node[font=\scriptsize] at (3.10,2.12) {T6};
+  \draw[crit] (4.34,1.76) rectangle (9.92,2.49);
+  \node[font=\scriptsize] at (7.13,2.12) {T9};
+  \node[anchor=east, font=\small] at (-0.15,1.27) {$P_2$};
+  \draw[job] (0.00,0.91) rectangle (1.24,1.64);
+  \node[font=\scriptsize] at (0.62,1.27) {T2};
+  \draw[job] (1.24,0.91) rectangle (2.48,1.64);
+  \node[font=\scriptsize] at (1.86,1.27) {T4};
+  \draw[job] (2.48,0.91) rectangle (4.96,1.64);
+  \node[font=\scriptsize] at (3.72,1.27) {T7};
+  \node[anchor=east, font=\small] at (-0.15,0.42) {$P_3$};
+  \draw[job] (0.00,0.06) rectangle (1.24,0.79);
+  \node[font=\scriptsize] at (0.62,0.42) {T3};
+  \draw[job] (1.24,0.06) rectangle (3.72,0.79);
+  \node[font=\scriptsize] at (2.48,0.42) {T5};
+  \draw[job] (3.72,0.06) rectangle (6.20,0.79);
+  \node[font=\scriptsize] at (4.96,0.42) {T8};
+  \draw[->, thick] (0,-0.15) -- (10.42,-0.15);
+  \draw[thick] (0.00,-0.1) -- (0.00,-0.22) node[below,font=\scriptsize]{0};
+  \draw[thick] (1.24,-0.1) -- (1.24,-0.22) node[below,font=\scriptsize]{2};
+  \draw[thick] (2.48,-0.1) -- (2.48,-0.22) node[below,font=\scriptsize]{4};
+  \draw[thick] (3.72,-0.1) -- (3.72,-0.22) node[below,font=\scriptsize]{6};
+  \draw[thick] (4.96,-0.1) -- (4.96,-0.22) node[below,font=\scriptsize]{8};
+  \draw[thick] (6.20,-0.1) -- (6.20,-0.22) node[below,font=\scriptsize]{10};
+  \draw[thick] (7.44,-0.1) -- (7.44,-0.22) node[below,font=\scriptsize]{12};
+  \draw[thick] (8.68,-0.1) -- (8.68,-0.22) node[below,font=\scriptsize]{14};
+  \draw[thick] (9.92,-0.1) -- (9.92,-0.22) node[below,font=\scriptsize]{16};
+  \draw[very thick, densely dotted] (9.92,-0.25) -- (9.92,2.80);
+  \node[font=\small\bfseries] at (9.92,3.05) {makespan = 16};
+\end{tikzpicture}
+```
+:::
+
+::: {.callout-important icon=false}
+## Drop all precedence constraints
+Makespan **12 $\to$ 16**. Fewer constraints, longer schedule.
+:::
+
+## Graham's anomalies
+:::{.callout-tip icon=false}
+## The bound on the damage
+Graham proved the anomalies are bounded. Going from $m$ to $m'$ processors, with the same list:
+$$
+\frac{T_{m'}}{T_m} \leq 1 + \frac{m-1}{m'}.
+$$
+So doubling the cluster can never more than *roughly* halve your gains -- but it can absolutely make things worse.
+:::
+
+:::{.callout-important icon=false}
+## What to take away
+
+- greedy is within $2\times$, but **not monotone**: local improvements are not safe
+- "it got slower after we upgraded" is a legitimate scheduling outcome, not necessarily a bug
+- and all of this assumed **exact, known** execution times
+:::
+
+## A fourth anomaly: the list itself
+:::{.callout-important icon=false}
+## Change nothing but the priority order
+The three above change the *instance*. The **list** is just as dangerous --- and this is the version you meet in practice, because a real scheduler's priority order comes from estimates, and estimates drift.
+
+Keep everything at baseline and merely **reverse** the list to $L' = (T_9, T_8, \dots, T_1)$:
+$$
+12 \;\longrightarrow\; 18.
+$$
+Fifty percent worse, from reordering alone.
+:::
+
+:::{.callout-warning icon=false}
+## Why reversing is so bad
+"Put the long task first" sounds right and is wrong: $T_9$ **depends on** $T_1$, so it is not ready at $t=0$. Reversing pushes $T_1$ to *last* --- so the task that unblocks the critical path is scheduled last, and $T_9$ starts very late.
+:::
+
+## A fourth anomaly: the list itself
+:::{.callout-tip icon=false}
+## The right list immunises against the other three
+Put $T_1$ first and $T_9$ **immediately after it**: $L^\star = (T_1, T_9, T_2, \dots, T_8)$. Then the baseline is still the optimal 12 --- and the other anomalies mostly disappear:
+
+| scenario | with $L = (T_1 \dots T_9)$ | with $L^\star$ |
+|---|---|---|
+| baseline, $m=3$ | 12 | **12** |
+| every task 1 unit faster | 13 | **10** |
+| extra processor, $m=4$ | 15 | **12** |
+| precedence removed | 16 | **13** |
+:::
+
+:::{.callout-important icon=false}
+## Which is the actual lesson
+The anomalies were never really about processors or task durations. They were about **a long task with low priority**.
+
+Every list-scheduling heuristic in the next section computes a priority order that puts long-and-critical tasks first. That is exactly what **static level** and **upward rank** are for.
+:::
+
+## Graham's anomalies
+:::{.callout-note icon=false}
+## The gap between theory and a running cluster
+Everything so far assumed:
+
+| assumption | reality |
+|---|---|
+| $w(n_i)$ known in advance | measured after the fact, if at all |
+| identical processors | mixed hardware, noisy neighbours, throttling |
+| fixed processor count | workers join and leave mid-job |
+| processors never fail | they run out of memory and die |
+| $c(n_i,n_j)$ a constant | depends on where the data happens to be |
+| the graph is known | it can be built while it runs |
+
 :::
 
 # Scheduling algorithms
@@ -278,7 +914,7 @@ executed on the same processor.
 :::{.callout-tip icon=false}
 ## Clustering: Extra final steps
 
-- a cluster **merging** step for merging the clusters so that the remaining number of clusters equal the number of processors
+- a cluster **merging** step for merging the clusters so that the remaining number of clusters equals the number of processors
 - a cluster **mapping** step for mapping the clusters on the available processors
 - a task **ordering** step for ordering the mapped tasks within each processor 
 :::
@@ -318,7 +954,7 @@ H. Topcuoglu, S. Hariri and Min-You Wu, **"Performance-effective and low-complex
 - $data$ -- a $v \times v$ matrix of communication data
 - $data_{i,k}$ -- amount of data to be transmitted from $n_i$ to $n_k$
 - $Q$ -- set of $q$ processors
-- $W$ -- a $v \times q$ computation cost matrix, in which each $w_{i,j}$ gives the estimated execution cost to complete task $n_i$ on processor $p_j$
+- $W$ -- a $v \times q$ computation cost matrix, in which each $w_{i,j}$ gives the estimated execution cost to complete task $n_i$ on processor $p_j$ *(Topcuoglu et al.'s notation --- unrelated to $W$ = work in the greedy bound)*
 - $B$ -- $q \times q$ data transfer rates matrix
 - $L$ -- $q$-dimensional vector of communication startup costs
 :::
@@ -330,7 +966,7 @@ H. Topcuoglu, S. Hariri and Min-You Wu, **"Performance-effective and low-complex
 $$
   \overline{w_i} = \sum\limits_{j=1}^q \frac{w_{i,j}}{q}.
 $$
-**Communication cost** of the edge $(i,k)$ for transfering data from task $n_i$ scheduled on processor $p_m$ to task $n_k$ scheduled on processor $p_n$:
+**Communication cost** of the edge $(i,k)$ for transferring data from task $n_i$ scheduled on processor $p_m$ to task $n_k$ scheduled on processor $p_n$:
 $$
 c_{i,k} = L_m + \frac{data_{i,k}}{B_{m,n}}
 $$
@@ -375,6 +1011,29 @@ $$
 The **objective function** of the task scheduling problem is to determine the assignment of tasks to processors such that its **makespan is minimized**.
 :::
 
+## Priorities before HEFT
+:::{.callout-tip icon=false}
+## Static level --- the common ingredient
+Most list heuristics are variations on one quantity. The **static level** of a node is the longest path from it to any exit, counting *computation only*:
+$$
+\text{sl}(n_i) = w(n_i) + \max_{n_j \in succ(n_i)} \text{sl}(n_j)
+$$
+It is how much work is still **ahead** of a node on its worst path --- the direct antidote to the "long task, low priority" failure.
+:::
+
+:::{.callout-note icon=false}
+## The family
+| heuristic | priority |
+|---|---|
+| **LPT** | longest processing time (independent tasks only) |
+| **HLFET** | static level |
+| **MCP** | as-late-as-possible start time |
+| **ETF** | earliest start time over all ready tasks |
+| **DLS** | static level $-$ earliest start time |
+
+Add *communication* costs to the static-level recurrence and you get HEFT's **upward rank**.
+:::
+
 ## HEFT/CPOP
 :::{.callout-note icon=false}
 ## Upward rank
@@ -417,7 +1076,7 @@ $$
 4. **while** there are unscheduled tasks in the list **do**:
 5. &emsp;&emsp; select the task $n_i$ from the scheduling list
 6. &emsp;&emsp; **for** each processor $p_k$ in the processor set $Q$ **do**:
-7. &emsp;&emsp;&emsp;&emsp; Compute $EFT(n_i,p_k)$ using the insertion-based scheduling policy
+7. &emsp;&emsp;&emsp;&emsp; Compute $EFT(n_i,p_k)$ using the *insertion-based* policy (a task may be slotted into an idle gap between two already-scheduled tasks, not only appended at the end)
 8. &emsp;&emsp; Assign task $n_i$ to the processor $p_j$ minimizing $EFT(n_i, p_j)$
 :::
 
@@ -450,9 +1109,9 @@ $$
 :::{.callout-important icon=false}
 ## CPOP
 
-14. **while** there are unscheduled tasks in the $PQ$**do**
+14. **while** there are unscheduled tasks in the $PQ$ **do**
 15. &emsp;&emsp; select the highest priority task $n_i$ from $PQ$
-16. &emsp;&emsp; **if** $n_i \ in SET_{CP}$ **then** 
+16. &emsp;&emsp; **if** $n_i \in SET_{CP}$ **then** 
 17. &emsp;&emsp;&emsp;&emsp; assign $n_i$ to $p_{CP}$
 18. &emsp;&emsp; **else** 
 19. &emsp;&emsp;&emsp;&emsp; assign $n_i$ to $p_j$ minimizing $EFT(n_i,p_j)$
@@ -465,131 +1124,416 @@ $$
 ## HEFT/CPOP
 ![HEFT - (a), CPOP - (b)](img/heft_cpop)
 
-# Dask Scheduling
+# Dynamic scheduling
 
-## Dask
-Dask is a library to perform parallel computation for analytics.
-![](img/dask_layers)
-
-## Scheduling
+## Why the static picture breaks
 :::{.callout-important icon=false}
-## What does Dask scheduler do?
+## HEFT needs a cost matrix. Where would you get one?
+Static algorithms want $w(n_i, p_k)$ and $c(n_i, n_j)$ for every task and every processor, **before** anything runs. In a real analytics cluster:
 
-- execute DAGs on parallel hardware
-- manage resource allocation across DAG nodes
+- a task's duration depends on **data it has not read yet** (how many rows survive a filter?)
+- the machine is **shared** -- noisy neighbours, thermal throttling, a cold page cache
+- the first execution of a task includes **JIT warm-up** and import time
+- workers **appear and disappear** (autoscaling, spot instances, OOM kills)
+- $c(n_i,n_j)$ is $0$ if the data is already on the worker and seconds if it is not -- which is what you are trying to decide
 :::
 
-
-## Dask Scheduling
+## Why the static picture breaks
 :::{.callout-note icon=false}
-## Dask Scheduler types
-
-- **Single-machine scheduler:** This scheduler provides basic features on a local process or thread pool. This scheduler was made first and is the default. It is simple and cheap to use, although it can only be used on a single machine and does not scale
-- **Distributed scheduler:** This scheduler is more sophisticated, offers more features, but also requires a bit more effort to set up. It can run locally or distributed across a cluster
+## And the graph itself may not be finished
+- `dask.dataframe` does not know partition sizes until it reads them
+- shuffles produce graph structure that depends on the data
+- interactive work appends to the graph while earlier parts are still running
 :::
 
-## DAG
-![](img/dask-overview)
-
-## Dask Scheduling
-![](img/dask_dist)
-
-## Scheduling
 :::{.callout-tip icon=false}
-## Single-thread scheduler
-```python
-import dask
-dask.config.set(scheduler='synchronous')  # overwrite default with single-threaded scheduler
-```
+## The pivot
+Stop computing a schedule. Compute a **policy**: a cheap rule, re-evaluated constantly, that is good on average and recovers from being wrong.
 :::
 
-:::{.callout-important icon=false}
-## Notes
-
-- Useful for debugging or profiling
-- No parallelism at all
-:::
-
-## Scheduling
-:::{.callout-tip icon=false}
-## Thread scheduler
-```python
-import dask
-dask.config.set(scheduler='threads')  # overwrite default with threaded scheduler 
-```
-:::
-
-:::{.callout-important icon=false}
-## Notes
-
-- Small overhead of 50 microseconds per task
-- Only provides parallelism when executing non-Python code (because of GIL)
-:::
-
-## Scheduling
-:::{.callout-tip icon=false}
-## Process scheduler
-```python
-import dask
-dask.config.set(scheduler='processes')  # overwrite default with multiprocessing scheduler
-```
-:::
-
-:::{.callout-important icon=false}
-## Notes
-
-- Performance penalties when inter-process communication is heavy
-- Can provide parallelism when executing Python code
-:::
-
-## Scheduling
+## Work sharing vs work stealing
 :::{.callout-note icon=false}
-## Distributed (local) scheduler
-```python
-from dask.distributed import Client
-client = Client()
-# or
-client = Client(processes=False)
-```
+## Two ways to balance load
+- **Work sharing**: whenever a processor creates new work, it *pushes* it out to a central pool or to another processor. Migration happens whenever work is created.
+- **Work stealing**: an idle processor *pulls* work from a busy one. Migration happens only when a processor runs dry.
 :::
 
-:::{.callout-important icon=false}
-## Notes
-
-- Can be more efficient than the multiprocessing scheduler on workloads that require multiple processes
-- Diagnostic dashboard and async API
-:::
-
-## Scheduling
 :::{.callout-tip icon=false}
-## Distributed (cluster) scheduler
-```python
-# You can swap out LocalCluster for other cluster types
+## Why stealing wins
+When everybody is busy, stealing costs **nothing at all**: no messages, no contention. Communication is proportional to the *imbalance*, not to the amount of work.
+:::
 
-from dask.distributed import LocalCluster
-from dask_kubernetes import KubeCluster
+## The deque discipline
+```{.tikz}
+\usetikzlibrary{arrows.meta}
+\begin{tikzpicture}[
+  scale=1.8, every node/.style={scale=1.8},
+  tsk/.style={draw, very thick, minimum width=2.6cm, minimum height=0.8cm, fill=gray!18, font=\small},
+  arr/.style={-{Latex[length=2.5mm]}, very thick}
+]
+  \node[tsk] (a) at (0,3.2) {big subtree};
+  \node[tsk] (b) at (0,2.4) {\dots};
+  \node[tsk] (c) at (0,1.6) {\dots};
+  \node[tsk] (d) at (0,0.8) {small, recent};
+  \draw[very thick] (-1.5,3.7) -- (-1.5,0.3) (1.5,3.7) -- (1.5,0.3);
 
-# cluster = LocalCluster()
-cluster = KubeCluster()  # example, you can swap out for Kubernetes
+  \node[align=left, font=\small] at (4.9,3.2) {\textbf{thief} steals from the \emph{top}\\[-1pt]{\scriptsize oldest task = near the root}\\[-1pt]{\scriptsize = one steal buys lots of work}};
+  \draw[arr] (1.6,3.2) -- (2.5,3.2);
 
-client = cluster.get_client()
+  \node[align=left, font=\small] at (4.9,0.8) {\textbf{owner} pushes/pops the \emph{bottom}\\[-1pt]{\scriptsize LIFO = depth-first = cache-hot}\\[-1pt]{\scriptsize = no locking in the common case}};
+  \draw[arr] (1.6,0.8) -- (2.5,0.8);
+
+  \node[font=\small] at (0,-0.1) {one worker's deque};
+  \path (-1.9,0) (-1.9,3.9);
+\end{tikzpicture}
 ```
+
+## The deque discipline
+:::{.callout-tip icon=false}
+## Why the two ends differ
+- The **owner** runs its own deque **LIFO**. That is a depth-first traversal: the data it needs is the data it just produced, still in L1/L2. It also keeps the memory footprint small (see `dask.order` later).
+- The **thief** takes from the **other** end, **FIFO**. The oldest entry sits nearest the root of the computation, so it is usually the *largest* remaining subtree. One expensive steal buys a long stretch of local work.
+- Because the two ends are different, owner and thief almost never touch the same slot -- the common path needs no lock at all (Cilk's THE protocol).
+:::
+
+## Work stealing: the theory {.scrollable}
+:::{.callout-important icon=false}
+## Blumofe & Leiserson (1999)
+For a **fully strict** computation (every task's results are used only by its parent --- the shape `spawn`/`sync` code produces) with work $T_1$ and span $T_\infty$, randomized work stealing on $P$ processors achieves
+$$
+\mathbb{E}[T_P] \;=\; \frac{T_1}{P} + O(T_\infty)
+$$
+-- **provably within a constant factor of optimal**, with no knowledge of task durations at all.
+
+::: {.callout-warning icon=false}
+## Notation
+This is Cilk's notation: $T_1 = W$ (time on one processor $=$ work) and $T_\infty = S$
+(time on unlimited processors $=$ span). It is the *same bound* as the greedy one.
+Note this $T_1$ has nothing to do with task $T_1$ in Graham's example.
+:::
+:::
+
+:::{.callout-tip icon=false}
+## And two bounds that matter more in practice
+- **Space**: $S_P \leq P \cdot S_1$ -- stealing cannot blow up memory more than linearly in $P$
+- **Communication**: expected $O(P \, T_\infty \, S_{\max})$ bytes, where $S_{\max}$ is the largest stack frame -- again proportional to the *span*, not the work
+:::
+
+## Work stealing: the theory
+:::{.callout-note icon=false}
+## Why random victim selection?
+A thief picks a victim **uniformly at random**. No load table, no coordination, no central state.
+
+If a constant fraction of the deques are non-empty, a steal succeeds with constant probability, so $O(P)$ steal attempts suffice per unit of progress. Any attempt to be smarter reintroduces the shared state you were trying to avoid.
+:::
+
+:::{.callout-tip icon=false}
+## The work-first principle (Cilk)
+Move overhead **off the work path and onto the critical path**. The work path executes $T_1$ times; the steal path executes $O(P\,T_\infty)$ times. Make the common case free, and let stealing be expensive.
+:::
+
+## Locality vs load balance
+:::{.callout-important icon=false}
+## The core tension
+Two jobs pull in opposite directions:
+
+- **balance**: keep every processor busy $\Rightarrow$ move tasks freely
+- **locality**: run a task where its input already is $\Rightarrow$ never move tasks
+
+Moving a task is cheap. Moving its 200 MB input is not.
+:::
+
+:::{.callout-note icon=false}
+## Delay scheduling (Zaharia et al., 2010)
+When the next task's preferred node is busy: **wait a few seconds** instead of launching it elsewhere. Slots free up constantly, so a short wait almost always wins the local slot.
+
+In the Hadoop fair scheduler this raised data locality to nearly 100% and roughly **doubled** throughput. Five lines of policy.
+:::
+
+## Sampling instead of state
+:::{.callout-note icon=false}
+## The power of two choices
+Placing a task on a **uniformly random** worker of $n$ leaves a maximum queue length of $\Theta(\log n / \log\log n)$.
+
+Sampling **two** at random and taking the shorter queue drops it to $\Theta(\log\log n)$ -- an exponential improvement, for one extra probe.
+:::
+
+:::{.callout-tip icon=false}
+## Why schedulers care
+It means you can get near-centralized quality of placement with **no centralized state at all**. Sparrow builds a whole distributed scheduler out of this idea: batch sampling plus *late binding* -- place reservations on several workers, and let the first one to become free actually claim the task.
+:::
+
+## Stragglers {.scrollable}
+:::{.callout-important icon=false}
+## The task that will not finish
+In a 10 000-task stage, the makespan is set by the slowest task, not the average one. Causes: a bad disk, a hot node, skewed data, a background daemon, a garbage collection pause.
+
+**Speculative execution**: once a stage is nearly done, launch duplicate copies of the laggards and take whichever finishes first.
+:::
+
+:::{.callout-note icon=false}
+## Refinements
+- **MapReduce (2004)**: back up the last few tasks near the end of a phase
+- **LATE (2008)**: rank by *longest approximate time to end*, not by progress so far -- crucial on heterogeneous nodes
+- **Mantri (2010)**: diagnose the *cause* (data skew vs slow node) before acting
+- **Dolly (2013)**: for small jobs, just clone every task up front -- cheaper than detecting stragglers
+:::
+
+:::{.callout-warning icon=false}
+## What it costs
+Speculation spends **cluster capacity** to buy **latency**. Duplicating the last 5% of a stage costs at most 5% extra work; duplicating aggressively on a busy cluster costs far more and slows down everyone else's jobs.
+
+Every refinement above is an attempt to spend that budget more precisely --- which is why they progress from *"back up the last few"* to *"diagnose the cause first"*.
+:::
+
+## Stragglers
+:::{.callout-tip icon=false}
+## The tail at scale (Dean & Barroso, 2013)
+If a single machine answers within 10 ms 99% of the time, then a request that fans out to **100** machines waits longer than 10 ms **63%** of the time.
+
+Rare slowness at the component level becomes the *common case* at the system level.
+:::
+
+:::{.callout-note icon=false}
+## Techniques
+**hedged requests** (send a second copy after the 95th-percentile delay), **tied requests** (send two, have them cancel each other), micro-partitioning, selective replication, "good enough" partial answers.
+:::
+
+## The scheduler is a parallel program
+:::{.callout-important icon=false}
+## Costs you now own
+- a **decision** must be cheaper than the task it schedules -- so per-task overhead sets your minimum useful task size
+- the scheduler holds state proportional to the **graph**, not the cluster: millions of tasks means millions of objects in one process
+- every policy above (stealing, speculation, locality delay) is **work the scheduler does while jobs are running**
+- and each one can misfire: stealing can thrash, speculation can double your cluster load, locality delay can idle machines
+:::
+
+# Beyond one framework
+
+## Who hands out the machines?
+:::{.callout-note icon=false}
+## Two levels of scheduling
+Everything so far was **intra-job**: one framework deciding which of *its* tasks runs on which of *its* workers.
+
+But those workers are processes on machines that somebody else hands out --- to this job and to fifty other tenants at the same time. That is **cluster resource management**, and it is a second, mostly independent scheduling problem.
 :::
 
 :::{.callout-important icon=false}
-## Notes
-- Can be setup either locally, or e.g. on a pre-existing Kubernetes cluster
-- Different cluster backends easy to swap
+## Why it is harder, not easier
+- jobs arrive **online**, with no notice and no cost estimates
+- multiple **resource dimensions**: CPU, memory, disk, network, GPUs, licences
+- **fairness** and priorities across teams that do not trust each other
+- long-running services and batch jobs sharing the same machines
+- decisions must be made in **milliseconds**, at tens of thousands of machines
 :::
 
-## Scheduling
-![](img/scheduling_overhead)
+## Four architectures
+```{.tikz}
+\usetikzlibrary{arrows.meta}
+\begin{tikzpicture}[
+  scale=2.0, every node/.style={scale=1.4},
+  s/.style={draw, very thick, rounded corners, minimum width=1.5cm, minimum height=0.65cm, fill=gray!20, font=\scriptsize, align=center},
+  st/.style={draw, very thick, minimum width=3.4cm, minimum height=0.6cm, fill=gray!40, font=\scriptsize},
+  arr/.style={-{Latex[length=1.8mm]}, thick},
+  ttl/.style={font=\small\bfseries}
+]
+ % 1 monolithic
+ \node[ttl] at (1.7,3.3) {monolithic};
+ \node[s]  (m1) at (1.7,2.5) {scheduler};
+ \node[st] (ms) at (1.7,1.5) {cluster state};
+ \draw[arr] (m1) -- (ms);
+ \node[font=\scriptsize, align=center] at (1.7,0.85) {Borg (orig.), Hadoop 1\\one code path, head-of-line blocking};
 
-## Issues
+ % 2 two-level
+ \node[ttl] at (7.3,3.3) {two-level};
+ \node[s] (f1) at (6.2,2.5) {fwk A};
+ \node[s] (f2) at (8.4,2.5) {fwk B};
+ \node[st] (rs) at (7.3,1.5) {resource manager};
+ \draw[arr] (rs) -- (f1) node[midway,left,font=\scriptsize]{offer};
+ \draw[arr] (rs) -- (f2);
+ \node[font=\scriptsize, align=center] at (7.3,0.85) {Mesos, YARN\\frameworks see only what is offered};
+
+ % 3 shared state
+ \node[ttl] at (1.7,-0.1) {shared state};
+ \node[s] (g1) at (0.6,-0.9) {sched 1};
+ \node[s] (g2) at (2.8,-0.9) {sched 2};
+ \node[st] (gs) at (1.7,-1.9) {shared cluster state};
+ \draw[arr] (g1) -- (gs);
+ \draw[arr] (g2) -- (gs);
+ \node[font=\scriptsize, align=center] at (1.7,-2.55) {Omega\\full view + optimistic concurrency};
+
+ % 4 distributed
+ \node[ttl] at (7.3,-0.1) {fully distributed};
+ \node[s] (d1) at (5.6,-0.9) {sched};
+ \node[s] (d2) at (7.3,-0.9) {sched};
+ \node[s] (d3) at (9.0,-0.9) {sched};
+ \node[st] (ds) at (7.3,-1.9) {workers (sampled)};
+ \draw[arr] (d1) -- (ds);
+ \draw[arr] (d2) -- (ds);
+ \draw[arr] (d3) -- (ds);
+ \node[font=\scriptsize, align=center] at (7.3,-2.55) {Sparrow\\no shared state, random probes};
+\end{tikzpicture}
+```
+
+## Four architectures
+:::{.callout-tip icon=false}
+## The trade-off in one line
+Going down the list, you trade **decision quality** for **decision throughput**.
+
+- *monolithic*: best decisions, one bottleneck, and every new policy goes into the same codebase
+- *two-level*: isolation between frameworks -- but a framework can only reason about the slice it was offered
+- *shared state*: everyone sees everything and commits transactions; conflicts are resolved by **retrying**, which is fine until contention is high
+- *distributed*: millisecond decisions at any scale, and no way to enforce a global policy
+:::
+
+## The zoo {.scrollable}
+:::{.callout-note icon=false}
+## Worth knowing by name
+
+| system | idea |
+|---|---|
+| **Borg** (Google, 2015) | monolithic, cells of tens of thousands of machines, priorities + quota, services and batch co-scheduled |
+| **Omega** (Google, 2013) | shared state, optimistic concurrency control between many schedulers |
+| **Mesos** (2011) | two-level *offers*; frameworks accept or decline |
+| **YARN** (2013) | two-level *requests*; per-application masters |
+| **Kubernetes** | filter (predicates) $\to$ score (priorities) $\to$ bind; pluggable framework |
+| **Sparrow** (2013) | decentralized, batch sampling + late binding |
+| **Quincy** (2009) / **Firmament** (2016) | encode fairness *and* locality as **min-cost flow**, solve it exactly |
+
+:::
+
+## Fairness with many resources
 :::{.callout-important icon=false}
-## Issues
+## What does "half the cluster" even mean?
+User A's jobs are CPU-bound; user B's are memory-bound. Splitting *cores* evenly wastes memory; splitting *memory* evenly wastes cores.
 
-- Resource starvation
-- Worker failures
-- Data loss
+**Dominant Resource Fairness** (Ghodsi et al., 2011): for each user, find the resource of which they consume the largest *share* -- their **dominant resource** -- and equalize those shares.
+:::
+
+:::{.callout-tip icon=false}
+## Why it caught on
+DRF is strategy-proof (lying about your needs does not help), envy-free, and Pareto-efficient. It is the default in Mesos and in YARN's capacity scheduler.
+
+Even "be fair" turns out to be a research problem.
+:::
+
+## Scale, for perspective
+:::{.callout-note icon=false}
+## The numbers
+- a Borg cell: **tens of thousands** of machines, one logically centralized scheduler
+- Google reported Borg placing on the order of **10 000 tasks per minute** per cell
+- Sparrow targets sub-second tasks with **millisecond** placement decisions, spread over many independent schedulers
+- a Dask scheduler: **a few thousand** tasks per second, single-threaded Python
+
+Different problems, four orders of magnitude apart in task size.
+:::
+
+# References
+
+## Books
+:::{.callout-note icon=false}
+## Fundamentals
+- O. Sinnen, *Task Scheduling for Parallel Systems*, Wiley, 2007 --- the DAG model used here: node/edge weights, CCR, list scheduling, clustering
+- U. A. Acar & G. E. Blelloch, *Algorithms: Parallel and Sequential*, CMU, freely available --- work, span, and the greedy scheduling principle
+- T. Cormen, C. Leiserson, R. Rivest & C. Stein, *Introduction to Algorithms*, 4th ed., MIT Press, 2022 --- ch. 26, *Parallel Algorithms*: work/span analysis and Brent's bound
+:::
+
+## Books
+:::{.callout-tip icon=false}
+## Scheduling theory
+- M. L. Pinedo, *Scheduling: Theory, Algorithms, and Systems*, Springer, 6th ed., 2022 --- the standard reference; source of the $\alpha \mid \beta \mid \gamma$ notation used here
+- P. Brucker, *Scheduling Algorithms*, Springer, 5th ed., 2007
+- J. Y-T. Leung (ed.), *Handbook of Scheduling: Algorithms, Models, and Performance Analysis*, Chapman & Hall/CRC, 2004
+- M. R. Garey & D. S. Johnson, *Computers and Intractability: A Guide to the Theory of NP-Completeness*, Freeman, 1979 --- where the scheduling reductions live
+:::
+
+## Books
+:::{.callout-note icon=false}
+## Parallel algorithms and task scheduling
+- H. Casanova, A. Legrand & Y. Robert, *Parallel Algorithms*, Chapman & Hall/CRC, 2008
+- H. El-Rewini, T. G. Lewis & H. H. Ali, *Task Scheduling in Parallel and Distributed Systems*, Prentice Hall, 1994
+- M. McCool, A. D. Robison & J. Reinders, *Structured Parallel Programming: Patterns for Efficient Computation*, Morgan Kaufmann, 2012 --- work/span reasoning applied to real patterns
+- M. Herlihy, N. Shavit, V. Luchangco & M. Spear, *The Art of Multiprocessor Programming*, 2nd ed., Morgan Kaufmann, 2020 --- ch. 16: work-stealing deques, in detail
+:::
+
+## Books
+:::{.callout-tip icon=false}
+## Systems and clusters
+- L. A. Barroso, U. Hölzle & P. Ranganathan, *The Datacenter as a Computer*, 3rd ed., Morgan & Claypool, 2018 --- warehouse-scale machines, utilization, tail latency
+- M. Kleppmann, *Designing Data-Intensive Applications*, O'Reilly --- batch and stream processing, fault tolerance
+- A. S. Tanenbaum & M. van Steen, *Distributed Systems*, 4th ed., 2023
+- R. & A. Arpaci-Dusseau, *Operating Systems: Three Easy Pieces*, freely available --- the *other* scheduler: CPU scheduling, MLFQ, multiprocessor scheduling
+:::
+
+## Papers
+:::{.callout-note icon=false}
+## Classical scheduling theory
+
+- R. L. Graham, *Bounds for certain multiprocessing anomalies*, Bell System Technical Journal, 1966
+- R. L. Graham, *Bounds on multiprocessing timing anomalies*, SIAM J. Applied Mathematics, 1969
+- T. C. Hu, *Parallel sequencing and assembly line problems*, Operations Research, 1961
+- E. G. Coffman & R. L. Graham, *Optimal scheduling for two-processor systems*, Acta Informatica, 1972
+- J. D. Ullman, *NP-complete scheduling problems*, J. Computer and System Sciences, 1975
+- C. Papadimitriou & M. Yannakakis, *Scheduling interval-ordered tasks*, SIAM J. Computing, 1979
+- C. Papadimitriou & M. Yannakakis, *Towards an architecture-independent analysis of parallel algorithms*, SIAM J. Computing, 1990
+- R. L. Graham, E. L. Lawler, J. K. Lenstra & A. H. G. Rinnooy Kan, *Optimization and approximation in deterministic sequencing and scheduling: a survey*, Annals of Discrete Mathematics, 1979 --- introduces the $\alpha \mid \beta \mid \gamma$ notation
+:::
+
+## Papers
+:::{.callout-note icon=false}
+## Complexity and approximation
+
+- R. M. Karp, *Reducibility among combinatorial problems*, Complexity of Computer Computations, 1972 --- `PARTITION` is one of the original 21
+- M. R. Garey & D. S. Johnson, *Computers and Intractability: A Guide to the Theory of NP-Completeness*, Freeman, 1979 --- `3-PARTITION`, and the weak/strong NP-hardness distinction
+- S. Sahni, *Algorithms for scheduling independent tasks*, JACM, 1976 --- pseudo-polynomial schemes and an FPTAS for fixed $m$
+- D. Hochbaum & D. Shmoys, *Using dual approximation algorithms for scheduling problems*, JACM, 1987 --- a PTAS for $P \mid\mid C_{\max}$
+:::
+
+## Papers
+:::{.callout-note icon=false}
+## Dependence analysis
+
+Where the true/anti/output taxonomy comes from:
+
+- A. J. Bernstein, *Analysis of programs for parallel processing*, IEEE Trans. Electronic Computers, EC-15(5), 1966 --- the original three conditions
+- D. J. Kuck, *The Structure of Computers and Computations*, Vol. 1, Wiley, 1978 --- the flow/anti/output terminology
+- D. J. Kuck, R. H. Kuhn, D. A. Padua, B. Leasure & M. Wolfe, *Dependence graphs and compiler optimizations*, POPL, 1981 --- dependence graphs, and which arcs a rewrite can remove
+- J. Ferrante, K. Ottenstein & J. Warren, *The program dependence graph and its use in optimization*, ACM TOPLAS, 1987 --- adds **control** dependence
+- R. Cytron, J. Ferrante, B. Rosen, M. Wegman & F. K. Zadeck, *Efficiently computing static single assignment form and the control dependence graph*, ACM TOPLAS, 1991 --- why single-assignment has no false dependences
+- R. Allen & K. Kennedy, *Optimizing Compilers for Modern Architectures: A Dependence-based Approach*, Morgan Kaufmann, 2001 --- the standard textbook
+- R. M. Tomasulo, *An efficient algorithm for exploiting multiple arithmetic units*, IBM J. R&D, 1967 --- renaming false dependences away in hardware
+:::
+
+## Papers
+:::{.callout-note icon=false}
+## DAG scheduling and heuristics
+
+- Y.-K. Kwok & I. Ahmad, *Static scheduling algorithms for allocating directed task graphs to multiprocessors*, ACM Computing Surveys, 1999
+- H. Topcuoglu, S. Hariri & M.-Y. Wu, *Performance-effective and low-complexity task scheduling for heterogeneous computing* (HEFT/CPOP), IEEE TPDS, 2002
+- R. P. Brent, *The parallel evaluation of general arithmetic expressions*, JACM, 1974
+:::
+
+:::{.callout-tip icon=false}
+## Work stealing
+
+- R. Blumofe & C. Leiserson, *Scheduling multithreaded computations by work stealing*, JACM, 1999
+- M. Frigo, C. Leiserson & K. Randall, *The implementation of the Cilk-5 multithreaded language*, PLDI, 1998
+- M. Mitzenmacher, *The power of two choices in randomized load balancing*, IEEE TPDS, 2001
+:::
+
+## Papers
+:::{.callout-note icon=false}
+## Cluster scheduling
+
+- J. Dean & S. Ghemawat, *MapReduce: simplified data processing on large clusters*, OSDI, 2004
+- M. Isard et al., *Quincy: fair scheduling for distributed computing clusters*, SOSP, 2009
+- M. Zaharia et al., *Improving MapReduce performance in heterogeneous environments* (LATE), OSDI, 2008
+- M. Zaharia et al., *Delay scheduling*, EuroSys, 2010
+- B. Hindman et al., *Mesos: a platform for fine-grained resource sharing*, NSDI, 2011
+- A. Ghodsi et al., *Dominant Resource Fairness*, NSDI, 2011
+- M. Schwarzkopf et al., *Omega: flexible, scalable schedulers for large compute clusters*, EuroSys, 2013
+- K. Ousterhout et al., *Sparrow: distributed, low latency scheduling*, SOSP, 2013
+- A. Verma et al., *Large-scale cluster management at Google with Borg*, EuroSys, 2015
+- I. Gog et al., *Firmament: fast, centralized cluster scheduling at scale*, OSDI, 2016
+- J. Dean & L. A. Barroso, *The tail at scale*, CACM, 2013
 :::
