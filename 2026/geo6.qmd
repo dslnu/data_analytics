@@ -81,7 +81,7 @@ For geographical problems this usually means asking whether our data displays a 
 > **are there places where this pattern does not hold?**
 :::
 
-## Choropleth mapping
+## Choropleth mapping {.scrollable}
 
 :::{.callout-tip icon=false}
 ## Overview
@@ -107,7 +107,7 @@ In broad terms: the **classification scheme** defines the number of classes and 
 > The effectiveness of a choropleth map depends largely on the **purpose** of the map.
 :::
 
-## Choropleth mapping
+## Choropleth mapping {.scrollable}
 
 ```{python}
 import seaborn
@@ -1000,6 +1000,22 @@ Visually, a clear case of positive spatial autocorrelation: few visible cases of
 
 ## Binary case: join counts {.scrollable}
 
+:::{.callout-note icon=false}
+## A note on the naming
+
+The checkerboard above is green and yellow; `esda` calls the two categories **black** and **white**. So the three counts are:
+
+| `esda` | here | meaning |
+|---|---|---|
+| `bb` | GG | both neighbours are **1** (Leave majority) |
+| `ww` | YY | both neighbours are **0** (Remain majority) |
+| `bw` | GY | the two neighbours **differ** |
+
+`bb` and `ww` are the *same-category* joins; `bw` is the *opposite* join.
+:::
+
+## Binary case: join counts {.scrollable}
+
 :::{.callout-tip icon=false}
 ## Computing the statistic
 
@@ -1014,32 +1030,102 @@ print("WW (Remain-Remain):  ", jc.ww)
 print("BW (opposite):       ", jc.bw)
 print("Total joins J:       ", jc.J)
 ```
+:::
 
-As is common in PySAL, `jc` holds far more than the statistic itself.
+## Every join is counted once {.scrollable}
+
+:::{.callout-important icon=false}
+## The three classes partition the joins
+
+Each neighbour pair falls into exactly one of the three classes, so they must sum to the total number of joins:
+
+$$\text{bb} + \text{ww} + \text{bw} = J$$
+
+```{python}
+print("bb + ww + bw =", jc.bb + jc.ww + jc.bw)
+print("J            =", jc.J)
+print("equal        :", jc.bb + jc.ww + jc.bw == jc.J)
+```
+
+$J$ is a property of the **weights matrix alone** --- it is the number of neighbour pairs in the graph, and it does not change when you relabel the observations. Only the *split* between the three classes carries information about the map.
+
+That is exactly why the permutation test works: shuffling `Leave` across the districts redistributes joins between `bb`, `ww` and `bw` while leaving $J$ fixed.
+:::
+
+:::{.callout-tip icon=false}
+## And there is more in the object
+
+```{python}
+print([a for a in dir(jc) if not a.startswith("_")])
+```
+
+As is common in PySAL, `jc` holds far more than the statistic itself --- simulated minima and maxima, a $\chi^2$ test, the crosstabulation, and directional autocorrelation results.
 :::
 
 ## Binary case: join counts {.scrollable}
+
 :::{.callout-important icon=false}
 ## Observed vs. expected
 
+The statistic compares the **observed** counts against what complete spatial randomness would produce. `esda` estimates the expectation by simulation:
+
 ```{python}
-print("Expected BB under randomness:", round(jc.mean_bb, 1))
-print("Expected BW under randomness:", round(jc.mean_bw, 1))
-print("p_sim_bb:", jc.p_sim_bb)
-print("p_sim_bw:", jc.p_sim_bw)
+#| code-fold: true
+pandas.DataFrame(
+    {
+        "observed": [jc.bb, jc.bw],
+        "expected": [round(jc.mean_bb, 1), round(jc.mean_bw, 1)],
+        "pseudo p": [jc.p_sim_bb, jc.p_sim_bw],
+    },
+    index=["bb (same category)", "bw (opposite)"],
+)
 ```
 
-Inference uses **999 random spatial permutations** of the observed values, creating synthetic maps under the null of complete spatial randomness.
+Read both rows together, because that is what identifies the *direction*:
 
-Both p-values are **one-sided with the alternative "observed is greater than under randomness"**. So:
+- same-category joins are **above** expectation --- 871 against 727
+- opposite joins are **far below** it --- 347 against 649, barely half
 
-- `p_sim_bb` ≈ 0.001 $\rightarrow$ far *more* same-category joins than expected
-- `p_sim_bw` = 1.0 $\rightarrow$ the observed opposite joins are *lower than every simulation*
-
-Together: clear **positive** spatial autocorrelation.
+More same and fewer opposite is the signature of **positive** spatial autocorrelation. The reverse --- more `bw` than expected --- would indicate a checkerboard, i.e. negative autocorrelation.
 :::
 
-## Continuous case: Moran's $I$
+:::{.callout-tip icon=false}
+## Interpreting `p_sim`
+
+An **empirical p-value**: the proportion of realizations in the simulation under spatial randomness that are more extreme than the observed value.
+
+A small enough p-value lets us **reject the hypothesis that the map is random** — the map displays more spatial pattern than we would expect if values had been randomly allocated to locations.
+
+`0.001` is actually the **minimum value obtainable** given 999 permutations.
+
+> If we generated a large number of maps with the same values randomly allocated over space, fewer than 0.1% would display a larger Moran's $I$ than the one we observe.
+
+Nearby areas tended to vote alike.
+:::
+
+
+## Reading the pseudo $p$-values {.scrollable}
+
+:::{.callout-warning icon=false}
+## Both are one-sided, and one of them looks alarming
+
+Inference uses **999 random spatial permutations** of the observed values, building synthetic maps under the null of complete spatial randomness and counting how often the simulated statistic is at least as large as the observed one.
+
+Both $p$-values are **one-sided**, with the alternative *"observed is greater than under randomness"*:
+
+- $p_{bb} = 0.001$ --- essentially no permutation produced this many same-category joins. Strong evidence.
+- $p_{bw} = 1.0$ --- **this is not a failed test.** It means the observed number of opposite joins was *lower than every single simulation*. Under a one-sided "greater than" alternative that is the most extreme possible result in the **opposite** direction, and it reinforces the conclusion rather than contradicting it.
+
+A $p$-value of exactly 1.0 from a one-sided permutation test is informative, not a bug. If you want a two-sided statement about `bw`, test the other tail.
+:::
+
+:::{.callout-note icon=false}
+## Where the statistic comes from
+
+Join counts are among the oldest spatial-autocorrelation statistics, formalised in **Cliff & Ord**, *Spatial Processes: Models and Applications*, Pion, 1981. They apply only to **binary** data --- which is why the next section moves to Moran's $I$ for the continuous case.
+:::
+
+## Continuous case: Moran's $I$ {.scrollable}
 
 :::{.callout-important icon=false}
 ## The statistic
@@ -1051,12 +1137,16 @@ $$
 where $n$ is the number of observations, $z_i$ the standardized value at $i$, and $w_{ij}$ the cell of $W$ for the pair $(i,j)$.
 :::
 
-:::{.callout-tip icon=false}
-## The Moran Plot
+## What is $z_i$? {.scrollable}
 
-A way of *visualizing* a spatial dataset to explore the nature and strength of spatial autocorrelation: a scatter plot of the variable of interest against its **spatial lag**.
+:::{.callout-important icon=false}
+## "Standardized" means centred on the mean
 
-The variable is usually **standardized** (mean subtracted) so values can be interpreted as above or below average.
+$$z_i = y_i - \bar{y}$$
+
+Each observation expressed as a **departure from the average**, so positive means above average and negative means below. Some texts use the full $z$-score, $(y_i - \bar{y})/\sigma$, and divide by the standard deviation as well.
+
+**For Moran's $I$ it makes no difference which you use.** Look at where $z$ appears in the formula: quadratically, in both the numerator ($z_i z_j$) and the denominator ($\sum_i z_i^2$). Multiply every $z$ by a constant $c$ and both scale by $c^2$, which cancels.
 :::
 
 ## Continuous case: Moran's $I$ {.scrollable}
@@ -1111,20 +1201,6 @@ moran = esda.moran.Moran(db["Pct_Leave"], w)
 print("Moran's I:", round(moran.I, 4))
 print("p_sim:    ", moran.p_sim)
 ```
-:::
-
-:::{.callout-tip icon=false}
-## Interpreting `p_sim`
-
-An **empirical p-value**: the proportion of realizations in the simulation under spatial randomness that are more extreme than the observed value.
-
-A small enough p-value lets us **reject the hypothesis that the map is random** — the map displays more spatial pattern than we would expect if values had been randomly allocated to locations.
-
-`0.001` is actually the **minimum value obtainable** given 999 permutations.
-
-> If we generated a large number of maps with the same values randomly allocated over space, fewer than 0.1% would display a larger Moran's $I$ than the one we observe.
-
-Nearby areas tended to vote alike.
 :::
 
 ## Continuous case: Moran's $I$ {.scrollable}
