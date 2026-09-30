@@ -1,0 +1,2150 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="MSDE">
+
+<title>Bioinformatics — reading notes – Big Data analytics / Applied Data analytics</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-6e268169e3b58a97b39eb04411ed87c3.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../styles.css">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">Big Data analytics / Applied Data analytics</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../bigdata.html"> 
+<span class="menu-text">Big Data analytics</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../applied.html"> 
+<span class="menu-text">Applied Data analytics</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../about.html"> 
+<span class="menu-text">About</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#how-to-use-this" id="toc-how-to-use-this" class="nav-link active" data-scroll-target="#how-to-use-this">How to use this</a>
+  <ul class="collapse">
+  <li><a href="#if-you-are-doing-a-project" id="toc-if-you-are-doing-a-project" class="nav-link" data-scroll-target="#if-you-are-doing-a-project">If you are doing a project</a></li>
+  <li><a href="#the-series-at-a-glance" id="toc-the-series-at-a-glance" class="nav-link" data-scroll-target="#the-series-at-a-glance">The series at a glance</a></li>
+  </ul></li>
+  <li><a href="#provenance" id="toc-provenance" class="nav-link" data-scroll-target="#provenance">Provenance</a>
+  <ul class="collapse">
+  <li><a href="#bio-1-biological-data-and-sequence-alignment" id="toc-bio-1-biological-data-and-sequence-alignment" class="nav-link" data-scroll-target="#bio-1-biological-data-and-sequence-alignment">Bio 1 — Biological data and sequence alignment</a></li>
+  <li><a href="#bio-2-homology-search-and-classification" id="toc-bio-2-homology-search-and-classification" class="nav-link" data-scroll-target="#bio-2-homology-search-and-classification">Bio 2 — Homology search and classification</a></li>
+  <li><a href="#bio-3-single-cell-data-and-preprocessing" id="toc-bio-3-single-cell-data-and-preprocessing" class="nav-link" data-scroll-target="#bio-3-single-cell-data-and-preprocessing">Bio 3 — Single-cell data and preprocessing</a></li>
+  <li><a href="#bio-4-cellular-structure-and-conditions" id="toc-bio-4-cellular-structure-and-conditions" class="nav-link" data-scroll-target="#bio-4-cellular-structure-and-conditions">Bio 4 — Cellular structure and conditions</a></li>
+  </ul></li>
+  <li><a href="#part-1-sequences-and-alignment" id="toc-part-1-sequences-and-alignment" class="nav-link" data-scroll-target="#part-1-sequences-and-alignment">Part 1 — Sequences and alignment</a>
+  <ul class="collapse">
+  <li><a href="#why-alignment-exists-at-all" id="toc-why-alignment-exists-at-all" class="nav-link" data-scroll-target="#why-alignment-exists-at-all">Why alignment exists at all</a></li>
+  <li><a href="#an-alignment-is-a-hypothesis" id="toc-an-alignment-is-a-hypothesis" class="nav-link" data-scroll-target="#an-alignment-is-a-hypothesis">An alignment is a hypothesis</a></li>
+  <li><a href="#the-dynamic-programming-recurrence" id="toc-the-dynamic-programming-recurrence" class="nav-link" data-scroll-target="#the-dynamic-programming-recurrence">The dynamic programming recurrence</a></li>
+  <li><a href="#global-versus-local-one-changed-line" id="toc-global-versus-local-one-changed-line" class="nav-link" data-scroll-target="#global-versus-local-one-changed-line">Global versus local: one changed line</a></li>
+  <li><a href="#scoring-is-where-the-biology-lives" id="toc-scoring-is-where-the-biology-lives" class="nav-link" data-scroll-target="#scoring-is-where-the-biology-lives">Scoring is where the biology lives</a></li>
+  <li><a href="#affine-gaps" id="toc-affine-gaps" class="nav-link" data-scroll-target="#affine-gaps">Affine gaps</a></li>
+  <li><a href="#four-modes-one-algorithm" id="toc-four-modes-one-algorithm" class="nav-link" data-scroll-target="#four-modes-one-algorithm">Four modes, one algorithm</a></li>
+  <li><a href="#where-the-parallelism-is" id="toc-where-the-parallelism-is" class="nav-link" data-scroll-target="#where-the-parallelism-is">Where the parallelism is</a></li>
+  <li><a href="#what-it-costs" id="toc-what-it-costs" class="nav-link" data-scroll-target="#what-it-costs">What it costs</a></li>
+  <li><a href="#multiple-alignment-and-the-second-np-hard-problem-in-this-course" id="toc-multiple-alignment-and-the-second-np-hard-problem-in-this-course" class="nav-link" data-scroll-target="#multiple-alignment-and-the-second-np-hard-problem-in-this-course">Multiple alignment, and the second NP-hard problem in this course</a></li>
+  </ul></li>
+  <li><a href="#part-2-search-and-classification" id="toc-part-2-search-and-classification" class="nav-link" data-scroll-target="#part-2-search-and-classification">Part 2 — Search and classification</a>
+  <ul class="collapse">
+  <li><a href="#homology-is-a-claim-about-history" id="toc-homology-is-a-claim-about-history" class="nav-link" data-scroll-target="#homology-is-a-claim-about-history">Homology is a claim about history</a></li>
+  <li><a href="#where-the-inference-chain-breaks" id="toc-where-the-inference-chain-breaks" class="nav-link" data-scroll-target="#where-the-inference-chain-breaks">Where the inference chain breaks</a></li>
+  <li><a href="#the-database-is-not-a-neutral-instrument" id="toc-the-database-is-not-a-neutral-instrument" class="nav-link" data-scroll-target="#the-database-is-not-a-neutral-instrument">The database is not a neutral instrument</a></li>
+  <li><a href="#the-problem-exhaustive-alignment-cannot-solve" id="toc-the-problem-exhaustive-alignment-cannot-solve" class="nav-link" data-scroll-target="#the-problem-exhaustive-alignment-cannot-solve">The problem exhaustive alignment cannot solve</a></li>
+  <li><a href="#why-k-mer-filtering-works" id="toc-why-k-mer-filtering-works" class="nav-link" data-scroll-target="#why-k-mer-filtering-works">Why <span class="math inline">\(k\)</span>-mer filtering works</a></li>
+  <li><a href="#what-the-heuristic-gives-up" id="toc-what-the-heuristic-gives-up" class="nav-link" data-scroll-target="#what-the-heuristic-gives-up">What the heuristic gives up</a></li>
+  <li><a href="#the-parameters-that-actually-decide-the-outcome" id="toc-the-parameters-that-actually-decide-the-outcome" class="nav-link" data-scroll-target="#the-parameters-that-actually-decide-the-outcome">The parameters that actually decide the outcome</a></li>
+  <li><a href="#e-values" id="toc-e-values" class="nav-link" data-scroll-target="#e-values">E-values</a></li>
+  <li><a href="#profiles-and-the-twilight-zone" id="toc-profiles-and-the-twilight-zone" class="nav-link" data-scroll-target="#profiles-and-the-twilight-zone">Profiles, and the twilight zone</a></li>
+  <li><a href="#sensitivity-and-specificity-are-a-decision-not-a-statistic" id="toc-sensitivity-and-specificity-are-a-decision-not-a-statistic" class="nav-link" data-scroll-target="#sensitivity-and-specificity-are-a-decision-not-a-statistic">Sensitivity and specificity are a decision, not a statistic</a></li>
+  <li><a href="#the-feature-table-is-the-whole-interface" id="toc-the-feature-table-is-the-whole-interface" class="nav-link" data-scroll-target="#the-feature-table-is-the-whole-interface">The feature table is the whole interface</a></li>
+  <li><a href="#look-before-you-classify" id="toc-look-before-you-classify" class="nav-link" data-scroll-target="#look-before-you-classify">Look before you classify</a></li>
+  <li><a href="#distances-and-one-axis-by-hand" id="toc-distances-and-one-axis-by-hand" class="nav-link" data-scroll-target="#distances-and-one-axis-by-hand">Distances, and one axis by hand</a></li>
+  <li><a href="#reading-an-ordination-plot" id="toc-reading-an-ordination-plot" class="nav-link" data-scroll-target="#reading-an-ordination-plot">Reading an ordination plot</a></li>
+  <li><a href="#naive-bayes-over-k-mers" id="toc-naive-bayes-over-k-mers" class="nav-link" data-scroll-target="#naive-bayes-over-k-mers">Naive Bayes over <span class="math inline">\(k\)</span>-mers</a></li>
+  <li><a href="#the-leakage-trap" id="toc-the-leakage-trap" class="nav-link" data-scroll-target="#the-leakage-trap">The leakage trap</a></li>
+  <li><a href="#what-leakage-actually-costs" id="toc-what-leakage-actually-costs" class="nav-link" data-scroll-target="#what-leakage-actually-costs">What leakage actually costs</a></li>
+  <li><a href="#the-confidence-measure-that-does-work" id="toc-the-confidence-measure-that-does-work" class="nav-link" data-scroll-target="#the-confidence-measure-that-does-work">The confidence measure that does work</a></li>
+  <li><a href="#the-fix-split-at-the-level-you-want-to-generalise-to" id="toc-the-fix-split-at-the-level-you-want-to-generalise-to" class="nav-link" data-scroll-target="#the-fix-split-at-the-level-you-want-to-generalise-to">The fix: split at the level you want to generalise to</a></li>
+  <li><a href="#accuracy-is-the-wrong-headline" id="toc-accuracy-is-the-wrong-headline" class="nav-link" data-scroll-target="#accuracy-is-the-wrong-headline">Accuracy is the wrong headline</a></li>
+  <li><a href="#three-things-to-demand-of-a-classifier" id="toc-three-things-to-demand-of-a-classifier" class="nav-link" data-scroll-target="#three-things-to-demand-of-a-classifier">Three things to demand of a classifier</a></li>
+  </ul></li>
+  <li><a href="#part-3-single-cell-data-and-preprocessing" id="toc-part-3-single-cell-data-and-preprocessing" class="nav-link" data-scroll-target="#part-3-single-cell-data-and-preprocessing">Part 3 — Single-cell data and preprocessing</a>
+  <ul class="collapse">
+  <li><a href="#what-makes-this-a-data-problem" id="toc-what-makes-this-a-data-problem" class="nav-link" data-scroll-target="#what-makes-this-a-data-problem">What makes this a data problem</a></li>
+  <li><a href="#how-the-cells-get-separated" id="toc-how-the-cells-get-separated" class="nav-link" data-scroll-target="#how-the-cells-get-separated">How the cells get separated</a></li>
+  <li><a href="#which-barcodes-are-actually-cells" id="toc-which-barcodes-are-actually-cells" class="nav-link" data-scroll-target="#which-barcodes-are-actually-cells">Which barcodes are actually cells?</a></li>
+  <li><a href="#two-kinds-of-zero" id="toc-two-kinds-of-zero" class="nav-link" data-scroll-target="#two-kinds-of-zero">Two kinds of zero</a></li>
+  <li><a href="#why-anndata" id="toc-why-anndata" class="nav-link" data-scroll-target="#why-anndata">Why AnnData</a></li>
+  <li><a href="#quality-control-and-why-the-covariates-must-be-read-jointly" id="toc-quality-control-and-why-the-covariates-must-be-read-jointly" class="nav-link" data-scroll-target="#quality-control-and-why-the-covariates-must-be-read-jointly">Quality control, and why the covariates must be read jointly</a></li>
+  <li><a href="#ambient-rna-and-doublets" id="toc-ambient-rna-and-doublets" class="nav-link" data-scroll-target="#ambient-rna-and-doublets">Ambient RNA and doublets</a></li>
+  <li><a href="#normalization" id="toc-normalization" class="nav-link" data-scroll-target="#normalization">Normalization</a></li>
+  <li><a href="#feature-selection-and-how-arbitrary-it-is" id="toc-feature-selection-and-how-arbitrary-it-is" class="nav-link" data-scroll-target="#feature-selection-and-how-arbitrary-it-is">Feature selection, and how arbitrary it is</a></li>
+  <li><a href="#dimensionality-reduction-and-reading-a-umap-honestly" id="toc-dimensionality-reduction-and-reading-a-umap-honestly" class="nav-link" data-scroll-target="#dimensionality-reduction-and-reading-a-umap-honestly">Dimensionality reduction, and reading a UMAP honestly</a></li>
+  <li><a href="#scale" id="toc-scale" class="nav-link" data-scroll-target="#scale">Scale</a></li>
+  </ul></li>
+  <li><a href="#part-4-cellular-structure-and-conditions" id="toc-part-4-cellular-structure-and-conditions" class="nav-link" data-scroll-target="#part-4-cellular-structure-and-conditions">Part 4 — Cellular structure and conditions</a>
+  <ul class="collapse">
+  <li><a href="#clustering-the-graph-not-the-matrix" id="toc-clustering-the-graph-not-the-matrix" class="nav-link" data-scroll-target="#clustering-the-graph-not-the-matrix">Clustering the graph, not the matrix</a></li>
+  <li><a href="#the-resolution-problem" id="toc-the-resolution-problem" class="nav-link" data-scroll-target="#the-resolution-problem">The resolution problem</a></li>
+  <li><a href="#sub-clustering" id="toc-sub-clustering" class="nav-link" data-scroll-target="#sub-clustering">Sub-clustering</a></li>
+  <li><a href="#annotation-and-why-it-resists-automation" id="toc-annotation-and-why-it-resists-automation" class="nav-link" data-scroll-target="#annotation-and-why-it-resists-automation">Annotation, and why it resists automation</a></li>
+  <li><a href="#a-worked-failure" id="toc-a-worked-failure" class="nav-link" data-scroll-target="#a-worked-failure">A worked failure</a></li>
+  <li><a href="#integration" id="toc-integration" class="nav-link" data-scroll-target="#integration">Integration</a></li>
+  <li><a href="#deep-generative-integration" id="toc-deep-generative-integration" class="nav-link" data-scroll-target="#deep-generative-integration">Deep generative integration</a></li>
+  <li><a href="#multiple-testing-at-single-cell-scale" id="toc-multiple-testing-at-single-cell-scale" class="nav-link" data-scroll-target="#multiple-testing-at-single-cell-scale">Multiple testing, at single-cell scale</a></li>
+  <li><a href="#a-library-bug-worth-knowing-about" id="toc-a-library-bug-worth-knowing-about" class="nav-link" data-scroll-target="#a-library-bug-worth-knowing-about">A library bug worth knowing about</a></li>
+  <li><a href="#conditions-and-why-per-cell-tests-are-wrong" id="toc-conditions-and-why-per-cell-tests-are-wrong" class="nav-link" data-scroll-target="#conditions-and-why-per-cell-tests-are-wrong">Conditions, and why per-cell tests are wrong</a></li>
+  </ul></li>
+  <li><a href="#cross-cutting-themes" id="toc-cross-cutting-themes" class="nav-link" data-scroll-target="#cross-cutting-themes">Cross-cutting themes</a></li>
+  <li><a href="#glossary" id="toc-glossary" class="nav-link" data-scroll-target="#glossary">Glossary</a></li>
+  <li><a href="#bibliography" id="toc-bibliography" class="nav-link" data-scroll-target="#bibliography">Bibliography</a>
+  <ul class="collapse">
+  <li><a href="#sequences" id="toc-sequences" class="nav-link" data-scroll-target="#sequences">Sequences</a></li>
+  <li><a href="#search-and-classification" id="toc-search-and-classification" class="nav-link" data-scroll-target="#search-and-classification">Search and classification</a></li>
+  <li><a href="#single-cell" id="toc-single-cell" class="nav-link" data-scroll-target="#single-cell">Single cell</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Bioinformatics — reading notes</h1>
+<p class="subtitle lead">Companion to Bio 1–4, with full source provenance</p>
+</div>
+
+
+<div class="quarto-title-meta-author">
+  <div class="quarto-title-meta-heading">Author</div>
+  <div class="quarto-title-meta-heading">Affiliation</div>
+  
+    <div class="quarto-title-meta-contents">
+    <p class="author">MSDE </p>
+  </div>
+  <div class="quarto-title-meta-contents">
+        <p class="affiliation">
+            Lviv University
+          </p>
+      </div>
+  </div>
+
+<div class="quarto-title-meta">
+
+      
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="how-to-use-this" class="level2">
+<h2 class="anchored" data-anchor-id="how-to-use-this">How to use this</h2>
+<p>The four Bio decks move fast and compress a great deal into single lines. This is the prose version, plus the thing the slides cannot carry: <strong>a complete map of where every section came from</strong>.</p>
+<p>Two sources, both open:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>source</th>
+<th>licence</th>
+<th>covers</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>An Introduction to Applied Bioinformatics</strong> (Caporaso) — <a href="https://readiab.org">readiab.org</a></td>
+<td>CC BY-NC-SA 4.0</td>
+<td>Bio 1–2 (sequences)</td>
+</tr>
+<tr class="even">
+<td><strong>Single-cell best practices</strong> (Heumos, Schaar, Lance <em>et al.</em>) — <a href="https://www.sc-best-practices.org">sc-best-practices.org</a></td>
+<td>Apache 2.0</td>
+<td>Bio 3–4 (single cell)</td>
+</tr>
+</tbody>
+</table>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The <code>.qmd</code> source of each deck also carries <code>&lt;!-- SOURCE: ... --&gt;</code> comments at every section boundary, naming the originating chapter and URL. Those comments are invisible in the rendered slides but travel with the file, so provenance survives editing.</p>
+</div>
+</div>
+<section id="if-you-are-doing-a-project" class="level3">
+<h3 class="anchored" data-anchor-id="if-you-are-doing-a-project">If you are doing a project</h3>
+<p>The eight bioinformatics projects in <a href="../projects.html">Course projects</a> each rest on one part of these notes. The sections listed are the ones that carry the argument the project is graded on, not merely related reading.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>project</th>
+<th>read first</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="../projects.html#b1-build-a-homology-searcher-then-find-out-what-it-cannot-see"><strong>B1</strong> — build a homology searcher</a></td>
+<td><a href="#the-dynamic-programming-recurrence">The DP recurrence</a> · <a href="#four-modes-one-algorithm">Four modes</a> · <a href="#what-it-costs">What it costs</a> · <a href="#why-k-mer-filtering-works">Why <span class="math inline">\(k\)</span>-mer filtering works</a> · <a href="#what-the-heuristic-gives-up">What the heuristic gives up</a> · <a href="#profiles-and-the-twilight-zone">Profiles and the twilight zone</a></td>
+</tr>
+<tr class="even">
+<td><a href="../projects.html#b2-a-taxonomic-classifier-that-knows-when-to-say-i-dont-know"><strong>B2</strong> — a classifier that abstains</a></td>
+<td><a href="#the-feature-table-is-the-whole-interface">The feature table</a> · <a href="#naive-bayes-over-k-mers">Naive Bayes over <span class="math inline">\(k\)</span>-mers</a> · <a href="#the-leakage-trap">The leakage trap</a> · <a href="#what-leakage-actually-costs">What leakage actually costs</a> · <a href="#the-confidence-measure-that-does-work">The confidence measure that does work</a> · <a href="#the-fix-split-at-the-level-you-want-to-generalise-to">The fix</a> · <a href="#three-things-to-demand-of-a-classifier">Three things to demand</a></td>
+</tr>
+<tr class="odd">
+<td><a href="../projects.html#b3-a-single-cell-analysis-you-can-defend"><strong>B3</strong> — an analysis you can defend</a></td>
+<td>all of <a href="#part-3-single-cell-data-and-preprocessing">Part 3</a>, then <a href="#clustering-the-graph-not-the-matrix">Clustering</a> · <a href="#the-resolution-problem">The resolution problem</a> · <a href="#sub-clustering">Sub-clustering</a> · <a href="#annotation-and-why-it-resists-automation">Annotation</a> · <a href="#a-worked-failure">A worked failure</a></td>
+</tr>
+<tr class="even">
+<td><a href="../projects.html#b4-did-anything-actually-change"><strong>B4</strong> — did anything actually change?</a></td>
+<td><a href="#integration">Integration</a> · <a href="#deep-generative-integration">Deep generative integration</a> · <a href="#conditions-and-why-per-cell-tests-are-wrong">Conditions and why per-cell tests are wrong</a> · <a href="#multiple-testing-at-single-cell-scale">Multiple testing</a></td>
+</tr>
+<tr class="odd">
+<td><a href="../projects.html#b5-a-microbiome-community-analysis"><strong>B5</strong> — a microbiome community analysis</a></td>
+<td><a href="#look-before-you-classify">Look before you classify</a> · <a href="#distances-and-one-axis-by-hand">Distances, and one axis by hand</a> · <a href="#reading-an-ordination-plot">Reading an ordination plot</a> · <a href="#conditions-and-why-per-cell-tests-are-wrong">Conditions and why per-cell tests are wrong</a> <em>(compositional closure)</em></td>
+</tr>
+<tr class="even">
+<td><a href="../projects.html#b6-from-alignment-to-tree-and-how-much-to-believe-it"><strong>B6</strong> — from alignment to tree</a></td>
+<td><a href="#multiple-alignment-and-the-second-np-hard-problem-in-this-course">Multiple alignment</a> · <a href="#an-alignment-is-a-hypothesis">An alignment is a hypothesis</a> · <a href="#scoring-is-where-the-biology-lives">Scoring is where the biology lives</a></td>
+</tr>
+<tr class="odd">
+<td><a href="../projects.html#b7-making-a-single-cell-pipeline-scale"><strong>B7</strong> — making a pipeline scale</a></td>
+<td><a href="#scale">Scale</a> · <a href="#why-anndata">Why AnnData</a> · <a href="#two-kinds-of-zero">Two kinds of zero</a> · <a href="#where-the-parallelism-is">Where the parallelism is</a></td>
+</tr>
+<tr class="even">
+<td><a href="../projects.html#b8-a-classifier-that-meets-a-tissue-it-has-never-seen"><strong>B8</strong> — a classifier meets a new tissue</a></td>
+<td><a href="#annotation-and-why-it-resists-automation">Annotation</a> · <a href="#integration">Integration</a> · <a href="#the-confidence-measure-that-does-work">The confidence measure that does work</a> · <a href="#three-things-to-demand-of-a-classifier">Three things to demand</a></td>
+</tr>
+</tbody>
+</table>
+<p>Two sections are worth reading whichever project you take, because every project is graded on them: <a href="#cross-cutting-themes">Cross-cutting themes</a>, and — for B2 and B4 especially — the i.i.d. discussion that runs through <a href="#the-fix-split-at-the-level-you-want-to-generalise-to">the fix</a> and <a href="#conditions-and-why-per-cell-tests-are-wrong">per-cell tests</a>.</p>
+</section>
+<section id="the-series-at-a-glance" class="level3">
+<h3 class="anchored" data-anchor-id="the-series-at-a-glance">The series at a glance</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>deck</th>
+<th>topic</th>
+<th>source</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Bio 1</strong></td>
+<td>Biological data and sequence alignment</td>
+<td>readIAB ch.&nbsp;1–3</td>
+</tr>
+<tr class="even">
+<td><strong>Bio 2</strong></td>
+<td>Homology search and classification</td>
+<td>readIAB ch.&nbsp;4–5</td>
+</tr>
+<tr class="odd">
+<td><strong>Bio 3</strong></td>
+<td>Single-cell data and preprocessing</td>
+<td>sc-best-practices, Intro + Preprocessing</td>
+</tr>
+<tr class="even">
+<td><strong>Bio 4</strong></td>
+<td>Cellular structure and conditions</td>
+<td>sc-best-practices, Cellular structure + Conditions</td>
+</tr>
+</tbody>
+</table>
+<p>The sequence half is about <strong>one molecule at a time, exactly</strong>. The single-cell half is about <strong>millions of measurements, statistically</strong>. Both end in the same place: an approximate answer whose error you have to characterise yourself.</p>
+<hr>
+</section>
+</section>
+<section id="provenance" class="level2">
+<h2 class="anchored" data-anchor-id="provenance">Provenance</h2>
+<p>Section-by-section, where each part of each deck came from.</p>
+<section id="bio-1-biological-data-and-sequence-alignment" class="level3">
+<h3 class="anchored" data-anchor-id="bio-1-biological-data-and-sequence-alignment">Bio 1 — Biological data and sequence alignment</h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>deck section</th>
+<th>source</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><em>Biological information</em></td>
+<td><a href="https://readiab.org/biological-information.html">readIAB ch.&nbsp;2, <em>Biological Information</em></a> — Central Dogma; Binary and decimal numerical systems; Encoding messages in bits; Protein sequences are encoded in a base 4 system; Quantifying information; The genetic code</td>
+</tr>
+<tr class="even">
+<td><em>What is an alignment?</em></td>
+<td><a href="https://readiab.org/pairwise-alignment.html">readIAB ch.&nbsp;3, <em>Pairwise sequence alignment</em></a> — What is a sequence alignment?; A first algorithm for aligning a pair of sequences; Why this simple procedure is too simplistic</td>
+</tr>
+<tr class="odd">
+<td><em>Reading the other strand</em> / <em>The alphabet is not four letters</em></td>
+<td>readIAB ch.&nbsp;2 (implicit in the Central Dogma section) — made explicit because both are constant sources of silent bugs</td>
+</tr>
+<tr class="even">
+<td><em>Why not just compare position by position?</em></td>
+<td>readIAB ch.&nbsp;3 opening — the hemoglobin Hamming-distance example</td>
+</tr>
+<tr class="odd">
+<td><em>What the matrix shows you</em> (dot plots)</td>
+<td>extends readIAB ch.&nbsp;3, <em>Step 3: Identify the longest diagonals</em></td>
+</tr>
+<tr class="even">
+<td><em>Scoring</em></td>
+<td>readIAB ch.&nbsp;3, <em>Differential scoring of matches and mismatches</em></td>
+</tr>
+<tr class="odd">
+<td><em>Choosing a matrix</em></td>
+<td><strong>not in the book</strong> — the BLOSUM/PAM numbering inversion, and matrices as packages with their gap penalties</td>
+</tr>
+<tr class="even">
+<td><em>Needleman-Wunsch</em></td>
+<td>readIAB ch.&nbsp;3, <em>A better approach for global pairwise alignment…</em> — Stepwise NW, steps 1–3; Automating NW with Python; A note on computing <span class="math inline">\(F\)</span> and <span class="math inline">\(T\)</span></td>
+</tr>
+<tr class="odd">
+<td><em>Smith-Waterman</em></td>
+<td>readIAB ch.&nbsp;3, <em>Global versus local alignment</em>; <em>Smith-Waterman local sequence alignment</em></td>
+</tr>
+<tr class="even">
+<td><em>Four modes, one algorithm</em></td>
+<td>extends readIAB ch.&nbsp;3 — semi-global and overlap added; read mapping and assembly depend on them</td>
+</tr>
+<tr class="odd">
+<td><em>Where the parallelism is</em></td>
+<td><strong>not in the book</strong> — anti-diagonal work/span, connecting to the DAG-scheduling lectures</td>
+</tr>
+<tr class="even">
+<td><em>Gaps and cost</em></td>
+<td>readIAB ch.&nbsp;3, <em>Differential scoring of gaps</em>; <em>How long does pairwise sequence alignment take?</em></td>
+</tr>
+<tr class="odd">
+<td><em>Memory, not just time</em> / <em>Banded alignment</em></td>
+<td><strong>not in the book</strong> — added for the space-complexity dimension (Hirschberg 1975)</td>
+</tr>
+<tr class="even">
+<td><em>Beyond pairs</em> (MSA) — <em>Aligning more than two</em>, <em>Exact MSA is out of reach</em>, <em>Progressive alignment</em>, <em>Once a gap, always a gap</em>, <em>What to distrust in an MSA</em></td>
+<td><strong>not in the book</strong> — readIAB 2nd ed.&nbsp;ch.&nbsp;3 stops at pairwise; added because Bio 2’s profile methods depend on it and it is the cleanest NP-hard-solved-greedily example in the course</td>
+</tr>
+</tbody>
+</table>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Warning
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Where the deck departs from the book.</strong> readIAB benchmarks <code>skbio.alignment.local_pairwise_align_ssw</code>, which was <strong>removed in scikit-bio 0.7.x</strong>. The deck substitutes Biopython’s <code>PairwiseAligner</code> as the fast implementation. This turns out to be a better comparison anyway: same algorithm, same score (56.0), <strong>669×</strong> apart in runtime — pure Python against C.</p>
+</div>
+</div>
+</section>
+<section id="bio-2-homology-search-and-classification" class="level3">
+<h3 class="anchored" data-anchor-id="bio-2-homology-search-and-classification">Bio 2 — Homology search and classification</h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>deck section</th>
+<th>source</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><em>The search problem</em></td>
+<td><a href="https://readiab.org/database-searching.html">readIAB ch.&nbsp;4, <em>Sequence homology searching</em></a> — Defining the problem; A complete homology search function</td>
+</tr>
+<tr class="even">
+<td><em>Homolog, ortholog, paralog</em> / <em>Similar is not homologous</em></td>
+<td>readIAB ch.&nbsp;4, <em>Defining the problem</em> — vocabulary the chapter assumes throughout</td>
+</tr>
+<tr class="odd">
+<td><em>The database has its own problems</em></td>
+<td><strong>not in the book</strong> — added because redundancy, inferred annotation and sampling bias all flatter a result</td>
+</tr>
+<tr class="even">
+<td><em>An inverted index</em></td>
+<td>readIAB ch.&nbsp;4, <em>Reducing the runtime for database searches</em></td>
+</tr>
+<tr class="odd">
+<td><em>How BLAST actually works</em></td>
+<td>readIAB ch.&nbsp;4, <em>Heuristic algorithms</em> — random reference selection; composition-based selection; <span class="math inline">\(k\)</span>-mer content</td>
+</tr>
+<tr class="even">
+<td><em>Word size</em> / <em>Spaced seeds</em> / <em>The BLAST family</em></td>
+<td><strong>not in the book</strong> — the practical layer students meet first (Ma <em>et al.</em> 2002 for spaced seeds)</td>
+</tr>
+<tr class="odd">
+<td><em>Minimizers</em></td>
+<td><strong>not in the book</strong> — added because every modern aligner uses them (Roberts <em>et al.</em> 2004)</td>
+</tr>
+<tr class="even">
+<td><em>Percent identity is not enough</em></td>
+<td>readIAB ch.&nbsp;4, <em>Metrics of alignment quality</em></td>
+</tr>
+<tr class="odd">
+<td><em>Statistical significance</em> / <em>Bit scores</em> / <em>Evaluating a search</em></td>
+<td>readIAB ch.&nbsp;4, <em>Determining the statistical significance of a pairwise alignment</em>; <em>False positives, false negatives, p-values, and alpha</em>; <em>Interpreting alignment scores in context</em></td>
+</tr>
+<tr class="even">
+<td><em>The limit of detection</em></td>
+<td>readIAB ch.&nbsp;4, <em>Exploring the limit of detection of sequence homology searches</em></td>
+</tr>
+<tr class="odd">
+<td><em>Profiles beat pairs</em> / <em>Two ways to build a profile</em></td>
+<td><strong>not in the book</strong> — delivers on the twilight-zone promise the chapter makes (Altschul 1997; Eddy 2011)</td>
+</tr>
+<tr class="even">
+<td><em>Machine learning</em> / <em>The feature table</em> / <em>Where the modelling happened</em></td>
+<td><a href="https://readiab.org/machine-learning.html">readIAB ch.&nbsp;5, <em>Machine learning in bioinformatics</em></a> — The feature table; Supervised classification; Naive Bayes classifiers; Training data, test data, and cross-validation</td>
+</tr>
+<tr class="odd">
+<td><em>Two kinds of learning</em></td>
+<td>readIAB ch.&nbsp;5, <em>Unsupervised versus supervised learning methods</em></td>
+</tr>
+<tr class="even">
+<td><em>Distances between samples</em> / <em>The distance matrix</em></td>
+<td>readIAB ch.&nbsp;5, <em>Unsupervised learning</em>; <em>Computing distances between samples</em> (Jaccard distance, <code>beta_diversity</code>)</td>
+</tr>
+<tr class="odd">
+<td><em>Ordination</em> / <em>Polar ordination by hand</em></td>
+<td>readIAB ch.&nbsp;5, <em>Polar ordination</em></td>
+</tr>
+<tr class="even">
+<td><em>Principal Coordinates Analysis</em></td>
+<td>readIAB ch.&nbsp;5, <em>Principal Coordinates Analysis (PCoA)</em></td>
+</tr>
+<tr class="odd">
+<td><em>Reading an ordination plot</em></td>
+<td>readIAB ch.&nbsp;5, <em>Interpreting ordination plots</em> — Axis order; Uncorrelated axes; Directionality of the axes</td>
+</tr>
+<tr class="even">
+<td><em>The same idea, twice</em> / <em>And the caveats transfer</em></td>
+<td><strong>not in the book</strong> — the explicit bridge to Bio 3’s PCA/UMAP, and why PCoA’s caveats are the gentle ones</td>
+</tr>
+<tr class="odd">
+<td><em>The leakage trap</em> / <em>What leakage costs you</em></td>
+<td>extends readIAB ch.&nbsp;5 with the novel-organism failure; framing follows Kapoor &amp; Narayanan 2023</td>
+</tr>
+<tr class="even">
+<td><em>The bootstrap confidence</em> / <em>Does it catch the unknown?</em> / <em>It works — and <code>predict_proba</code> did not</em> / <em>Why the bootstrap sees it</em> / <em>Still not a novelty detector</em></td>
+<td>readIAB ch.&nbsp;5, <em>Evaluating our confidence in the results of the Naive Bayes classifier</em> — applied here to the novel-genus case</td>
+</tr>
+<tr class="odd">
+<td><em>Splitting by group</em> / <em>Expect the score to drop</em> / <em>Accuracy is the wrong headline</em> / <em>What a classifier should output</em></td>
+<td><strong>not in the book</strong> — the fix, the metrics and the abstention rule that the leakage diagnosis implies</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="bio-3-single-cell-data-and-preprocessing" class="level3">
+<h3 class="anchored" data-anchor-id="bio-3-single-cell-data-and-preprocessing">Bio 3 — Single-cell data and preprocessing</h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>deck section</th>
+<th>source</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><em>What the data is</em></td>
+<td><a href="https://www.sc-best-practices.org/introduction/scrna_seq.html">Introduction / Single-cell RNA sequencing</a> and <a href="https://www.sc-best-practices.org/introduction/raw_data_processing.html">Raw data processing</a></td>
+</tr>
+<tr class="even">
+<td><em>AnnData</em></td>
+<td><a href="https://www.sc-best-practices.org/introduction/fundamental_data_structures_and_frameworks.html">Introduction / Fundamental data structures and frameworks</a></td>
+</tr>
+<tr class="odd">
+<td><em>Quality control</em></td>
+<td><a href="https://www.sc-best-practices.org/preprocessing_visualization/quality_control.html">Preprocessing / Quality Control</a> — Motivation; Filtering low quality cells (the MAD method); Correction of ambient RNA; Doublet detection</td>
+</tr>
+<tr class="even">
+<td><em>Normalization</em></td>
+<td><a href="https://www.sc-best-practices.org/preprocessing_visualization/normalization.html">Preprocessing / Normalization</a> — Motivation (Gamma-Poisson); Shifted logarithm; Analytic Pearson residuals</td>
+</tr>
+<tr class="odd">
+<td><em>Feature selection</em></td>
+<td><a href="https://www.sc-best-practices.org/preprocessing_visualization/feature_selection.html">Preprocessing / Feature selection</a></td>
+</tr>
+<tr class="even">
+<td><em>Unwanted variation: the cell cycle</em></td>
+<td>sc-best-practices treats this in the annotation chapter; moved here as a preprocessing decision</td>
+</tr>
+<tr class="odd">
+<td><em>Dimensionality reduction</em></td>
+<td><a href="https://www.sc-best-practices.org/preprocessing_visualization/dimensionality_reduction.html">Preprocessing / Dimensionality Reduction</a> — PCA; t-SNE; UMAP; Inspecting QC metrics</td>
+</tr>
+<tr class="even">
+<td><em>Scale and compute</em></td>
+<td><strong>not in the book</strong> — added to connect to this course’s Dask and scheduling lectures; the GPU material corresponds loosely to <a href="https://www.sc-best-practices.org/introduction/rapids_singlecell.html">rapids-singlecell</a></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="bio-4-cellular-structure-and-conditions" class="level3">
+<h3 class="anchored" data-anchor-id="bio-4-cellular-structure-and-conditions">Bio 4 — Cellular structure and conditions</h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>deck section</th>
+<th>source</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><em>Clustering</em></td>
+<td><a href="https://www.sc-best-practices.org/cellular_structure/clustering.html">Cellular structure / Clustering</a></td>
+</tr>
+<tr class="even">
+<td><em>Annotation</em></td>
+<td><a href="https://www.sc-best-practices.org/cellular_structure/annotation.html">Cellular structure / Annotation</a> — Manual annotation; From markers to cluster annotation; From cluster DE genes to annotation; Marker-gene classifiers; Wider-gene-set classifiers; Annotation by mapping to a reference</td>
+</tr>
+<tr class="odd">
+<td><em>Which test, and does it matter?</em> / <em>Ranking is not selecting</em></td>
+<td>sc-best-practices, Annotation / <em>From cluster DE genes to annotation</em>, expanded with the filtering criteria</td>
+</tr>
+<tr class="even">
+<td><em>Integration</em></td>
+<td><a href="https://www.sc-best-practices.org/cellular_structure/integration.html">Cellular structure / Integration</a></td>
+</tr>
+<tr class="odd">
+<td><em>Design beats correction</em> / <em>Same lesson as Bio 2</em></td>
+<td><strong>not in the book</strong> — the part of the batch problem that is settled before data exists</td>
+</tr>
+<tr class="even">
+<td><em>How integration is benchmarked</em> / <em>What the benchmark found</em></td>
+<td>scIB (Luecken <em>et al.</em> 2022), referenced by the integration chapter</td>
+</tr>
+<tr class="odd">
+<td><em>Conditions</em></td>
+<td><a href="https://www.sc-best-practices.org/conditions/differential_gene_expression.html">Conditions / Differential gene expression</a> and <a href="https://www.sc-best-practices.org/conditions/compositional.html">Compositional analysis</a></td>
+</tr>
+<tr class="even">
+<td><em>How many samples?</em> / <em>Effect size, not just significance</em></td>
+<td><strong>not in the book as slides</strong> — the consequences of the pseudoreplication argument (Squair <em>et al.</em> 2021)</td>
+</tr>
+<tr class="odd">
+<td><em>From genes to pathways</em></td>
+<td><a href="https://www.sc-best-practices.org/conditions/gsea_pathway.html">Conditions / Gene set enrichment and pathway analysis</a></td>
+</tr>
+<tr class="even">
+<td><em>What this series does not cover</em></td>
+<td>Parts IV–VI of the book — trajectories, mechanisms, spatial, multimodal</td>
+</tr>
+</tbody>
+</table>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Important
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>No R anywhere in these decks</strong>, by request. Four chapters of the source book lean on it heavily — quality control (14 <code>rpy2</code>/<code>%%R</code> references), normalization (8), feature selection (12), integration (18). Every R-backed step has a <code>scanpy</code> equivalent, and those are what the decks use. Where a method is genuinely R-only — <strong>scran</strong> pooling, <strong>scDblFinder</strong>, <strong>SoupX</strong>, <strong>scry</strong> deviance — it is named in prose and not run. The one substitution worth knowing: the book detects doublets with scDblFinder; the decks use <strong>Scrublet</strong>, which is built into <code>scanpy</code>.</p>
+</div>
+</div>
+<hr>
+</section>
+</section>
+<section id="part-1-sequences-and-alignment" class="level2">
+<h2 class="anchored" data-anchor-id="part-1-sequences-and-alignment">Part 1 — Sequences and alignment</h2>
+<section id="why-alignment-exists-at-all" class="level3">
+<h3 class="anchored" data-anchor-id="why-alignment-exists-at-all">Why alignment exists at all</h3>
+<p>The naive similarity measure between two equal-length strings is <strong>Hamming distance</strong>: count the positions that differ. It is useless here, and the deck demonstrates exactly why.</p>
+<p>Take a 24-base reference. One substitution gives Hamming distance <strong>1</strong>. One <em>insertion</em> near the start gives <strong>14 of 24 positions — 58%</strong>. The two sequences are one mutation apart, and Hamming calls them barely related, because every position downstream is now being compared against the wrong partner.</p>
+<p>That is the whole motivation: <strong>you must decide where the gaps go before you can compare</strong>. Alignment is that decision, and everything else follows from it.</p>
+</section>
+<section id="an-alignment-is-a-hypothesis" class="level3">
+<h3 class="anchored" data-anchor-id="an-alignment-is-a-hypothesis">An alignment is a hypothesis</h3>
+<p>This is the point readIAB is most insistent about, and it is worth repeating because software encourages you to forget it:</p>
+<blockquote class="blockquote">
+<p>The goal of pairwise sequence alignment is, given two sequences, to generate a <strong>hypothesis</strong> about which sequence positions derived from a common ancestral position.</p>
+</blockquote>
+<p>We almost never have the ancestral sequence. So we cannot distinguish an insertion in one lineage from a deletion in the other — hence the compound term <strong>indel</strong> — and we build the alignment by inserting gaps to maximise similarity, a <strong>maximum parsimony</strong> argument. Assume the fewest mutation events.</p>
+<p>An alignment returned by BLAST is a hypothesis in exactly the same sense as one you sketch by hand. For closely related sequences it is almost certainly right. For distant ones it is frequently wrong, and nothing in the output says so.</p>
+</section>
+<section id="the-dynamic-programming-recurrence" class="level3">
+<h3 class="anchored" data-anchor-id="the-dynamic-programming-recurrence">The dynamic programming recurrence</h3>
+<p>Let <span class="math inline">\(F_{ij}\)</span> be the best score for aligning the first <span class="math inline">\(i\)</span> characters of <span class="math inline">\(s_1\)</span> with the first <span class="math inline">\(j\)</span> of <span class="math inline">\(s_2\)</span>:</p>
+<p><span class="math display">\[F_{ij} = \max \begin{cases} F_{i-1,j-1} + s(a_i, b_j) &amp; \text{align } a_i \text{ with } b_j \\ F_{i-1,j} + d &amp; \text{gap in } s_2 \\ F_{i,j-1} + d &amp; \text{gap in } s_1 \end{cases}\]</span></p>
+<p>with <span class="math inline">\(F_{0j} = jd\)</span> and <span class="math inline">\(F_{i0} = id\)</span>.</p>
+<p>Three things are worth drawing out that the slide cannot:</p>
+<p><strong>It is the same recurrence as edit distance.</strong> Change the scoring to match <span class="math inline">\(=0\)</span>, mismatch <span class="math inline">\(=1\)</span>, gap <span class="math inline">\(=1\)</span> and minimise instead of maximise, and you have Levenshtein distance. Sequence alignment <em>is</em> edit distance with a biologically motivated cost function.</p>
+<p><strong>Each cell depends on exactly three already-computed neighbours.</strong> That is what makes a single forward pass sufficient, and it is also what makes the algorithm parallelisable along anti-diagonals — every cell on one anti-diagonal depends only on the two before it, so a whole anti-diagonal can be computed at once. This is how GPU and SIMD aligners work.</p>
+<p><strong><span class="math inline">\(F\)</span> gives you the score; <span class="math inline">\(T\)</span> gives you the alignment.</strong> You need the traceback matrix because <span class="math inline">\(F_{mn}\)</span> tells you <em>how good</em> the best alignment is and nothing about <em>what it is</em>. Implementations that skip <span class="math inline">\(T\)</span> recompute the winning choice from neighbouring <span class="math inline">\(F\)</span> values, trading arithmetic for memory.</p>
+</section>
+<section id="global-versus-local-one-changed-line" class="level3">
+<h3 class="anchored" data-anchor-id="global-versus-local-one-changed-line">Global versus local: one changed line</h3>
+<p>Smith-Waterman differs from Needleman-Wunsch in exactly two respects:</p>
+<p><span class="math display">\[F_{ij} = \max \begin{cases} \mathbf{0} &amp; \leftarrow \text{the only new term} \\ F_{i-1,j-1} + s(a_i,b_j) \\ F_{i-1,j} + d \\ F_{i,j-1} + d \end{cases}\]</span></p>
+<ol type="1">
+<li><strong>Clamp at zero</strong> — a prefix whose running score has gone negative is abandoned rather than carried forward.</li>
+<li><strong>Start the traceback at the maximum cell</strong>, not the corner, and stop at the first zero.</li>
+</ol>
+<p>The consequence is visible in the deck’s side-by-side matrices. The global matrix has a steep negative gradient into the corners, which is the cost of forcing the ends to align. The local matrix is <strong>flat zero over most of its area</strong>, with score concentrated along the conserved block.</p>
+<p>Use global when the sequences are the same kind of thing end to end — two hemoglobin proteins. Use local when you are looking for a shared domain inside otherwise unrelated sequences, or matching a short read against a chromosome.</p>
+</section>
+<section id="scoring-is-where-the-biology-lives" class="level3">
+<h3 class="anchored" data-anchor-id="scoring-is-where-the-biology-lives">Scoring is where the biology lives</h3>
+<p>The naive algorithm scores all matches <span class="math inline">\(+1\)</span> and all mismatches <span class="math inline">\(-1\)</span>. For proteins that is plainly wrong: leucine and isoleucine are both hydrophobic and similarly sized, and substituting one for the other is far more tolerable than substituting either for aspartate.</p>
+<p><strong>Substitution matrices</strong> encode this as a log-odds ratio of observed against expected substitution frequency:</p>
+<p><span class="math display">\[S_{ij} = \frac{1}{\lambda}\log\frac{p_{ij}}{q_i q_j}\]</span></p>
+<p>Positive means the substitution occurs <em>more often than chance</em> — conservative. BLOSUM62 is the default nearly everywhere. Reading its diagonal is instructive: tryptophan scores <strong>11</strong> for matching itself because it is rare and rarely substituted, while alanine scores only <strong>4</strong>. And L/I scores <strong>+2</strong> <em>despite being a mismatch</em>.</p>
+<p>The matrix learned chemistry from evolution without being told any chemistry.</p>
+</section>
+<section id="affine-gaps" class="level3">
+<h3 class="anchored" data-anchor-id="affine-gaps">Affine gaps</h3>
+<p>A 5-base deletion is <strong>one</strong> mutational event. Charging <span class="math inline">\(5d\)</span> for it says it is five times less likely than a 1-base deletion, which misrepresents how indels occur. Affine penalties separate the two costs:</p>
+<p><span class="math display">\[\text{gap cost} = g_{\text{open}} + (L-1)\,g_{\text{extend}}\]</span></p>
+<p>with <span class="math inline">\(g_\text{open} \gg g_\text{extend}\)</span> — typically <span class="math inline">\(-11\)</span> and <span class="math inline">\(-1\)</span> for BLOSUM62. The effect is alignments with <strong>few, longer</strong> gaps instead of many scattered ones.</p>
+<p>Gotoh (1982) showed this can still be done in <span class="math inline">\(O(mn)\)</span> using three matrices instead of one — which is why affine gaps are universal rather than a luxury.</p>
+</section>
+<section id="four-modes-one-algorithm" class="level3">
+<h3 class="anchored" data-anchor-id="four-modes-one-algorithm">Four modes, one algorithm</h3>
+<p>Global and local are not the only options, and the two that get omitted are the ones most used in practice. Everything is the same recurrence; what changes is how the edges are initialised and where the traceback starts and stops.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>mode</th>
+<th>edges</th>
+<th>traceback from</th>
+<th>for</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>global (NW)</td>
+<td><span class="math inline">\(id\)</span>, <span class="math inline">\(jd\)</span></td>
+<td>corner</td>
+<td>two whole comparable sequences</td>
+</tr>
+<tr class="even">
+<td>local (SW)</td>
+<td>0, clamp at 0</td>
+<td>max cell, stop at 0</td>
+<td>a shared domain</td>
+</tr>
+<tr class="odd">
+<td><strong>semi-global</strong></td>
+<td>0</td>
+<td>max of last row/col</td>
+<td>a short read in a long reference</td>
+</tr>
+<tr class="even">
+<td><strong>overlap</strong></td>
+<td>0</td>
+<td>max of last row/col</td>
+<td>suffix–prefix, for assembly</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Semi-global</strong> is the one students most often get wrong by reaching for local instead. Free end gaps let a 150 bp read align into a 3 Gb chromosome without paying for the 3 Gb it does not cover — while the <em>read</em> is still aligned end to end, so a truncated match shows up as truncated rather than being quietly trimmed away, which is exactly what local alignment would do to it. In Biopython: <code>mode="global"</code> with <code>target_end_gap_score = 0</code> and <code>query_end_gap_score = 0</code>.</p>
+</section>
+<section id="where-the-parallelism-is" class="level3">
+<h3 class="anchored" data-anchor-id="where-the-parallelism-is">Where the parallelism is</h3>
+<p>Each cell needs three already-computed neighbours, so no cell in a row can start before the one to its left finishes — <strong>rows are inherently sequential</strong>. But every cell on an anti-diagonal <span class="math inline">\(i+j=c\)</span> depends only on cells in <span class="math inline">\(c-1\)</span> and <span class="math inline">\(c-2\)</span>, so a whole anti-diagonal is mutually independent:</p>
+<p><span class="math display">\[\text{work} = \Theta(mn), \qquad \text{span} = \Theta(m+n), \qquad \text{parallelism} = \Theta\!\left(\tfrac{mn}{m+n}\right)\]</span></p>
+<p>For <span class="math inline">\(m = n\)</span> that is <span class="math inline">\(\Theta(n/2)\)</span>. This is the work/span analysis from the scheduling lectures applied to a DP table: the table is a DAG, the anti-diagonals are its levels, the span is its critical path. Striped SIMD implementations — Farrar’s SSE Smith-Waterman, the SSW library — are this idea at register width, and they account for most of the 669× gap measured between the Python and C aligners.</p>
+</section>
+<section id="what-it-costs" class="level3">
+<h3 class="anchored" data-anchor-id="what-it-costs">What it costs</h3>
+<p>Both algorithms fill an <span class="math inline">\(m \times n\)</span> table with constant work per cell, so time <strong>and memory</strong> are quadratic. Measured in the deck with Biopython:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th><span class="math inline">\(n\)</span></th>
+<th>time</th>
+<th>cells</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>200</td>
+<td>0.33 ms</td>
+<td>40 000</td>
+</tr>
+<tr class="even">
+<td>400</td>
+<td>1.92 ms</td>
+<td>160 000</td>
+</tr>
+<tr class="odd">
+<td>800</td>
+<td>8.05 ms</td>
+<td>640 000</td>
+</tr>
+<tr class="even">
+<td>1 600</td>
+<td>33.5 ms</td>
+<td>2 560 000</td>
+</tr>
+</tbody>
+</table>
+<p>Doubling the length quadruples the time, and time per cell stays flat at about 5 ns. That is <span class="math inline">\(O(n^2)\)</span> as plainly as it is ever visible.</p>
+<p><strong>Memory is the harsher constraint.</strong> For <span class="math inline">\(n = 100{,}000\)</span>, two rows of <code>float64</code> is <strong>1.6 MB</strong>; the full traceback matrix is <strong>80 GB</strong>. Hirschberg’s algorithm recovers the alignment in linear space by divide and conquer — find where the optimal path crosses the middle column, recurse on both halves — doubling the time to reduce space from <span class="math inline">\(O(mn)\)</span> to <span class="math inline">\(O(\min(m,n))\)</span>. That is what makes whole-chromosome alignment possible.</p>
+<p><strong>Banded alignment</strong> goes further: if the sequences are similar and similar in length, the optimal path stays near the diagonal, so compute only a band of width <span class="math inline">\(2w+1\)</span> and get <span class="math inline">\(O(mw)\)</span>. The catch is the usual one — an indel larger than <span class="math inline">\(w\)</span> falls outside the band, and you get a confidently wrong answer.</p>
+</section>
+<section id="multiple-alignment-and-the-second-np-hard-problem-in-this-course" class="level3">
+<h3 class="anchored" data-anchor-id="multiple-alignment-and-the-second-np-hard-problem-in-this-course">Multiple alignment, and the second NP-hard problem in this course</h3>
+<p>Most of what you actually want needs a <strong>family</strong>, not a pair: the conserved positions, a profile to search with, a phylogeny, the places where an indel is tolerated.</p>
+<p>The recurrence generalises directly — an <span class="math inline">\(N\)</span>-dimensional table where each cell looks back at <span class="math inline">\(2^N - 1\)</span> predecessors instead of 3 — and the cost explodes to <span class="math inline">\(O(n^N 2^N)\)</span>. For five sequences of length 200 that is already <span class="math inline">\(\sim 10^{13}\)</span> cells. And this is not just a bad formulation: <strong>multiple sequence alignment under the sum-of-pairs objective is NP-hard</strong> (Wang &amp; Jiang 1994).</p>
+<p>Which is the scheduling lecture’s shape again — optimal and unusable — met with the same response: a greedy algorithm with no guarantee, plus evidence that it is good enough.</p>
+<p><strong>Progressive alignment</strong> is that greedy algorithm. Align all pairs to get distances, build a guide tree, then walk it from the leaves aligning the most similar things first: sequence to sequence, then sequence to profile, then profile to profile. This is Clustal, MUSCLE and MAFFT, it is <span class="math inline">\(O(N^2n^2)\)</span>, and it produced essentially every alignment you will read about.</p>
+<p>Its defining weakness has a name: <strong>“once a gap, always a gap”</strong>. A gap placed early, when only two sequences were visible, is never revisited — later sequences must align around a decision taken without them, and an early mistake propagates to the whole family. Mitigations are iterative rather than principled: MUSCLE and MAFFT re-estimate the guide tree from the alignment and realign; T-Coffee and ProbCons score a pairwise alignment by its consistency with the others before committing.</p>
+<p>Two consequences worth carrying:</p>
+<ul>
+<li><strong>The circularity.</strong> The guide tree shapes the alignment; the alignment is then used to estimate a phylogeny. Inferring a tree from an alignment built on a tree is circular, and the circularity is rarely acknowledged.</li>
+<li><strong>Columns are not equally trustworthy.</strong> Well-aligned core regions are reliable; gappy variable regions are largely arbitrary and tool-dependent. Since phylogenetics and conservation scoring are most sensitive to exactly those columns, pipelines trim them (<code>trimAl</code>, Gblocks) before tree-building — and alignment uncertainty is almost never propagated, so downstream confidence is overstated.</li>
+</ul>
+<p>That last point is the same selective-inference problem that returns in Bio 4: a quantity estimated from the data gets treated as fixed by everything that follows.</p>
+<hr>
+</section>
+</section>
+<section id="part-2-search-and-classification" class="level2">
+<h2 class="anchored" data-anchor-id="part-2-search-and-classification">Part 2 — Search and classification</h2>
+<section id="homology-is-a-claim-about-history" class="level3">
+<h3 class="anchored" data-anchor-id="homology-is-a-claim-about-history">Homology is a claim about history</h3>
+<p>Three words get used interchangeably and should not be.</p>
+<p><strong>Homologous</strong> means <em>descended from a common ancestral sequence</em>. It is a claim about history and it is <strong>binary</strong> — two sequences either share an ancestor or they do not. “40% homologous” is not a statement about anything; the 40% belongs to <em>identity</em>, which is a measurement, not a conclusion.</p>
+<p>Homologs arise two ways, and the distinction changes what you may infer:</p>
+<ul>
+<li><strong>orthologs</strong> — separated by <em>speciation</em>. Human and mouse haemoglobin. Usually retain function, because each lineage kept one copy doing the same job.</li>
+<li><strong>paralogs</strong> — separated by <em>duplication within</em> a lineage. Human haemoglobin and myoglobin. One copy is free to drift, so function often diverges.</li>
+</ul>
+<p>Your best BLAST hit can perfectly well be a paralog, in which case you will transfer an annotation from a gene that shares ancestry with your query but no longer shares its job. Nothing in the output says so.</p>
+</section>
+<section id="where-the-inference-chain-breaks" class="level3">
+<h3 class="anchored" data-anchor-id="where-the-inference-chain-breaks">Where the inference chain breaks</h3>
+<p><span class="math display">\[\text{similarity} \Rightarrow \text{common ancestry} \Rightarrow \text{shared function}\]</span></p>
+<p><strong>The first implication</strong> fails through convergence and, much more often, through <strong>composition</strong>. Two AT-rich sequences look similar because they are AT-rich. Low-complexity regions — poly-glutamine tracts, simple repeats — produce high-scoring alignments between proteins that have nothing to do with each other, which is why BLAST masks them by default (<code>dust</code> for nucleotides, <code>seg</code> for proteins). If you turn masking off, you will find “homologs” everywhere.</p>
+<p><strong>The second implication</strong> fails through paralogy, through domain shuffling — two proteins sharing one module and nothing else — and through ordinary functional divergence after duplication.</p>
+<p>The chain remains the best tool available. It simply is not a proof, and the output format, a confident table of percentages, makes it look like one.</p>
+</section>
+<section id="the-database-is-not-a-neutral-instrument" class="level3">
+<h3 class="anchored" data-anchor-id="the-database-is-not-a-neutral-instrument">The database is not a neutral instrument</h3>
+<p>Four properties of reference databases, all of which make results look <strong>better</strong> than they are:</p>
+<ul>
+<li><strong>Redundancy.</strong> GenBank holds the same gene thousands of times from thousands of strains, so a hit list of 500 sequences may be 500 copies of one finding. RefSeq and UniRef exist to be curated, de-duplicated subsets.</li>
+<li><strong>Annotation is inferred, not measured.</strong> The overwhelming majority of annotations were themselves assigned by homology search, so transferring one is often copying a copy.</li>
+<li><strong>Errors percolate.</strong> A misannotation becomes the best hit for the next query, which inherits it, which then serves as evidence for the next. This is measurable in the databases and has its own literature.</li>
+<li><strong>Sampling is biased</strong> toward organisms that are easy to culture and interesting to fund — while an environmental sample is mostly things nobody has sequenced.</li>
+</ul>
+</section>
+<section id="the-problem-exhaustive-alignment-cannot-solve" class="level3">
+<h3 class="anchored" data-anchor-id="the-problem-exhaustive-alignment-cannot-solve">The problem exhaustive alignment cannot solve</h3>
+<p>Aligning two 1 kb sequences is <span class="math inline">\(10^6\)</span> cells: instant. But the real task is searching <strong>one query against a database</strong>. GenBank holds on the order of <span class="math inline">\(10^{12}\)</span> bases, so a single full Smith-Waterman query is about <span class="math inline">\(10^{15}\)</span> cell computations — at the measured ~5 ns per cell, <strong>over a month</strong>, for one search.</p>
+<p>This is the gap every fast aligner exists to fill, and the strategy is always the same shape:</p>
+<p><span class="math display">\[\text{cheap filter} \rightarrow \text{small candidate set} \rightarrow \text{exact alignment}\]</span></p>
+</section>
+<section id="why-k-mer-filtering-works" class="level3">
+<h3 class="anchored" data-anchor-id="why-k-mer-filtering-works">Why <span class="math inline">\(k\)</span>-mer filtering works</h3>
+<p>Two homologous sequences almost certainly share <strong>exact short substrings</strong>; two unrelated sequences share far fewer, and only by chance. So compare <span class="math inline">\(k\)</span>-mer <em>sets</em> with the Jaccard index</p>
+<p><span class="math display">\[J(A,B) = \frac{|A \cap B|}{|A \cup B|}\]</span></p>
+<p>— two set operations, no matrix. In the deck’s measurement, homologs at 2–35% divergence score Jaccard <strong>0.22–0.83</strong>, while unrelated sequences cluster at <strong>0.12–0.16</strong>. The cheap statistic ranks the same way as the expensive one, so a threshold around 0.2 discards most of a database for almost nothing.</p>
+<p><strong>The inverted index</strong> is what makes this scale. Instead of comparing the query against every reference, build a map from <span class="math inline">\(k\)</span>-mer → sequences containing it, <strong>once, offline</strong>. Then a query is a handful of dictionary lookups.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th></th>
+<th>build</th>
+<th>query</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>exhaustive alignment</td>
+<td>nothing</td>
+<td><span class="math inline">\(O(N \cdot mn)\)</span></td>
+</tr>
+<tr class="even">
+<td>inverted index</td>
+<td><span class="math inline">\(O(N \cdot m)\)</span> once</td>
+<td><span class="math inline">\(O(m + \text{hits})\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>That amortisation is why NCBI can serve BLAST to the world, and why you run <code>makeblastdb</code> before <code>blastn</code>.</p>
+</section>
+<section id="what-the-heuristic-gives-up" class="level3">
+<h3 class="anchored" data-anchor-id="what-the-heuristic-gives-up">What the heuristic gives up</h3>
+<p>This is the part that matters and the part students skip. Look again at the deck’s table: the homolog at <strong>35% divergence</strong> has a Jaccard close to the unrelated sequences. A threshold tuned to exclude noise will also exclude that genuine homolog.</p>
+<p><em>Heuristics lose distant homologs, and distant homologs are often the interesting ones.</em> The deck measures this directly: against a noise baseline of score 19 ± 3, homology stays detectable out to about <strong>60% divergence</strong> and becomes statistically <strong>indistinguishable from chance at 65%</strong>.</p>
+<p>Beyond that limit, no threshold and no better implementation helps — the signal is gone from the data. Detecting homology below the <em>twilight zone</em> (20–35% identity for proteins) requires profile methods — PSI-BLAST, HMMER — which pool information across many related sequences rather than comparing two.</p>
+</section>
+<section id="the-parameters-that-actually-decide-the-outcome" class="level3">
+<h3 class="anchored" data-anchor-id="the-parameters-that-actually-decide-the-outcome">The parameters that actually decide the outcome</h3>
+<p><strong>Word size</strong> is the main dial. A seed must be an <em>exact</em> match of length <span class="math inline">\(w\)</span>, so the chance that a homologous region seeds is roughly <span class="math inline">\(p^w\)</span> for per-position identity <span class="math inline">\(p\)</span>. At 80% identity <span class="math inline">\(0.8^{11} \approx 0.086\)</span> per position — with hundreds of positions, seeding is near-certain. At 60%, <span class="math inline">\(0.6^{11} \approx 0.004\)</span>, and short homologous regions seed only occasionally.</p>
+<p><code>blastn</code> defaults to 11; <code>megablast</code> uses <strong>28</strong> and is roughly an order of magnitude faster because it is tuned for near-identical sequences. When a search “finds nothing”, check the word size first — <code>megablast</code> misses remote homology <em>by design</em>.</p>
+<p><strong>Spaced seeds</strong> use those <span class="math inline">\(w\)</span> positions better. Mutations are roughly independent across positions, so long consecutive runs of identity are exactly what diverged sequences lack. A spaced seed demands matches only at selected positions of a longer window — <code>111*1**1*1**11*111</code> asks for 11 matches spread over 18 positions. Same lookup cost, far likelier to be satisfied by a genuine homolog, and successive offsets are less correlated, so a region failing to seed at one offset often seeds at the next. PatternHunter showed this gives higher sensitivity <em>and</em> higher speed — a rare case with no trade-off.</p>
+<p><strong>Which BLAST program</strong> matters more than any parameter:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>program</th>
+<th>query</th>
+<th>database</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>blastn</code></td>
+<td>nucleotide</td>
+<td>nucleotide</td>
+</tr>
+<tr class="even">
+<td><code>blastp</code></td>
+<td>protein</td>
+<td>protein</td>
+</tr>
+<tr class="odd">
+<td><code>blastx</code></td>
+<td>nucleotide (translated)</td>
+<td>protein</td>
+</tr>
+<tr class="even">
+<td><code>tblastn</code></td>
+<td>protein</td>
+<td>nucleotide (translated)</td>
+</tr>
+</tbody>
+</table>
+<p>The rule worth memorising: <strong>search in protein space whenever you can.</strong> The genetic code is redundant, so synonymous substitutions pile up in DNA while the protein is unchanged. Two genes at 45% nucleotide identity — indistinguishable from noise — can be 80% identical as proteins and obviously homologous. Protein search also uses a 20-letter alphabet, making chance matches far rarer, and BLOSUM62 lets a conservative substitution still count for something.</p>
+</section>
+<section id="e-values" class="level3">
+<h3 class="anchored" data-anchor-id="e-values">E-values</h3>
+<p>A raw alignment score means nothing on its own. A score of 60 is impressive against a 100-sequence database and meaningless against <span class="math inline">\(10^9\)</span>. The <strong>E-value</strong> is the expected number of alignments scoring at least <span class="math inline">\(S\)</span> by chance in a database this size:</p>
+<p><span class="math display">\[E = K\,m\,n\,e^{-\lambda S}\]</span></p>
+<p><span class="math inline">\(E = 10\)</span> means expect ten such hits by chance — noise. <span class="math inline">\(E = 10^{-5}\)</span> means one per 100 000 searches — interesting.</p>
+<p>Note the consequence: <strong>the E-value grows with database size for a fixed score.</strong> The same alignment becomes less significant as GenBank grows. That is not a flaw; it is a multiple-testing correction being applied honestly.</p>
+<p>The <strong>bit score</strong> is the companion number. A raw score <span class="math inline">\(S\)</span> depends on the scoring matrix and gap penalties, so raw scores are not comparable between searches; normalising gives</p>
+<p><span class="math display">\[S' = \frac{\lambda S - \ln K}{\ln 2}, \qquad E = \frac{mn}{2^{S'}}\]</span></p>
+<p>So bit score describes <strong>the alignment</strong>, E-value describes <strong>the alignment in this database</strong>. Report bit scores when ranking hits against each other, E-values when arguing that a hit is real.</p>
+</section>
+<section id="profiles-and-the-twilight-zone" class="level3">
+<h3 class="anchored" data-anchor-id="profiles-and-the-twilight-zone">Profiles, and the twilight zone</h3>
+<p>Pairwise alignment has exactly two sequences of evidence, and below ~25% protein identity that is not enough. A <strong>profile</strong> uses a whole family instead. Align many known members and each column tells you something no pair can — <em>position 47 is always hydrophobic; position 48 is anything at all</em>. A position-specific scoring matrix records one score column per position rather than one matrix for the whole sequence, so a query matching the family’s <strong>conserved</strong> positions scores well even at 20% overall identity, because the variable positions were never being counted against it.</p>
+<p><strong>PSI-BLAST</strong> builds the profile iteratively from your own search: <code>blastp</code>, take hits above a threshold, build a PSSM, search again, repeat. Its failure mode is specific — a single false positive entering the profile means the next iteration searches <em>for that too</em>, and contamination compounds across rounds. This is <strong>profile drift</strong>; use a strict inclusion threshold and inspect what enters each round.</p>
+<p><strong>HMMER</strong> uses a profile hidden Markov model, adding position-specific insertion and deletion probabilities — a genuine probabilistic model rather than a score table. It is what Pfam is built on, and <code>hmmsearch</code> against a curated Pfam model is generally the most sensitive sequence-homology tool available.</p>
+<p>Below ~20% identity even profiles struggle and the remaining signal is <strong>structural</strong>. Structure is conserved far longer than sequence, which is why accurate structure prediction redefined remote-homology detection, and why <code>foldseek</code> over predicted structures now recovers relationships no sequence method can reach.</p>
+</section>
+<section id="sensitivity-and-specificity-are-a-decision-not-a-statistic" class="level3">
+<h3 class="anchored" data-anchor-id="sensitivity-and-specificity-are-a-decision-not-a-statistic">Sensitivity and specificity are a decision, not a statistic</h3>
+<p>Lowering a threshold raises sensitivity and lowers specificity. No setting maximises both. Where you sit on that curve depends on the cost of each error <em>in your application</em> — and every E-value cut-off you have ever used encodes somebody’s answer to that question.</p>
+</section>
+<section id="the-feature-table-is-the-whole-interface" class="level3">
+<h3 class="anchored" data-anchor-id="the-feature-table-is-the-whole-interface">The feature table is the whole interface</h3>
+<p>Almost every machine-learning method expects exactly one thing:</p>
+<p><span class="math display">\[\underbrace{n \text{ samples}}_{\text{rows}} \times \underbrace{p \text{ features}}_{\text{columns}} \;+\; \text{a label per row}\]</span></p>
+<p>The entire difficulty of applying ML to biology is that biological data does not arrive in this shape, and every decision gets made while forcing it there.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>data</th>
+<th>sample</th>
+<th>feature</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>taxonomy</td>
+<td>a sequence</td>
+<td>count of each <span class="math inline">\(k\)</span>-mer</td>
+</tr>
+<tr class="even">
+<td>microbiome</td>
+<td>a specimen</td>
+<td>abundance of each taxon</td>
+</tr>
+<tr class="odd">
+<td>scRNA-seq</td>
+<td>a cell</td>
+<td>count of each gene</td>
+</tr>
+</tbody>
+</table>
+<p>That third row is why these four lectures belong together. <strong><code>adata.X</code> is a feature table</strong>, and the whole of Bio 3 is a sequence of decisions about how to build one — what counts as a sample (QC), what counts as a feature (HVG selection), and what the numbers mean (normalization).</p>
+<p>By the time you call <code>.fit()</code>, all of it is already settled; the classifier sees only the table. <strong>Most of the quality of a result is determined before the model is chosen</strong> — which is why so little of this material is about models.</p>
+</section>
+<section id="look-before-you-classify" class="level3">
+<h3 class="anchored" data-anchor-id="look-before-you-classify">Look before you classify</h3>
+<p>readIAB puts unsupervised learning first, and the ordering is the point. Unsupervised methods take a feature table; supervised methods take a feature table <strong>and labels</strong>. The unsupervised step is how you find out whether your labels correspond to anything in the data at all — because if samples do not separate by label in an ordination, a classifier scoring 99% is telling you about leakage, not biology.</p>
+<p>In ecology the unsupervised step is called <strong>ordination</strong>, and scikit-bio’s own documentation is blunt about what that means:</p>
+<blockquote class="blockquote">
+<p>Mathematically, ordination shares similarities with, and is in multiple respects equivalent to, embedding and dimensionality reduction. […] the term “ordination” is mainly used in the field of ecology.</p>
+</blockquote>
+<p>So this is Bio 3’s arc — count matrix, distances, PCA, embedding — at a different scale with a different vocabulary:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>here (ecology)</th>
+<th>Bio 3 (single cell)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>sample</td>
+<td>cell</td>
+</tr>
+<tr class="even">
+<td>feature (<span class="math inline">\(k\)</span>-mer)</td>
+<td>gene</td>
+</tr>
+<tr class="odd">
+<td>feature table</td>
+<td><code>adata.X</code></td>
+</tr>
+<tr class="even">
+<td>beta diversity</td>
+<td>neighbour-graph distances</td>
+</tr>
+<tr class="odd">
+<td>ordination (PCoA)</td>
+<td>PCA</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="distances-and-one-axis-by-hand" class="level3">
+<h3 class="anchored" data-anchor-id="distances-and-one-axis-by-hand">Distances, and one axis by hand</h3>
+<p>Ordination starts from distances between all pairs of samples, and we already have the statistic: the Jaccard index from the search half of the lecture, subtracted from one. <code>skbio.diversity.beta_diversity("jaccard", …)</code> gives a <code>DistanceMatrix</code> — 120 sequences, distances from <strong>0.382 to 0.863</strong>, zero diagonal, symmetric. Both of those last properties hold by construction and are still worth asserting; a matrix failing either means a bug upstream.</p>
+<p><strong>Polar ordination</strong> is readIAB’s teaching device, and its arithmetic fits on a line. Take the two most distant samples as the endpoints of an axis and project everything onto it by the law of cosines:</p>
+<p><span class="math display">\[p_i = \frac{D_{AB}^2 + d(A,i)^2 - d(B,i)^2}{2 D_{AB}}\]</span></p>
+<p>On our three synthetic genera that single axis already separates them — means <strong>0.173, 0.463, 0.678</strong> with standard deviations under 0.04, so the groups sit many standard deviations apart. No eigenvectors, no library.</p>
+<p>Its limitation is why nobody uses it: the <em>first</em> axis is principled and every axis after it is not. You must pick new endpoints, and nothing makes the result uncorrelated with what you already have. <strong>PCoA</strong> fixes exactly that by choosing all axes at once, eigendecomposing the centred distance matrix so the axes are orthogonal by construction and ordered by variance explained.</p>
+</section>
+<section id="reading-an-ordination-plot" class="level3">
+<h3 class="anchored" data-anchor-id="reading-an-ordination-plot">Reading an ordination plot</h3>
+<p>Our PCoA gives <strong>26.7%</strong> on PC1, <strong>23.1%</strong> on PC2 — then <strong>1.1%</strong> on PC3.</p>
+<p><strong>Read the drop, not the percentages.</strong> That cliff answers “how many dimensions does this data actually have?” — two, which is what three groups need. Everything past the cliff is noise, and plotting PC3 would be plotting noise.</p>
+<p>Three rules that readIAB states and that get violated routinely:</p>
+<ol type="1">
+<li><strong>Axis order is meaningful.</strong> PC1 explains more than PC2. The plot is therefore not square: the same distance means more along PC1. Axes should be scaled by explained variation, and usually are not.</li>
+<li><strong>The axes are uncorrelated by construction</strong>, so they are <em>not two independent findings</em>. “Group A separates on PC1 and group B on PC2” describes one decomposition, not two discoveries.</li>
+<li><strong>Axis direction is arbitrary.</strong> Eigenvectors are defined up to sign; a different library or a randomised solver may mirror the plot. Nothing about “left” or “right” means anything — only relative position does.</li>
+</ol>
+<p>These are the <em>honest</em> caveats, and PCoA is the well-behaved case: it is linear and distance-preserving, and each axis carries a percentage. UMAP is neither, which is why its caveats in Bio 3 are stronger — a UMAP axis has no units and no meaning at all.</p>
+</section>
+<section id="naive-bayes-over-k-mers" class="level3">
+<h3 class="anchored" data-anchor-id="naive-bayes-over-k-mers">Naive Bayes over <span class="math inline">\(k\)</span>-mers</h3>
+<p>For classification, the trick is turning a sequence into a fixed-length vector: count its <span class="math inline">\(k\)</span>-mers, and every sequence becomes a point in <span class="math inline">\(4^k\)</span>-dimensional space.</p>
+<p><span class="math display">\[P(c \mid x) \propto P(c)\prod_i P(x_i \mid c)\]</span></p>
+<p>The “naive” part assumes <span class="math inline">\(k\)</span>-mers occur independently given the class, which is obviously false — overlapping <span class="math inline">\(k\)</span>-mers share <span class="math inline">\(k-1\)</span> characters. It works anyway, because we need only the <em>ranking</em> of <span class="math inline">\(P(c \mid x)\)</span> across classes to be right, not the probabilities. And it is fast, which matters when classifying millions of reads. This is the method behind the RDP classifier and <code>q2-feature-classifier</code>.</p>
+<p><strong>Choosing <span class="math inline">\(k\)</span></strong> is a real trade-off, visible in the deck’s measurement. At <span class="math inline">\(k=3\)</span> all 64 possible 3-mers are observed and the feature matrix is <strong>99.9% non-zero</strong> — the features carry almost no discriminating information. At <span class="math inline">\(k=9\)</span> only 17 597 of 262 144 possible 9-mers appear and the matrix is <strong>2.2% non-zero</strong> — most <span class="math inline">\(k\)</span>-mers are seen once or never, so counts stop being estimates of anything. Useful values for 16S work sit at <strong>6–8</strong>.</p>
+</section>
+<section id="the-leakage-trap" class="level3">
+<h3 class="anchored" data-anchor-id="the-leakage-trap">The leakage trap</h3>
+<p>The deck trains a classifier and reports <strong>100% cross-validated accuracy</strong>, then tells you to distrust it. This is the most transferable lesson in the two sequence lectures.</p>
+<p>The synthetic sequences within each genus were all generated by mutating <strong>one</strong> reference. Random <span class="math inline">\(k\)</span>-fold CV therefore puts near-duplicates of every test sequence into the training set. The classifier is not generalising; it is recognising things it has effectively already seen.</p>
+<p>Biological data is <strong>structured by relatedness</strong> and is never i.i.d.: strains within a species, species within a genus, and reference databases biased toward organisms people happen to study. Random splitting silently violates the independence assumption that cross-validation rests on.</p>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Warning
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>An honest note about the deck.</strong> An earlier version of this material tried to demonstrate leakage by comparing random <span class="math inline">\(k\)</span>-fold CV against <code>GroupKFold</code>. On synthetic data the demonstration failed — with 400 bp sequences the genus signal is so strong that both scored 1.000, and an earlier variant scored <em>below chance</em> because the synthetic “strains” within a genus were unrelated random sequences. Rather than tune synthetic data until it produced the desired answer, the deck now shows a failure that needs no tuning at all, below.</p>
+</div>
+</div>
+</section>
+<section id="what-leakage-actually-costs" class="level3">
+<h3 class="anchored" data-anchor-id="what-leakage-actually-costs">What leakage actually costs</h3>
+<p>Hand the trained classifier sequences from a genus it has <strong>never seen</strong> — the everyday situation in environmental sequencing, where most organisms are uncharacterised. In the deck’s run, all ten novel sequences were assigned to <code>Genus_C</code> with a reported confidence of <strong>1.000</strong>.</p>
+<p>The label is meaningless and the confidence is worse than meaningless: it is maximal.</p>
+<p>The reason is structural. <code>predict_proba</code> returns a distribution over <strong>the classes it was trained on</strong>. It expresses relative preference among those, not absolute fit, so it <em>cannot</em> say “this is unlike anything I know”. Real taxonomic classifiers add a confidence threshold below which they refuse to assign and report at a coarser rank — “Bacteria” rather than a genus. Without that, a pipeline invents plausible answers for every unknown it meets.</p>
+</section>
+<section id="the-confidence-measure-that-does-work" class="level3">
+<h3 class="anchored" data-anchor-id="the-confidence-measure-that-does-work">The confidence measure that does work</h3>
+<p><code>predict_proba</code> is not what taxonomic classifiers actually report. RDP’s measure — and readIAB’s — is a <strong>bootstrap</strong>: resample the query’s own <span class="math inline">\(k\)</span>-mers with replacement, reclassify each subsample, and count how often the original answer comes back.</p>
+<p><span class="math display">\[\text{confidence} = \frac{\#\{\text{subsamples agreeing with the full query}\}}{\#\text{iterations}}\]</span></p>
+<p>Applied to the <em>identical</em> predictions — all novel sequences called <code>Genus_C</code> — the two measures disagree completely:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th></th>
+<th>known genus</th>
+<th>novel genus</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>predict_proba</code></td>
+<td>1.000</td>
+<td><strong>1.000</strong></td>
+</tr>
+<tr class="even">
+<td>bootstrap (10% of <span class="math inline">\(k\)</span>-mers, 100 iterations)</td>
+<td>1.00</td>
+<td><strong>0.59</strong></td>
+</tr>
+</tbody>
+</table>
+<p>At the <strong>0.80 threshold conventional in 16S work</strong>, every novel sequence is correctly rejected. <code>predict_proba</code> rejects nothing, ever.</p>
+<p><strong>Why the difference.</strong> <code>predict_proba</code> normalises likelihoods across the training classes, so the numbers sum to one whatever the evidence, and exponentiating log-likelihoods pushes a weak preference and an overwhelming one both toward 1.0. The bootstrap asks a different question: <em>how robust is the margin?</em> For a genuine member, even a tenth of its <span class="math inline">\(k\)</span>-mers point overwhelmingly one way. For a novel organism the preference rests on a handful of coincidental matches, so resampling lets a different accident win. Fragility under resampling is a usable proxy for “the evidence was thin”.</p>
+<p><strong>But it is still not a novelty detector.</strong> It measures stability, which <em>correlated</em> with fit here; that is not a guarantee. 0.59 is below threshold but not zero — the classifier still chose a genus, every time. And a novel organism that happens to be <em>consistently</em> similar to one training class will bootstrap high and be confidently wrong, because nothing in the procedure looks outside the label set.</p>
+<p>A true novelty measure is a <strong>distance to the training data</strong>, not a confidence within it. In taxonomic practice that role is played by an alignment-identity floor: assign only if the query is within some identity of a reference — which is to say the classifier does not replace the homology search, it sits on top of it.</p>
+</section>
+<section id="the-fix-split-at-the-level-you-want-to-generalise-to" class="level3">
+<h3 class="anchored" data-anchor-id="the-fix-split-at-the-level-you-want-to-generalise-to">The fix: split at the level you want to generalise to</h3>
+<p>Random <span class="math inline">\(k\)</span>-fold CV answers <em>can the model classify a new sequence?</em> What you almost always want to know is <em>can it classify a new <strong>organism</strong>?</em> — a different question with a different split.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>the claim you want to make</th>
+<th>group by</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>works on a new read from a known strain</td>
+<td>nothing — random is fine</td>
+</tr>
+<tr class="even">
+<td>works on a new strain</td>
+<td>strain</td>
+</tr>
+<tr class="odd">
+<td>works on a new species</td>
+<td>species</td>
+</tr>
+<tr class="even">
+<td>works on an uncultured environmental organism</td>
+<td>genus or higher</td>
+</tr>
+</tbody>
+</table>
+<p>In <code>scikit-learn</code> this is <code>GroupKFold</code>, <code>StratifiedGroupKFold</code> or <code>LeaveOneGroupOut</code> with <code>groups=</code>. One keyword argument, and it separates a number you can report from one you cannot.</p>
+<p><strong>Expect the grouped score to be lower, and let it be.</strong> If it is not lower, either there is no structure in your data or your grouping does not capture it. The temptation to report the higher number because the honest one “looks bad” is precisely the mechanism the leakage literature documents.</p>
+</section>
+<section id="accuracy-is-the-wrong-headline" class="level3">
+<h3 class="anchored" data-anchor-id="accuracy-is-the-wrong-headline">Accuracy is the wrong headline</h3>
+<p>Accuracy hides everything that matters under class imbalance, and taxonomic data is always imbalanced — databases hold thousands of <em>E. coli</em> and one of most things. A classifier labelling everything as the majority genus can score 95% and be useless.</p>
+<p>Report instead: <strong>per-class recall</strong> (which genera does it systematically miss? the rare ones, invariably); <strong>macro-averaged F1</strong>, which weights every class equally; <strong>the confusion matrix</strong>, the only output showing what it confuses with what — confusions among close relatives are tolerable, confusions among distant ones mean something is broken; and <strong>accuracy at each rank</strong>, since a classifier that is 60% right at genus may be 95% right at phylum, and reporting the rank you achieved beats reporting the rank you wanted.</p>
+</section>
+<section id="three-things-to-demand-of-a-classifier" class="level3">
+<h3 class="anchored" data-anchor-id="three-things-to-demand-of-a-classifier">Three things to demand of a classifier</h3>
+<ol type="1">
+<li><strong>A calibrated confidence</strong> — among cases reported at 0.9, about 90% should be right. Naive Bayes is notoriously over-confident because the independence assumption multiplies correlated evidence as if it were independent. Calibrate (<code>CalibratedClassifierCV</code>) before believing a probability.</li>
+<li><strong>The ability to abstain</strong> — below a threshold, report nothing or report at a coarser rank. A pipeline that must answer will invent answers, as ours did at 1.000.</li>
+<li><strong>A record of the training distribution</strong> — the only way anyone can judge whether your sample resembles it.</li>
+</ol>
+<p>RDP and <code>q2-feature-classifier</code> provide all three. A <code>MultinomialNB</code> you fitted yourself provides none by default.</p>
+<hr>
+</section>
+</section>
+<section id="part-3-single-cell-data-and-preprocessing" class="level2">
+<h2 class="anchored" data-anchor-id="part-3-single-cell-data-and-preprocessing">Part 3 — Single-cell data and preprocessing</h2>
+<section id="what-makes-this-a-data-problem" class="level3">
+<h3 class="anchored" data-anchor-id="what-makes-this-a-data-problem">What makes this a data problem</h3>
+<p>A modern experiment yields <strong>tens of thousands of cells × tens of thousands of genes</strong>, of which roughly 90% of entries are zero. Everything in Bio 3 responds to one of three facts: the matrix is <em>sparse</em>, the measurement is <em>noisy</em>, and the biology you want is <em>confounded with the technology you used to see it</em>.</p>
+<p>PBMC3k, the teaching dataset, is 2 700 cells × 32 738 genes and about <strong>97% zero</strong>.</p>
+</section>
+<section id="how-the-cells-get-separated" class="level3">
+<h3 class="anchored" data-anchor-id="how-the-cells-get-separated">How the cells get separated</h3>
+<p>The protocol determines what your data can answer, and the choice is made before any analysis exists.</p>
+<p><strong>Droplet-based</strong> (10x Genomics, Drop-seq). Cells are encapsulated with barcoded beads in oil; every transcript from one droplet carries that droplet’s barcode. Cheap per cell, so you get <strong>thousands to millions</strong> of cells — but shallow, typically only 1 000–5 000 genes detected per cell, and 3′-biased, so you cannot see splice isoforms.</p>
+<p><strong>Plate-based</strong> (Smart-seq2/3). One cell per well, full-length coverage. Only <strong>hundreds</strong> of cells, at far higher cost each — but deep, with isoform-level resolution.</p>
+<p>The rule of thumb: droplets for <em>finding</em> cell types, plates for <em>characterising</em> them in detail. Most of what you will meet is 10x, and the decks use 10x data throughout.</p>
+<p><strong>UMIs</strong> are what make droplet counts meaningful. PCR amplification is exponential and uneven, so raw read counts measure amplification luck as much as abundance. A unique molecular identifier is a random barcode attached to each transcript <em>before</em> amplification, so you count <strong>distinct UMIs</strong>, not reads — recovering molecules rather than copies. Plate-based full-length protocols generally lack UMIs, which is one reason their counts need different statistical treatment.</p>
+<p><strong>Single-cell versus single-nucleus.</strong> Some tissues cannot be dissociated into intact cells — frozen material, brain, adipose, skeletal muscle. snRNA-seq profiles nuclei instead. The consequences are real and often forgotten: nuclear RNA is enriched for <strong>unspliced pre-mRNA</strong> (so intronic reads must be counted, which changes the reference used), you lose cytoplasmic and mitochondrial transcripts (so <strong>mitochondrial QC thresholds do not transfer</strong> — near-zero mitochondrial content is expected, not a sign of damage), and you recover fewer transcripts per cell. Comparing a single-cell dataset against a single-nucleus one without accounting for this produces “differential expression” that is entirely protocol.</p>
+</section>
+<section id="which-barcodes-are-actually-cells" class="level3">
+<h3 class="anchored" data-anchor-id="which-barcodes-are-actually-cells">Which barcodes are actually cells?</h3>
+<p>A droplet run produces far more barcodes than cells — often hundreds of thousands of barcodes for a few thousand cells. Most droplets caught no cell at all, only ambient RNA, and they still produce counts.</p>
+<p>The classical method plots <strong>barcodes ranked by total counts against their count depth</strong>, on log-log axes. Real cells form a plateau at high depth; empty droplets form a long tail at low depth; between them is a sharp drop — the <strong>knee</strong>. Cut at the knee.</p>
+<p>The reason this is not merely a thresholding detail: the cut-off simultaneously decides which barcodes are cells <em>and</em> which barcodes are the empty droplets used to estimate the ambient profile. Get it wrong in one direction and you admit thousands of empty droplets that will cluster as a spurious low-count “cell type”; get it wrong in the other and you discard small cells, which are often exactly the immune populations of interest.</p>
+<p>Knee-finding is fragile when cell sizes vary widely, so modern callers (<code>EmptyDrops</code>, and CellRanger’s own newer algorithm) test each low-count barcode’s expression profile <em>against</em> the ambient profile instead of thresholding on depth alone. A barcode with few counts but a transcriptionally distinct profile is kept.</p>
+</section>
+<section id="two-kinds-of-zero" class="level3">
+<h3 class="anchored" data-anchor-id="two-kinds-of-zero">Two kinds of zero</h3>
+<p>This distinction governs everything downstream:</p>
+<ul>
+<li>a <strong>biological zero</strong> — the gene genuinely is not transcribed in this cell</li>
+<li>a <strong>technical zero (dropout)</strong> — the gene <em>is</em> expressed but the transcript was not captured. Droplet capture efficiency is roughly <strong>10–30%</strong></li>
+</ul>
+<p>Nothing in the count matrix distinguishes them. The practical consequence: <em>“gene X is absent in cluster 3”</em> is a far weaker claim than <em>“gene X is abundant in cluster 3”</em>. <strong>Absence of evidence is cheap in single-cell data.</strong></p>
+</section>
+<section id="why-anndata" class="level3">
+<h3 class="anchored" data-anchor-id="why-anndata">Why AnnData</h3>
+<p>You need a matrix plus per-cell metadata, per-gene metadata, alternative representations (PCA, UMAP), alternative versions of the matrix (raw, normalized, scaled) and unstructured extras (the neighbour graph) — all of which must stay aligned through every filtering operation. Keeping five NumPy arrays in sync by hand is how analyses go quietly wrong.</p>
+<p><code>adata[cells, genes]</code> slices every slot consistently. That is the entire value proposition.</p>
+<p>Two practical points the slides mention only briefly:</p>
+<p><strong>Subsetting returns a view, not a copy.</strong> Writing to a view triggers an implicit copy and a warning. Form the habit of ending every filtering step with <code>.copy()</code>.</p>
+<p><strong><code>backed="r"</code> leaves <code>.X</code> on disk</strong> and reads slices on demand — the difference between a dataset that fits in RAM and one that does not. Most <code>scanpy</code> functions need an in-memory matrix, so backed mode is for inspection and subsetting, not the full pipeline.</p>
+</section>
+<section id="quality-control-and-why-the-covariates-must-be-read-jointly" class="level3">
+<h3 class="anchored" data-anchor-id="quality-control-and-why-the-covariates-must-be-read-jointly">Quality control, and why the covariates must be read jointly</h3>
+<p>Three numbers per barcode: count depth, genes detected, and mitochondrial fraction. The classic dying cell has <strong>low counts, few genes, high mitochondrial fraction</strong> — the membrane broke, cytoplasmic mRNA leaked out, and what remains is protected inside mitochondria.</p>
+<p>But cells with high mitochondrial content may simply be <strong>respiratory</strong> — cardiomyocytes, for instance — and perfectly healthy. Cells with high counts may be <strong>large</strong>, not doublets. Thresholding each covariate independently discards real biology.</p>
+<p><strong>Automatic thresholds via MAD.</strong> Rather than eyeballing cut-offs, mark a cell an outlier if a covariate sits more than <span class="math inline">\(n\)</span> median absolute deviations from the median:</p>
+<p><span class="math display">\[\text{MAD} = \operatorname{median}\big(|X_i - \operatorname{median}(X)|\big)\]</span></p>
+<p>MAD rather than standard deviation because it is <strong>robust</strong> — a handful of extreme cells do not inflate it, whereas they would inflate <span class="math inline">\(\sigma\)</span> and so hide themselves.</p>
+<p>Note the asymmetry the deck applies: 5 MADs on depth-like covariates, but only 3 on the mitochondrial fraction <em>plus</em> a hard 8% ceiling. The mitochondrial signal is the one we trust most as evidence of damage.</p>
+<p>On PBMC3k this removes <strong>281 of 2 700 cells</strong>, and gene filtering at <code>min_cells=20</code> takes 32 738 genes down to <strong>9 483</strong>.</p>
+</section>
+<section id="ambient-rna-and-doublets" class="level3">
+<h3 class="anchored" data-anchor-id="ambient-rna-and-doublets">Ambient RNA and doublets</h3>
+<p><strong>Ambient RNA</strong> — when cells are dissociated some lyse and release mRNA into the suspension, so every droplet is filled with a little of “the soup” regardless of which cell it caught. Every cell then appears to express a bit of everything. The correction estimates the soup profile from <strong>empty droplets</strong> and subtracts a fraction of it. The standard tool, SoupX, is R-only; its idea matters more than its API — <em>droplet data has a background, and the background is measurable</em>.</p>
+<p><strong>Doublets</strong> — two cells under one barcode. Homotypic (same type) are largely harmless and mostly invisible in a count matrix. <strong>Heterotypic</strong> doublets matter: they form spurious intermediate clusters and get mistaken for transitional states. Rate scales with loading, roughly 0.8% per 1 000 cells on 10x.</p>
+<p>Detection works by simulation: you cannot label real doublets, but you can <em>make</em> them. Add pairs of observed cells together, embed everything, and score each real cell by how many of its neighbours are artificial. Scrublet flags <strong>32 of 2 700 cells (1.2%)</strong> on PBMC3k — the expected range.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Flag, do not delete — yet.</strong> A genuinely transitional cell type, expressing two programmes because it is <em>becoming</em> one from the other, looks exactly like a heterotypic doublet. Delete first and you can never tell.</p>
+</div>
+</div>
+</section>
+<section id="normalization" class="level3">
+<h3 class="anchored" data-anchor-id="normalization">Normalization</h3>
+<p>Two cells with identical biology can have very different counts, because capture, reverse transcription and sequencing each add variability. Comparing raw counts measures sequencing luck as much as expression.</p>
+<p>Count data also has a <strong>mean–variance relationship</strong> — the Gamma–Poisson model gives <span class="math inline">\(\operatorname{Var}[Y] = \mu + \alpha\mu^2\)</span> — while PCA and most downstream methods assume roughly uniform variance.</p>
+<p>The <strong>shifted logarithm</strong> is the default fix:</p>
+<p><span class="math display">\[f(y) = \log\!\left(\frac{y}{s} + y_0\right), \qquad s_c = \frac{\sum_g y_{gc}}{L}\]</span></p>
+<p><strong>Analytic Pearson residuals</strong> take a different route: model what counts you would expect from sequencing depth alone, keep the residual. No pseudo-count, no log, and negative values are meaningful. Several benchmarks prefer it for preserving heterogeneity.</p>
+<p>The book’s advice — and the deck’s — is to compute <strong>several and keep them as separate <code>layers</code></strong>, then choose per downstream task. A layer is just another matrix; this makes the choice visible rather than buried.</p>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Important
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Always stash the raw counts in a layer first.</strong> Deviance-based feature selection, Pearson residuals and most differential-expression tests need counts, and you cannot invert the transform.</p>
+</div>
+</div>
+</section>
+<section id="feature-selection-and-how-arbitrary-it-is" class="level3">
+<h3 class="anchored" data-anchor-id="feature-selection-and-how-arbitrary-it-is">Feature selection, and how arbitrary it is</h3>
+<p>After filtering, ~10 000 genes remain, most of them near-constant across cells or almost entirely zero. Keeping them adds dimensions without signal, costs time, and <strong>dilutes the distances that clustering depends on</strong>. Convention keeps the top 2 000–4 000.</p>
+<p>Here is the uncomfortable measurement from the deck: two standard <code>scanpy</code> flavours — <code>seurat</code> and <code>cell_ranger</code> — selecting 2 000 genes each from the same data <strong>overlap on only 1 296 of them, 65%</strong>. A third of the selection differs between two defensible methods, and that disagreement propagates into the PCA, the graph, and the clusters.</p>
+<p>The pipeline looks deterministic. It is not.</p>
+</section>
+<section id="dimensionality-reduction-and-reading-a-umap-honestly" class="level3">
+<h3 class="anchored" data-anchor-id="dimensionality-reduction-and-reading-a-umap-honestly">Dimensionality reduction, and reading a UMAP honestly</h3>
+<p>2 000 dimensions is still far too many: distances stop discriminating (nearest and furthest neighbour converge), noise accumulates, and you cannot look at it. The standard route is <strong>PCA to ~50 dimensions → neighbour graph → 2-D embedding</strong>.</p>
+<p>The neighbour graph is the thing to get right, because <strong>it is computed once and used three times</strong> — by the UMAP, by the clustering, and by much of what follows. <span class="math inline">\(k\)</span> and <code>n_pcs</code> matter more than they appear to.</p>
+<p><strong>How many components?</strong> The conventional answer is the <strong>elbow</strong> in the scree plot — the point where additional PCs stop explaining meaningfully more variance. In practice the elbow is rarely sharp in single-cell data, and the honest position is that anything in the 30–50 range usually gives the same biology. Two asymmetric risks are worth knowing: too few PCs discards real structure, especially rare populations whose variance sits on later components; too many mostly adds noise, which the neighbour graph is fairly robust to. So <strong>erring high is the safer error</strong>, and 50 is a defensible default.</p>
+<p>Note also that the deviance and Pearson-residual routes change what PCA sees, so the elbow is not a property of the data alone — it moves with the normalization you chose.</p>
+<p>What you may conclude from a UMAP: these cells form distinct groups; this group is larger; this cell sits between two groups in neighbour-space.</p>
+<p>What you may <strong>not</strong> conclude:</p>
+<ul>
+<li><em>“cluster A is closer to B than to C”</em> — between-cluster distances are not preserved</li>
+<li><em>“this cluster is tight, so it is homogeneous”</em> — density is not preserved either</li>
+<li><em>“there are five cell types”</em> — the embedding did not decide that</li>
+</ul>
+<p>The deck makes this concrete by putting t-SNE and UMAP side by side on the <em>same graph</em>: the groups agree, their positions and spacing do not.</p>
+<p><strong>The diagnostic that matters</strong> is plotting QC metrics on the embedding. If a group of cells is defined by its doublet score or its sequencing depth rather than its biology, preprocessing has produced an artefact — go back rather than annotate it.</p>
+</section>
+<section id="scale" class="level3">
+<h3 class="anchored" data-anchor-id="scale">Scale</h3>
+<p>PBMC3k is a teaching dataset. The arithmetic at atlas scale:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>cells</th>
+<th>dense (float32)</th>
+<th>sparse at 5%</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>2 700</td>
+<td>0.2 GB</td>
+<td>0.02 GB</td>
+</tr>
+<tr class="even">
+<td>100 000</td>
+<td>8.0 GB</td>
+<td>0.8 GB</td>
+</tr>
+<tr class="odd">
+<td>1 000 000</td>
+<td><strong>80 GB</strong></td>
+<td><strong>8.0 GB</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Sparsity is not an optimisation; it is the difference between running on a laptop and not running at all. Measured on PBMC3k: CSR <strong>18.31 MB</strong>, CSC <strong>18.43 MB</strong>, COO <strong>27.44 MB</strong>, dense <strong>353.6 MB</strong>.</p>
+<p>CSR is row-major and fast per <strong>cell</strong> — AnnData’s default, because most operations are per-cell. CSC is fast per <strong>gene</strong>. A per-gene loop over a CSR matrix is an easy way to make an analysis far slower than it needs to be: summing 2 000 genes one at a time on PBMC3k takes <strong>55×</strong> longer over CSR (1.79 s) than over CSC (0.03 s).</p>
+<p><strong>Where the time goes</strong>, for a standard pipeline: the neighbour graph (approximate <span class="math inline">\(k\)</span>-NN over <span class="math inline">\(n\)</span> cells in 50-D) is usually the single most expensive step, then UMAP, then Leiden — all three of which consume the same graph. Everything before them is roughly linear in the number of stored values and rarely the bottleneck.</p>
+<p>Which is the DAG story from the scheduling lectures again: the <strong>span</strong> is the longest chain (you cannot start PCA before normalization finishes), the <strong>width</strong> is where parallelism lives (UMAP and Leiden are independent of each other), and caching intermediates as layers and <code>.h5ad</code> files is memoisation over that DAG.</p>
+<hr>
+</section>
+</section>
+<section id="part-4-cellular-structure-and-conditions" class="level2">
+<h2 class="anchored" data-anchor-id="part-4-cellular-structure-and-conditions">Part 4 — Cellular structure and conditions</h2>
+<section id="clustering-the-graph-not-the-matrix" class="level3">
+<h3 class="anchored" data-anchor-id="clustering-the-graph-not-the-matrix">Clustering the graph, not the matrix</h3>
+<p>We do not cluster in gene space. We cluster the <strong>neighbour graph</strong>, which makes this community detection: find groups of nodes more densely connected to each other than to the rest. Graph-based rather than <span class="math inline">\(k\)</span>-means because cell types are neither spherical nor equally sized, Euclidean distance degrades in the sparse high-dimensional regime, and the graph is sparse so it scales.</p>
+<p>The algorithms optimise <strong>modularity</strong>:</p>
+<p><span class="math display">\[Q = \frac{1}{2m}\sum_{ij}\left(A_{ij} - \frac{k_i k_j}{2m}\right)\delta(c_i, c_j)\]</span></p>
+<p>which has a documented <strong>resolution limit</strong>: maximising <span class="math inline">\(Q\)</span> systematically cannot detect communities below a size that depends on the whole graph. Rare cell types are exactly what that hides — and rare cell types are often the point of the experiment.</p>
+<p><strong>Leiden over Louvain.</strong> Louvain can produce <em>internally disconnected</em> communities — a “cluster” that is really two groups with no path between them inside the cluster. Traag <em>et al.</em> showed this is not rare. Leiden adds a refinement phase guaranteeing internal connectivity, and is usually faster too.</p>
+</section>
+<section id="the-resolution-problem" class="level3">
+<h3 class="anchored" data-anchor-id="the-resolution-problem">The resolution problem</h3>
+<p>Resolution <span class="math inline">\(\gamma\)</span> has no correct value. The deck’s sweep on the same graph:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>resolution</th>
+<th>clusters</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0.25</td>
+<td>7</td>
+</tr>
+<tr class="even">
+<td>0.5</td>
+<td>9</td>
+</tr>
+<tr class="odd">
+<td>1.0</td>
+<td>13</td>
+</tr>
+<tr class="even">
+<td>2.0</td>
+<td>16</td>
+</tr>
+</tbody>
+</table>
+<p>A factor of eight in <span class="math inline">\(\gamma\)</span> roughly doubles the cluster count, and <strong>every one of those partitions is defensible</strong>. They answer different questions at different levels of the cell-type hierarchy.</p>
+<p>What people actually do, in rough order of honesty: <strong>marker-driven</strong> (pick the resolution whose clusters match interpretable markers — circular, but it is what the biology demands); <strong>stability</strong> (cluster on subsamples, keep what recurs); <strong>hierarchy</strong> (cluster coarsely, then sub-cluster within a group of interest — often the most practical, since one resolution need not serve every question).</p>
+<p>The deck’s stability check gives an adjusted Rand index of <strong>0.892, 0.874, 0.914</strong> across 80% subsamples — mean <strong>0.894</strong>. Near 1 means the partition is reproduced; well below means the boundaries move and you should not build an argument on their exact placement.</p>
+<blockquote class="blockquote">
+<p>A cluster is <strong>a hypothesis about a group of cells</strong>, not a discovery. It becomes a finding when markers, and ideally an orthogonal dataset, support it.</p>
+</blockquote>
+</section>
+<section id="sub-clustering" class="level3">
+<h3 class="anchored" data-anchor-id="sub-clustering">Sub-clustering</h3>
+<p>The practical escape from the resolution problem is to stop looking for one resolution that serves every question. Cluster coarsely to get major lineages, then take one cluster and <strong>re-run the pipeline within it</strong>: recompute highly variable genes, PCA and the neighbour graph <em>on those cells alone</em>.</p>
+<p>Recomputing matters and is the step people skip. The original HVGs and PCs were chosen to separate T cells from monocytes from B cells; they are not the genes or the axes that distinguish naive from memory T cells. Sub-clustering on the global embedding mostly reproduces the global structure.</p>
+<p>The corresponding danger is that <strong>sub-clustering always returns clusters</strong>. Leiden partitions whatever graph it is given, so running it inside a homogeneous population yields groups that are noise. This is where the stability check earns its place: if the sub-clusters do not survive subsampling, and have no markers you can interpret, they are an artefact of having asked the question.</p>
+</section>
+<section id="annotation-and-why-it-resists-automation" class="level3">
+<h3 class="anchored" data-anchor-id="annotation-and-why-it-resists-automation">Annotation, and why it resists automation</h3>
+<p>First the definitional problem: <em>is a “CD4 T cell” a type, or are naive, memory, regulatory and effector CD4 T cells four types?</em> Both answers are in use, in the same tissue, by different labs. <strong>Cell type is a hierarchy with no canonical depth</strong> — which is exactly why resolution has no correct value.</p>
+<p><strong>Annotate clusters, never single cells.</strong> Dropout makes a per-cell call unreliable: a cell can be a B cell and show zero counts for <code>CD79A</code> simply because that transcript was not captured. Clustering aggregates over the dropout.</p>
+<p><strong>The double-dipping problem.</strong> We define clusters using the data, then test for differential expression on the same data. The clustering already maximised between-group separation, so of course the groups differ.</p>
+<blockquote class="blockquote">
+<p>As the definition of the clusters is based on the same data as used for these statistical tests, the <span class="math inline">\(p\)</span>-values of these tests will be inflated.</p>
+</blockquote>
+<p>Ranking genes by cluster specificity works fine. <strong>The significance values are meaningless</strong> and must not be reported as evidence that a cluster is real.</p>
+</section>
+<section id="a-worked-failure" class="level3">
+<h3 class="anchored" data-anchor-id="a-worked-failure">A worked failure</h3>
+<p>The deck automates label assignment by taking, for each cluster, the marker set with the highest mean expression. It <strong>fails visibly</strong>, and that is the point.</p>
+<p>Cluster 0 was labelled <code>NK</code>. Its top genes are <code>CCL5, GZMK, IL32, NKG7, B2M, CTSW</code> — and <code>GZMK</code> and <code>CTSW</code> are cytotoxic <strong>T</strong> cell markers. <code>NKG7</code> is shared between NK and CD8 T cells, and that one shared gene was enough to flip the label. No cluster received <code>CD8 T</code> at all.</p>
+<p>A shared marker is enough to flip an assignment, and only knowing the biology catches it. This is why annotation is the least automatable step in the field.</p>
+<p>Automated methods fall into three families — marker-based classifiers (Garnett, CellAssign), wide-gene-set classifiers trained on atlases (CellTypist), and reference mapping with label transfer (scArches, Symphony, Azimuth). Their quality depends on the classifier type (benchmarks find neural networks generally do <em>not</em> beat SVMs here), the training data’s annotation quality, and how similar your data is to it.</p>
+<p><strong>The most useful output is not the label but the uncertainty.</strong> Progenitor and transitional cells score uncertain because they genuinely lie between annotated states; an unseen cell type also scores uncertain. So high uncertainty flags both <em>“the method cannot tell”</em> and <em>“this may be something new”</em>.</p>
+</section>
+<section id="integration" class="level3">
+<h3 class="anchored" data-anchor-id="integration">Integration</h3>
+<p>Cells from different samples, donors, protocols or runs differ systematically for non-biological reasons. Uncorrected, they cluster by <strong>batch</strong>, and you annotate the same cell type twice under different names.</p>
+<p><strong>The fundamental difficulty:</strong> batch effect and biological difference are <strong>not identifiable in general</strong>. If all healthy samples were processed on Monday and all diseased on Tuesday, no algorithm can separate disease from day. Integration works by assuming <em>shared cell types exist across batches</em> and aligning those.</p>
+<p>The deck demonstrates with a synthetic batch effect where the truth is known. Same-batch neighbour fraction goes from <strong>0.808</strong> (against a null of 0.5 — cells overwhelmingly neighbour their own batch) to <strong>0.499</strong> after Harmony. Essentially perfect mixing.</p>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Warning
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>The synthetic effect must be gene-specific.</strong> An earlier version scaled every gene in a cell by a constant, which <code>normalize_total</code> cancels <em>exactly</em> — producing a “batch effect” that raw PCA already showed as perfectly mixed at 0.496. The demonstration would have claimed Harmony fixed something that was never broken. The working version up-regulates a random third of genes in batch B, which survives library-size normalization.</p>
+</div>
+</div>
+<p><strong>Design beats correction.</strong> Because batch and biology are confounded by the <em>design</em>, the decisive choices are made before any data exists: randomise condition across batches; record whatever you cannot randomise (operator, reagent lot, chip, day) since an unrecorded covariate cannot be modelled but does not stop existing; and multiplex where possible — cell hashing, or genetic demultiplexing of pooled donors with <code>souporcell</code> or <code>vireo</code>, puts several samples in one reaction so the batch effect between them is zero by construction. No method recovers information the design destroyed; it can only make the plot look as though it did.</p>
+<p><strong>Over-correction is the failure nobody sees.</strong> If a cell type is present in only one condition, the algorithm has no counterpart to align it to and will blend it into the nearest shared population. The result is a clean, well-mixed UMAP in which your finding has been removed, with nothing in the output indicating it happened. The scIB benchmark scores <em>biological conservation</em> alongside batch removal precisely because the two trade off.</p>
+<p>That mixing statistic — 0.808 → 0.499 — is a <strong>batch-removal</strong> score, and alone it is dangerously easy to maximise: replacing the embedding with random noise scores perfectly. So scIB reports two families and combines them, weighting biological conservation 0.6 against batch removal 0.4:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>batch correction</th>
+<th>biological conservation</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>kBET, graph iLISI</td>
+<td>ARI / NMI against known labels</td>
+</tr>
+<tr class="even">
+<td>graph connectivity</td>
+<td><strong>isolated-label F1</strong> — does the rare type survive?</td>
+</tr>
+<tr class="odd">
+<td>PCR comparison</td>
+<td>cell-cycle variance, trajectory conservation</td>
+</tr>
+</tbody>
+</table>
+<p>The isolated-label metrics are the ones to watch, because they measure exactly the over-correction failure. Broadly, the benchmark found no universal winner: Harmony is fast and hard to beat on simple batch effects, scVI and scANVI rank highest at atlas scale, BBKNN is cheapest and adjusts only the graph — and more aggressive correction always costs more biological signal.</p>
+</section>
+<section id="deep-generative-integration" class="level3">
+<h3 class="anchored" data-anchor-id="deep-generative-integration">Deep generative integration</h3>
+<p>Harmony corrects an existing PCA embedding — it is linear, fast, and takes the representation as given. <strong>scVI</strong> takes a different route: a variational autoencoder trained on the raw counts, with batch supplied as a covariate, learns a latent space in which batch has been conditioned away.</p>
+<p>What this buys, and why it dominates at atlas scale:</p>
+<ul>
+<li>it models counts directly with a negative-binomial likelihood, so no normalization or log transform is assumed beforehand</li>
+<li>batch is a modelled covariate rather than a geometric correction applied afterwards</li>
+<li>the same latent space supports downstream tasks a corrected PCA cannot — imputation, differential expression with uncertainty, and <strong>scANVI</strong>, its semi-supervised variant that propagates known cell-type labels</li>
+<li>a trained model can be extended to new data without retraining from scratch (<code>scArches</code>), which is what makes reference mapping practical</li>
+</ul>
+<p>The costs are the usual ones for a neural method: it is slower, wants a GPU to be comfortable at scale, and has hyperparameters — latent dimension, layer count, epochs — that a linear method does not. It is also harder to tell when it has gone wrong, because the latent space has no interpretation the way principal components do.</p>
+</section>
+<section id="multiple-testing-at-single-cell-scale" class="level3">
+<h3 class="anchored" data-anchor-id="multiple-testing-at-single-cell-scale">Multiple testing, at single-cell scale</h3>
+<p>Testing 20 000 genes at <span class="math inline">\(\alpha = 0.05\)</span> yields about 1 000 false positives before any biology exists. Standard practice is Benjamini–Hochberg FDR control, and <code>scanpy</code> applies it by default in <code>rank_genes_groups</code> — which is why the output column is <code>pvals_adj</code>.</p>
+<p>Three complications specific to this setting:</p>
+<ul>
+<li><strong>The tests are not independent.</strong> Genes are co-expressed in modules, so BH is conservative in some places and anti-conservative in others. It remains the standard because nothing practical does better.</li>
+<li><strong>The burden multiplies across cell types.</strong> Testing 20 000 genes in each of 15 cell types is 300 000 tests. Correcting within each cell type and reporting the result as though it were one experiment understates the problem.</li>
+<li><strong>After double-dipping, none of it is valid anyway.</strong> For <em>marker</em> genes the adjusted <span class="math inline">\(p\)</span>-values inherit the selective-inference problem described above, so FDR control is being applied to numbers that were already inflated. This is the strongest argument for treating marker lists as rankings and reserving real inference for the pseudobulk between-condition comparison, where the replication structure is honest.</li>
+</ul>
+</section>
+<section id="a-library-bug-worth-knowing-about" class="level3">
+<h3 class="anchored" data-anchor-id="a-library-bug-worth-knowing-about">A library bug worth knowing about</h3>
+<p><code>sc.external.pp.harmony_integrate</code> is <strong>broken with harmonypy ≥ 2</strong>. The scanpy wrapper (1.12.4) ends with</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>adata.obsm[adjusted_basis] <span class="op">=</span> harmony_out.Z_corr.T</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>That transpose was correct when harmonypy returned <code>(components, cells)</code>. Version 2 returns <code>(cells, components)</code> already, so the transpose yields a <code>(50,)</code> array and AnnData raises a shape error.</p>
+<p>Three ways out: pin <code>harmonypy&lt;2</code>; call <code>run_harmony</code> directly; or use a shape-guarded helper that decides orientation from the data rather than assuming it —</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>Z <span class="op">=</span> np.asarray(harmonypy.run_harmony(X, adata.obs, key).Z_corr)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> Z.shape <span class="op">==</span> (n_comps, n_cells):</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    Z <span class="op">=</span> Z.T</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The general lesson: when a wrapper silently assumes an orientation, <strong>check the shape</strong>. A transpose bug that raises is the lucky case; one that does not raise gives you a plausible, wrong embedding.</p>
+</section>
+<section id="conditions-and-why-per-cell-tests-are-wrong" class="level3">
+<h3 class="anchored" data-anchor-id="conditions-and-why-per-cell-tests-are-wrong">Conditions, and why per-cell tests are wrong</h3>
+<p>With cell types annotated across samples, the questions become <em>which genes differ between conditions within a cell type</em> and <em>did the proportions of cell types change</em>. Both are comparisons <strong>between samples</strong>, and that is what makes them statistically different from everything before.</p>
+<p>The tempting analysis — all T cells from diseased donors against all from healthy, Wilcoxon per gene across cells — is <strong>pseudoreplication</strong>. Cells from one donor are not independent observations:</p>
+<p><span class="math display">\[n = 6 \text{ donors} \quad \text{not} \quad n = 10{,}000 \text{ cells}\]</span></p>
+<p>Treating cells as replicates inflates significance by orders of magnitude. It is one of the most common errors in published single-cell analyses.</p>
+<p><strong>Pseudobulk</strong> is the recommended default: sum counts within each (sample, cell type), then use edgeR, DESeq2 or limma on the result. It restores a correct notion of replication, lets you use two decades of careful bulk methodology, averages away dropout, and vastly reduces the multiple-testing burden. The cost is losing within-cell-type heterogeneity and needing enough cells per group — typically 10–20 — for the sum to be stable.</p>
+<p>Mixed models with a random effect per donor (MAST with a donor term, glmmTMB, NEBULA) are the honest alternative when you genuinely need cell-level resolution.</p>
+<p><strong>How many samples, then.</strong> Once <span class="math inline">\(n\)</span> is the number of donors, the arithmetic gets uncomfortable: 2 donors per group cannot estimate within-group variance at all, 3 detects only very large consistent effects, 5–6 is the usual floor for a publishable DE analysis, and covariate modelling wants 10+. Sequencing 50 000 cells from 3 donors gives you <span class="math inline">\(n = 3\)</span> measured precisely — and precision per sample reduces <em>measurement</em> error, not <em>biological</em> variance, which is what the test is about.</p>
+<p>Extra cells do buy something, just not that: rare cell types. A population at 1% gives 500 cells out of 50 000 and a stable pseudobulk sum, but only 20 out of 2 000. <strong>Depth buys cell types; replication buys conclusions.</strong></p>
+<p><strong>Report effect sizes, not a ranked <span class="math inline">\(p\)</span>-value list.</strong> With enough cells, a 1.05-fold change in a highly expressed gene becomes significant — real, and uninteresting. Threshold on log fold change alongside adjusted <span class="math inline">\(p\)</span> (that is what a volcano plot is for); shrink the estimates, since low-expression genes give wildly variable fold changes and <code>lfcShrink</code>/empirical-Bayes moderation is why edgeR and DESeq2 rankings reproduce better; and watch for composition shifts, where one expanding cell type changes pseudobulk library composition and makes genes look differential through normalization alone. “1 847 genes were differentially expressed” is not a finding.</p>
+<p><strong>Compositional analysis</strong> has its own trap: proportions sum to 1, so <em>one cell type increasing forces every other to decrease</em>. Test each proportion separately and a single expanding population produces apparent significant depletion in all the others. scCODA and centred-log-ratio approaches model the constraint explicitly.</p>
+<hr>
+</section>
+</section>
+<section id="cross-cutting-themes" class="level2">
+<h2 class="anchored" data-anchor-id="cross-cutting-themes">Cross-cutting themes</h2>
+<p>Four ideas recur across all four lectures, and they are the reason this material belongs in a data-analytics course rather than only a biology one.</p>
+<p><strong>1. Optimal and unusable.</strong> Needleman-Wunsch and Smith-Waterman are provably optimal given a scoring scheme, and unusable at database scale. The field abandoned optimality rather than waiting for faster computers — the same move as greedy list scheduling instead of optimal scheduling, or approximate nearest neighbours instead of exact ones. What replaces the guarantee is <em>measurement of what the guarantee was worth</em>.</p>
+<p><strong>2. Every default is a modelling choice.</strong> <code>normalize_total()</code> looks like housekeeping. It decides that a cell’s total RNA content is uninformative — false for cell types that genuinely differ in size and transcriptional output. The same is true of the MAD multiplier, the 2 000-gene cut-off, the number of PCs, <span class="math inline">\(k\)</span>, and <span class="math inline">\(\gamma\)</span>. Defaults are defensible starting points, not neutral ones.</p>
+<p><strong>3. Selective inference is everywhere and mostly uncorrected.</strong> Clusters defined from expression, then tested for differential expression. Cell types defined from markers, then used to compare conditions. Classifiers evaluated on data that contains near-duplicates of their training set. In each case the analysis reuses the data that defined the previous step.</p>
+<p><strong>4. Biological data is not i.i.d.</strong> Strains within a species, species within a genus, cells within a donor. Almost every statistical method you would reach for assumes independence somewhere, and biology violates it structurally. Pseudobulk, grouped cross-validation and mixed models are three answers to the same underlying problem.</p>
+<hr>
+</section>
+<section id="glossary" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="glossary">Glossary</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>term</th>
+<th>meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>AnnData</strong></td>
+<td>the single-cell data structure: <code>.X</code>, <code>.obs</code>, <code>.var</code>, <code>.layers</code>, <code>.obsm</code></td>
+</tr>
+<tr class="even">
+<td><strong>affine gap</strong></td>
+<td>gap cost <span class="math inline">\(g_\text{open} + (L-1)g_\text{extend}\)</span> — one event, not <span class="math inline">\(L\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>ambient RNA</strong></td>
+<td>free mRNA in the suspension, captured by every droplet (“the soup”)</td>
+</tr>
+<tr class="even">
+<td><strong>BLOSUM62</strong></td>
+<td>the default protein substitution matrix, from blocks of aligned sequences</td>
+</tr>
+<tr class="odd">
+<td><strong>doublet</strong></td>
+<td>two cells captured under one barcode</td>
+</tr>
+<tr class="even">
+<td><strong>dropout</strong></td>
+<td>a technical zero — gene expressed but transcript not captured</td>
+</tr>
+<tr class="odd">
+<td><strong>E-value</strong></td>
+<td>expected number of chance alignments at least this good, given database size</td>
+</tr>
+<tr class="even">
+<td><strong>homolog</strong></td>
+<td>a sequence descended from a common ancestor with another</td>
+</tr>
+<tr class="odd">
+<td><strong>indel</strong></td>
+<td>an insertion or deletion; indistinguishable without the ancestral sequence</td>
+</tr>
+<tr class="even">
+<td><strong><span class="math inline">\(k\)</span>-mer</strong></td>
+<td>a substring of length <span class="math inline">\(k\)</span>; the feature unit of fast search and classification</td>
+</tr>
+<tr class="odd">
+<td><strong>Leiden</strong></td>
+<td>graph community detection guaranteeing internally connected communities</td>
+</tr>
+<tr class="even">
+<td><strong>MAD</strong></td>
+<td>median absolute deviation — a robust spread estimate, used for QC thresholds</td>
+</tr>
+<tr class="odd">
+<td><strong>minimizer</strong></td>
+<td>one representative <span class="math inline">\(k\)</span>-mer per window; shrinks an index by ~<span class="math inline">\(w\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>modularity</strong></td>
+<td>edges inside communities vs.&nbsp;expected at random; has a resolution limit</td>
+</tr>
+<tr class="odd">
+<td><strong>pseudobulk</strong></td>
+<td>counts summed within (sample, cell type) to restore valid replication</td>
+</tr>
+<tr class="even">
+<td><strong>pseudoreplication</strong></td>
+<td>treating non-independent units (cells) as independent replicates</td>
+</tr>
+<tr class="odd">
+<td><strong>resolution (<span class="math inline">\(\gamma\)</span>)</strong></td>
+<td>the Leiden parameter controlling cluster granularity; no correct value</td>
+</tr>
+<tr class="even">
+<td><strong>seed-and-extend</strong></td>
+<td>find exact short matches, then extend them — the core of BLAST</td>
+</tr>
+<tr class="odd">
+<td><strong>twilight zone</strong></td>
+<td>20–35% protein identity, below which homology is undetectable pairwise</td>
+</tr>
+<tr class="even">
+<td><strong>UMI</strong></td>
+<td>unique molecular identifier; tags a molecule before PCR so counts are molecules</td>
+</tr>
+<tr class="odd">
+<td><strong>knee plot</strong></td>
+<td>barcodes ranked by count depth; the drop separates cells from empty droplets</td>
+</tr>
+<tr class="even">
+<td><strong>snRNA-seq</strong></td>
+<td>single-<em>nucleus</em>; needed for frozen tissue, and invalidates mitochondrial QC</td>
+</tr>
+<tr class="odd">
+<td><strong>sub-clustering</strong></td>
+<td>re-running HVG/PCA/graph <em>within</em> one cluster to resolve finer types</td>
+</tr>
+<tr class="even">
+<td><strong>scVI</strong></td>
+<td>variational autoencoder learning a batch-conditioned latent space from raw counts</td>
+</tr>
+<tr class="odd">
+<td><strong>BH / FDR</strong></td>
+<td>Benjamini–Hochberg false-discovery control; <code>scanpy</code>’s <code>pvals_adj</code></td>
+</tr>
+<tr class="even">
+<td><strong>ordination</strong></td>
+<td>ecology’s word for dimensionality reduction; PCoA is classical MDS</td>
+</tr>
+<tr class="odd">
+<td><strong>beta diversity</strong></td>
+<td>distance between samples; Jaccard distance <span class="math inline">\(= 1 -\)</span> Jaccard index</td>
+</tr>
+<tr class="even">
+<td><strong>PCoA</strong></td>
+<td>eigendecomposition of a centred distance matrix; orthogonal axes ordered by variance</td>
+</tr>
+<tr class="odd">
+<td><strong>bootstrap confidence</strong></td>
+<td>resample the query’s <span class="math inline">\(k\)</span>-mers and count agreement; RDP’s measure, threshold 0.8</td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="bibliography" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="bibliography">Bibliography</h2>
+<section id="sequences" class="level3">
+<h3 class="anchored" data-anchor-id="sequences">Sequences</h3>
+<ul>
+<li><strong>Needleman &amp; Wunsch</strong> (1970), <em>A general method applicable to the search for similarities in the amino acid sequence of two proteins</em>, J. Mol. Biol. 48(3), 443–453. <a href="https://doi.org/10.1016/0022-2836(70)90057-4" class="uri">https://doi.org/10.1016/0022-2836(70)90057-4</a></li>
+<li><strong>Smith &amp; Waterman</strong> (1981), <em>Identification of common molecular subsequences</em>, J. Mol. Biol. 147(1), 195–197. <a href="https://doi.org/10.1016/0022-2836(81)90087-5" class="uri">https://doi.org/10.1016/0022-2836(81)90087-5</a></li>
+<li><strong>Gotoh</strong> (1982), <em>An improved algorithm for matching biological sequences</em>, J. Mol. Biol. 162(3), 705–708. <a href="https://doi.org/10.1016/0022-2836(82)90398-9" class="uri">https://doi.org/10.1016/0022-2836(82)90398-9</a></li>
+<li><strong>Hirschberg</strong> (1975), <em>A linear space algorithm for computing maximal common subsequences</em>, CACM 18(6), 341–343. <a href="https://doi.org/10.1145/360825.360861" class="uri">https://doi.org/10.1145/360825.360861</a></li>
+<li><strong>Henikoff &amp; Henikoff</strong> (1992), <em>Amino acid substitution matrices from protein blocks</em>, PNAS 89(22), 10915–10919. <a href="https://doi.org/10.1073/pnas.89.22.10915" class="uri">https://doi.org/10.1073/pnas.89.22.10915</a></li>
+<li><strong>Wang &amp; Jiang</strong> (1994), <em>On the complexity of multiple sequence alignment</em>, Journal of Computational Biology 1(4), 337–348 — <em>DOI pending verification</em></li>
+<li><strong>Katoh &amp; Standley</strong> (2013), <em>MAFFT multiple sequence alignment software version 7</em>, Molecular Biology and Evolution 30(4) — <em>DOI pending verification</em></li>
+<li><strong>Durbin, Eddy, Krogh &amp; Mitchison</strong> (1998), <em>Biological Sequence Analysis</em>, Cambridge University Press — the standard reference</li>
+</ul>
+</section>
+<section id="search-and-classification" class="level3">
+<h3 class="anchored" data-anchor-id="search-and-classification">Search and classification</h3>
+<ul>
+<li><strong>Altschul, Gish, Miller, Myers &amp; Lipman</strong> (1990), <em>Basic local alignment search tool</em>, J. Mol. Biol. 215(3), 403–410. <a href="https://doi.org/10.1016/S0022-2836(05)80360-2" class="uri">https://doi.org/10.1016/S0022-2836(05)80360-2</a></li>
+<li><strong>Altschul et al.</strong> (1997), <em>Gapped BLAST and PSI-BLAST</em>, Nucleic Acids Research 25(17), 3389–3402. <a href="https://doi.org/10.1093/nar/25.17.3389" class="uri">https://doi.org/10.1093/nar/25.17.3389</a></li>
+<li><strong>Karlin &amp; Altschul</strong> (1990), <em>Methods for assessing the statistical significance of molecular sequence features</em>, PNAS 87(6), 2264–2268. <a href="https://doi.org/10.1073/pnas.87.6.2264" class="uri">https://doi.org/10.1073/pnas.87.6.2264</a></li>
+<li><strong>Roberts, Hayes, Hunt, Mount &amp; Yorke</strong> (2004), <em>Reducing storage requirements for biological sequence comparison</em> (minimizers), Bioinformatics 20(18), 3363–3369. <a href="https://doi.org/10.1093/bioinformatics/bth408" class="uri">https://doi.org/10.1093/bioinformatics/bth408</a></li>
+<li><strong>Ma, Tromp &amp; Li</strong> (2002), <em>PatternHunter: faster and more sensitive homology search</em> (spaced seeds), Bioinformatics 18(3) — <em>DOI pending verification</em></li>
+<li><strong>Eddy</strong> (2011), <em>Accelerated profile HMM searches</em> (HMMER3), PLoS Computational Biology 7(10) — <em>DOI pending verification</em></li>
+<li><strong>Wang, Garrity, Tiedje &amp; Cole</strong> (2007), <em>Naive Bayesian classifier for rapid assignment of rRNA sequences</em> (RDP), Appl. Environ. Microbiol. 73(16), 5261–5267. <a href="https://doi.org/10.1128/AEM.00062-07" class="uri">https://doi.org/10.1128/AEM.00062-07</a></li>
+<li><strong>Bokulich et al.</strong> (2018), <em>Optimizing taxonomic classification of marker-gene amplicon sequences with QIIME 2</em>, Microbiome 6, 90. <a href="https://doi.org/10.1186/s40168-018-0470-z" class="uri">https://doi.org/10.1186/s40168-018-0470-z</a></li>
+<li><strong>Kapoor &amp; Narayanan</strong> (2023), <em>Leakage and the reproducibility crisis in machine-learning-based science</em>, Patterns 4(9), 100804. <a href="https://doi.org/10.1016/j.patter.2023.100804" class="uri">https://doi.org/10.1016/j.patter.2023.100804</a></li>
+</ul>
+</section>
+<section id="single-cell" class="level3">
+<h3 class="anchored" data-anchor-id="single-cell">Single cell</h3>
+<ul>
+<li><strong>Heumos, Schaar, Lance et al.</strong> (2023), <em>Best practices for single-cell analysis across modalities</em>, Nature Reviews Genetics 24, 550–572. <a href="https://doi.org/10.1038/s41576-023-00586-w" class="uri">https://doi.org/10.1038/s41576-023-00586-w</a></li>
+<li><strong>Luecken &amp; Theis</strong> (2019), <em>Current best practices in single-cell RNA-seq analysis: a tutorial</em>, Molecular Systems Biology 15(6), e8746. <a href="https://doi.org/10.15252/msb.20188746" class="uri">https://doi.org/10.15252/msb.20188746</a></li>
+<li><strong>Wolf, Angerer &amp; Theis</strong> (2018), <em>SCANPY: large-scale single-cell gene expression data analysis</em>, Genome Biology 19, 15. <a href="https://doi.org/10.1186/s13059-017-1382-0" class="uri">https://doi.org/10.1186/s13059-017-1382-0</a></li>
+<li><strong>Virshup et al.</strong> (2024), <em>anndata: Annotated data</em>, JOSS 9(101), 4371. <a href="https://doi.org/10.21105/joss.04371" class="uri">https://doi.org/10.21105/joss.04371</a></li>
+<li><strong>Lause, Berens &amp; Kobak</strong> (2021), <em>Analytic Pearson residuals for normalization of single-cell RNA-seq UMI data</em>, Genome Biology 22, 258. <a href="https://doi.org/10.1186/s13059-021-02451-7" class="uri">https://doi.org/10.1186/s13059-021-02451-7</a></li>
+<li><strong>Wolock, Lopez &amp; Klein</strong> (2019), <em>Scrublet: computational identification of cell doublets</em>, Cell Systems 8(4), 281–291. <a href="https://doi.org/10.1016/j.cels.2018.11.005" class="uri">https://doi.org/10.1016/j.cels.2018.11.005</a></li>
+<li><strong>Traag, Waltman &amp; van Eck</strong> (2019), <em>From Louvain to Leiden: guaranteeing well-connected communities</em>, Scientific Reports 9, 5233. <a href="https://doi.org/10.1038/s41598-019-41695-z" class="uri">https://doi.org/10.1038/s41598-019-41695-z</a></li>
+<li><strong>Korsunsky et al.</strong> (2019), <em>Fast, sensitive and accurate integration of single-cell data with Harmony</em>, Nature Methods 16, 1289–1296. <a href="https://doi.org/10.1038/s41592-019-0619-0" class="uri">https://doi.org/10.1038/s41592-019-0619-0</a></li>
+<li><strong>Luecken et al.</strong> (2022), <em>Benchmarking atlas-level data integration in single-cell genomics</em> (scIB), Nature Methods 19, 41–50. <a href="https://doi.org/10.1038/s41592-021-01336-8" class="uri">https://doi.org/10.1038/s41592-021-01336-8</a></li>
+<li><strong>Squair et al.</strong> (2021), <em>Confronting false discoveries in single-cell differential expression</em>, Nature Communications 12, 5692. <a href="https://doi.org/10.1038/s41467-021-25960-2" class="uri">https://doi.org/10.1038/s41467-021-25960-2</a></li>
+<li><strong>Büttner et al.</strong> (2021), <em>scCODA is a Bayesian model for compositional single-cell data analysis</em>, Nature Communications 12, 6876. <a href="https://doi.org/10.1038/s41467-021-27150-6" class="uri">https://doi.org/10.1038/s41467-021-27150-6</a></li>
+<li><strong>Lähnemann et al.</strong> (2020), <em>Eleven grand challenges in single-cell data science</em>, Genome Biology 21, 31. <a href="https://doi.org/10.1186/s13059-020-1926-6" class="uri">https://doi.org/10.1186/s13059-020-1926-6</a></li>
+</ul>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/dslnu\.github\.io\/data_analytics\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

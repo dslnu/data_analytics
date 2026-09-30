@@ -1,0 +1,1268 @@
+---
+title: "GeoScience part 7"
+subtitle: "Spatial regression, feature engineering, and honest validation"
+author:
+  - name: MSDE
+    affiliation: Lviv University
+code-fold: false
+execute:
+  enabled: true
+  cache: true
+  echo: true
+diagram:
+  cache: true
+  cache-dir: ./cache
+  engine:
+    tikz:
+      execpath: lualatex
+      additional-packages: |
+        \usetikzlibrary{arrows.meta}
+        \usetikzlibrary{positioning}
+        \usetikzlibrary{decorations.pathreplacing}
+filters:
+  - diagram
+format:
+  revealjs:
+    css: custom.css
+    preview-links: auto
+    slide-number: true
+    theme: default
+    multiplex:
+      url: 'https://mplex.vitv.ly'
+      secret: 'a5a151a1c415aec26e113f3f855cbe46'
+      id: '5b87a828d4875a63913a24fb43da0b3fb11e7b263634349e2397d79d00f2de0f'
+---
+
+```{python}
+#| include: false
+import warnings
+
+warnings.filterwarnings("ignore")
+
+import matplotlib
+
+matplotlib.rcParams["figure.figsize"] = (7, 4)
+matplotlib.rcParams["figure.dpi"] = 110
+matplotlib.rcParams["font.size"] = 8
+
+GDS = "../_repos/gdsbook/data"
+
+import os
+import contextily
+import matplotlib.pyplot as plt
+import numpy
+import pandas
+import geopandas
+import seaborn
+
+
+def _carto(variant):
+    """CARTO basemaps now require an API key. Use it when CARTO_API_KEY is
+    set; otherwise fall back to a keyless Esri equivalent so the render
+    never shows the "API KEY REQUIRED" watermark."""
+    key = os.environ.get("CARTO_API_KEY")
+    return (
+        variant(apikey=key)
+        if key
+        else contextily.providers.Esri.WorldGrayCanvas
+    )
+
+
+BASEMAP = _carto(contextily.providers.CartoDB.Positron)
+```
+
+## Supervised learning with geography {.scrollable}
+
+:::{.callout-tip icon=false}
+## Source
+
+**Geographic Data Science with Python** --- Rey, Arribas-Bel & Wolf, <https://geographicdata.science>
+
+**Part III, Advanced Topics** --- chapters 11 (*Spatial Regression*) and 12 (*Spatial Feature Engineering*).
+:::
+
+:::{.callout-important icon=false}
+## Where we are
+
+Geo 5 and Geo 6 were about **describing** spatial structure: weights, choropleths, Moran's I, LISA, point patterns.
+
+This lecture is about **using** it. We fit models that predict, and we treat geography in three ways:
+
+1. as a **feature** you engineer
+2. as **heterogeneity** --- the model changes across space
+3. as **dependence** --- neighbours influence each other
+
+And then, in a section the book does not cover, we ask whether the resulting predictions are as good as they look.
+:::
+
+## Roadmap {.scrollable}
+
+:::{.callout-note icon=false}
+## Five parts
+
+1. **A baseline model** --- ordinary least squares, no geography at all
+2. **Hidden structure in the errors** --- the diagnostic that motivates everything else
+3. **Space as a feature** --- map matching and map synthesis (ch. 12)
+4. **Space in the model** --- heterogeneity (fixed effects, regimes) and dependence (SLX, error, lag)
+5. **Validating spatial predictions** --- why your cross-validated $R^2$ is too high
+
+Parts 1--4 follow the book. Part 5 does not exist in the book, and it is the part most likely to change what you do.
+:::
+
+<!-- ==========================================================================
+     SOURCE: gdsbook ch.11 "Spatial Regression"
+       https://geographicdata.science/book/notebooks/11_regression.html
+       sections: "What is spatial regression and why should I care?",
+                 "Data: San Diego Airbnb", "Non-spatial regression, a quick refresh"
+     ========================================================================== -->
+
+# Why geography belongs in a model
+
+## Two arguments
+
+:::{.callout-tip icon=false}
+## One enthusiastic, one reluctant
+
+**The process is genuinely spatial.** People pay a premium to live in a better school district; homes near a motorway or a waste plant sell for less; asthma incidence depends on where you *spend your day*, not where you sleep. Here *geography is a feature* — it predicts because the outcome was produced geographically.
+
+**Or: geography is a useful diagnostic.** Even if you do not believe the process is spatial, mapping your **errors** tells you whether the model fails systematically somewhere. If error is "contagious" between nearby observations, that structure is exploitable.
+
+> Regardless of whether or not the true process is explicitly geographic, additional information about the spatial relationships between our observations can make our predictions better.
+:::
+
+## Where spatial error comes from
+
+:::{.callout-note icon=false}
+## Three sources, and none of them require a "spatial process"
+
+- **Geography should have been an attribute** and you did not know how to include it.
+- **An omitted variable is spatially patterned.** Its absence shows up as structure in the residuals — a *spatially patterned omitted covariate*.
+- **Your predictors carry embodied spatial information.** Most social-science variables are spatially patterned for free. Use one and you may get patterned errors; use several and the effect compounds.
+
+This is why spatial diagnostics are worth running on models you did not think were spatial.
+:::
+
+## The data {.scrollable}
+
+:::{.callout-tip icon=false}
+## San Diego Airbnb listings
+
+```{python}
+db = geopandas.read_file(f"{GDS}/airbnb/regression_db.geojson")
+
+print("listings :", db.shape[0])
+print("columns  :", db.shape[1])
+print("crs      :", db.crs)
+db[["accommodates", "bedrooms", "beds", "d2balboa", "coastal", "log_price"]].head()
+```
+
+The table mixes three kinds of variable, and the distinction matters for this lecture:
+
+- **intrinsic** — `accommodates`, `bathrooms`, `bedrooms`, `beds`
+- **categorical** — room type (`rt_*`) and property group (`pg_*`) binaries
+- **already spatial** — `d2balboa` (distance to Balboa Park), `coastal`, `neighborhood`
+:::
+
+## The specification
+
+:::{.callout-important icon=false}
+## Ten covariates, no geography
+
+$$P_i = \alpha + \sum_k \mathbf{X}_{ik}\beta_k + \epsilon_i$$
+
+```{python}
+variable_names = [
+    "accommodates", "bathrooms", "bedrooms", "beds",
+    "rt_Private_room", "rt_Shared_room",
+    "pg_Condominium", "pg_House", "pg_Other", "pg_Townhouse",
+]
+```
+
+We model **`log_price`** rather than price, so coefficients read as approximate percentage changes.
+
+Each $\beta_k$ is the association between that variable and price *holding the others constant*. Regression is not magic: it discounts confounders **you included**, not all confounders.
+:::
+
+## Fitting it {.scrollable}
+
+:::{.callout-tip icon=false}
+## `spreg.OLS`
+
+We use PySAL's `spreg` rather than `statsmodels` or `sklearn`, because it is the one that will later let us fit explicitly spatial models with the same interface.
+
+```{python}
+import spreg
+
+m1 = spreg.OLS(
+    db[["log_price"]].values,
+    db[variable_names].values,
+    name_y="log_price",
+    name_x=variable_names,
+)
+
+print(f"n   = {m1.n}")
+print(f"R2  = {m1.r2:.4f}")
+print(f"adj = {m1.ar2:.4f}")
+```
+
+Two-thirds of the variation in nightly price, from ten non-spatial covariates.
+:::
+
+## The coefficients {.scrollable}
+
+```{python}
+#| code-fold: true
+coef = pandas.DataFrame(
+    {
+        "Coeff.": m1.betas.flatten(),
+        "Std. Error": m1.std_err.flatten(),
+        "P-Value": [i[1] for i in m1.t_stat],
+    },
+    index=m1.name_x,
+).round(4)
+coef
+```
+
+Largely as expected: more people accommodated, more bathrooms and bedrooms all raise price. **More `beds` lowers it** — given a fixed number of rooms, more beds means a more crowded listing. Renting a private room or a shared room is cheaper than the whole property.
+
+::: {.callout-note icon=false}
+## A caveat the book flags
+
+Can you *arbitrarily* change the number of beds without changing how many people a listing accommodates? Not really. Interaction effects would address this; we leave them aside.
+:::
+
+<!-- source: gdsbook ch.11, "Hidden structures" -->
+
+# Hidden structure in the errors
+
+## The i.i.d. assumption
+
+:::{.callout-important icon=false}
+## What linear models assume, and what geography does to it
+
+OLS assumes errors are **independent and identically distributed**. If residuals cluster in space, that assumption is violated — and the standard errors, $t$-statistics and $p$-values that follow from it are wrong.
+
+So the question is not academic. Before trusting any coefficient in the table above, we should ask: **do the errors have a geography?**
+
+Three checks, in increasing sharpness:
+
+1. split the residuals by a known spatial category
+2. look at their distribution by neighbourhood
+3. correlate each residual with the residuals around it
+:::
+
+## Check 1 --- coastal or not {.scrollable}
+
+:::{.callout-tip icon=false}
+## A theory: the model knows nothing about beaches
+
+San Diego is a coastal city and the model has no beach variable. If proximity to the ocean matters, coastal listings should be systematically under-predicted.
+
+```{python}
+#| code-fold: true
+u = m1.u.flatten()
+is_coastal = db.coastal.astype(bool).values
+coastal = u[is_coastal]
+not_coastal = u[~is_coastal]
+
+f, ax = plt.subplots(figsize=(5.5, 3.2))
+ax.hist(coastal, density=True, alpha=0.7, label="Coastal")
+ax.hist(not_coastal, histtype="step", density=True, linewidth=3, label="Not coastal")
+ax.axvline(0, linestyle=":", color="k", linewidth=2)
+ax.set_xlabel("residual"); ax.legend()
+plt.tight_layout(); plt.show()
+```
+:::
+
+## Check 1 --- is the difference real?
+
+:::{.callout-tip icon=false}
+## A $t$-test on the two groups of residuals
+
+```{python}
+from scipy.stats import ttest_ind
+
+t, p = ttest_ind(coastal, not_coastal)
+print(f"coastal mean residual     : {coastal.mean():+.4f}")
+print(f"non-coastal mean residual : {not_coastal.mean():+.4f}")
+print(f"t = {t:.3f}   p = {p:.3g}")
+```
+
+The coastal residuals sit slightly higher and are less variable, and the two distributions are statistically distinct.
+
+**A residual mean that differs by a known spatial category is a model failure, not a curiosity.** It says the model is systematically wrong in a place you can name.
+:::
+
+## Check 2 --- by neighbourhood {.scrollable}
+
+```{python}
+#| code-fold: true
+db["residual"] = m1.u
+medians = db.groupby("neighborhood").residual.median().to_frame("hood_residual")
+
+f = plt.figure(figsize=(11, 2.8))
+ax = plt.gca()
+seaborn.boxplot(
+    x="neighborhood", y="residual", ax=ax,
+    data=db.merge(medians, how="left", left_on="neighborhood", right_index=True)
+            .sort_values("hood_residual"),
+    palette="bwr", linewidth=0.5, fliersize=1,
+)
+f.autofmt_xdate(rotation=-90)
+plt.tight_layout(); plt.show()
+```
+
+No neighbourhood is disjoint from the others, but the medians trend clearly. The well-known tourist districts — Gaslamp Quarter, Little Italy, The Core — sit high. There may be a genuine effect of **neighbourhood fashionableness** that no column in our table captures.
+
+## Check 3 --- the sharpest one {.scrollable}
+
+:::{.callout-tip icon=false}
+## Correlate each error with its neighbour's error
+
+If pricing is *contagious* — hosts price against nearby listings — errors should be too. Take the single nearest listing to each property and compare residuals.
+
+```{python}
+from libpysal import weights
+
+knn = weights.KNN.from_dataframe(db, k=1)
+lag_residual = weights.spatial_lag.lag_spatial(knn, m1.u)
+
+r1 = numpy.corrcoef(m1.u.flatten(), lag_residual.flatten())[0, 1]
+print(f"corr(u, Wu) with k=1 : {r1:.4f}")
+```
+
+A positive correlation means: **when the model over-predicts a listing, it over-predicts its neighbour too.**
+:::
+
+## Check 3 --- and it stabilises {.scrollable}
+
+```{python}
+#| code-fold: true
+rows = []
+for k in (1, 5, 10, 20, 40):
+    w = weights.KNN.from_dataframe(db, k=k)
+    w.transform = "R"
+    lag = weights.spatial_lag.lag_spatial(w, m1.u)
+    rows.append((k, numpy.corrcoef(m1.u.flatten(), lag.flatten())[0, 1]))
+
+for k, r in rows:
+    print(f"  k = {k:>2} : corr(u, Wu) = {r:.4f}")
+
+f, ax = plt.subplots(figsize=(4.6, 2.8))
+ax.plot([r[0] for r in rows], [r[1] for r in rows], "o-")
+ax.set_xlabel("k nearest neighbours"); ax.set_ylabel("corr(u, Wu)")
+plt.tight_layout(); plt.show()
+```
+
+The correlation *rises* with $k$ and then settles. A single neighbour is a noisy estimate of "the surroundings"; twenty is a stable one. This is why the book works at $k = 20$.
+
+## Where the errors cluster {.scrollable}
+
+:::{.callout-tip icon=false}
+## LISA on the residuals
+
+We already have the tool from Geo 6. Run a local Moran on the residuals and keep only significant cluster cores.
+
+```{python}
+import esda
+
+knn.reweight(k=20, inplace=True)
+knn.transform = "R"
+outliers = esda.moran.Moran_Local(m1.u, knn, permutations=9999)
+
+error_clusters = (outliers.q % 2 == 1) & (outliers.p_sim <= 0.001)
+print(f"significant error-cluster listings: {error_clusters.sum()} of {db.shape[0]}")
+```
+
+These are places where the model is significantly wrong **and so are its neighbours**.
+:::
+
+## Where the errors cluster {.scrollable}
+
+```{python}
+#| code-fold: true
+ax = (
+    db.assign(error_clusters=error_clusters, local_I=outliers.Is)
+      .query("error_clusters")
+      .sort_values("local_I")
+      .plot("local_I", cmap="bwr", marker=".", markersize=6, figsize=(5.4, 5))
+)
+contextily.add_basemap(ax, crs=db.crs, source=BASEMAP)
+ax.set_axis_off()
+plt.tight_layout(); plt.show()
+```
+
+:::{.callout-important icon=false}
+## Why this matters
+
+If mis-prediction has a **consistent geography**, we can model it. The rest of the lecture is three different ways of doing exactly that.
+:::
+
+<!-- ==========================================================================
+     SOURCE: gdsbook ch.12 "Spatial Feature Engineering"
+       https://geographicdata.science/book/notebooks/12_feature_engineering.html
+       sections: "What is spatial feature engineering?", "Feature engineering
+       using map matching" (counting nearby features; assigning point values
+       from surfaces; point interpolation; polygon to point; area to area),
+       "Feature engineering using map synthesis" (spatial summary features;
+       clustering as feature engineering)
+     ========================================================================== -->
+
+# Space as a feature
+
+## Spatial feature engineering
+
+:::{.callout-important icon=false}
+## Two directions
+
+> At its core, *spatial feature engineering* is the process of developing additional information from raw data using **geographic knowledge**.
+
+| | | |
+|---|---|---|
+| **Map matching** | *between* datasets | geography is the join key |
+| **Map synthesis** | *within* one dataset | geography borrows from nearby rows |
+
+**Space is the ultimate linkage key.** Two datasets with no shared identifier — Airbnb listings and census tracts, say — can still be joined, because both are somewhere. That is a trick you cannot pull with aspatial data.
+:::
+
+## A vocabulary
+
+:::{.callout-note icon=false}
+## Two families of engineered feature
+
+**Spatial summary features** measure attributes of observations bearing some spatial relationship to the target:
+
+- the mean or median of features within a neighbourhood
+- the **spatial lag** — the average of the neighbours' values
+- counts within a distance, standard deviation of the ten nearest
+- **interpolated features**, transferring information between supports
+
+**Proximity features** measure distance from the target to something else — a park, the coast, the nearest other observation.
+
+Both can be built by matching or by synthesis.
+:::
+
+## The precision trade-off
+
+:::{.callout-warning icon=false}
+## More accurate transfer costs more
+
+> There is always an inevitable trade-off between precision and sophistication: more precise transfer is usually possible at the expense of more advanced and involved techniques.
+
+That cost is both computational and cognitive — someone has to understand the method later. Sometimes you need the best possible estimate; often "good enough" is good enough, and the simple spatial join wins.
+:::
+
+## Proximity as a feature {.scrollable}
+
+:::{.callout-tip icon=false}
+## Distance to Balboa Park
+
+Balboa Park holds the museums and the zoo. If visitors pay to be near it and we omit that, we have a spatially patterned omitted covariate — exactly the diagnosis from the last section.
+
+```{python}
+#| code-fold: true
+ax = db.plot("d2balboa", marker=".", s=4, figsize=(5, 4.6), legend=True)
+contextily.add_basemap(ax, crs=db.crs, source=BASEMAP)
+ax.set_axis_off()
+plt.tight_layout(); plt.show()
+```
+:::
+
+## Does it help? {.scrollable}
+
+:::{.callout-tip icon=false}
+## Add it and refit
+
+```{python}
+balboa_names = variable_names + ["d2balboa"]
+m2 = spreg.OLS(
+    db[["log_price"]].values,
+    db[balboa_names].values,
+    name_y="log_price",
+    name_x=balboa_names,
+)
+
+pandas.DataFrame(
+    [[m1.r2, m1.ar2], [m2.r2, m2.ar2]],
+    index=["M1 (no distance)", "M2 (+ d2balboa)"],
+    columns=["R2", "Adj. R2"],
+).round(4)
+```
+
+```{python}
+#| code-fold: true
+i = m2.name_x.index("d2balboa")
+print(f"d2balboa coefficient : {m2.betas.flatten()[i]:+.6f}")
+print(f"p-value              : {m2.t_stat[i][1]:.3f}")
+```
+:::
+
+:::{.callout-warning icon=false}
+## A negative result, kept on purpose
+
+The coefficient is **not significant** and $R^2$ barely moves. A sensible, well-motivated spatial feature simply did not help.
+
+This is worth sitting with. The residual clustering we measured is real — but *this particular* story about it was wrong. Diagnosing spatial structure tells you something is missing; it does not tell you what.
+:::
+
+## Counting nearby features {.scrollable}
+
+:::{.callout-tip icon=false}
+## Map matching: how many restaurants are near each listing?
+
+The conceptually simplest match. Take a second point dataset — bars and restaurants from OpenStreetMap — and count how many fall within a radius of each listing.
+
+```{python}
+dbm_ = db.to_crs(epsg=3857)
+pois = geopandas.read_file(f"{GDS}/cache/sd_pois.gpkg").to_crs(epsg=3857)
+food = pois[pois["amenity"].isin(["restaurant", "bar"])]
+
+buffers = dbm_[["geometry"]].copy()
+buffers["geometry"] = buffers.buffer(500)
+near = geopandas.sjoin(food, buffers, predicate="within")
+
+db["food_500m"] = near.groupby("index_right").size().reindex(db.index).fillna(0).astype(int)
+print(f"POIs loaded   : {len(food)} restaurants and bars")
+print(f"mean / median : {db.food_500m.mean():.1f} / {db.food_500m.median():.0f}")
+print(f"max           : {db.food_500m.max()}")
+print(f"listings with none nearby: {(db.food_500m == 0).sum()} of {len(db)}")
+```
+
+A **buffer, a spatial join, a groupby**. That is the whole operation, and it is the workhorse of map matching.
+:::
+
+## Does *that* help? {.scrollable}
+
+:::{.callout-tip icon=false}
+## Test it before believing it
+
+```{python}
+print(f"corr(food_500m, log_price) = {numpy.corrcoef(db.food_500m, db.log_price)[0, 1]:+.4f}")
+```
+
+:::
+
+:::{.callout-warning icon=false}
+## A second negative result
+
+Essentially zero, and very slightly **negative**. The feature that "obviously" should predict price does not.
+
+Two plausible readings, and the data here cannot separate them: restaurant density may genuinely not drive nightly price once size and room type are controlled for; or the effect exists but is confounded — dense restaurant areas are downtown, where listings are smaller.
+
+**Keep both negative results in view.** `d2balboa` failed, `food_500m` failed, and yet the residuals are demonstrably clustered. Spatial structure being *present* is not the same as your favourite explanation for it being *right*.
+:::
+
+## Sampling a surface {.scrollable}
+
+:::{.callout-tip icon=false}
+## Map matching from raster to points
+
+When the ancillary data is a **surface** rather than points — elevation, temperature, pollution — the match is a raster sample at each point's coordinates.
+
+```{python}
+import rasterio
+
+dem = rasterio.open(f"{GDS}/nasadem/nasadem_sd.tif")
+pts = db.to_crs(dem.crs)
+coords = [(x, y) for x, y in zip(pts.geometry.x, pts.geometry.y)]
+db["elevation"] = [v[0] for v in dem.sample(coords)]
+
+print(f"raster : {dem.shape[0]} x {dem.shape[1]} cells, crs {dem.crs}")
+print(f"elevation  min {db.elevation.min():>4}  median {db.elevation.median():>5.0f}  max {db.elevation.max():>4}  (m)")
+print(f"corr with log_price = {numpy.corrcoef(db.elevation, db.log_price)[0, 1]:+.4f}")
+```
+
+**Reproject the points to the raster's CRS, not the other way round.** Resampling a raster is lossy and slow; transforming a few thousand points is neither.
+
+`dem.sample()` does nearest-cell lookup. A smoother estimate would interpolate between neighbouring cells — the precision/sophistication trade-off again, at its smallest scale.
+:::
+
+## When there is no surface {.scrollable}
+
+:::{.callout-important icon=false}
+## Spatial interpolation
+
+Sometimes you have measurements at points that are **not** the points you care about, and no ready-made surface. Then you must guess the field between them.
+
+The serious methods are **kriging** (Gaussian process regression, from geostatistics) and **geographically weighted regression**. The book uses something deliberately simpler:
+
+```python
+from sklearn.neighbors import KNeighborsRegressor
+
+model = KNeighborsRegressor(n_neighbors=10, weights="distance")
+model.fit(known_locations, known_values)
+surface = model.predict(grid_locations)
+```
+
+Ten nearest listings, distance-weighted. Not sophisticated — but it makes the point that **interpolation is just prediction where the only features are coordinates.** Remember that; it comes back in part 5.
+:::
+
+## Polygon to point
+
+:::{.callout-tip icon=false}
+## The humble spatial join
+
+To attach census tract population density to each listing, the geographic problem is only "which polygon contains this point?" — a spatial join.
+
+```python
+sd_pop = geopandas.read_file(f"{GDS}/cache/sd_census.gpkg")
+joined = geopandas.sjoin(airbnbs, sd_pop, predicate="within")
+```
+
+You met this in Geo 3. Notice that it is doing real work here: it moves information across an **entirely different geography**, from irregular administrative polygons onto points, with no shared key.
+:::
+
+## Area to area {.scrollable}
+
+:::{.callout-warning icon=false}
+## The hard case
+
+Transferring between two *different polygon* geographies — census tracts to hexagons — has no exact answer. The boundaries do not nest.
+
+```{python}
+from tobler.area_weighted import area_interpolate
+
+census = geopandas.read_file(f"{GDS}/cache/sd_census.gpkg").to_crs(epsg=3857)
+hexes = geopandas.read_file(f"{GDS}/h3_grid/sd_h3_grid.gpkg").to_crs(epsg=3857)
+census["pop"] = census["B02001_001E"]
+
+interp = area_interpolate(source_df=census, target_df=hexes,
+                          extensive_variables=["pop"])
+
+print(f"source : {len(census)} census tracts, {census['pop'].sum():>9,.0f} people")
+print(f"target : {len(hexes)} hexagons,      {interp['pop'].sum():>9,.0f} people")
+```
+:::
+
+:::{.callout-important icon=false}
+## Extensive or intensive --- not optional
+
+A **count** must be *split* among the pieces so the total is preserved. A **rate** must be *averaged*. Pass a population count as `intensive_variables` and you will invent people.
+:::
+
+## Where did 60% of the population go? {.scrollable}
+
+:::{.callout-important icon=false}
+## Read the totals, always
+
+The interpolated total is **far** below the source total. That is not a bug, and working out why is the whole lesson.
+
+```{python}
+print(f"census extent : {census.area.sum() / 1e6:>8,.0f} km2")
+print(f"hex grid      : {hexes.area.sum() / 1e6:>8,.0f} km2")
+print(f"grid covers   : {hexes.area.sum() / census.area.sum():>8.1%} of the census area")
+print(f"but captures  : {interp['pop'].sum() / census['pop'].sum():>8.1%} of the population")
+```
+
+The hex grid covers only the urban core. **Mass is preserved only where the target covers the source** — everything outside the grid is silently dropped.
+
+Note the ratio, though: **4% of the land holds 40% of the people.** Which is also the reason simple areal weighting is crude — it assumes population is uniform *within* each source tract, and population is never uniform. Dasymetric methods use ancillary data (land cover, building footprints, night lights) to distribute it more honestly.
+:::
+
+:::{.callout-warning icon=false}
+## The habit worth forming
+
+After any areal interpolation, compare the source and target totals. If they differ, you must be able to say why before you use the result.
+:::
+
+## Map synthesis {.scrollable}
+
+:::{.callout-tip icon=false}
+## Borrowing from within the same dataset
+
+No second dataset needed. Use the spatial configuration of the data itself.
+
+```{python}
+w20 = weights.KNN.from_dataframe(db, k=20)
+w20.transform = "R"
+
+db["lag_bedrooms"] = weights.spatial_lag.lag_spatial(w20, db["bedrooms"].values)
+db["rel_bedrooms"] = db["bedrooms"] - db["lag_bedrooms"]
+
+print(f"corr(bedrooms,     log_price) = {numpy.corrcoef(db.bedrooms, db.log_price)[0, 1]:+.4f}")
+print(f"corr(lag_bedrooms, log_price) = {numpy.corrcoef(db.lag_bedrooms, db.log_price)[0, 1]:+.4f}")
+print(f"corr(rel_bedrooms, log_price) = {numpy.corrcoef(db.rel_bedrooms, db.log_price)[0, 1]:+.4f}")
+```
+
+Three variables from one column. `bedrooms` is *what I am*; `lag_bedrooms` is *what my neighbourhood is*; their difference is **how I compare to my neighbours** — which, for a host pricing against nearby listings, may be the most meaningful of the three.
+:::
+
+:::{.callout-note icon=false}
+## The most useful engineered variable here
+
+The **spatial lag of a feature** answers "what is around me?" without needing any second dataset. It is cheap, it is interpretable, and unlike the two proximity features we tried, it actually carries signal.
+:::
+
+## Clustering as a feature
+
+:::{.callout-note icon=false}
+## Geography in, categorical feature out
+
+Run a density-based clustering on the coordinates (Geo 6's DBSCAN, or HDBSCAN) and use the **cluster label** as a categorical predictor.
+
+```python
+from sklearn.cluster import HDBSCAN
+
+labels = HDBSCAN(min_cluster_size=30).fit_predict(coordinates)
+airbnbs["district"] = labels
+```
+
+This invents a neighbourhood system from the data rather than accepting the administrative one — a useful move when official boundaries do not match the phenomenon. It is also a bridge to the next section: a cluster label used as a predictor *is* a spatial fixed effect.
+:::
+
+<!-- source: gdsbook ch.11, "Spatial heterogeneity" -- spatial fixed effects
+     and spatial regimes -->
+
+# Space in the model I --- heterogeneity
+
+## Spatial heterogeneity
+
+:::{.callout-important icon=false}
+## The model itself changes across space
+
+So far geography entered as a *column*. Spatial heterogeneity is different: parts of the **model** vary with location.
+
+Three things can vary:
+
+| varies | name | meaning |
+|---|---|---|
+| $\alpha$ | spatial fixed effects | different baseline level per place |
+| $\beta$ | spatial regimes | the *relationships* differ per place |
+| $\sigma^2$ | spatial heteroskedasticity | error variance differs per place |
+
+We handle the first two.
+:::
+
+## Spatial fixed effects
+
+:::{.callout-tip icon=false}
+## Let the intercept vary by neighbourhood
+
+$$\log P_i = \alpha_r + \sum_k \mathbf{X}_{ik}\beta_k + \epsilon_i$$
+
+We are missing factors that determine price, and some vary systematically by area. Rather than measure them, **control for them** with one binary per neighbourhood.
+
+This is sometimes called *space as a proxy*: we do not know what makes a neighbourhood desirable, but we know the pattern it follows, and we can let $\alpha$ absorb it.
+:::
+
+:::{.callout-note icon=false}
+## And note what it is
+
+A spatial fixed effect is exactly the clustering-as-a-feature idea from the previous section, with administrative boundaries supplying the labels.
+:::
+
+## Fitting fixed effects {.scrollable}
+
+:::{.callout-tip icon=false}
+## With `statsmodels`' formula interface
+
+```{python}
+import statsmodels.formula.api as sm
+
+f = "log_price ~ " + " + ".join(variable_names) + " + neighborhood - 1"
+m3 = sm.ols(f, data=db).fit()
+
+print(f"R2 = {m3.rsquared:.4f}   (M1 was {m1.r2:.4f})")
+print(f"neighbourhood terms: {sum('neighborhood[' in i for i in m3.params.index)}")
+```
+
+The trailing **`- 1`** drops the global intercept. Keeping it alongside a full set of neighbourhood dummies makes the system under-determined — the dummies already sum to one for every row.
+:::
+
+## Reading the fixed effects {.scrollable}
+
+```{python}
+#| code-fold: true
+sfe = (
+    m3.params[[i for i in m3.params.index if "neighborhood[" in i]]
+    .rename(lambda s: s.replace("neighborhood[", "").replace("]", ""))
+    .sort_values()
+)
+print("cheapest five:"); print(sfe.head().round(3).to_string())
+print("\ndearest five:"); print(sfe.tail().round(3).to_string())
+```
+
+The estimates have a clear geography of their own: the expensive neighbourhoods are coastal, the cheap ones inland. **The model has recovered a spatial pattern nobody told it about** — which is the point, but also a warning, since it means $\alpha_r$ is absorbing everything spatial we failed to measure.
+
+## Spatial regimes
+
+:::{.callout-important icon=false}
+## Let the slopes vary too
+
+$$\log P_i = \alpha_r + \sum_k \mathbf{X}_{ki}\beta_{k-r} + \epsilon_i$$
+
+Fixed effects assume the *relationships* are the same everywhere and only the baseline shifts. Regimes relax that: every coefficient may differ by group.
+
+The substantive claim is stronger. Not just "the coast is more expensive", but **"an extra bedroom is worth a different amount on the coast than inland."**
+:::
+
+## Fitting regimes {.scrollable}
+
+:::{.callout-tip icon=false}
+## `spreg.OLS_Regimes`, split on coastal
+
+```{python}
+m5 = spreg.OLS_Regimes(
+    db[["log_price"]].values,
+    db[variable_names].values,
+    db["coastal"].tolist(),
+    constant_regi="many",
+    regime_err_sep=False,
+    name_y="log_price",
+    name_x=variable_names,
+)
+print(f"R2 = {m5.r2:.4f}")
+```
+
+```{python}
+#| code-fold: true
+b = pandas.Series(m5.betas.flatten(), index=m5.name_x)
+coastal_b = b[[i for i in b.index if i.startswith("1_")]].rename(lambda s: s[2:])
+inland_b = b[[i for i in b.index if i.startswith("0_")]].rename(lambda s: s[2:])
+pandas.DataFrame({"inland": inland_b, "coastal": coastal_b}).round(3)
+```
+:::
+
+## Regimes, read
+
+:::{.callout-note icon=false}
+## What the two columns say
+
+Compare the two columns rather than reading either alone. Where they are close, the regime split bought nothing for that variable. Where they diverge, the relationship genuinely differs between coast and inland.
+
+**The cost of regimes is parameters.** You have doubled the coefficient count, so each is estimated on half the data and standard errors grow. Split on a variable with no real effect and you have added noise and lost power for nothing.
+
+Regimes work when the split is **theoretically motivated** — here, that the ocean changes how people value a property — not when it is chosen because it improved the fit.
+:::
+
+<!-- source: gdsbook ch.11, "Spatial dependence" -- SLX, spatial error,
+     spatial lag models -->
+
+# Space in the model II --- dependence
+
+## Spatial dependence
+
+:::{.callout-important icon=false}
+## The configuration itself matters
+
+Heterogeneity says *the model differs by place*. Dependence says something stronger: **the outcome at one location depends on what is at other locations.**
+
+A listing's price may depend not only on whether it is a townhouse, but on whether it is surrounded by townhouses or by high-rises. Hosts price against their neighbours; the neighbours price against them.
+
+Three standard ways to encode this, differing in *where* the neighbour term enters.
+:::
+
+## Three models
+
+:::{.callout-tip icon=false}
+## Where does $W$ go?
+
+| model | equation | the claim |
+|---|---|---|
+| **SLX** | $y = \alpha + X\beta + WX\gamma + \epsilon$ | my neighbours' *features* affect me |
+| **Spatial error** | $y = \alpha + X\beta + u$, $u = \lambda Wu + \epsilon$ | the *unmeasured* stuff is spatially correlated |
+| **Spatial lag** | $y = \alpha + \rho Wy + X\beta + \epsilon$ | my neighbours' *outcome* affects me |
+
+These are different substantive theories, not three fits of one idea. Choosing between them is a modelling decision, and the diagnostics only partly settle it.
+:::
+
+## SLX --- exogenous effects {.scrollable}
+
+:::{.callout-tip icon=false}
+## The simplest: add spatial lags of the covariates
+
+```{python}
+#| code-fold: true
+wx_vars = [i for i in variable_names if "pg_" in i]
+knn.transform = "R"
+wx = pandas.DataFrame(
+    numpy.column_stack([
+        weights.spatial_lag.lag_spatial(knn, db[v].values) for v in wx_vars
+    ]),
+    columns=["w_" + v for v in wx_vars],
+    index=db.index,
+)
+slx_X = pandas.concat([db[variable_names], wx], axis=1)
+
+m6 = spreg.OLS(
+    db[["log_price"]].values, slx_X.values,
+    name_y="log_price", name_x=list(slx_X.columns),
+)
+print(f"SLX R2 = {m6.r2:.4f}   (M1 was {m1.r2:.4f})")
+```
+
+Because this is still OLS with extra columns, **SLX coefficients read normally**. That is its great advantage: no new estimator, no new interpretation.
+:::
+
+## Spatial error {.scrollable}
+
+:::{.callout-tip icon=false}
+## Put the dependence in the unexplained part
+
+$$y = \alpha + X\beta + u, \qquad u = \lambda W u + \epsilon$$
+
+The claim: we have the right covariates, but whatever we *failed* to measure is spatially correlated. Fix the errors and the coefficients become trustworthy again.
+
+```{python}
+m7 = spreg.GM_Error_Het(
+    db[["log_price"]].values,
+    db[variable_names].values,
+    w=knn,
+    name_y="log_price",
+    name_x=variable_names,
+)
+print(f"lambda = {m7.betas.flatten()[-1]:.4f}")
+```
+
+A non-zero $\lambda$ confirms residual dependence. Note this model does **not** change what the covariates mean — it corrects their standard errors.
+:::
+
+## Spatial lag {.scrollable}
+
+:::{.callout-tip icon=false}
+## Put the dependence in the outcome
+
+$$y = \alpha + \rho W y + X\beta + \epsilon$$
+
+```{python}
+m8 = spreg.GM_Lag(
+    db[["log_price"]].values,
+    db[variable_names].values,
+    w=knn,
+    name_y="log_price",
+    name_x=variable_names,
+)
+print(f"rho = {m8.betas.flatten()[-1]:.4f}")
+```
+
+$\rho$ is the strength of the feedback: how much a neighbour's *price* moves mine.
+:::
+
+:::{.callout-warning icon=false}
+## And $y$ is on both sides
+
+That is not a typo — it is what makes this model special, and what makes its coefficients mean something different.
+:::
+
+## Why lag coefficients are not slopes
+
+:::{.callout-important icon=false}
+## Feedback loops
+
+In OLS, $\beta_k$ is the effect of changing $X_k$ by one unit. In a spatial lag model it is not, because changing $X$ at one location changes $y$ there, which changes $Wy$ at the neighbours, which changes *their* $y$, which feeds back.
+
+Effects therefore decompose:
+
+- **direct** — the effect on $i$ of changing $X_i$, *including* the feedback that returns to $i$
+- **indirect (spillover)** — the effect on *everyone else*
+- **total** — their sum
+
+**Reading $\beta$ from a lag model as though it were a slope is simply wrong**, and it is a common error. Report the direct and indirect effects instead.
+:::
+
+## Comparing the models {.scrollable}
+
+```{python}
+#| code-fold: true
+pandas.DataFrame(
+    {
+        "R2 / pseudo-R2": [m1.r2, m2.r2, m3.rsquared, m5.r2, m6.r2],
+        "geography enters via": [
+            "nothing",
+            "a distance feature",
+            "varying intercept (SFE)",
+            "varying slopes (regimes)",
+            "neighbours' features (SLX)",
+        ],
+    },
+    index=["M1 OLS", "M2 +d2balboa", "M3 fixed effects", "M5 regimes", "M6 SLX"],
+).round(4)
+```
+
+:::{.callout-warning icon=false}
+## Do not pick by $R^2$
+
+Every model here adds parameters, so fit can only improve. These are **different claims about the world**, and the right one depends on what you think generates the data — not on the fourth decimal place.
+
+And all of these numbers are **in-sample**. The next section is about what happens when they are not.
+:::
+
+<!-- ==========================================================================
+     NOT IN THE BOOK. gdsbook Part III fits and interprets spatial models but
+     never evaluates out-of-sample prediction -- there is no cross-validation
+     anywhere in chapters 9-12. This section supplies it, following directly
+     from the residual-autocorrelation diagnostic in ch.11 "Hidden structures".
+     ========================================================================== -->
+
+# Validating spatial predictions
+
+## The question nobody asked
+
+:::{.callout-important icon=false}
+## Everything so far was in-sample
+
+Every $R^2$ in this lecture describes how well a model fits the data it was **fitted on**. For explanation that is defensible. For **prediction** it is not, and prediction is what you will usually be asked for.
+
+The standard answer is cross-validation: hold out a fold, fit on the rest, score on the held-out part, repeat.
+
+We are about to see that the standard answer **does not work on spatial data**, for a reason this lecture has already established.
+:::
+
+## Recall the diagnostic
+
+:::{.callout-warning icon=false}
+## We measured this in part 2
+
+Residuals are spatially autocorrelated: $\text{corr}(u, Wu) \approx 0.33$ at $k=20$. Nearby listings have similar prices *and* similar errors.
+
+Now consider what random $k$-fold cross-validation does with that. It shuffles rows and cuts them into five parts. Every test listing has, almost certainly, **several of its immediate neighbours in the training set**.
+
+So the model is not predicting an unseen location. It is **interpolating between points it has already seen** — and interpolation is easy.
+:::
+
+## This is leakage
+
+:::{.callout-important icon=false}
+## The same failure as Bio 2, in different clothing
+
+| | not independent | random CV therefore |
+|---|---|---|
+| taxonomy | strains within a genus | tests on near-duplicates of training sequences |
+| single cell | cells within a donor | treats one donor as thousands of replicates |
+| **geography** | **nearby places** | **tests on the interior of the training set** |
+
+The rule is the same in all three: **split at the level you want to generalise to.** If you want to predict prices in a district you have no data for, your folds must be districts.
+:::
+
+## Setting up an honest test {.scrollable}
+
+:::{.callout-tip icon=false}
+## Features, target, and a projected CRS
+
+```{python}
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import cross_val_score, KFold, GroupKFold
+
+dbm = db.to_crs(epsg=3857)          # metres, so blocks are metres
+xy = numpy.column_stack((dbm.geometry.x, dbm.geometry.y))
+y = dbm["log_price"].values
+
+house = ["accommodates", "bathrooms", "bedrooms", "beds"]
+
+
+def rf():
+    return RandomForestRegressor(n_estimators=120, random_state=0, n_jobs=-1)
+
+
+def blocks(size):
+    """Assign each listing to a square block of `size` metres."""
+    bx = ((xy[:, 0] - xy[:, 0].min()) // size).astype(int)
+    by = ((xy[:, 1] - xy[:, 1].min()) // size).astype(int)
+    return bx * 10_000 + by
+```
+
+**Reproject first.** Blocks must be defined in metres; dividing degrees by 4000 is meaningless.
+:::
+
+## Isolating the leak {.scrollable}
+
+:::{.callout-tip icon=false}
+## Three models, two validation schemes
+
+```{python}
+g = blocks(4000)
+rows = []
+for name, X in [
+    ("coordinates only", xy),
+    ("house features only", dbm[house].values),
+    ("features + coordinates", numpy.column_stack([dbm[house].values, xy])),
+]:
+    r = cross_val_score(rf(), X, y, cv=KFold(5, shuffle=True, random_state=0),
+                        scoring="r2").mean()
+    b = cross_val_score(rf(), X, y, cv=GroupKFold(5), groups=g, scoring="r2").mean()
+    rows.append((name, r, b, r - b))
+
+print(f"{'model':<26}{'random':>9}{'block':>9}{'drop':>8}")
+for n, r, b, d in rows:
+    print(f"{n:<26}{r:>9.3f}{b:>9.3f}{d:>8.3f}")
+```
+:::
+
+## Read that table again
+
+:::{.callout-important icon=false}
+## The coordinates-only model is the proof
+
+Under random CV a model using **nothing but latitude and longitude** scores $R^2 \approx 0.17$. It looks like it learned something about San Diego.
+
+Under block CV the same model scores **negative** — worse than predicting the mean price for every listing.
+
+**All of its apparent skill was memorising neighbours.** Remove the neighbours from the training set and there is nothing left, because there was never anything there.
+:::
+
+:::{.callout-note icon=false}
+## And the contrast
+
+`house features only` barely moves between the two schemes. Bedrooms and bathrooms are not spatial, so blocking costs nothing. The gap belongs to the coordinates, and only to them.
+:::
+
+## How big are the blocks? {.scrollable}
+
+:::{.callout-tip icon=false}
+## Sweep the block size
+
+```{python}
+#| code-fold: true
+X = numpy.column_stack([dbm[house].values, xy])
+rand = cross_val_score(rf(), X, y, cv=KFold(5, shuffle=True, random_state=0),
+                       scoring="r2").mean()
+
+sizes, scores = [], []
+for s in (250, 500, 1000, 2000, 4000, 8000):
+    gg = blocks(s)
+    if len(numpy.unique(gg)) < 5:
+        continue
+    sizes.append(s)
+    scores.append(cross_val_score(rf(), X, y, cv=GroupKFold(5), groups=gg,
+                                  scoring="r2").mean())
+
+for s, sc in zip(sizes, scores):
+    print(f"  block {s:>5} m : R2 = {sc:.3f}")
+print(f"  random CV      : R2 = {rand:.3f}")
+
+f, ax = plt.subplots(figsize=(5, 3))
+ax.semilogx(sizes, scores, "o-", label="block CV")
+ax.axhline(rand, ls="--", color="grey", label="random CV")
+ax.set_xlabel("block size (m)"); ax.set_ylabel("$R^2$"); ax.legend()
+plt.tight_layout(); plt.show()
+```
+:::
+
+## Reading the curve {.scrollable}
+
+:::{.callout-important icon=false}
+## What this curve actually shows
+
+Read the numbers, not the story you expected.
+
+**At 250 m the block score equals random CV** (0.656 vs 0.653). Blocks that small barely separate anything — a 250 m block still leaves neighbours in the training set. That agreement is a useful sanity check: it confirms the mechanism is distance, not the `GroupKFold` machinery.
+
+**The trend is downward but not monotone.** 1 000 m scores *below* 2 000 m here. With five folds over a few hundred blocks, each estimate carries real variance, and a single sweep is noisy. Repeat with several random block origins before reading much into any one point.
+
+**It has not flattened by 8 km.** San Diego spans roughly 40 km, so even 8 km blocks leave training listings fairly close to test ones. The honest conclusion is that we have not yet reached the distance at which leakage stops.
+:::
+
+:::{.callout-warning icon=false}
+## So what do you report?
+
+Not a plateau, because we do not have one. Report the score **at the block size matching your intended use**: if you will predict 5 km from your nearest training data, the 4–8 km numbers are the relevant ones — around 0.57–0.60, against the 0.65 that random CV advertises.
+
+The optimism here is modest precisely *because* most of this model's signal is non-spatial. That is the reassuring case. The coordinates-only model on the previous slide is the other one.
+:::
+
+## Buffered leave-one-out
+
+:::{.callout-note icon=false}
+## A stricter variant
+
+Blocks still put some test points right next to a block boundary, and so next to training data. **Buffered LOO** removes that: hold out one observation, and also *delete from the training set* everything within radius $r$ of it.
+
+```python
+for i in range(n):
+    d = distances_from(i)
+    train = (d > buffer_radius)
+    model.fit(X[train], y[train])
+    pred[i] = model.predict(X[[i]])
+```
+
+Expensive — one fit per observation — but it gives a clean answer to "how well do I predict at distance $r$ from any data?", which is often the actual question.
+:::
+
+## Checking the residuals again
+
+:::{.callout-tip icon=false}
+## Close the loop
+
+The diagnostic that opened this lecture is also the one that closes it. After fitting any predictive model, compute Moran's I on its residuals.
+
+- **Significant autocorrelation remaining** → there is spatial structure the model has not captured. Consider the features and models from parts 3 and 4.
+- **No autocorrelation** → the spatial structure is accounted for, and the i.i.d. assumption behind your inference is defensible.
+
+It costs three lines and it is the single most informative check you can run on a spatial model.
+:::
+
+# Wrap-up
+
+## What we covered {.scrollable}
+
+:::{.callout-important icon=false}
+## Summary
+
+| idea | point |
+|---|---|
+| why space in a model | genuine process, **or** a diagnostic on errors |
+| hidden structure | residuals clustered; i.i.d. violated; inference invalid |
+| LISA on residuals | finds *where* the model fails, not just that it does |
+| spatial feature engineering | map matching (between datasets) vs map synthesis (within) |
+| extensive vs intensive | counts split, rates average — getting it wrong invents people |
+| the spatial lag of a feature | the most useful engineered variable here |
+| spatial fixed effects | let $\alpha$ vary; "space as a proxy" |
+| spatial regimes | let $\beta$ vary; stronger claim, doubles the parameters |
+| SLX / error / lag | three different theories, not three fits |
+| lag coefficients | **not slopes** — decompose into direct and indirect |
+| random CV on spatial data | **leaks**; coordinates-only went 0.17 → negative |
+| block CV | split at the level you want to generalise to |
+| the plateau | the number you can defend |
+:::
+
+## The thread
+
+:::{.callout-note icon=false}
+## One lesson, three courses
+
+Geo 5 and 6 taught you to **measure** spatial dependence. This lecture used it twice: once to *improve* models, and once to *distrust* them.
+
+The second use is the transferable one. Spatial autocorrelation is a specific case of the general problem that observations are not independent — the same problem as related organisms in Bio 2 and cells from one donor in Bio 4.
+
+> Before trusting a score, ask what the unit of independence actually is.
+:::
+
+## Exercises {.scrollable}
+
+:::{.callout-tip icon=false}
+## Try these
+
+1. Refit M1 and compute Moran's I on the residuals under rook, queen, KNN-5 and KNN-20 weights. How much does the choice of $W$ change the conclusion?
+2. The `d2balboa` feature failed. Engineer a better one — distance to the coastline, or a count of restaurants within 500 m — and test whether it reduces residual autocorrelation.
+3. Fit spatial fixed effects using **HDBSCAN cluster labels** instead of administrative neighbourhoods. Which fits better, and which is easier to explain?
+4. Compare the direct and indirect effects from `GM_Lag` against the naive $\beta$. How misleading would reporting $\beta$ have been?
+5. Repeat the block-CV sweep with a linear model instead of a random forest. Does the optimism gap shrink? Why might a flexible model leak more?
+6. Implement buffered leave-one-out for a subsample of 500 listings. Plot accuracy against buffer radius, and compare the shape to the block-size curve.
+7. Split the data by `coastal` and use it as the CV group. Is predicting inland-from-coastal harder than predicting a random block? What does that tell you about transferability?
+:::
+
+## Further reading {.scrollable}
+
+:::{.callout-note icon=false}
+## Sources
+
+- **Rey, Arribas-Bel & Wolf**, *Geographic Data Science with Python*, CRC Press, 2023 --- chs. 11--12. <https://geographicdata.science>
+- **Anselin**, *Spatial Econometrics: Methods and Models*, Kluwer, 1988 --- the standard reference for the lag and error models
+- **Anselin & Rey**, *Modern Spatial Econometrics in Practice*, GeoDa Press, 2014
+- **Gelman & Hill**, *Data Analysis Using Regression and Multilevel/Hierarchical Models*, Cambridge, 2007 --- chs. 3--4 for the non-spatial foundation
+- **LeSage & Pace**, *Introduction to Spatial Econometrics*, CRC Press, 2009 --- the definitive treatment of direct and indirect effects
+- **Roberts et al.**, *Cross-validation strategies for data with temporal, spatial, hierarchical, or phylogenetic structure*, **Ecography** 40(8), 2017 --- the standard reference for block cross-validation
+- **Ploton et al.**, *Spatial validation reveals poor predictive performance of large-scale ecological mapping models*, **Nature Communications** 11, 2020 --- a high-profile demonstration of the optimism this lecture measures
+- `spreg` documentation --- <https://pysal.org/spreg/>
+- `tobler` for areal interpolation --- <https://pysal.org/tobler/>
+:::
+
+## Coming next
+
+:::{.callout-important icon=false}
+## Projects
+
+This lecture supplies the machinery for **G4** in the [course projects](../projects.qmd): predicting across space, and reporting the accuracy you can defend rather than the one that looks best.
+
+Parts 3 and 4 also feed **G1**, where the engineered feature *is* the analysis.
+:::
