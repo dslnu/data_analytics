@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.10.18">
 
   <meta name="author" content="MSDE">
-  <title>Big Data analytics / Applied Data analytics – Big Data: Dask intro part2</title>
+  <title>Big Data analytics / Applied Data analytics – Big Data: Dask intro</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
@@ -199,7 +199,7 @@
     <div class="slides">
 
 <section id="title-slide" class="quarto-title-block center">
-  <h1 class="title">Big Data: Dask intro part2</h1>
+  <h1 class="title">Big Data: Dask intro</h1>
 
 <div class="quarto-title-authors">
 <div class="quarto-title-author">
@@ -214,11 +214,346 @@ MSDE
 
 </section>
 <section>
+<section id="what-is-dask" class="title-slide slide level1 center">
+<h1>What is Dask?</h1>
+
+</section>
+<section id="where-we-are" class="slide level2">
+<h2>Where we are</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>From theory to a system</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>a program is a <strong>DAG of tasks</strong></li>
+<li>a <strong>scheduler</strong> maps tasks to processors</li>
+<li>real schedulers are <strong>dynamic</strong></li>
+</ul>
+<p><strong>Dask is a Python library implementing the above.</strong></p>
+</div>
+</div>
+</div>
+</section>
+<section id="the-problem" class="slide level2">
+<h2>The problem</h2>
+<div class="callout callout-important callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>NumPy and pandas hit two walls</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>One core.</strong> Most NumPy and pandas operations run on a single core</li>
+<li><strong>In memory.</strong> The whole dataset must fit in RAM - and intermediate results need room too. <code>x + x.T</code> on an 18 GB array needs space for the result as well.</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-tip callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Dask’s answer</strong></p>
+</div>
+<div class="callout-content">
+<p>Keep the NumPy and pandas <strong>APIs</strong>. Change the internals:</p>
+<ul>
+<li>cut the data into pieces (<strong>chunking</strong>)</li>
+<li>describe the work as a task graph</li>
+<li>let a scheduler run the pieces in parallel.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="dask" class="slide level2">
+<h2>Dask</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Two things under one name</strong></p>
+</div>
+<div class="callout-content">
+<ol type="1">
+<li><strong>Collections</strong> — Array, DataFrame, Bag, Delayed. They look like NumPy arrays, pandas DataFrames and Python lists, but each one is really a <strong>recipe</strong>: a task graph over many small pieces.</li>
+<li><strong>Schedulers</strong> — the machinery that executes a task graph, on the threads of one laptop or the workers of a cluster.</li>
+</ol>
+<ul>
+<li>Collections produce task graphs</li>
+<li>Schedulers consume them</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="the-architecture" class="slide level2">
+<h2>The architecture</h2>
+<img data-src="bigdata_lec5_files/mediabag/c0ce351d060a3e5ab599b80724ce7a47d254fa4f.svg">
+<p>Everything on the left <strong>builds</strong> a graph. Everything on the right <strong>runs</strong> one.</p>
+</section>
+<section id="it-looks-like-numpy" class="slide level2 scrollable">
+<h2>It looks like NumPy</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Huge array</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a aria-label="1"></a><span class="im">import</span> dask.array <span class="im">as</span> da</span>
+<span id="cb1-2"><a aria-label="2"></a></span>
+<span id="cb1-3"><a aria-label="3"></a>x <span class="op">=</span> da.ones((<span class="dv">50_000</span>, <span class="dv">50_000</span>), chunks<span class="op">=</span>(<span class="dv">5_000</span>, <span class="dv">5_000</span>))</span>
+<span id="cb1-4"><a aria-label="4"></a>x</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<pre><code>dask.array&lt;ones_like, shape=(50000, 50000), dtype=float64,
+           chunksize=(5000, 5000), chunktype=numpy.ndarray&gt;</code></pre>
+<p>That is <strong>18.6 GiB</strong> of <code>float64</code>, on a machine with 19 GB of RAM. Creating it took no time and no memory, because nothing was created: <code>x</code> is 100 chunks of 190 MiB each that <em>could</em> be built on demand.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="nothing-happens-until-you-ask" class="slide level2 scrollable">
+<h2>Nothing happens until you ask</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Lazy evaluation</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a aria-label="1"></a>y <span class="op">=</span> (x <span class="op">+</span> x.T).mean()</span>
+<span id="cb3-2"><a aria-label="2"></a>y</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<pre><code>dask.array&lt;mean_agg-aggregate, shape=(), dtype=float64, chunksize=(), ...&gt;</code></pre>
+<p>Still nothing computed. <code>y</code> is a graph of <strong>439 tasks</strong> describing how to get the answer. Only <code>.compute()</code> hands that graph to a scheduler:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a aria-label="1"></a>y.compute()      <span class="co"># 2.0, in 1.5 seconds</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>In NumPy the same line needs <code>x</code> <em>and</em> the sum in memory at once — about 37 GiB — and simply fails here. Dask streams 190 MiB chunks through 12 cores and never holds more than a few at a time.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Parallel <em>and</em> out-of-core</strong></p>
+</div>
+<div class="callout-content">
+<p>One mechanism buys both: chunks are independent tasks, so they can run on different cores; and chunks are small, so only the ones in flight need to be in memory.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="the-collections" class="slide level2">
+<h2>The collections</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Pick the one that matches your data</strong></p>
+</div>
+<div class="callout-content">
+<table class="caption-top">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>collection</th>
+<th>mimics</th>
+<th>made of</th>
+<th>for</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>dask.array</code></td>
+<td>NumPy</td>
+<td>many NumPy arrays</td>
+<td>images, grids, simulations</td>
+</tr>
+<tr class="even">
+<td><code>dask.dataframe</code></td>
+<td>pandas</td>
+<td>many pandas DataFrames</td>
+<td>tabular data, logs, CSV/Parquet</td>
+</tr>
+<tr class="odd">
+<td><code>dask.bag</code></td>
+<td>lists, iterators</td>
+<td>many Python lists</td>
+<td>JSON, text, semi-structured records</td>
+</tr>
+<tr class="even">
+<td><code>dask.delayed</code></td>
+<td>ordinary functions</td>
+<td>one task per call</td>
+<td>custom pipelines that fit none of the above</td>
+</tr>
+<tr class="odd">
+<td>Futures</td>
+<td><code>concurrent.futures</code></td>
+<td>tasks submitted eagerly</td>
+<td>real-time and evolving workloads</td>
+</tr>
+</tbody>
+</table>
+<p>The first three are <strong>big versions of things you know</strong>. The last two are the general-purpose escape hatch: any Python function can become a task.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="dask.delayed-function-rightarrow-task" class="slide level2 scrollable">
+<h2><code>dask.delayed</code>: function <span class="math inline">\(\rightarrow\)</span> task</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The smallest possible Dask program</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a aria-label="1"></a><span class="im">from</span> dask <span class="im">import</span> delayed</span>
+<span id="cb6-2"><a aria-label="2"></a></span>
+<span id="cb6-3"><a aria-label="3"></a><span class="at">@delayed</span></span>
+<span id="cb6-4"><a aria-label="4"></a><span class="kw">def</span> inc(i):</span>
+<span id="cb6-5"><a aria-label="5"></a>    <span class="cf">return</span> i <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb6-6"><a aria-label="6"></a></span>
+<span id="cb6-7"><a aria-label="7"></a><span class="at">@delayed</span></span>
+<span id="cb6-8"><a aria-label="8"></a><span class="kw">def</span> add(a, b):</span>
+<span id="cb6-9"><a aria-label="9"></a>    <span class="cf">return</span> a <span class="op">+</span> b</span>
+<span id="cb6-10"><a aria-label="10"></a></span>
+<span id="cb6-11"><a aria-label="11"></a>y <span class="op">=</span> inc(<span class="dv">1</span>)</span>
+<span id="cb6-12"><a aria-label="12"></a>z <span class="op">=</span> add(y, <span class="dv">10</span>)</span>
+<span id="cb6-13"><a aria-label="13"></a>z</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<pre><code>Delayed('add-189e31a5-7d42-48fd-a586-f96cab664107')</code></pre>
+<p>Calling <code>inc(1)</code> did <strong>not</strong> run <code>inc</code>. It recorded “call <code>inc</code> with 1” as a node and returned a placeholder. <code>add(y, 10)</code> recorded a second node with an edge from the first.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a aria-label="1"></a>z.compute()      <span class="co"># 12</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</section>
+<section id="which-scheduler" class="slide level2">
+<h2>Which scheduler?</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Same graph, different executors</strong></p>
+</div>
+<div class="callout-content">
+<table class="caption-top">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>scheduler</th>
+<th>runs tasks in</th>
+<th>good for</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>threads</strong></td>
+<td>a thread pool, one process</td>
+<td>NumPy/pandas code that releases the GIL — the default for arrays and dataframes</td>
+</tr>
+<tr class="even">
+<td><strong>processes</strong></td>
+<td>a process pool</td>
+<td>pure-Python code that holds the GIL — the default for bags</td>
+</tr>
+<tr class="odd">
+<td><strong>synchronous</strong></td>
+<td>the calling thread</td>
+<td>debugging: <code>pdb</code> and profilers work</td>
+</tr>
+<tr class="even">
+<td><strong>distributed</strong></td>
+<td>workers on one machine or many</td>
+<td>clusters, and the diagnostic dashboard even on a laptop</td>
+</tr>
+</tbody>
+</table>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a aria-label="1"></a>y.compute(scheduler<span class="op">=</span><span class="st">"threads"</span>)       <span class="co"># pick per call</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The first three are the <strong>single-machine</strong> schedulers — simple, no setup. The distributed scheduler is the one that does the things Lecture 3 called dynamic scheduling: data locality, work stealing, resilience to lost workers.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="dask-1" class="slide level2 scrollable">
+<h2>Dask</h2>
+<div class="callout callout-warning no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Every task pays the scheduler</strong></p>
+</div>
+<div class="callout-content">
+<p>Measured on this machine, 20 000 do-nothing tasks:</p>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th></th>
+<th>per unit of work</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Dask task (threaded scheduler)</td>
+<td><strong>~0.7 ms</strong></td>
+</tr>
+<tr class="even">
+<td>plain Python loop iteration</td>
+<td>15 ns</td>
+</tr>
+</tbody>
+</table>
+<p>A factor of roughly 45 000.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-important callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Rule</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>A scheduling decision must be cheaper than the task it schedules.</strong></p>
+<p>So tasks must be <strong>big</strong> — aim for at least ~100 ms of real work each. A million tiny tasks is a slow program with a large graph.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="dask-2" class="slide level2 scrollable">
+<h2>Dask</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>When not to use Dask</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>The data fits in memory and the code is fast enough.</strong> Use NumPy or pandas. Dask is the more complicated tool and will often be slower.</li>
+<li><strong>The work is a tight loop of tiny operations.</strong> Use Numba or Cython (Lecture 2); the overhead above will eat any gain.</li>
+<li><strong>You need a database.</strong> Indexed lookups and transactions are not what a task scheduler is for.</li>
+</ul>
+<p>Reach for Dask when the data outgrows RAM, or the cores sit idle on work that splits into chunky independent pieces.</p>
+</div>
+</div>
+</div>
+</section></section>
+<section>
 <section id="dask-internals" class="title-slide slide level1 center">
 <h1>Dask Internals</h1>
 
 </section>
-<section id="dask" class="slide level2">
+<section id="dask-3" class="slide level2">
 <h2>Dask</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -241,7 +576,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="dask-1" class="slide level2">
+<section id="dask-4" class="slide level2">
 <h2>Dask</h2>
 <div class="callout callout-note no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -257,7 +592,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="dask-2" class="slide level2">
+<section id="dask-5" class="slide level2">
 <h2>Dask</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -275,23 +610,23 @@ MSDE
 </div>
 </div>
 </section>
-<section id="dask-3" class="slide level2">
+<section id="dask-6" class="slide level2">
 <h2>Dask</h2>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a aria-label="1"></a><span class="kw">def</span> inc(i):</span>
-<span id="cb1-2"><a aria-label="2"></a>  <span class="cf">return</span> i <span class="op">+</span> <span class="dv">1</span></span>
-<span id="cb1-3"><a aria-label="3"></a></span>
-<span id="cb1-4"><a aria-label="4"></a><span class="kw">def</span> add(a, b):</span>
-<span id="cb1-5"><a aria-label="5"></a>  <span class="cf">return</span> a <span class="op">+</span> b</span>
-<span id="cb1-6"><a aria-label="6"></a></span>
-<span id="cb1-7"><a aria-label="7"></a>x <span class="op">=</span> <span class="dv">1</span></span>
-<span id="cb1-8"><a aria-label="8"></a>y <span class="op">=</span> inc(x)</span>
-<span id="cb1-9"><a aria-label="9"></a>z <span class="op">=</span> add(y, <span class="dv">10</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a aria-label="1"></a><span class="kw">def</span> inc(i):</span>
+<span id="cb10-2"><a aria-label="2"></a>  <span class="cf">return</span> i <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb10-3"><a aria-label="3"></a></span>
+<span id="cb10-4"><a aria-label="4"></a><span class="kw">def</span> add(a, b):</span>
+<span id="cb10-5"><a aria-label="5"></a>  <span class="cf">return</span> a <span class="op">+</span> b</span>
+<span id="cb10-6"><a aria-label="6"></a></span>
+<span id="cb10-7"><a aria-label="7"></a>x <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb10-8"><a aria-label="8"></a>y <span class="op">=</span> inc(x)</span>
+<span id="cb10-9"><a aria-label="9"></a>z <span class="op">=</span> add(y, <span class="dv">10</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="dask-4" class="slide level2">
+<section id="dask-7" class="slide level2">
 <h2>Dask</h2>
 
 <img data-src="img/dask_simple_dag.png" class="r-stretch"></section>
-<section id="dask-5" class="slide level2">
+<section id="dask-8" class="slide level2">
 <h2>Dask</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -299,14 +634,14 @@ MSDE
 <p><strong>Dictionary representation</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a aria-label="1"></a>d <span class="op">=</span> {<span class="st">'x'</span>: <span class="dv">1</span>,</span>
-<span id="cb2-2"><a aria-label="2"></a>     <span class="st">'y'</span>: (inc, <span class="st">'x'</span>),</span>
-<span id="cb2-3"><a aria-label="3"></a>     <span class="st">'z'</span>: (add, <span class="st">'y'</span>, <span class="dv">10</span>)}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a aria-label="1"></a>d <span class="op">=</span> {<span class="st">'x'</span>: <span class="dv">1</span>,</span>
+<span id="cb11-2"><a aria-label="2"></a>     <span class="st">'y'</span>: (inc, <span class="st">'x'</span>),</span>
+<span id="cb11-3"><a aria-label="3"></a>     <span class="st">'z'</span>: (add, <span class="st">'y'</span>, <span class="dv">10</span>)}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
 </section>
-<section id="dask-6" class="slide level2">
+<section id="dask-9" class="slide level2">
 <h2>Dask</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -320,12 +655,12 @@ MSDE
 </div>
 </div>
 </section>
-<section id="dask-7" class="slide level2">
+<section id="dask-10" class="slide level2">
 <h2>Dask</h2>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a aria-label="1"></a>{<span class="st">'x'</span>: <span class="dv">1</span>,</span>
-<span id="cb3-2"><a aria-label="2"></a> <span class="st">'y'</span>: <span class="dv">2</span>,</span>
-<span id="cb3-3"><a aria-label="3"></a> <span class="st">'z'</span>: (add, <span class="st">'x'</span>, <span class="st">'y'</span>),</span>
-<span id="cb3-4"><a aria-label="4"></a> <span class="st">'w'</span>: (<span class="bu">sum</span>, [<span class="st">'x'</span>, <span class="st">'y'</span>, <span class="st">'z'</span>])}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a aria-label="1"></a>{<span class="st">'x'</span>: <span class="dv">1</span>,</span>
+<span id="cb12-2"><a aria-label="2"></a> <span class="st">'y'</span>: <span class="dv">2</span>,</span>
+<span id="cb12-3"><a aria-label="3"></a> <span class="st">'z'</span>: (add, <span class="st">'x'</span>, <span class="st">'y'</span>),</span>
+<span id="cb12-4"><a aria-label="4"></a> <span class="st">'w'</span>: (<span class="bu">sum</span>, [<span class="st">'x'</span>, <span class="st">'y'</span>, <span class="st">'z'</span>])}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
@@ -341,7 +676,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="dask-8" class="slide level2">
+<section id="dask-11" class="slide level2">
 <h2>Dask</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -349,12 +684,12 @@ MSDE
 <p><strong>Valid tasks in a Dask graph</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a aria-label="1"></a>(add, <span class="dv">1</span>, <span class="dv">2</span>)</span>
-<span id="cb4-2"><a aria-label="2"></a>(add, <span class="st">'x'</span> , <span class="dv">2</span>)</span>
-<span id="cb4-3"><a aria-label="3"></a>(add, (inc, <span class="st">'x'</span>), <span class="dv">2</span>)</span>
-<span id="cb4-4"><a aria-label="4"></a>(<span class="bu">sum</span>, [<span class="dv">1</span>, <span class="dv">2</span>])</span>
-<span id="cb4-5"><a aria-label="5"></a>(<span class="bu">sum</span>, [<span class="st">'x'</span>, (inc, <span class="st">'x'</span>)])</span>
-<span id="cb4-6"><a aria-label="6"></a>(np.dot, np.array([...]), np.array([...]))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a aria-label="1"></a>(add, <span class="dv">1</span>, <span class="dv">2</span>)</span>
+<span id="cb13-2"><a aria-label="2"></a>(add, <span class="st">'x'</span> , <span class="dv">2</span>)</span>
+<span id="cb13-3"><a aria-label="3"></a>(add, (inc, <span class="st">'x'</span>), <span class="dv">2</span>)</span>
+<span id="cb13-4"><a aria-label="4"></a>(<span class="bu">sum</span>, [<span class="dv">1</span>, <span class="dv">2</span>])</span>
+<span id="cb13-5"><a aria-label="5"></a>(<span class="bu">sum</span>, [<span class="st">'x'</span>, (inc, <span class="st">'x'</span>)])</span>
+<span id="cb13-6"><a aria-label="6"></a>(np.dot, np.array([...]), np.array([...]))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -364,7 +699,7 @@ MSDE
 <h1>Arrays</h1>
 
 </section>
-<section id="dask-9" class="slide level2">
+<section id="dask-12" class="slide level2">
 <h2>Dask</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -379,7 +714,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="dask-10" class="slide level2">
+<section id="dask-13" class="slide level2 scrollable">
 <h2>Dask</h2>
 <div class="callout callout-note no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -403,7 +738,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="dask-11" class="slide level2">
+<section id="dask-14" class="slide level2">
 <h2>Dask</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -416,7 +751,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="dask-12" class="slide level2">
+<section id="dask-15" class="slide level2">
 <h2>Dask</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -424,11 +759,11 @@ MSDE
 <p><strong>Unblocked</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a aria-label="1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(N):</span>
-<span id="cb5-2"><a aria-label="2"></a> <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(N):</span>
-<span id="cb5-3"><a aria-label="3"></a>   r <span class="op">=</span> X[i,k]</span>
-<span id="cb5-4"><a aria-label="4"></a>   <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(N):</span>
-<span id="cb5-5"><a aria-label="5"></a>     Z[i,j] <span class="op">+=</span> r<span class="op">*</span>Y[k,j]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a aria-label="1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(N):</span>
+<span id="cb14-2"><a aria-label="2"></a> <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(N):</span>
+<span id="cb14-3"><a aria-label="3"></a>   r <span class="op">=</span> X[i,k]</span>
+<span id="cb14-4"><a aria-label="4"></a>   <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(N):</span>
+<span id="cb14-5"><a aria-label="5"></a>     Z[i,j] <span class="op">+=</span> r<span class="op">*</span>Y[k,j]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -438,18 +773,18 @@ MSDE
 <p><strong>Blocked</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a aria-label="1"></a><span class="cf">for</span> kk <span class="kw">in</span> <span class="bu">range</span>(N<span class="op">/</span>B):</span>
-<span id="cb6-2"><a aria-label="2"></a> <span class="cf">for</span> jj <span class="kw">in</span> <span class="bu">range</span>(N<span class="op">/</span>B): </span>
-<span id="cb6-3"><a aria-label="3"></a>   <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(N):</span>
-<span id="cb6-4"><a aria-label="4"></a>     <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(kk, <span class="bu">min</span>(kk<span class="op">+</span>B<span class="op">-</span><span class="dv">1</span>, N)):</span>
-<span id="cb6-5"><a aria-label="5"></a>       r <span class="op">=</span> X[i,k]</span>
-<span id="cb6-6"><a aria-label="6"></a>       <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(jj, <span class="bu">min</span>(jj<span class="op">+</span>B<span class="op">-</span><span class="dv">1</span>,N)):</span>
-<span id="cb6-7"><a aria-label="7"></a>         Z[i,j] <span class="op">+=</span> r<span class="op">*</span>Y[k,j]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a aria-label="1"></a><span class="cf">for</span> kk <span class="kw">in</span> <span class="bu">range</span>(N<span class="op">/</span>B):</span>
+<span id="cb15-2"><a aria-label="2"></a> <span class="cf">for</span> jj <span class="kw">in</span> <span class="bu">range</span>(N<span class="op">/</span>B): </span>
+<span id="cb15-3"><a aria-label="3"></a>   <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(N):</span>
+<span id="cb15-4"><a aria-label="4"></a>     <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(kk, <span class="bu">min</span>(kk<span class="op">+</span>B<span class="op">-</span><span class="dv">1</span>, N)):</span>
+<span id="cb15-5"><a aria-label="5"></a>       r <span class="op">=</span> X[i,k]</span>
+<span id="cb15-6"><a aria-label="6"></a>       <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(jj, <span class="bu">min</span>(jj<span class="op">+</span>B<span class="op">-</span><span class="dv">1</span>,N)):</span>
+<span id="cb15-7"><a aria-label="7"></a>         Z[i,j] <span class="op">+=</span> r<span class="op">*</span>Y[k,j]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
 </section>
-<section id="dask-13" class="slide level2">
+<section id="dask-16" class="slide level2">
 <h2>Dask</h2>
 <div class="callout callout-note callout-titled callout-style-default">
 <div class="callout-body">
@@ -468,7 +803,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="dask-14" class="slide level2">
+<section id="dask-17" class="slide level2">
 <h2>Dask</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -487,13 +822,13 @@ MSDE
 </div>
 </div>
 </section>
-<section id="dask-15" class="slide level2">
+<section id="dask-18" class="slide level2">
 <h2>Dask</h2>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a aria-label="1"></a><span class="im">import</span> dask.array <span class="im">as</span> da</span>
-<span id="cb7-2"><a aria-label="2"></a>x <span class="op">=</span> da.arange(<span class="dv">15</span>, chunks<span class="op">=</span>(<span class="dv">5</span>,))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a aria-label="1"></a><span class="im">import</span> dask.array <span class="im">as</span> da</span>
+<span id="cb16-2"><a aria-label="2"></a>x <span class="op">=</span> da.arange(<span class="dv">15</span>, chunks<span class="op">=</span>(<span class="dv">5</span>,))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 <img data-src="img/dask_array_chunks.png" class="r-stretch"></section>
-<section id="dask-16" class="slide level2">
+<section id="dask-19" class="slide level2">
 <h2>Dask</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -501,8 +836,8 @@ MSDE
 <p><strong>Metadata</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a aria-label="1"></a>x <span class="co"># Array object metadata</span></span>
-<span id="cb8-2"><a aria-label="2"></a>dask.array<span class="op">&lt;</span>x<span class="op">-</span><span class="dv">1</span>, shape<span class="op">=</span>(<span class="dv">15</span>,), chunks<span class="op">=</span>((<span class="dv">5</span>, <span class="dv">5</span>, <span class="dv">5</span>)), dtype<span class="op">=</span>int64<span class="op">&gt;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a aria-label="1"></a>x <span class="co"># Array object metadata</span></span>
+<span id="cb17-2"><a aria-label="2"></a>dask.array<span class="op">&lt;</span>x<span class="op">-</span><span class="dv">1</span>, shape<span class="op">=</span>(<span class="dv">15</span>,), chunks<span class="op">=</span>((<span class="dv">5</span>, <span class="dv">5</span>, <span class="dv">5</span>)), dtype<span class="op">=</span>int64<span class="op">&gt;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -512,15 +847,15 @@ MSDE
 <p><strong>Dask Graph</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a aria-label="1"></a>x.dask <span class="co"># Every dask array holds a dask graph</span></span>
-<span id="cb9-2"><a aria-label="2"></a>{(<span class="st">'x'</span> , <span class="dv">0</span>): (np.arange, <span class="dv">0</span>, <span class="dv">5</span>),</span>
-<span id="cb9-3"><a aria-label="3"></a> (<span class="st">'x'</span>, <span class="dv">1</span>): (np.arange, <span class="dv">5</span>, <span class="dv">10</span>),</span>
-<span id="cb9-4"><a aria-label="4"></a> (<span class="st">'x'</span> , <span class="dv">2</span>): (np.arange, <span class="dv">10</span>, <span class="dv">15</span>)}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a aria-label="1"></a>x.dask <span class="co"># Every dask array holds a dask graph</span></span>
+<span id="cb18-2"><a aria-label="2"></a>{(<span class="st">'x'</span> , <span class="dv">0</span>): (np.arange, <span class="dv">0</span>, <span class="dv">5</span>),</span>
+<span id="cb18-3"><a aria-label="3"></a> (<span class="st">'x'</span>, <span class="dv">1</span>): (np.arange, <span class="dv">5</span>, <span class="dv">10</span>),</span>
+<span id="cb18-4"><a aria-label="4"></a> (<span class="st">'x'</span> , <span class="dv">2</span>): (np.arange, <span class="dv">10</span>, <span class="dv">15</span>)}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
 </section>
-<section id="dask-17" class="slide level2">
+<section id="dask-20" class="slide level2">
 <h2>Dask</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -528,18 +863,18 @@ MSDE
 <p><strong>More complex graph</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a aria-label="1"></a>z <span class="op">=</span> (x <span class="op">+</span> <span class="dv">100</span>).<span class="bu">sum</span>()</span>
-<span id="cb10-2"><a aria-label="2"></a>z.dask</span>
-<span id="cb10-3"><a aria-label="3"></a>{(<span class="st">'x'</span>, <span class="dv">0</span>): (np.arange, <span class="dv">0</span>, <span class="dv">5</span>),</span>
-<span id="cb10-4"><a aria-label="4"></a>(<span class="st">'x'</span>, <span class="dv">1</span>): (np.arange, <span class="dv">5</span>, <span class="dv">10</span>),</span>
-<span id="cb10-5"><a aria-label="5"></a>(<span class="st">'x'</span>, <span class="dv">2</span>): (np.arange, <span class="dv">10</span>, <span class="dv">15</span>),</span>
-<span id="cb10-6"><a aria-label="6"></a>(<span class="st">'y'</span>, <span class="dv">0</span>): (add, (<span class="st">'x'</span>, <span class="dv">0</span>), <span class="dv">100</span>),</span>
-<span id="cb10-7"><a aria-label="7"></a>(<span class="st">'y'</span>, <span class="dv">1</span>): (add, (<span class="st">'x'</span>, <span class="dv">1</span>), <span class="dv">100</span>),</span>
-<span id="cb10-8"><a aria-label="8"></a>(<span class="st">'y'</span>, <span class="dv">2</span>): (add, (<span class="st">'x'</span>, <span class="dv">2</span>), <span class="dv">100</span>),</span>
-<span id="cb10-9"><a aria-label="9"></a>(<span class="st">'z'</span>, <span class="dv">0</span>): (np.<span class="bu">sum</span>, (<span class="st">'y'</span>, <span class="dv">0</span>)),</span>
-<span id="cb10-10"><a aria-label="10"></a>(<span class="st">'z'</span>, <span class="dv">1</span>): (np.<span class="bu">sum</span>, (<span class="st">'y'</span>, <span class="dv">1</span>)),</span>
-<span id="cb10-11"><a aria-label="11"></a>(<span class="st">'z'</span>, <span class="dv">2</span>): (np.<span class="bu">sum</span>, (<span class="st">'y'</span>, <span class="dv">2</span>)),</span>
-<span id="cb10-12"><a aria-label="12"></a>(<span class="st">'z'</span>,): (<span class="bu">sum</span>, [(<span class="st">'z'</span>, <span class="dv">0</span>), (<span class="st">'z'</span>, <span class="dv">1</span>), (<span class="st">'z'</span>, <span class="dv">2</span>)])}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a aria-label="1"></a>z <span class="op">=</span> (x <span class="op">+</span> <span class="dv">100</span>).<span class="bu">sum</span>()</span>
+<span id="cb19-2"><a aria-label="2"></a>z.dask</span>
+<span id="cb19-3"><a aria-label="3"></a>{(<span class="st">'x'</span>, <span class="dv">0</span>): (np.arange, <span class="dv">0</span>, <span class="dv">5</span>),</span>
+<span id="cb19-4"><a aria-label="4"></a>(<span class="st">'x'</span>, <span class="dv">1</span>): (np.arange, <span class="dv">5</span>, <span class="dv">10</span>),</span>
+<span id="cb19-5"><a aria-label="5"></a>(<span class="st">'x'</span>, <span class="dv">2</span>): (np.arange, <span class="dv">10</span>, <span class="dv">15</span>),</span>
+<span id="cb19-6"><a aria-label="6"></a>(<span class="st">'y'</span>, <span class="dv">0</span>): (add, (<span class="st">'x'</span>, <span class="dv">0</span>), <span class="dv">100</span>),</span>
+<span id="cb19-7"><a aria-label="7"></a>(<span class="st">'y'</span>, <span class="dv">1</span>): (add, (<span class="st">'x'</span>, <span class="dv">1</span>), <span class="dv">100</span>),</span>
+<span id="cb19-8"><a aria-label="8"></a>(<span class="st">'y'</span>, <span class="dv">2</span>): (add, (<span class="st">'x'</span>, <span class="dv">2</span>), <span class="dv">100</span>),</span>
+<span id="cb19-9"><a aria-label="9"></a>(<span class="st">'z'</span>, <span class="dv">0</span>): (np.<span class="bu">sum</span>, (<span class="st">'y'</span>, <span class="dv">0</span>)),</span>
+<span id="cb19-10"><a aria-label="10"></a>(<span class="st">'z'</span>, <span class="dv">1</span>): (np.<span class="bu">sum</span>, (<span class="st">'y'</span>, <span class="dv">1</span>)),</span>
+<span id="cb19-11"><a aria-label="11"></a>(<span class="st">'z'</span>, <span class="dv">2</span>): (np.<span class="bu">sum</span>, (<span class="st">'y'</span>, <span class="dv">2</span>)),</span>
+<span id="cb19-12"><a aria-label="12"></a>(<span class="st">'z'</span>,): (<span class="bu">sum</span>, [(<span class="st">'z'</span>, <span class="dv">0</span>), (<span class="st">'z'</span>, <span class="dv">1</span>), (<span class="st">'z'</span>, <span class="dv">2</span>)])}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -549,13 +884,13 @@ MSDE
 <p><strong>Execute the Graph</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a aria-label="1"></a>z.compute()</span>
-<span id="cb11-2"><a aria-label="2"></a><span class="dv">1605</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a aria-label="1"></a>z.compute()</span>
+<span id="cb20-2"><a aria-label="2"></a><span class="dv">1605</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
 </section>
-<section id="dask-18" class="slide level2">
+<section id="dask-21" class="slide level2">
 <h2>Dask</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -574,7 +909,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="dask-19" class="slide level2">
+<section id="dask-22" class="slide level2">
 <h2>Dask</h2>
 <div class="callout callout-note no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -585,12 +920,12 @@ MSDE
 <p>A normal NumPy array knows its shape, a dask array must know its shape and the shape of all of the internal NumPy blocks that make up the larger array.</p>
 <p>These shapes can be concisely described by a tuple of tuples of integers, where each internal tuple corresponds to the lengths along a single dimension.</p>
 <p>In the example above we have a 20 by 24 array cut into uniform blocks of size 5 by 8. The chunks attribute describing this array is the following:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a aria-label="1"></a>chunks <span class="op">=</span> ((<span class="dv">5</span>, <span class="dv">5</span>, <span class="dv">5</span>, <span class="dv">5</span>), (<span class="dv">8</span>, <span class="dv">8</span>, <span class="dv">8</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a aria-label="1"></a>chunks <span class="op">=</span> ((<span class="dv">5</span>, <span class="dv">5</span>, <span class="dv">5</span>, <span class="dv">5</span>), (<span class="dv">8</span>, <span class="dv">8</span>, <span class="dv">8</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
 </section>
-<section id="dask-20" class="slide level2">
+<section id="dask-23" class="slide level2">
 <h2>Dask</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -598,15 +933,15 @@ MSDE
 <p><strong>Chunks need not be uniform!</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a aria-label="1"></a>x[::<span class="dv">2</span>].chunks</span>
-<span id="cb13-2"><a aria-label="2"></a>((<span class="dv">3</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">2</span>), (<span class="dv">8</span>, <span class="dv">8</span>, <span class="dv">8</span>))</span>
-<span id="cb13-3"><a aria-label="3"></a>x[::<span class="dv">2</span>].T.chunks</span>
-<span id="cb13-4"><a aria-label="4"></a>((<span class="dv">8</span>, <span class="dv">8</span>, <span class="dv">8</span>), (<span class="dv">3</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">2</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a aria-label="1"></a>x[::<span class="dv">2</span>].chunks</span>
+<span id="cb22-2"><a aria-label="2"></a>((<span class="dv">3</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">2</span>), (<span class="dv">8</span>, <span class="dv">8</span>, <span class="dv">8</span>))</span>
+<span id="cb22-3"><a aria-label="3"></a>x[::<span class="dv">2</span>].T.chunks</span>
+<span id="cb22-4"><a aria-label="4"></a>((<span class="dv">8</span>, <span class="dv">8</span>, <span class="dv">8</span>), (<span class="dv">3</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">2</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
 </section>
-<section id="dask-21" class="slide level2">
+<section id="dask-24" class="slide level2">
 <h2>Dask</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -626,7 +961,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="dask-22" class="slide level2">
+<section id="dask-25" class="slide level2">
 <h2>Dask</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -634,7 +969,7 @@ MSDE
 <p><strong>Ahead-of-time shape limitations</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a aria-label="1"></a>x[x <span class="op">&gt;</span> <span class="dv">0</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a aria-label="1"></a>x[x <span class="op">&gt;</span> <span class="dv">0</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -644,7 +979,7 @@ MSDE
 <h1>Dask Task Scheduling</h1>
 
 </section>
-<section id="dask-23" class="slide level2">
+<section id="dask-26" class="slide level2">
 <h2>Dask</h2>
 <p>Three layers: <strong>collections</strong> build the graph, the <strong>scheduler</strong> decides what runs where, <strong>workers</strong> execute. <img data-src="img/dask_layers.png"></p>
 </section>
@@ -696,8 +1031,8 @@ MSDE
 <p><strong>Single-thread scheduler</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a aria-label="1"></a><span class="im">import</span> dask</span>
-<span id="cb15-2"><a aria-label="2"></a>dask.config.<span class="bu">set</span>(scheduler<span class="op">=</span><span class="st">'synchronous'</span>)  <span class="co"># overwrite default with single-threaded scheduler</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb24"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a aria-label="1"></a><span class="im">import</span> dask</span>
+<span id="cb24-2"><a aria-label="2"></a>dask.config.<span class="bu">set</span>(scheduler<span class="op">=</span><span class="st">'synchronous'</span>)  <span class="co"># overwrite default with single-threaded scheduler</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -723,8 +1058,8 @@ MSDE
 <p><strong>Thread scheduler</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a aria-label="1"></a><span class="im">import</span> dask</span>
-<span id="cb16-2"><a aria-label="2"></a>dask.config.<span class="bu">set</span>(scheduler<span class="op">=</span><span class="st">'threads'</span>)  <span class="co"># overwrite default with threaded scheduler </span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a aria-label="1"></a><span class="im">import</span> dask</span>
+<span id="cb25-2"><a aria-label="2"></a>dask.config.<span class="bu">set</span>(scheduler<span class="op">=</span><span class="st">'threads'</span>)  <span class="co"># overwrite default with threaded scheduler </span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -750,8 +1085,8 @@ MSDE
 <p><strong>Process scheduler</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a aria-label="1"></a><span class="im">import</span> dask</span>
-<span id="cb17-2"><a aria-label="2"></a>dask.config.<span class="bu">set</span>(scheduler<span class="op">=</span><span class="st">'processes'</span>)  <span class="co"># overwrite default with multiprocessing scheduler</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a aria-label="1"></a><span class="im">import</span> dask</span>
+<span id="cb26-2"><a aria-label="2"></a>dask.config.<span class="bu">set</span>(scheduler<span class="op">=</span><span class="st">'processes'</span>)  <span class="co"># overwrite default with multiprocessing scheduler</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -777,10 +1112,10 @@ MSDE
 <p><strong>Distributed (local) scheduler</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a aria-label="1"></a><span class="im">from</span> dask.distributed <span class="im">import</span> Client</span>
-<span id="cb18-2"><a aria-label="2"></a>client <span class="op">=</span> Client()</span>
-<span id="cb18-3"><a aria-label="3"></a><span class="co"># or</span></span>
-<span id="cb18-4"><a aria-label="4"></a>client <span class="op">=</span> Client(processes<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a aria-label="1"></a><span class="im">from</span> dask.distributed <span class="im">import</span> Client</span>
+<span id="cb27-2"><a aria-label="2"></a>client <span class="op">=</span> Client()</span>
+<span id="cb27-3"><a aria-label="3"></a><span class="co"># or</span></span>
+<span id="cb27-4"><a aria-label="4"></a>client <span class="op">=</span> Client(processes<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -806,15 +1141,15 @@ MSDE
 <p><strong>Distributed (cluster) scheduler</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a aria-label="1"></a><span class="co"># You can swap out LocalCluster for other cluster types</span></span>
-<span id="cb19-2"><a aria-label="2"></a></span>
-<span id="cb19-3"><a aria-label="3"></a><span class="im">from</span> dask.distributed <span class="im">import</span> LocalCluster</span>
-<span id="cb19-4"><a aria-label="4"></a><span class="im">from</span> dask_kubernetes <span class="im">import</span> KubeCluster</span>
-<span id="cb19-5"><a aria-label="5"></a></span>
-<span id="cb19-6"><a aria-label="6"></a><span class="co"># cluster = LocalCluster()</span></span>
-<span id="cb19-7"><a aria-label="7"></a>cluster <span class="op">=</span> KubeCluster()  <span class="co"># example, you can swap out for Kubernetes</span></span>
-<span id="cb19-8"><a aria-label="8"></a></span>
-<span id="cb19-9"><a aria-label="9"></a>client <span class="op">=</span> cluster.get_client()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a aria-label="1"></a><span class="co"># You can swap out LocalCluster for other cluster types</span></span>
+<span id="cb28-2"><a aria-label="2"></a></span>
+<span id="cb28-3"><a aria-label="3"></a><span class="im">from</span> dask.distributed <span class="im">import</span> LocalCluster</span>
+<span id="cb28-4"><a aria-label="4"></a><span class="im">from</span> dask_kubernetes <span class="im">import</span> KubeCluster</span>
+<span id="cb28-5"><a aria-label="5"></a></span>
+<span id="cb28-6"><a aria-label="6"></a><span class="co"># cluster = LocalCluster()</span></span>
+<span id="cb28-7"><a aria-label="7"></a>cluster <span class="op">=</span> KubeCluster()  <span class="co"># example, you can swap out for Kubernetes</span></span>
+<span id="cb28-8"><a aria-label="8"></a></span>
+<span id="cb28-9"><a aria-label="9"></a>client <span class="op">=</span> cluster.get_client()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -853,7 +1188,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="dask-24" class="slide level2">
+<section id="dask-27" class="slide level2">
 <h2>Dask</h2>
 <p>Graph creation and graph scheduling are separate problems!</p>
 <p>Current Dask scheduler is <strong>dynamic</strong>.</p>
@@ -873,7 +1208,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="dask-25" class="slide level2">
+<section id="dask-28" class="slide level2">
 <h2>Dask</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -892,11 +1227,11 @@ MSDE
 </div>
 </div>
 </section>
-<section id="dask-26" class="slide level2">
+<section id="dask-29" class="slide level2">
 <h2>Dask</h2>
 
 <img data-src="img/dask_custom_scheduler.png" class="r-stretch"></section>
-<section id="dask-27" class="slide level2">
+<section id="dask-30" class="slide level2">
 <h2>Dask</h2>
 
 <img data-src="img/dask_blas_comparison.png" class="r-stretch"></section>
@@ -953,7 +1288,7 @@ MSDE
 <h2>Ordering: why memory, not makespan</h2>
 <img data-src="bigdata_lec5_files/mediabag/04f05b12bbb75054482b97350259cbab353c6538.svg">
 </section>
-<section id="ordering-why-memory-not-makespan-1" class="slide level2">
+<section id="ordering-why-memory-not-makespan-1" class="slide level2 scrollable">
 <h2>Ordering: why memory, not makespan</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1034,10 +1369,10 @@ MSDE
 </div>
 <div class="callout-content">
 <p>Every <strong>100 ms</strong> the scheduler compares saturated workers against idle ones and moves <em>pending</em> tasks between them. Enabled by default:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode numberSource yaml number-lines code-with-copy"><code class="sourceCode yaml"><span id="cb20-1"><a aria-label="1"></a><span class="fu">distributed</span><span class="kw">:</span></span>
-<span id="cb20-2"><a aria-label="2"></a><span class="at">  </span><span class="fu">scheduler</span><span class="kw">:</span></span>
-<span id="cb20-3"><a aria-label="3"></a><span class="at">    </span><span class="fu">work-stealing</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
-<span id="cb20-4"><a aria-label="4"></a><span class="at">    </span><span class="fu">work-stealing-interval</span><span class="kw">:</span><span class="at"> 100ms</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode numberSource yaml number-lines code-with-copy"><code class="sourceCode yaml"><span id="cb29-1"><a aria-label="1"></a><span class="fu">distributed</span><span class="kw">:</span></span>
+<span id="cb29-2"><a aria-label="2"></a><span class="at">  </span><span class="fu">scheduler</span><span class="kw">:</span></span>
+<span id="cb29-3"><a aria-label="3"></a><span class="at">    </span><span class="fu">work-stealing</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb29-4"><a aria-label="4"></a><span class="at">    </span><span class="fu">work-stealing-interval</span><span class="kw">:</span><span class="at"> 100ms</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1054,21 +1389,6 @@ MSDE
 </div>
 </div>
 </section>
-<section id="work-stealing-in-dask-1" class="slide level2">
-<h2>Work stealing in Dask</h2>
-<div class="callout callout-important no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Note the difference from Cilk</strong></p>
-</div>
-<div class="callout-content">
-<p>Cilk-style stealing is <strong>fully decentralized</strong>: an idle worker picks a random victim itself.</p>
-<p>Dask’s stealing is <strong>scheduler-mediated</strong>: the central scheduler already knows every worker’s occupancy and every result’s location, so it can make a <em>better</em> decision than a random probe – at the price of that central state being the bottleneck.</p>
-<p>Same name, different architecture, different failure mode.</p>
-</div>
-</div>
-</div>
-</section>
 <section id="when-greedy-goes-wrong-root-task-overproduction" class="slide level2">
 <h2>When greedy goes wrong: root task overproduction</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
@@ -1077,8 +1397,8 @@ MSDE
 <p><strong>A real, expensive bug class</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a aria-label="1"></a>df <span class="op">=</span> dd.read_parquet(<span class="st">"s3://.../*.parquet"</span>)   <span class="co"># 10 000 partitions</span></span>
-<span id="cb21-2"><a aria-label="2"></a>df.map_partitions(expensive).<span class="bu">sum</span>().compute()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a aria-label="1"></a>df <span class="op">=</span> dd.read_parquet(<span class="st">"s3://.../*.parquet"</span>)   <span class="co"># 10 000 partitions</span></span>
+<span id="cb30-2"><a aria-label="2"></a>df.map_partitions(expensive).<span class="bu">sum</span>().compute()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>A greedy scheduler sees 10 000 <strong>ready</strong> root tasks and no reason not to run them. Workers cheerfully load far more data than the downstream tasks can consume, and the cluster dies of memory exhaustion – while doing nothing wrong by the greedy principle.</p>
 </div>
 </div>
@@ -1214,17 +1534,17 @@ MSDE
 <p><strong>What users can annotate</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a aria-label="1"></a><span class="cf">with</span> dask.annotate(priority<span class="op">=</span><span class="dv">10</span>):          <span class="co"># jump the queue</span></span>
-<span id="cb22-2"><a aria-label="2"></a>    urgent <span class="op">=</span> expensive(x)</span>
-<span id="cb22-3"><a aria-label="3"></a></span>
-<span id="cb22-4"><a aria-label="4"></a><span class="cf">with</span> dask.annotate(resources<span class="op">=</span>{<span class="st">"GPU"</span>: <span class="dv">1</span>}): <span class="co"># abstract semaphore</span></span>
-<span id="cb22-5"><a aria-label="5"></a>    y <span class="op">=</span> train(urgent)</span>
-<span id="cb22-6"><a aria-label="6"></a></span>
-<span id="cb22-7"><a aria-label="7"></a><span class="cf">with</span> dask.annotate(workers<span class="op">=</span>[<span class="st">"tcp://10.0.0.5:8786"</span>],</span>
-<span id="cb22-8"><a aria-label="8"></a>                   allow_other_workers<span class="op">=</span><span class="va">True</span>):</span>
-<span id="cb22-9"><a aria-label="9"></a>    z <span class="op">=</span> reads_local_file()</span>
-<span id="cb22-10"><a aria-label="10"></a></span>
-<span id="cb22-11"><a aria-label="11"></a>future <span class="op">=</span> client.submit(f, x, retries<span class="op">=</span><span class="dv">3</span>, priority<span class="op">=-</span><span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a aria-label="1"></a><span class="cf">with</span> dask.annotate(priority<span class="op">=</span><span class="dv">10</span>):          <span class="co"># jump the queue</span></span>
+<span id="cb31-2"><a aria-label="2"></a>    urgent <span class="op">=</span> expensive(x)</span>
+<span id="cb31-3"><a aria-label="3"></a></span>
+<span id="cb31-4"><a aria-label="4"></a><span class="cf">with</span> dask.annotate(resources<span class="op">=</span>{<span class="st">"GPU"</span>: <span class="dv">1</span>}): <span class="co"># abstract semaphore</span></span>
+<span id="cb31-5"><a aria-label="5"></a>    y <span class="op">=</span> train(urgent)</span>
+<span id="cb31-6"><a aria-label="6"></a></span>
+<span id="cb31-7"><a aria-label="7"></a><span class="cf">with</span> dask.annotate(workers<span class="op">=</span>[<span class="st">"tcp://10.0.0.5:8786"</span>],</span>
+<span id="cb31-8"><a aria-label="8"></a>                   allow_other_workers<span class="op">=</span><span class="va">True</span>):</span>
+<span id="cb31-9"><a aria-label="9"></a>    z <span class="op">=</span> reads_local_file()</span>
+<span id="cb31-10"><a aria-label="10"></a></span>
+<span id="cb31-11"><a aria-label="11"></a>future <span class="op">=</span> client.submit(f, x, retries<span class="op">=</span><span class="dv">3</span>, priority<span class="op">=-</span><span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1247,7 +1567,7 @@ MSDE
 <p><strong>Adaptive scaling</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a aria-label="1"></a>cluster.adapt(minimum<span class="op">=</span><span class="dv">2</span>, maximum<span class="op">=</span><span class="dv">100</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb32"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a aria-label="1"></a>cluster.adapt(minimum<span class="op">=</span><span class="dv">2</span>, maximum<span class="op">=</span><span class="dv">100</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The scheduler watches occupancy and asks the cluster manager for more workers, or gives them back.</p>
 </div>
 </div>
@@ -1274,9 +1594,9 @@ MSDE
 <div class="callout-content">
 <p>An all-to-all shuffle of <span class="math inline">\(n\)</span> partitions is <span class="math inline">\(O(n^2)\)</span> edges. At 10 000 partitions that is <span class="math inline">\(10^8\)</span> tasks – the scheduler runs out of memory before a single row moves.</p>
 <p>Dask’s answer was to stop expressing it as a graph: <strong>P2P shuffle</strong> makes the exchange a <em>side service</em> that workers run among themselves, appearing to the scheduler as <span class="math inline">\(O(n)\)</span> tasks.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb24"><pre class="sourceCode numberSource yaml number-lines code-with-copy"><code class="sourceCode yaml"><span id="cb24-1"><a aria-label="1"></a><span class="fu">dataframe</span><span class="kw">:</span></span>
-<span id="cb24-2"><a aria-label="2"></a><span class="at">  </span><span class="fu">shuffle</span><span class="kw">:</span></span>
-<span id="cb24-3"><a aria-label="3"></a><span class="at">    </span><span class="fu">method</span><span class="kw">:</span><span class="at"> p2p</span><span class="co">     # the alternative is the old "tasks" graph</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb33"><pre class="sourceCode numberSource yaml number-lines code-with-copy"><code class="sourceCode yaml"><span id="cb33-1"><a aria-label="1"></a><span class="fu">dataframe</span><span class="kw">:</span></span>
+<span id="cb33-2"><a aria-label="2"></a><span class="at">  </span><span class="fu">shuffle</span><span class="kw">:</span></span>
+<span id="cb33-3"><a aria-label="3"></a><span class="at">    </span><span class="fu">method</span><span class="kw">:</span><span class="at"> p2p</span><span class="co">     # the alternative is the old "tasks" graph</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Now the default on distributed clusters – the graph-based shuffle is the fallback.</p>
 </div>
 </div>
@@ -1446,12 +1766,12 @@ MSDE
 <li>Individual tasks can be simple Python functions, complex Unix applications, or serverless function invocations.</li>
 <li>The <strong>key idea</strong> is that you declare file objects, and then declare tasks that consume them and produce new file objects. <!-- For example, this snippet draws an input file from the Project Gutenberg repository and runs a Task to search for the string "needle", producing the file output.txt: --></li>
 </ul>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a aria-label="1"></a>f <span class="op">=</span> m.declare_url(<span class="st">"https://www.gutenberg.org/cache/epub/2600/pg2600.txt"</span>)</span>
-<span id="cb25-2"><a aria-label="2"></a>g <span class="op">=</span> m.declare_file(<span class="st">"myoutput.txt"</span>)</span>
-<span id="cb25-3"><a aria-label="3"></a></span>
-<span id="cb25-4"><a aria-label="4"></a>t <span class="op">=</span> Task(<span class="st">"grep needle warandpeace.txt &gt; output.txt"</span>)</span>
-<span id="cb25-5"><a aria-label="5"></a>t.add_input(f, <span class="st">"warandpeace.txt"</span>)</span>
-<span id="cb25-6"><a aria-label="6"></a>t.add_output(g, <span class="st">"output.txt"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a aria-label="1"></a>f <span class="op">=</span> m.declare_url(<span class="st">"https://www.gutenberg.org/cache/epub/2600/pg2600.txt"</span>)</span>
+<span id="cb34-2"><a aria-label="2"></a>g <span class="op">=</span> m.declare_file(<span class="st">"myoutput.txt"</span>)</span>
+<span id="cb34-3"><a aria-label="3"></a></span>
+<span id="cb34-4"><a aria-label="4"></a>t <span class="op">=</span> Task(<span class="st">"grep needle warandpeace.txt &gt; output.txt"</span>)</span>
+<span id="cb34-5"><a aria-label="5"></a>t.add_input(f, <span class="st">"warandpeace.txt"</span>)</span>
+<span id="cb34-6"><a aria-label="6"></a>t.add_output(g, <span class="st">"output.txt"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1482,62 +1802,62 @@ MSDE
 </div>
 <div class="callout-content">
 <p>TaskVine manager can be used as Dask scheduler:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a aria-label="1"></a><span class="cf">try</span>:</span>
-<span id="cb26-2"><a aria-label="2"></a>    <span class="im">import</span> dask</span>
-<span id="cb26-3"><a aria-label="3"></a>    <span class="im">import</span> awkward <span class="im">as</span> ak</span>
-<span id="cb26-4"><a aria-label="4"></a>    <span class="im">import</span> dask_awkward <span class="im">as</span> dak</span>
-<span id="cb26-5"><a aria-label="5"></a>    <span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb26-6"><a aria-label="6"></a><span class="cf">except</span> <span class="pp">ImportError</span>:</span>
-<span id="cb26-7"><a aria-label="7"></a>    <span class="bu">print</span>(<span class="st">"You need dask, awkward, and numpy installed"</span>)</span>
-<span id="cb26-8"><a aria-label="8"></a>    <span class="bu">print</span>(<span class="st">"(e.g. conda install -c conda-forge dask dask-awkward numpy) to run this example."</span>)</span>
-<span id="cb26-9"><a aria-label="9"></a></span>
-<span id="cb26-10"><a aria-label="10"></a>behavior: <span class="bu">dict</span> <span class="op">=</span> {}</span>
-<span id="cb26-11"><a aria-label="11"></a></span>
-<span id="cb26-12"><a aria-label="12"></a><span class="at">@ak.mixin_class</span>(behavior)</span>
-<span id="cb26-13"><a aria-label="13"></a><span class="kw">class</span> Point:</span>
-<span id="cb26-14"><a aria-label="14"></a>    <span class="kw">def</span> distance(<span class="va">self</span>, other):</span>
-<span id="cb26-15"><a aria-label="15"></a>    <span class="cf">return</span> np.sqrt((<span class="va">self</span>.x <span class="op">-</span> other.x) <span class="op">**</span> <span class="dv">2</span> <span class="op">+</span> (<span class="va">self</span>.y <span class="op">-</span> other.y) <span class="op">**</span> <span class="dv">2</span>)</span>
-<span id="cb26-16"><a aria-label="16"></a></span>
-<span id="cb26-17"><a aria-label="17"></a></span>
-<span id="cb26-18"><a aria-label="18"></a><span class="cf">if</span> <span class="va">__name__</span> <span class="op">==</span> <span class="st">"__main__"</span>:</span>
-<span id="cb26-19"><a aria-label="19"></a>    <span class="co"># data arrays</span></span>
-<span id="cb26-20"><a aria-label="20"></a>    points1 <span class="op">=</span> ak.Array([</span>
-<span id="cb26-21"><a aria-label="21"></a>    [{<span class="st">"x"</span>: <span class="fl">1.0</span>, <span class="st">"y"</span>: <span class="fl">1.1</span>}, {<span class="st">"x"</span>: <span class="fl">2.0</span>, <span class="st">"y"</span>: <span class="fl">2.2</span>}, {<span class="st">"x"</span>: <span class="dv">3</span>, <span class="st">"y"</span>: <span class="fl">3.3</span>}],</span>
-<span id="cb26-22"><a aria-label="22"></a>    [],</span>
-<span id="cb26-23"><a aria-label="23"></a>    [{<span class="st">"x"</span>: <span class="fl">4.0</span>, <span class="st">"y"</span>: <span class="fl">4.4</span>}, {<span class="st">"x"</span>: <span class="fl">5.0</span>, <span class="st">"y"</span>: <span class="fl">5.5</span>}],</span>
-<span id="cb26-24"><a aria-label="24"></a>    [{<span class="st">"x"</span>: <span class="fl">6.0</span>, <span class="st">"y"</span>: <span class="fl">6.6</span>}],</span>
-<span id="cb26-25"><a aria-label="25"></a>    [{<span class="st">"x"</span>: <span class="fl">7.0</span>, <span class="st">"y"</span>: <span class="fl">7.7</span>}, {<span class="st">"x"</span>: <span class="fl">8.0</span>, <span class="st">"y"</span>: <span class="fl">8.8</span>}, {<span class="st">"x"</span>: <span class="dv">9</span>, <span class="st">"y"</span>: <span class="fl">9.9</span>}],</span>
-<span id="cb26-26"><a aria-label="26"></a>    ])</span>
-<span id="cb26-27"><a aria-label="27"></a></span>
-<span id="cb26-28"><a aria-label="28"></a>    points2 <span class="op">=</span> ak.Array([</span>
-<span id="cb26-29"><a aria-label="29"></a>    [{<span class="st">"x"</span>: <span class="fl">0.9</span>, <span class="st">"y"</span>: <span class="fl">1.0</span>}, {<span class="st">"x"</span>: <span class="fl">2.0</span>, <span class="st">"y"</span>: <span class="fl">2.2</span>}, {<span class="st">"x"</span>: <span class="fl">2.9</span>, <span class="st">"y"</span>: <span class="fl">3.0</span>}],</span>
-<span id="cb26-30"><a aria-label="30"></a>    [],</span>
-<span id="cb26-31"><a aria-label="31"></a>    [{<span class="st">"x"</span>: <span class="fl">3.9</span>, <span class="st">"y"</span>: <span class="fl">4.0</span>}, {<span class="st">"x"</span>: <span class="fl">5.0</span>, <span class="st">"y"</span>: <span class="fl">5.5</span>}],</span>
-<span id="cb26-32"><a aria-label="32"></a>    [{<span class="st">"x"</span>: <span class="fl">5.9</span>, <span class="st">"y"</span>: <span class="fl">6.0</span>}],</span>
-<span id="cb26-33"><a aria-label="33"></a>    [{<span class="st">"x"</span>: <span class="fl">6.9</span>, <span class="st">"y"</span>: <span class="fl">7.0</span>}, {<span class="st">"x"</span>: <span class="fl">8.0</span>, <span class="st">"y"</span>: <span class="fl">8.8</span>}, {<span class="st">"x"</span>: <span class="fl">8.9</span>, <span class="st">"y"</span>: <span class="fl">9.0</span>}],</span>
-<span id="cb26-34"><a aria-label="34"></a>    ])</span>
-<span id="cb26-35"><a aria-label="35"></a>    array1 <span class="op">=</span> dak.from_awkward(points1, npartitions<span class="op">=</span><span class="dv">3</span>)</span>
-<span id="cb26-36"><a aria-label="36"></a>    array2 <span class="op">=</span> dak.from_awkward(points2, npartitions<span class="op">=</span><span class="dv">3</span>)</span>
-<span id="cb26-37"><a aria-label="37"></a></span>
-<span id="cb26-38"><a aria-label="38"></a>    array1 <span class="op">=</span> dak.with_name(array1, name<span class="op">=</span><span class="st">"Point"</span>, behavior<span class="op">=</span>behavior)</span>
-<span id="cb26-39"><a aria-label="39"></a>    array2 <span class="op">=</span> dak.with_name(array2, name<span class="op">=</span><span class="st">"Point"</span>, behavior<span class="op">=</span>behavior)</span>
-<span id="cb26-40"><a aria-label="40"></a></span>
-<span id="cb26-41"><a aria-label="41"></a>    distance <span class="op">=</span> array1.distance(array2)</span>
-<span id="cb26-42"><a aria-label="42"></a></span>
-<span id="cb26-43"><a aria-label="43"></a>    m <span class="op">=</span> vine.DaskVine(port<span class="op">=</span><span class="dv">9123</span>, ssl<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb26-44"><a aria-label="44"></a>    m.set_name(<span class="st">"test_manager"</span>)</span>
-<span id="cb26-45"><a aria-label="45"></a>    <span class="bu">print</span>(<span class="ss">f"Listening for workers at port: </span><span class="sc">{</span>m<span class="sc">.</span>port<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb26-46"><a aria-label="46"></a></span>
-<span id="cb26-47"><a aria-label="47"></a>    f <span class="op">=</span> vine.Factory(manager<span class="op">=</span>m)</span>
-<span id="cb26-48"><a aria-label="48"></a>    f.cores <span class="op">=</span> <span class="dv">4</span></span>
-<span id="cb26-49"><a aria-label="49"></a>    f.max_workers <span class="op">=</span> <span class="dv">1</span></span>
-<span id="cb26-50"><a aria-label="50"></a>    f.min_workers <span class="op">=</span> <span class="dv">1</span></span>
-<span id="cb26-51"><a aria-label="51"></a>    <span class="cf">with</span> f:</span>
-<span id="cb26-52"><a aria-label="52"></a>        <span class="cf">with</span> dask.config.<span class="bu">set</span>(scheduler<span class="op">=</span>m.get):</span>
-<span id="cb26-53"><a aria-label="53"></a>            result <span class="op">=</span> distance.compute(resources<span class="op">=</span>{<span class="st">"cores"</span>: <span class="dv">1</span>}, resources_mode<span class="op">=</span><span class="st">"max"</span>, lazy_transfers<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb26-54"><a aria-label="54"></a>            <span class="bu">print</span>(<span class="ss">f"distance = </span><span class="sc">{</span>result<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb26-55"><a aria-label="55"></a>        <span class="bu">print</span>(<span class="st">"Terminating workers..."</span>, end<span class="op">=</span><span class="st">""</span>)</span>
-<span id="cb26-56"><a aria-label="56"></a>    <span class="bu">print</span>(<span class="st">"done!"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb35"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a aria-label="1"></a><span class="cf">try</span>:</span>
+<span id="cb35-2"><a aria-label="2"></a>    <span class="im">import</span> dask</span>
+<span id="cb35-3"><a aria-label="3"></a>    <span class="im">import</span> awkward <span class="im">as</span> ak</span>
+<span id="cb35-4"><a aria-label="4"></a>    <span class="im">import</span> dask_awkward <span class="im">as</span> dak</span>
+<span id="cb35-5"><a aria-label="5"></a>    <span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb35-6"><a aria-label="6"></a><span class="cf">except</span> <span class="pp">ImportError</span>:</span>
+<span id="cb35-7"><a aria-label="7"></a>    <span class="bu">print</span>(<span class="st">"You need dask, awkward, and numpy installed"</span>)</span>
+<span id="cb35-8"><a aria-label="8"></a>    <span class="bu">print</span>(<span class="st">"(e.g. conda install -c conda-forge dask dask-awkward numpy) to run this example."</span>)</span>
+<span id="cb35-9"><a aria-label="9"></a></span>
+<span id="cb35-10"><a aria-label="10"></a>behavior: <span class="bu">dict</span> <span class="op">=</span> {}</span>
+<span id="cb35-11"><a aria-label="11"></a></span>
+<span id="cb35-12"><a aria-label="12"></a><span class="at">@ak.mixin_class</span>(behavior)</span>
+<span id="cb35-13"><a aria-label="13"></a><span class="kw">class</span> Point:</span>
+<span id="cb35-14"><a aria-label="14"></a>    <span class="kw">def</span> distance(<span class="va">self</span>, other):</span>
+<span id="cb35-15"><a aria-label="15"></a>    <span class="cf">return</span> np.sqrt((<span class="va">self</span>.x <span class="op">-</span> other.x) <span class="op">**</span> <span class="dv">2</span> <span class="op">+</span> (<span class="va">self</span>.y <span class="op">-</span> other.y) <span class="op">**</span> <span class="dv">2</span>)</span>
+<span id="cb35-16"><a aria-label="16"></a></span>
+<span id="cb35-17"><a aria-label="17"></a></span>
+<span id="cb35-18"><a aria-label="18"></a><span class="cf">if</span> <span class="va">__name__</span> <span class="op">==</span> <span class="st">"__main__"</span>:</span>
+<span id="cb35-19"><a aria-label="19"></a>    <span class="co"># data arrays</span></span>
+<span id="cb35-20"><a aria-label="20"></a>    points1 <span class="op">=</span> ak.Array([</span>
+<span id="cb35-21"><a aria-label="21"></a>    [{<span class="st">"x"</span>: <span class="fl">1.0</span>, <span class="st">"y"</span>: <span class="fl">1.1</span>}, {<span class="st">"x"</span>: <span class="fl">2.0</span>, <span class="st">"y"</span>: <span class="fl">2.2</span>}, {<span class="st">"x"</span>: <span class="dv">3</span>, <span class="st">"y"</span>: <span class="fl">3.3</span>}],</span>
+<span id="cb35-22"><a aria-label="22"></a>    [],</span>
+<span id="cb35-23"><a aria-label="23"></a>    [{<span class="st">"x"</span>: <span class="fl">4.0</span>, <span class="st">"y"</span>: <span class="fl">4.4</span>}, {<span class="st">"x"</span>: <span class="fl">5.0</span>, <span class="st">"y"</span>: <span class="fl">5.5</span>}],</span>
+<span id="cb35-24"><a aria-label="24"></a>    [{<span class="st">"x"</span>: <span class="fl">6.0</span>, <span class="st">"y"</span>: <span class="fl">6.6</span>}],</span>
+<span id="cb35-25"><a aria-label="25"></a>    [{<span class="st">"x"</span>: <span class="fl">7.0</span>, <span class="st">"y"</span>: <span class="fl">7.7</span>}, {<span class="st">"x"</span>: <span class="fl">8.0</span>, <span class="st">"y"</span>: <span class="fl">8.8</span>}, {<span class="st">"x"</span>: <span class="dv">9</span>, <span class="st">"y"</span>: <span class="fl">9.9</span>}],</span>
+<span id="cb35-26"><a aria-label="26"></a>    ])</span>
+<span id="cb35-27"><a aria-label="27"></a></span>
+<span id="cb35-28"><a aria-label="28"></a>    points2 <span class="op">=</span> ak.Array([</span>
+<span id="cb35-29"><a aria-label="29"></a>    [{<span class="st">"x"</span>: <span class="fl">0.9</span>, <span class="st">"y"</span>: <span class="fl">1.0</span>}, {<span class="st">"x"</span>: <span class="fl">2.0</span>, <span class="st">"y"</span>: <span class="fl">2.2</span>}, {<span class="st">"x"</span>: <span class="fl">2.9</span>, <span class="st">"y"</span>: <span class="fl">3.0</span>}],</span>
+<span id="cb35-30"><a aria-label="30"></a>    [],</span>
+<span id="cb35-31"><a aria-label="31"></a>    [{<span class="st">"x"</span>: <span class="fl">3.9</span>, <span class="st">"y"</span>: <span class="fl">4.0</span>}, {<span class="st">"x"</span>: <span class="fl">5.0</span>, <span class="st">"y"</span>: <span class="fl">5.5</span>}],</span>
+<span id="cb35-32"><a aria-label="32"></a>    [{<span class="st">"x"</span>: <span class="fl">5.9</span>, <span class="st">"y"</span>: <span class="fl">6.0</span>}],</span>
+<span id="cb35-33"><a aria-label="33"></a>    [{<span class="st">"x"</span>: <span class="fl">6.9</span>, <span class="st">"y"</span>: <span class="fl">7.0</span>}, {<span class="st">"x"</span>: <span class="fl">8.0</span>, <span class="st">"y"</span>: <span class="fl">8.8</span>}, {<span class="st">"x"</span>: <span class="fl">8.9</span>, <span class="st">"y"</span>: <span class="fl">9.0</span>}],</span>
+<span id="cb35-34"><a aria-label="34"></a>    ])</span>
+<span id="cb35-35"><a aria-label="35"></a>    array1 <span class="op">=</span> dak.from_awkward(points1, npartitions<span class="op">=</span><span class="dv">3</span>)</span>
+<span id="cb35-36"><a aria-label="36"></a>    array2 <span class="op">=</span> dak.from_awkward(points2, npartitions<span class="op">=</span><span class="dv">3</span>)</span>
+<span id="cb35-37"><a aria-label="37"></a></span>
+<span id="cb35-38"><a aria-label="38"></a>    array1 <span class="op">=</span> dak.with_name(array1, name<span class="op">=</span><span class="st">"Point"</span>, behavior<span class="op">=</span>behavior)</span>
+<span id="cb35-39"><a aria-label="39"></a>    array2 <span class="op">=</span> dak.with_name(array2, name<span class="op">=</span><span class="st">"Point"</span>, behavior<span class="op">=</span>behavior)</span>
+<span id="cb35-40"><a aria-label="40"></a></span>
+<span id="cb35-41"><a aria-label="41"></a>    distance <span class="op">=</span> array1.distance(array2)</span>
+<span id="cb35-42"><a aria-label="42"></a></span>
+<span id="cb35-43"><a aria-label="43"></a>    m <span class="op">=</span> vine.DaskVine(port<span class="op">=</span><span class="dv">9123</span>, ssl<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb35-44"><a aria-label="44"></a>    m.set_name(<span class="st">"test_manager"</span>)</span>
+<span id="cb35-45"><a aria-label="45"></a>    <span class="bu">print</span>(<span class="ss">f"Listening for workers at port: </span><span class="sc">{</span>m<span class="sc">.</span>port<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb35-46"><a aria-label="46"></a></span>
+<span id="cb35-47"><a aria-label="47"></a>    f <span class="op">=</span> vine.Factory(manager<span class="op">=</span>m)</span>
+<span id="cb35-48"><a aria-label="48"></a>    f.cores <span class="op">=</span> <span class="dv">4</span></span>
+<span id="cb35-49"><a aria-label="49"></a>    f.max_workers <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb35-50"><a aria-label="50"></a>    f.min_workers <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb35-51"><a aria-label="51"></a>    <span class="cf">with</span> f:</span>
+<span id="cb35-52"><a aria-label="52"></a>        <span class="cf">with</span> dask.config.<span class="bu">set</span>(scheduler<span class="op">=</span>m.get):</span>
+<span id="cb35-53"><a aria-label="53"></a>            result <span class="op">=</span> distance.compute(resources<span class="op">=</span>{<span class="st">"cores"</span>: <span class="dv">1</span>}, resources_mode<span class="op">=</span><span class="st">"max"</span>, lazy_transfers<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb35-54"><a aria-label="54"></a>            <span class="bu">print</span>(<span class="ss">f"distance = </span><span class="sc">{</span>result<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb35-55"><a aria-label="55"></a>        <span class="bu">print</span>(<span class="st">"Terminating workers..."</span>, end<span class="op">=</span><span class="st">""</span>)</span>
+<span id="cb35-56"><a aria-label="56"></a>    <span class="bu">print</span>(<span class="st">"done!"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1547,7 +1867,7 @@ MSDE
 <h1>Other Dask collections</h1>
 
 </section>
-<section id="dask-28" class="slide level2">
+<section id="dask-31" class="slide level2">
 <h2>Dask</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1564,7 +1884,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="dask-29" class="slide level2">
+<section id="dask-32" class="slide level2">
 <h2>Dask</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1580,21 +1900,21 @@ MSDE
 </div>
 </div>
 </section>
-<section id="dask-30" class="slide level2">
+<section id="dask-33" class="slide level2">
 <h2>Dask</h2>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a aria-label="1"></a><span class="op">&gt;&gt;&gt;</span> <span class="im">import</span> dask.bag <span class="im">as</span> db</span>
-<span id="cb27-2"><a aria-label="2"></a><span class="op">&gt;&gt;&gt;</span> <span class="im">import</span> json</span>
-<span id="cb27-3"><a aria-label="3"></a><span class="op">&gt;&gt;&gt;</span> b <span class="op">=</span> db.from_filenames(<span class="st">'2014-*.json.gz'</span>).<span class="bu">map</span>(json.loads)</span>
-<span id="cb27-4"><a aria-label="4"></a><span class="op">&gt;&gt;&gt;</span> alices <span class="op">=</span> b.<span class="bu">filter</span>(<span class="kw">lambda</span> d: d[<span class="st">'name'</span>] <span class="op">==</span> <span class="st">'Alice'</span>)</span>
-<span id="cb27-5"><a aria-label="5"></a><span class="op">&gt;&gt;&gt;</span> alices.take(<span class="dv">3</span>)</span>
-<span id="cb27-6"><a aria-label="6"></a>({<span class="st">'name'</span>: <span class="st">'Alice'</span>, <span class="st">'city'</span>: <span class="st">'LA'</span>, <span class="st">'balance'</span>: <span class="dv">100</span>},</span>
-<span id="cb27-7"><a aria-label="7"></a>{<span class="st">'name'</span>: <span class="st">'Alice'</span>, <span class="st">'city'</span>: <span class="st">'LA'</span>, <span class="st">'balance'</span>: <span class="dv">200</span>},</span>
-<span id="cb27-8"><a aria-label="8"></a>{<span class="st">'name'</span>: <span class="st">'Alice'</span>, <span class="st">'city'</span>: <span class="st">'NYC'</span>, <span class="st">'balance'</span>: <span class="dv">300</span>},)</span>
-<span id="cb27-9"><a aria-label="9"></a></span>
-<span id="cb27-10"><a aria-label="10"></a><span class="op">&gt;&gt;&gt;</span> <span class="bu">dict</span>(alices.pluck(<span class="st">'city'</span>).frequencies())</span>
-<span id="cb27-11"><a aria-label="11"></a>{<span class="st">'LA'</span>: <span class="dv">10000</span>, <span class="st">'NYC'</span>: <span class="dv">20000</span>, ...}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb36"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a aria-label="1"></a><span class="op">&gt;&gt;&gt;</span> <span class="im">import</span> dask.bag <span class="im">as</span> db</span>
+<span id="cb36-2"><a aria-label="2"></a><span class="op">&gt;&gt;&gt;</span> <span class="im">import</span> json</span>
+<span id="cb36-3"><a aria-label="3"></a><span class="op">&gt;&gt;&gt;</span> b <span class="op">=</span> db.from_filenames(<span class="st">'2014-*.json.gz'</span>).<span class="bu">map</span>(json.loads)</span>
+<span id="cb36-4"><a aria-label="4"></a><span class="op">&gt;&gt;&gt;</span> alices <span class="op">=</span> b.<span class="bu">filter</span>(<span class="kw">lambda</span> d: d[<span class="st">'name'</span>] <span class="op">==</span> <span class="st">'Alice'</span>)</span>
+<span id="cb36-5"><a aria-label="5"></a><span class="op">&gt;&gt;&gt;</span> alices.take(<span class="dv">3</span>)</span>
+<span id="cb36-6"><a aria-label="6"></a>({<span class="st">'name'</span>: <span class="st">'Alice'</span>, <span class="st">'city'</span>: <span class="st">'LA'</span>, <span class="st">'balance'</span>: <span class="dv">100</span>},</span>
+<span id="cb36-7"><a aria-label="7"></a>{<span class="st">'name'</span>: <span class="st">'Alice'</span>, <span class="st">'city'</span>: <span class="st">'LA'</span>, <span class="st">'balance'</span>: <span class="dv">200</span>},</span>
+<span id="cb36-8"><a aria-label="8"></a>{<span class="st">'name'</span>: <span class="st">'Alice'</span>, <span class="st">'city'</span>: <span class="st">'NYC'</span>, <span class="st">'balance'</span>: <span class="dv">300</span>},)</span>
+<span id="cb36-9"><a aria-label="9"></a></span>
+<span id="cb36-10"><a aria-label="10"></a><span class="op">&gt;&gt;&gt;</span> <span class="bu">dict</span>(alices.pluck(<span class="st">'city'</span>).frequencies())</span>
+<span id="cb36-11"><a aria-label="11"></a>{<span class="st">'LA'</span>: <span class="dv">10000</span>, <span class="st">'NYC'</span>: <span class="dv">20000</span>, ...}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="dask-31" class="slide level2">
+<section id="dask-34" class="slide level2">
 <h2>Dask</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1602,20 +1922,20 @@ MSDE
 <p><strong>S3 example</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a aria-label="1"></a><span class="op">&gt;&gt;&gt;</span> <span class="im">import</span> dask.bag <span class="im">as</span> db</span>
-<span id="cb28-2"><a aria-label="2"></a><span class="op">&gt;&gt;&gt;</span> b <span class="op">=</span> db.from_s3(<span class="st">'githubarchive-data'</span>, <span class="st">'2015-01-01-*.json.gz'</span>)</span>
-<span id="cb28-3"><a aria-label="3"></a>          .<span class="bu">map</span>(json.loads)</span>
-<span id="cb28-4"><a aria-label="4"></a>          .<span class="bu">map</span>(<span class="kw">lambda</span> d: d[<span class="st">'type'</span>] <span class="op">==</span> <span class="st">'PushEvent'</span>)</span>
-<span id="cb28-5"><a aria-label="5"></a>          .count()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb37"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a aria-label="1"></a><span class="op">&gt;&gt;&gt;</span> <span class="im">import</span> dask.bag <span class="im">as</span> db</span>
+<span id="cb37-2"><a aria-label="2"></a><span class="op">&gt;&gt;&gt;</span> b <span class="op">=</span> db.from_s3(<span class="st">'githubarchive-data'</span>, <span class="st">'2015-01-01-*.json.gz'</span>)</span>
+<span id="cb37-3"><a aria-label="3"></a>          .<span class="bu">map</span>(json.loads)</span>
+<span id="cb37-4"><a aria-label="4"></a>          .<span class="bu">map</span>(<span class="kw">lambda</span> d: d[<span class="st">'type'</span>] <span class="op">==</span> <span class="st">'PushEvent'</span>)</span>
+<span id="cb37-5"><a aria-label="5"></a>          .count()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
 </section>
-<section id="dask-32" class="slide level2">
+<section id="dask-35" class="slide level2">
 <h2>Dask</h2>
 <p><!-- %https://blog.dask.org/2015/06/26/Complex-Graphs --> <img data-src="img/dask_bag_graph.png"></p>
 </section>
-<section id="dask-33" class="slide level2">
+<section id="dask-36" class="slide level2">
 <h2>Dask</h2>
 <div class="callout callout-note no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1629,7 +1949,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="dask-34" class="slide level2">
+<section id="dask-37" class="slide level2">
 <h2>Dask</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1644,7 +1964,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="dask-35" class="slide level2">
+<section id="dask-38" class="slide level2">
 <h2>Dask</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1657,7 +1977,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="dask-36" class="slide level2">
+<section id="dask-39" class="slide level2">
 <h2>Dask</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1665,15 +1985,15 @@ MSDE
 <p><strong>Out-of-core parallel SVD example</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a aria-label="1"></a><span class="op">&gt;&gt;&gt;</span> <span class="im">import</span> dask.array <span class="im">as</span> da</span>
-<span id="cb29-2"><a aria-label="2"></a><span class="op">&gt;&gt;&gt;</span> x <span class="op">=</span> da.ones((<span class="dv">5000</span>, <span class="dv">1000</span>), chunks<span class="op">=</span>(<span class="dv">1000</span>, <span class="dv">1000</span>))</span>
-<span id="cb29-3"><a aria-label="3"></a><span class="op">&gt;&gt;&gt;</span> u, s, v <span class="op">=</span> da.svd(x)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb38"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a aria-label="1"></a><span class="op">&gt;&gt;&gt;</span> <span class="im">import</span> dask.array <span class="im">as</span> da</span>
+<span id="cb38-2"><a aria-label="2"></a><span class="op">&gt;&gt;&gt;</span> x <span class="op">=</span> da.ones((<span class="dv">5000</span>, <span class="dv">1000</span>), chunks<span class="op">=</span>(<span class="dv">1000</span>, <span class="dv">1000</span>))</span>
+<span id="cb38-3"><a aria-label="3"></a><span class="op">&gt;&gt;&gt;</span> u, s, v <span class="op">=</span> da.svd(x)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Out-of-core parallel non-negative matrix factorizations on top of <code>dask.array</code>.</p>
 </div>
 </div>
 </div>
 </section>
-<section id="dask-37" class="slide level2">
+<section id="dask-40" class="slide level2">
 <h2>Dask</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -2027,7 +2347,7 @@ MSDE
         }
           var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
           var mailtoRegex = new RegExp(/^mailto:/);
-            var filterRegex = new RegExp("https:\/\/dslnu\.github\.io\/data_analytics\/");
+            var filterRegex = new RegExp('/' + window.location.host + '/');
           var isInternal = (href) => {
               return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
           }
