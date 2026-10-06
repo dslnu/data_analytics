@@ -2092,6 +2092,8 @@ pandas.DataFrame(
 :::{.callout-important icon=false}
 ## New information from geographic knowledge
 
+> space is the ultimate linkage key
+
 *Spatial feature engineering* develops additional information from raw data using **geographic knowledge**. It happens in two directions:
 
 - **Map matching** --- *between* datasets: geography links samples in separate datasets together.
@@ -2103,22 +2105,6 @@ pandas.DataFrame(
 
 - A **spatial summary feature** measures attributes of observations with some pre-specified spatial relationship to a target observation: the mean or median within a neighbourhood; the **spatial lag**; the count of observations within a distance; the standard deviation of the ten nearest. *Interpolated* features --- transferring information between spatial supports --- also belong here.
 - A **proximity feature** measures the distance from a target observation to some other observation or place --- like the distance to Balboa Park in the regression section, or the distance to the nearest other observation.
-:::
-
-## Map matching {.scrollable}
-
-:::{.callout-important icon=false}
-## Space is the ultimate linkage key
-
-Geographic information is collected at different scales, aggregated with bespoke delineations, and stored in different datasets. Location lets us **connect datasets that share no common key** --- a trick that would be much harder, or impossible, without spatial information.
-
-The difficulty of transferring information between geographies depends on the source, the target, and the precision wanted. There is always a trade-off between **precision and sophistication**: more precise transfer costs more effort, cognitive and computational. Sometimes we need the best estimate at any cost; sometimes "good enough" is good enough.
-:::
-
-:::{.callout-note icon=false}
-## The cases covered
-
-Counting points of one dataset near points of another; sampling a raster surface at points; attaching polygon attributes to points --- mostly traditional GIS operations. Then two more involved cases: points to points at different locations (interpolation), and polygons to different polygons.
 :::
 
 ## Counting nearby features {.scrollable}
@@ -2336,7 +2322,7 @@ ax.set_axis_off();
 
 Sometimes all we have are measurements at points that are **not** the points we want. **Spatial interpolation** estimates the value a continuous field takes at unmeasured sites.
 
-Sophisticated options include **kriging** (geostatistics, based on Gaussian process regression) and **geographically weighted regression**. Here, a basic $k$-nearest-neighbour regressor from `scikit-learn`: predict at a site from a distance-weighted average of the nearest ten listings.
+Sophisticated options include **kriging** (geostatistics, based on Gaussian process regression) and **geographically weighted regression**. We will use a basic $k$-nearest-neighbour regressor from `scikit-learn`: predict at a site from a distance-weighted average of the nearest ten listings.
 :::
 
 :::{.callout-tip icon=false}
@@ -2355,12 +2341,6 @@ two_bed_home_locations = numpy.column_stack(
 )
 len(two_bed_homes)
 ```
-:::
-
-:::{.callout-warning icon=false}
-## A correction to the book's filter
-
-The book writes `airbnbs["bedrooms"] == 2 & airbnbs["rt_Entire_home/apt"]`. In Python `&` binds tighter than `==`, so that compares bedrooms with `2 & (0 or 1)`, which is always 0 --- it selects the 445 listings with **zero** bedrooms. Parenthesising each condition selects the intended 1 263.
 :::
 
 ## A grid to predict on {.scrollable}
@@ -2796,23 +2776,6 @@ ax.set_ylim(0, 1250);
 ```
 
 The clusters capture some of the variation in price. To use it in a regression, the labels could serve as the basis for **spatial fixed effects**, as in the previous section.
-
-## Spatial feature engineering: conclusion {.scrollable}
-
-:::{.callout-important icon=false}
-## Enriching data with geography
-
-Feature engineering is within reach whether or not you have auxiliary data. At minimum it builds new variables from existing ones (**map synthesis**); with more data, location is the **ultimate linkage key** that connects datasets with no obvious relationship (**map matching**).
-
-Each operation --- the average near each observation, membership of a cluster --- is simple. Combined, they build large, rich datasets usable in any existing method. The regression and clustering techniques of the previous sections use spatial structure *during* learning; the techniques here put it *into the data*, making non-spatial models geography-aware.
-:::
-
-<!-- ==========================================================================
-     NOT IN THE BOOK. gdsbook Part III fits and interprets spatial models but
-     never evaluates out-of-sample prediction -- there is no cross-validation
-     anywhere in chapters 9-12. This section supplies it, following directly
-     from the residual-autocorrelation diagnostic in ch.11 "Hidden structures".
-     ========================================================================== -->
 
 # Validating spatial predictions
 
