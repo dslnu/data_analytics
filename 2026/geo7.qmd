@@ -71,48 +71,7 @@ def _carto(variant):
 BASEMAP = _carto(contextily.providers.CartoDB.Positron)
 ```
 
-## Supervised learning with geography {.scrollable}
-
-:::{.callout-tip icon=false}
-## Source
-
-**Geographic Data Science with Python** --- Rey, Arribas-Bel & Wolf, <https://geographicdata.science>
-
-**Part III, Advanced Topics** --- the whole of it: chapters 9 (*Spatial Inequality*), 10 (*Clustering and Regionalization*), 11 (*Spatial Regression*) and 12 (*Spatial Feature Engineering*).
-:::
-
-:::{.callout-important icon=false}
-## Where we are
-
-Geo 5 and Geo 6 were about **describing** spatial structure: weights, choropleths, Moran's I, LISA, point patterns.
-
-This lecture is about **using** it --- taking standard data-science techniques and, in the authors' phrase, sprinkling a bit of geo-dust on them.
-
-We measure inequality and watch it move over fifty years; we cluster places and then force the clusters to be contiguous; we fit regressions in which geography is a feature, a source of heterogeneity, and a form of dependence.
-
-And then, in a section the book does not cover, we ask whether the resulting predictions are as good as they look.
-:::
-
-## Roadmap {.scrollable}
-
-:::{.callout-note icon=false}
-## Five parts
-
-1. **Spatial inequality and its dynamics** --- Gini, Theil, decomposition, and fifty years of change (ch. 9)
-2. **Clustering and regionalization** --- geodemographics, and what a contiguity constraint costs (ch. 10)
-3. **A baseline model** --- ordinary least squares, no geography at all
-4. **Hidden structure in the errors** --- the diagnostic that motivates everything else
-5. **Space as a feature** --- map matching and map synthesis (ch. 12)
-6. **Space in the model** --- heterogeneity (fixed effects, regimes) and dependence (SLX, error, lag)
-7. **Validating spatial predictions** --- why your cross-validated $R^2$ is too high
-
-Parts 1--6 follow the book. Part 7 does not exist in it, and it is the part most likely to change what you do.
-
-::: {.callout-note icon=false}
-Parts 1 and 2 stand alone; if you only need the modelling material, start at part 3.
-:::
-:::
-
+## Spatial inequality and its dynamics {.scrollable}
 <!-- ==========================================================================
      SOURCE: gdsbook ch.9 "Spatial Inequality"
        https://geographicdata.science/book/notebooks/09_spatial_inequality.html
@@ -122,18 +81,22 @@ Parts 1 and 2 stand alone; if you only need the modelling material, start at par
        regional decomposition of inequality, spatializing classic measures)
      ========================================================================== -->
 
-# Spatial inequality and its dynamics
 
-## Two literatures that rarely meet
 
 :::{.callout-important icon=false}
 ## Personal versus regional inequality
 
 Most inequality research asks how outcomes differ **between individuals**, and does not group people geographically. It never asks whether the differences follow a *pattern* — whether the disadvantaged are concentrated in one part of the map.
 
-> While the two literatures (personal and regional inequality) are related, they have developed in a largely parallel fashion with limited cross-fertilization.
+- we will take the regional view
+- we will consider **time** as a first-class dimension. 
+:::
 
-This section takes the regional view, and it is also the only place in the course where **time** is a first-class dimension. Everything else has been a snapshot.
+:::{.callout-warning}
+## Why is it important?
+
+- causes of civil unrest
+- political polarization
 :::
 
 ## The data {.scrollable}
@@ -152,6 +115,52 @@ pci[["GeoName", "Region", "1969", "1993", "2017"]].head()
 ```
 
 One row per county, one **column per year**. This is wide-format panel data: the geography is fixed and time runs across the columns.
+:::
+
+## Spatial inequality and its dynamics
+
+:::{.callout-tip icon=false}
+## Example
+First ten years for Jackson County, Mississippi:
+
+```{python}
+pci.query('NAME == "Jackson" & STATEFP == "28"').loc[
+    :, "1969":"1979"
+]
+```
+:::
+
+
+## Spatial inequality and its dynamics
+:::{.callout-tip icon=false}
+## Global inequality
+```{python}
+seaborn.histplot(x=pci["1969"], kde=True);
+```
+
+- displays feature distribution for this measure of income
+- however, the plot is silent on the underlying geographic distribution of county incomes.
+:::
+
+## Spatial inequality and its dynamics {.scrollable}
+:::{.callout-tip icon=false}
+## Choropleth
+```{python}
+pci = pci.to_crs(
+    # Albers Equal Area North America
+    epsg=5070
+)
+ax = pci.plot(
+    column="1969",
+    scheme="Quantiles",
+    legend=True,
+    edgecolor="none",
+    legend_kwds={"loc": "lower left"},
+    figsize=(12, 12),
+)
+ax.set_axis_off()
+plt.show()
+```
 :::
 
 ## Global inequality: the 20:20 ratio {.scrollable}
@@ -173,6 +182,39 @@ print(f"  peak : {max(r2020):.3f} in {years[int(numpy.argmax(r2020))]}")
 In 1969 the richest 20% of counties had incomes **1.5×** the poorest 20%. Its virtue is robustness: it ignores both tails entirely, so a handful of extreme counties cannot move it.
 
 Its vice is the same thing — it uses **two numbers** and discards the rest of the distribution.
+:::
+
+## Global inequality: the 20:20 ratio {.scrollable}
+
+:::{.callout-tip icon=false}
+## Graph over time
+```{python}
+#| code-fold: true
+def ineq_20_20(values):
+    top20, bottom20 = values.quantile([0.8, 0.2])
+    return top20 / bottom20
+
+
+# Generate range of strings from 1969 to 2018
+years = numpy.arange(1969, 2018).astype(str)
+# Compute 20:20 ratio for every year
+ratio_2020 = pci[years].apply(ineq_20_20, axis=0)
+# Plot evolution of 20:20 ratio
+ax = plt.plot(years, ratio_2020)
+
+# Grab figure generated in the plot
+figure = plt.gcf()
+# Replace tick labels with every other year
+plt.xticks(years[::2])
+# Set vertical label
+plt.ylabel("20:20 ratio")
+# Set horizontal label
+plt.xlabel("Year")
+# Rotate year labels
+figure.autofmt_xdate(rotation=45)
+
+plt.show()
+```
 :::
 
 ## The Lorenz curve {.scrollable}
@@ -197,7 +239,59 @@ ax.legend(fontsize=7)
 plt.tight_layout(); plt.show()
 ```
 
-The **Gini index** is the area between the diagonal and the curve, divided by the area under the diagonal ($\tfrac12$). It summarises the whole curve in one number.
+The **Gini index** is the area between the diagonal and the curve, divided by the area under the diagonal (which is always$\tfrac12$). 
+:::
+
+## The Gini index over time {.scrollable}
+
+:::{.callout-tip icon=false}
+## One number per year
+
+`inequality.gini.Gini` computes the coefficient for one year. Wrap it in a function and apply it across every year column:
+
+```{python}
+import inequality
+
+
+def gini_by_col(column):
+    return inequality.gini.Gini(column.values).g
+
+
+inequalities = pci[years].apply(gini_by_col, axis=0).to_frame("gini")
+inequalities.head()
+```
+
+`Gini` expects a NumPy array rather than a `pandas.Series`, hence `.values`.
+:::
+
+## The Gini index over time {.scrollable}
+
+```{python}
+inequalities.plot(figsize=(8, 3));
+```
+
+## Theil's index {.scrollable}
+
+:::{.callout-important icon=false}
+## Definition
+
+A third commonly used measure of inequality is Theil's $T$:
+
+$$T = \sum_{i=1}^m \left( \frac{y_i}{\sum_{i=1}^m y_i} \ln \left[ m \frac{y_i}{\sum_{i=1}^m y_i}\right] \right)$$
+
+where $y_i$ is per capita income in area $i$ among $m$ areas. Conceptually it is related to the **entropy** of the income distribution, measuring how evenly incomes are spread across the areas.
+:::
+
+:::{.callout-tip icon=false}
+## Reading the formula
+
+Write $s_i = y_i / \sum_j y_j$ for area $i$'s **share** of total income. Under perfect equality every share would be $1/m$, so $m\,s_i$ is the area's share *relative to its equal share*:
+
+- $m\,s_i > 1$ --- richer than equal, $\ln$ term positive
+- $m\,s_i < 1$ --- poorer than equal, $\ln$ term negative
+
+Each term is weighted by $s_i$ itself, so richer areas count for more --- which is why Theil is more sensitive to the **upper tail** than Gini.
+
 :::
 
 ## Gini and Theil {.scrollable}
@@ -225,92 +319,104 @@ for a in ax: a.set_xlabel("year")
 plt.tight_layout(); plt.show()
 ```
 :::
-
-## They disagree
-
-:::{.callout-important icon=false}
-## Gini fell. Theil rose.
-
-Over the same 49 years, on the same data:
-
-| | 1969 | 2017 | direction |
-|---|---|---|---|
-| **Gini** | 0.1356 | 0.1284 | **down** |
-| **Theil** | 0.0296 | 0.0310 | **up** |
-
-Neither is wrong. They weight the distribution differently — **Gini is most sensitive around the middle**, Theil (a generalised entropy measure) gives more weight to the upper tail. A distribution that compresses in the middle while stretching at the top moves them in opposite directions.
-
-> "Did inequality rise?" is not answerable without saying **which inequality**, and reporting a single index without saying why you chose it hides the decision.
-:::
-
-## Personal versus regional, formally
-
-:::{.callout-note icon=false}
-## Why the distinction matters
-
-With $N$ individuals across $m$ regions, an individual's deviation from the national mean decomposes exactly:
-
-$$\delta_l = \underbrace{(Y_l - y_i)}_{\text{within their region}} + \underbrace{(y_i - \bar{y})}_{\text{their region vs the nation}}$$
-
-So national interpersonal inequality contains a **regional** component and a **personal-within-region** component. Our county data only sees the second term's geography — each county is already an average.
-
-This is the ecological problem from G1 in a different guise: **county-level inequality is not person-level inequality**, and a fall in one is compatible with a rise in the other.
-:::
-
-## Regional decomposition {.scrollable}
+## Spatial inequality and its dynamics
 
 :::{.callout-tip icon=false}
-## Theil splits exactly; Gini does not
-
-The Theil index belongs to the generalised entropy family, the **only** class that decomposes additively into between-group and within-group parts:
-
-$$T = T_{\text{between}} + T_{\text{within}}$$
-
+## Do they disagree?
 ```{python}
-from inequality.theil import TheilD
+def theil(column):
+    return inequality.theil.Theil(column.values).T
 
-td = TheilD(pci[years].values, pci.Region.values)
 
-for lbl, i in [("1969", 0), ("2017", -1)]:
-    b, w_ = td.bg[i], td.wg[i]
-    print(f"  {lbl}:  between {b:.4f}   within {w_:.4f}   between-share {b / (b + w_):.1%}")
+inequalities["theil"] = pci[years].apply(theil, axis=0)
+_ = seaborn.regplot(x="theil", y="gini", data=inequalities)
 ```
-
-The US Census Bureau's eight regions supply the grouping.
 :::
 
-## What the decomposition reveals {.scrollable}
-
-```{python}
-#| code-fold: true
-f, ax = plt.subplots(figsize=(5.4, 3))
-ax.plot(range(1969, 2018), td.bg, label="between regions")
-ax.plot(range(1969, 2018), td.wg, label="within regions")
-ax.plot(range(1969, 2018), td.bg + td.wg, "k--", lw=1, label="total")
-ax.set_xlabel("year"); ax.set_ylabel("Theil"); ax.legend(fontsize=7)
-plt.tight_layout(); plt.show()
-```
+## Personal vs. regional income {.scrollable}
 
 :::{.callout-important icon=false}
-## The aggregate was hiding two opposite trends
+## Setting up the notation
 
-- **Between-region** inequality **fell** — 0.0091 → 0.0053. American regions converged.
-- **Within-region** inequality **rose** — 0.0204 → 0.0257. Counties inside each region pulled apart.
-- The between-share collapsed from **30.9% to 17.1%**.
+There is a subtle but important distinction between the study of **personal** and **regional** income inequality. To see it, express the two in one framework.
 
-The total barely moved because the components moved in opposite directions and roughly cancelled. **Reporting only the total would have described 49 years of substantial structural change as "not much happened".**
+Consider a country of $N$ individuals distributed over $m$ regions.
+
+- $Y_l$ --- the income of individual $l$
+- $Y_i = \sum_{l \in i} Y_l$ --- total personal income in region $i$
+- $N_i$ --- the number of individuals in region $i$
+- $y_i = \dfrac{Y_i}{N_i}$ --- **per capita** income in region $i$
+- $\bar{y}$ --- national per capita income, averaged over *people*, not over regions
+
+Our data is the $y_i$.
 :::
 
-## Decomposition depends on your regions
+## Inequality between people {.scrollable}
+
+:::{.callout-tip icon=false}
+## Start from the national dispersion
+
+At the national level, the **coefficient of variation** of individual incomes is a natural index of interpersonal inequality:
+
+$$CV_{nat} = \frac{1}{\bar{y}}\sqrt{\frac{\sum_{l=1}^N (Y_l - \bar{y})^2}{N}}$$
+
+The key component is the **total sum of squares**, and unpacking it sheds light on the personal-versus-regional question:
+
+$$TSS = \sum_{l=1}^N (Y_l - \bar{y})^2$$
+:::
+
+## Inequality between people {.scrollable}
+:::{.callout-important icon=false}
+## Split each person's deviation in two
+
+An individual deviation $\delta_l = Y_l - \bar{y}$ is individual $l$'s contribution to inequality. It breaks exactly into two parts:
+
+$$\delta_l = \underbrace{(Y_l - y_i)}_{\text{person vs their region}} + \underbrace{(y_i - \bar{y})}_{\text{region vs the nation}}$$
+
+The first term is the difference between the individual's income and per capita income **in the region where they live**. The second is the difference between that region's per capita income and the national average.
+:::
+
+## The regional assumption {.scrollable}
 
 :::{.callout-warning icon=false}
-## MAUP, now inside a statistic
+## We cannot see inside a region
 
-The between/within split is a property of the **grouping you chose**. Use states instead of census regions and the between-share rises, because states are smaller and more homogeneous internally.
+In regional studies the intra-regional personal income distribution is typically **not available**. So the assumption is often made that intra-regional personal inequality is **zero**: everyone in the same region has the same income.
 
-There is no correct grouping, so "most inequality is within regions" is a statement about census regions as much as about the economy. Report the grouping alongside the number, and ideally show the split under two or three alternatives.
+The first term then vanishes, $Y_l - y_i = 0$, and the total sum of squares collapses onto the regions:
 
-This is the Modifiable Areal Unit Problem from **G1**, arriving in an index rather than a map.
+$$
+\begin{aligned}
+TSS &= \sum_{l=1}^N (Y_l - \bar{y})^2 \\
+    &= \sum_{l=1}^N \delta_l^2 \\
+    &= \sum_{l=1}^N \big((Y_l - y_i) + (y_i - \bar{y})\big)^2 \\
+    &= \sum_{l=1}^N \big(0 + (y_i - \bar{y})\big)^2 \\
+    &= \sum_{i=1}^m \sum_{l \in i} (y_i - \bar{y})^2 \\
+    &= \sum_{i=1}^m N_i\,(y_i - \bar{y})^2
+\end{aligned}
+$$
+
+In the inner sums, $i$ means *the region individual $l$ lives in*.
+:::
+
+## What the assumption buys {.scrollable}
+
+:::{.callout-important icon=false}
+## Inequality between places, not people
+
+Under the assumption, each individual in region $i$ makes the **same** contribution to national inequality, a deviation of $(y_i - \bar{y})$. The region as a whole contributes $N_i(y_i - \bar{y})$ in deviations, and $N_i(y_i - \bar{y})^2$ to the sum of squares --- so **big regions far from the average dominate**.
+
+The assumption may look overly restrictive, but it isolates the nature of **inter-regional** inequality: inequality *between places* rather than between people within them. In essence it shifts the question up one level of the spatial hierarchy, from individuals to areal units.
+:::
+
+:::{.callout-tip icon=false}
+## The split is exact even without the assumption
+
+Expand the square and the cross term disappears, because deviations from a region's own mean sum to zero within that region. So for **any** distribution of incomes:
+
+$$TSS = \underbrace{\sum_{i=1}^m \sum_{l \in i} (Y_l - y_i)^2}_{\text{within regions}} + \underbrace{\sum_{i=1}^m N_i\,(y_i - \bar{y})^2}_{\text{between regions}}$$
+
+The zero-inequality assumption does not create this split; it **deletes the first term**. Regional data measures the second term only, and says nothing about the first.
 :::
 
 ## Inequality with a geography {.scrollable}
@@ -346,17 +452,339 @@ plt.tight_layout(); plt.show()
 :::{.callout-important icon=false}
 ## Spatial clustering of income has weakened steadily
 
-$I$ falls from **0.649** to **0.421** — still strongly positive, but a clear monotone decline.
+$I$ falls from **0.649** to **0.421** — still strongly positive, and a steady decline: lower at every eight-year step (correlation with year −0.96), though not every single year --- it rises in 19 of 48.
 
 Rich counties are still next to rich counties. But the map has become **less** organised by geography over fifty years: where you are predicts your income less well in 2017 than in 1969.
 
-Note this is a *different* question from whether inequality rose. Income could become more unequal *and* less spatially clustered at the same time — and in this data, roughly that is what happened.
+:::
+
+<!-- source: gdsbook ch.9, "Regional decomposition of inequality" -->
+
+## Regional decomposition of inequality {.scrollable}
+
+:::{.callout-important icon=false}
+## Is inequality "explained" by groups?
+
+A common objection to measuring inequality in aggregate: it says nothing about the **scale** at which inequality matters. Observed inequality can be driven by differences *between groups* rather than between similar individuals --- it can be "explained" by a confounding variable such as age, sex or education. Older people have had longer to gain experience and are generally paid more for it, so age alone accounts for a large part of the inequality in wealth.
+
+So it is often useful to **decompose** an inequality index into groups: how much of it comes from differences between the groups, how much from differences inside them, and how unequal each group is on its own.
+
+In geographic applications the groups are usually **regions** --- contiguous groups of observations (Shorrocks & Wan, 2005). Decomposing by region is a way of introducing geography into the study of inequality.
+:::
+
+## The regions {.scrollable}
+
+:::{.callout-tip icon=false}
+## Eight regions
+
+The `Region` column assigns each county to one of eight regions:
+
+```{python}
+region_names = {
+    1: "New England",
+    2: "Mideast",
+    3: "Great Lakes",
+    4: "Plains",
+    5: "Southeast",
+    6: "Southwest",
+    7: "Rocky Mountain",
+    8: "Far West",
+}
+```
+
+```{python}
+#| code-fold: true
+ax = pci.assign(Region_Name=pci.Region.map(region_names)).plot(
+    "Region_Name",
+    linewidth=0,
+    legend=True,
+    categorical=True,
+    legend_kwds=dict(bbox_to_anchor=(1.3, 0.5), fontsize=7),
+    figsize=(7, 4),
+)
+ax.set_axis_off();
+```
+
+These are the **Bureau of Economic Analysis** regions --- the income data itself is BEA table CAINC1. The book calls them Census Bureau regions; the Census Bureau's own scheme is 4 regions and 9 divisions.
+:::
+
+## Regional mean incomes {.scrollable}
+
+:::{.callout-tip icon=false}
+## Split, apply, combine
+
+Group the counties by region, take the mean of every year column, and combine into one table --- a row per region, a column per year:
+
+```{python}
+rmeans = (
+    pci.assign(Region_Name=pci.Region.map(region_names))
+    .groupby(by="Region_Name")[years]
+    .mean()
+)
+```
+
+```{python}
+#| code-fold: true
+ax = rmeans.T.plot.line(figsize=(8, 3.6))
+ax.set_ylabel("mean per capita income ($)")
+ax.legend(fontsize=7, ncol=2);
+```
+
+These are **nominal** dollars, so the common upward trend is mostly inflation. What matters for inequality is the **spread between the lines**, and that is what the decomposition measures.
+:::
+
+## The decomposition, formally {.scrollable}
+
+:::{.callout-important icon=false}
+## Theil's $T$ = between + within
+
+Write the per capita incomes of the $m$ areas as $y = (y_1, y_2, \ldots, y_m)$, grouped into $\omega$ mutually exclusive regions. If $m_g$ is the number of areas in region $g$, then every area is counted exactly once:
+
+$$\sum_{g=1}^{\omega} m_g = m$$
+
+(This would fail if an area belonged to two regions and were counted twice.) Theil's index then splits into a between and a within part:
+
+$$
+\begin{aligned}
+T &= \sum_{i=1}^m \left( \frac{y_i}{\sum_{i=1}^m y_i} \ln \left[ m \frac{y_i}{\sum_{i=1}^m y_i}\right] \right) \\
+  &= \left[ \sum_{g=1}^{\omega} s_{g} \ln \left(\frac{m}{m_g} s_g \right)  \right] + \left[ \sum_{g=1}^{\omega} s_g \sum_{i \in g} s_{i,g} \ln \left(m_g s_{i,g}\right) \right] \\
+  &= B + W
+\end{aligned}
+$$
+
+where $s_g = \dfrac{\sum_{i \in g} y_i}{\sum_i y_i}$ is region $g$'s share of total income, and $s_{i,g} = y_i / \sum_{i \in g} y_i$ is area $i$'s share of its own region's income.
+:::
+
+## Computing the decomposition {.scrollable}
+
+:::{.callout-tip icon=false}
+## `TheilD`
+
+```{python}
+theil_dr = inequality.theil.TheilD(pci[years].values, pci.Region)
+```
+
+The between and within components for every year are in the `bg` and `wg` attributes:
+
+```{python}
+theil_dr.bg[:5]
+```
+
+Store them alongside the earlier results, and compute the **share** of total inequality that is between regions:
+
+```{python}
+inequalities["theil"] = theil_dr.T
+inequalities["theil_between"] = theil_dr.bg
+inequalities["theil_within"] = theil_dr.wg
+inequalities["theil_between_share"] = (
+    inequalities["theil_between"] / inequalities["theil"]
+)
+inequalities[["theil", "theil_between", "theil_within", "theil_between_share"]].head()
+```
 :::
 
 :::{.callout-note icon=false}
-## And a third construction
+## Is the decomposition significant?
 
-`inequality.gini.Gini_Spatial` goes further, splitting the Gini itself into contributions from **neighbouring** versus **non-neighbouring** county pairs — putting space inside the index rather than measuring it alongside.
+Inference uses `inequality.theil.TheilDSim`, which permutes the region labels across counties. The book omits it for brevity and reports that every decomposition is significant. Spot-checking 1969 and 2017 with 99 permutations, the between-region component sits at the permutation floor, $p = 0.01$, in both years.
+:::
+
+## Three series over time {.scrollable}
+
+```{python}
+#| code-fold: true
+inequalities[
+    ["theil_between", "theil_within", "theil_between_share"]
+].plot(subplots=True, figsize=(8, 6));
+```
+
+:::{.callout-important icon=false}
+## What they show
+
+The between-region **share** is lowest in the **mid-2000s** (11.7% in 2006), not the mid-1990s. Regional differences mattered a great deal in the 1970s and 1980s --- nearly a third of all county inequality in 1969 --- and their importance has waned relative to inequality **within** regions.
+:::
+
+<!-- source: gdsbook ch.9, "Spatializing classic measures" -->
+
+## Spatializing classic measures {.scrollable}
+
+:::{.callout-important icon=false}
+## A region is just a group
+
+Regional decompositions are useful, but they do not tell the whole story. A "region" is just a special kind of group: its geography shows up only through **membership** --- is the county *in* the region or not?
+
+That kind of thinking is *place-based*, but not *spatial*. It never uses distance or proximity. Rearrange the regions on the map and, as long as membership is unchanged, every statistic is identical. (Shuffled regions are arguably no longer regions --- but the methods would not notice.)
+
+The alternative is to build space **into** a classic measure. Rey & Smith (2012) do this for the Gini coefficient.
+:::
+
+## The Gini as pairwise differences {.scrollable}
+
+:::{.callout-tip icon=false}
+## Rewrite the Gini, then split it
+
+The Gini can be written in terms of all pairwise absolute differences in income:
+
+$$G = \frac{\sum_i \sum_j \left | y_i - y_j \right|}{2 n^2 \bar{y}}$$
+
+where $n$ is the number of observations and $\bar{y}$ the mean income. Those pairs divide into **neighbouring** ones and **distant** ones:
+
+$$
+\sum_i \sum_j \left |y_i - y_j \right | = \sum_i \sum_j \underbrace{w_{ij} \left |y_i - y_j \right |}_{\text{near differences}} + \underbrace{(1-w_{ij})  \left |y_i - y_j \right |}_{\text{far differences}}
+$$
+
+where $w_{ij} = 1$ if $i$ and $j$ are neighbours and $0$ otherwise --- exactly a binary spatial weights matrix. So:
+
+$$G = \underbrace{\frac{\sum_i \sum_j w_{ij}\left | y_i - y_j \right|}{2 n^2 \bar{y}}}_{\text{near: the spatial Gini}} + \underbrace{\frac{\sum_i \sum_j (1-w_{ij}) \left | y_i - y_j \right|}{2 n^2 \bar{y}}}_{\text{far}}$$
+
+The **spatial Gini** is the first term. (Non-binary weights need a correction factor, not covered here.)
+:::
+
+## What the spatial Gini tells you {.scrollable}
+
+:::{.callout-tip icon=false}
+## Near against far
+
+- **Strong positive spatial dependence** --- neighbours have similar incomes, so the near differences are small. Most of the inequality comes from disparities between *distant* places.
+- **Weak (or negative) dependence** --- near differences are as large as anywhere else, and the two components equalise in proportion to the number of pairs in each.
+
+Inference uses random spatial permutations of the income values: does the near component differ from what you would get with incomes scattered randomly over the map?
+:::
+
+:::{.callout-note icon=false}
+## A complement to the Theil decomposition
+
+Theil's regional decomposition never looks at **pairs** of observations; the spatial Gini is built from them. That makes it more sensitive --- and more easily moved by a small group of very wealthy places.
+:::
+
+## The spatial Gini for 1969 {.scrollable}
+
+:::{.callout-tip icon=false}
+## `Gini_Spatial`
+
+The spatial Gini needs **binary** weights, so switch the queen matrix back from row-standardised:
+
+```{python}
+from inequality.gini import Gini_Spatial
+
+wq.transform = "B"
+numpy.random.seed(12345)
+gs69 = Gini_Spatial(pci["1969"], wq)
+
+print(f"Gini (aspatial)       : {gs69.g:.4f}")
+print(f"far component         : {gs69.wcg_share:.4f}")
+print(f"far share of the Gini : {gs69.wcg_share / gs69.g:.2%}")
+print(f"p_sim                 : {gs69.p_sim}")
+```
+
+The near component is significantly different from what random placement would give: inequality between neighbouring counties is not like inequality between distant ones.
+:::
+
+:::{.callout-warning icon=false}
+## `wcg_share` is not a share
+
+The book describes `wcg_share` as "the share of the overall Gini due to the far differences". In the library it is `wcg / (2n²ȳ)` --- the far **component**, in the same units as $G$ (0.1354 against $G$ = 0.1356). The share is that divided by $G$: **99.9%**.
+:::
+
+## Every year {.scrollable}
+
+:::{.callout-tip icon=false}
+## The function-by-column pattern again
+
+Return the Gini, the near and far components, and the pseudo $p$-value for each year:
+
+```{python}
+def gini_spatial_by_col(incomes, weights):
+    gs = Gini_Spatial(incomes, weights)
+    denom = 2 * incomes.mean() * weights.n ** 2
+    near_diffs = gs.wg / denom
+    far_diffs = gs.wcg / denom
+    out = pandas.Series(
+        {
+            "gini": gs.g,
+            "near_diffs": near_diffs,
+            "far_diffs": far_diffs,
+            "p_sim": gs.p_sim,
+        }
+    )
+    return out
+
+
+spatial_gini_results = pci[years].apply(gini_spatial_by_col, weights=wq).T.astype(float)
+spatial_gini_results.head()
+```
+
+Inference is computationally demanding --- every permutation recomputes all the neighbour differences --- so this cell takes around 20 seconds.
+:::
+
+## Every year {.scrollable}
+
+:::{.callout-tip icon=false}
+## Always significant
+
+```{python}
+(spatial_gini_results.p_sim < 0.05).mean()
+```
+
+The $p$-value is below 0.05 in every year: the near component is always **smaller** than random placement would give. (A *larger* one would mean negative spatial dependence, which is rare in practice.)
+:::
+
+:::{.callout-warning icon=false}
+## Read it with the pseudo $p$-value lesson from Geo 6
+
+Every one of those $p$-values is exactly **0.01** --- the floor for 99 permutations. They do not say "$p = 0.01$"; they say "smaller than 99 permutations can resolve". More permutations would be needed to rank the years against each other.
+:::
+
+## Why the near component is so small {.scrollable}
+
+:::{.callout-important icon=false}
+## Two reasons
+
+**First, there are few neighbouring pairs.** Neighbours are less than 0.2% of all pairs of counties:
+
+```{python}
+wq.pct_nonzero
+```
+
+**Second, neighbours are similar** when spatial dependence is positive, so each near difference is small too. A small number of small differences adds up to very little.
+
+The second reason can be measured. If neighbours were no more alike than any other pair, their share of all the absolute differences would equal their share of pairs:
+
+```{python}
+for y in ("1969", "2017"):
+    gs = Gini_Spatial(pci[y], wq, permutations=0)
+    print(f"  {y}: neighbours are {wq.s0 / (wq.n * (wq.n - 1)):.3%} of pairs "
+          f"but carry {gs.wg / gs.dtotal:.3%} of the differences")
+```
+
+Neighbouring counties carry about **half** their fair share of the differences in 1969, rising toward **two-thirds** by 2017 --- neighbours became less alike.
+:::
+
+## Near differences and Moran's $I$ {.scrollable}
+
+```{python}
+#| code-fold: true
+inequalities["near_diffs"] = spatial_gini_results.near_diffs
+inequalities["I"] = morans
+
+inequalities[["near_diffs", "I"]].plot.line(subplots=True, figsize=(8, 4.5));
+```
+
+```{python}
+print(f"corr(near_diffs, Moran's I) = {inequalities['near_diffs'].corr(inequalities['I']):.3f}")
+```
+
+:::{.callout-important icon=false}
+## Two views of one trend
+
+As spatial dependence weakens --- Moran's $I$ falling --- the near differences grow. The spatial Gini and Moran's $I$ describe the same change from opposite sides: neighbouring counties have become **less alike** over fifty years.
+:::
+
+:::{.callout-note icon=false}
+## Sources
+
+- Shorrocks & Wan (2005), *Spatial decomposition of inequality*, **Journal of Economic Geography** 5(1). <https://doi.org/10.1093/jnlecg/lbh054>
+- Rey & Smith (2012), *A spatial decomposition of the Gini coefficient*, **Letters in Spatial and Resource Sciences** 6. <https://doi.org/10.1007/s12076-012-0086-z>
 :::
 
 <!-- ==========================================================================
@@ -1631,7 +2059,7 @@ Read the numbers, not the story you expected.
 
 Not a plateau, because we do not have one. Report the score **at the block size matching your intended use**: if you will predict 5 km from your nearest training data, the 4–8 km numbers are the relevant ones — around 0.57–0.60, against the 0.65 that random CV advertises.
 
-The optimism here is modest precisely *because* most of this model's signal is non-spatial. That is the reassuring case. The coordinates-only model on the previous slide is the other one.
+The optimism here is modest precisely *because* most of this model's signal is non-spatial. That is the reassuring case. The coordinates-only model a few slides back is the other one.
 :::
 
 ## Buffered leave-one-out
@@ -1674,8 +2102,8 @@ It costs three lines and it is the single most informative check you can run on 
 
 | idea | point |
 |---|---|
-| Gini vs Theil | disagreed on direction over the same 49 years --- say *which* inequality |
-| Theil decomposition | between-region fell, within-region rose; the total hid both |
+| Gini vs Theil | track each other (r = 0.944); their 1969→2017 "disagreement" is an endpoint choice --- report trajectories |
+| Theil decomposition | regions converged to 1994 then partly diverged; within-region rose after the 1970s; the between-share fell from 31% to 12--20% and stayed there |
 | decomposition and grouping | the between/within split is MAUP inside a statistic |
 | Moran's I over time | income clustering weakened steadily, 0.649 → 0.421 |
 | geodemographics | k-means and Ward agreed only at ARI 0.58 --- no label says which is right |
