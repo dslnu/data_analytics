@@ -1649,6 +1649,34 @@ ax.set_ylabel("Spatial lag of residuals ($Wu$)");
 And the estimate is *positive*: people would be paying a premium to be **further** from the park, against our theory. Spatial heterogeneity, next, sheds some light on this.
 :::
 
+## Intercept and slopes {.scrollable}
+
+:::{.callout-tip icon=false}
+## The two kinds of parameter
+
+In the regression from earlier,
+
+$$\log P_i = \alpha + \sum_k \mathbf{X}_{ik}\beta_k + \epsilon_i$$
+
+- the **intercept** $\alpha$ is the predicted log price when every explanatory variable is zero --- the **baseline level** the other effects add to. Graphically, where the line crosses the vertical axis.
+- each **slope** $\beta_k$ is the change in log price when $X_k$ rises by one unit, all other variables held fixed. Graphically, the steepness of the line. With a log outcome it reads as a **percentage change**, $e^{\beta_k} - 1$.
+
+From the baseline model `m1`:
+
+```{python}
+b = dict(zip(m1.name_x, m1.betas.flatten()))
+print(f"intercept : {b['CONSTANT']:.3f}  -> baseline price about ${numpy.exp(b['CONSTANT']):.0f}")
+print(f"bedrooms  : {b['bedrooms']:.4f} -> each extra bedroom adds about {numpy.exp(b['bedrooms']) - 1:.1%}")
+```
+:::
+
+:::{.callout-note icon=false}
+## What spatial heterogeneity lets vary
+
+- **Varying intercept** --- each place gets its own baseline level, but every variable has the same effect everywhere: parallel lines at different heights. These are **spatial fixed effects**.
+- **Varying slopes** --- the *effect* of a variable differs by place: lines of different steepness. These are **spatial regimes**, whose coastal and inland estimates follow in a few slides.
+:::
+
 ## Spatial heterogeneity {.scrollable}
 
 :::{.callout-important icon=false}
@@ -1661,8 +1689,6 @@ That is **spatial heterogeneity**: parts of the model change from place to place
 - variation in the **intercept** $\alpha$ --- different baseline exposure to the process
 - variation in the **slopes** $\beta$ --- a geographic factor mediating a relationship, such as a policy applied unevenly across jurisdictions
 - variation in the **error variance** $\sigma^2$ --- spatial heteroskedasticity
-
-This section covers the first two.
 :::
 
 ## Spatial fixed effects {.scrollable}
@@ -1714,7 +1740,7 @@ Spatial FE are a regression with a categorical variable, modelled with binary du
 :::{.callout-tip icon=false}
 ## The same model as a regime model
 
-`spreg`'s *regimes* --- covered next --- generalise fixed effects. Allowing only the constant to vary gives the FE model:
+`spreg`'s *regimes* generalise fixed effects. Allowing only the constant to vary gives the FE model:
 
 ```{python}
 m4 = spreg.OLS_Regimes(
@@ -1832,7 +1858,7 @@ The parameters mostly conform to expectations in both regimes.
 :::{.callout-tip icon=false}
 ## The Chow test
 
-The Chow test's null hypothesis is that estimates from different regimes are indistinguishable. The global test, jointly over all coefficients --- statistic, then $p$-value:
+The Chow test's null hypothesis is that estimates from different regimes are indistinguishable. The global test, jointly over all coefficients (statistic, $p$-value):
 
 ```{python}
 m5.chow.joint
@@ -1876,7 +1902,6 @@ or, in matrix form:
 
 $$\log(P_i) = \alpha + \mathbf{X}\beta + \mathbf{WX}\gamma + \epsilon$$
 
-This is really spatial feature engineering (the next section), but it is the clearest scaffolding for building dependence into a regression.
 :::
 
 ## Reading $\beta$ and $\gamma$ {.scrollable}
@@ -1884,8 +1909,8 @@ This is really spatial feature engineering (the next section), but it is the cle
 :::{.callout-note icon=false}
 ## Direct and indirect effects
 
-- **$\beta$** --- the change in $y_i$ when $X_{ik}$ changes by one. Since the outcome is log price, $\beta$ reads as a **percentage** change. The subscript $i$ matters: with $\mathbf{W}$ involved, *where* the change happens matters.
-- **$\gamma$** --- the *indirect* association: the change in a house's price when its **average surroundings** change by one.
+- **$\beta$** - the change in $y_i$ when $X_{ik}$ changes by one. Since the outcome is log price, $\beta$ reads as a **percentage** change. The subscript $i$ matters: with $\mathbf{W}$ involved, *where* the change happens matters.
+- **$\gamma$** - the *indirect* association: the change in a house's price when its **average surroundings** change by one.
 
 But a change at site $i$ **spills over**: when $x_i$ changes, so does the spatial lag of every site near $i$, by an amount that depends on $\mathbf{W}$. A highly connected site barely notices one neighbour changing; a site with one neighbour sees its lag change by exactly that neighbour's change. Finding the indirect effect of a change at a specific site means computing the **change in the spatial lag** and using that as the change in $X$.
 :::
@@ -2000,12 +2025,6 @@ print(knn.neighbors[2])
 The first row --- the **direct** effect --- equals the `pg_Condominium` estimate exactly. Every neighbour changes by about $0.03$: the `w_pg_Condominium` estimate divided by the weight of the link, $\frac{1}{20}$.
 :::
 
-:::{.callout-note icon=false}
-## Why SLX is the gentle introduction
-
-It needs no further changes, is estimated with OLS, and is interpreted much like non-spatial variables. Most of the wider spatial-econometrics literature for a single cross-section centres on two variations --- the **spatial error** and the **spatial lag** models --- which differ in which part of the model the spatial lag enters.
-:::
-
 ## Spatial error {.scrollable}
 
 :::{.callout-important icon=false}
@@ -2065,30 +2084,6 @@ pandas.DataFrame(
 
 `W_log_price` applies to all observations and changes the effective strength of every $\beta$. Interpret changes with care --- through predictions and scenarios that separate **direct** and **indirect** components.
 :::
-
-## Other ways of bringing space into regression {.scrollable}
-
-:::{.callout-note icon=false}
-## Beyond this lecture
-
-Generalized Additive Models apply spatial kernel smoothing inside the regression function; spatial Gaussian Process models and kriging treat dependence between locations as smooth; conditional autoregressive (CAR) models examine relationships at locations *conditional* on their surroundings. These are more advanced than the level of this lecture, not less important.
-:::
-
-:::{.callout-important icon=false}
-## Space as a first-class citizen
-
-All of these models embed space by **modifying the functional form** of the model. The next section takes the opposite route: leave the model alone and inject space through the **variables** --- enriching the data with geography *before* it reaches the model.
-:::
-
-<!-- ==========================================================================
-     SOURCE: gdsbook ch.12 "Spatial Feature Engineering"
-       https://geographicdata.science/book/notebooks/12_feature_engineering.html
-       Follows the chapter section by section. Adaptations: the OSM and
-       Census downloads are shown but not run (the book's own cached files
-       are loaded instead); HDBSCAN comes from scikit-learn, as the
-       `hdbscan` package is not installed; the two-bedroom filter is
-       corrected (operator precedence).
-     ========================================================================== -->
 
 # Spatial feature engineering
 
