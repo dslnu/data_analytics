@@ -1,0 +1,479 @@
+---
+title: "GeoScience part 7: supplement"
+subtitle: "Validating spatial predictions"
+author:
+  - name: MSDE
+    affiliation: Lviv University
+code-fold: false
+execute:
+  enabled: true
+  cache: true
+  echo: true
+diagram:
+  cache: true
+  cache-dir: ./cache
+  engine:
+    tikz:
+      execpath: lualatex
+      additional-packages: |
+        \usetikzlibrary{arrows.meta}
+        \usetikzlibrary{positioning}
+        \usetikzlibrary{decorations.pathreplacing}
+filters:
+  - diagram
+format:
+  revealjs:
+    css: custom.css
+    preview-links: auto
+    slide-number: true
+    theme: default
+    multiplex:
+      url: 'https://mplex.vitv.ly'
+      secret: 'dafaca5003d11938317c2158111aa7d0'
+      id: 'c8a51011f0dd683d18fef43bd11c8fae8395c0603cfeb0999a4f3c93b7572741'
+---
+
+```{python}
+#| include: false
+import warnings
+
+warnings.filterwarnings("ignore")
+
+import matplotlib
+
+matplotlib.rcParams["figure.figsize"] = (7, 4)
+matplotlib.rcParams["figure.dpi"] = 110
+matplotlib.rcParams["font.size"] = 8
+
+GDS = "../_repos/gdsbook/data"
+
+import os
+import contextily
+import matplotlib.pyplot as plt
+import numpy
+import pandas
+import geopandas
+import seaborn
+
+
+def _carto(variant):
+    """CARTO basemaps now require an API key. Use it when CARTO_API_KEY is
+    set; otherwise fall back to a keyless Esri equivalent so the render
+    never shows the "API KEY REQUIRED" watermark."""
+    key = os.environ.get("CARTO_API_KEY")
+    return (
+        variant(apikey=key)
+        if key
+        else contextily.providers.Esri.WorldGrayCanvas
+    )
+
+
+BASEMAP = _carto(contextily.providers.CartoDB.Positron)
+```
+
+# Validating spatial predictions
+
+## A supplement to Geo 7 {.scrollable}
+
+:::{.callout-important icon=false}
+## Not part of the book
+
+Geo 7 follows Part III of *Geographic Data Science with Python*. Those chapters fit spatial models and interpret their coefficients, but they never evaluate **out-of-sample prediction** --- there is no cross-validation anywhere in them.
+
+This supplement adds that missing step. It reuses Geo 7's San Diego Airbnb data and baseline regression, and asks whether the accuracy such models report is as good as it looks.
+:::
+
+## Where Geo 7 left off {.scrollable}
+
+:::{.callout-tip icon=false}
+## The baseline model and its residuals
+
+```{python}
+import spreg
+from libpysal import weights
+
+db = geopandas.read_file(f"{GDS}/airbnb/regression_db.geojson")
+variable_names = [
+    "accommodates", "bathrooms", "bedrooms", "beds",
+    "rt_Private_room", "rt_Shared_room",
+    "pg_Condominium", "pg_House", "pg_Other", "pg_Townhouse",
+]
+m1 = spreg.OLS(
+    db[["log_price"]].values, db[variable_names].values,
+    name_y="log_price", name_x=variable_names,
+)
+knn = weights.KNN.from_dataframe(db, k=20)
+knn.transform = "R"
+lag_u = weights.spatial_lag.lag_spatial(knn, m1.u)
+
+print(f"R2 (in-sample)                 = {m1.r2:.4f}")
+print(f"corr(residual, neighbours' lag) = {numpy.corrcoef(m1.u.flatten(), lag_u.flatten())[0, 1]:.4f}")
+```
+
+The same model as in Geo 7: two-thirds of the variation in log price, and errors that cluster in space.
+:::
+
+
+## The question nobody asked
+
+:::{.callout-important icon=false}
+## Everything so far was in-sample
+
+Every $R^2$ in Geo 7 describes how well a model fits the data it was **fitted on**. For explanation that is defensible. For **prediction** it is not, and prediction is what you will usually be asked for.
+
+The standard answer is cross-validation: hold out a fold, fit on the rest, score on the held-out part, repeat.
+
+We are about to see that the standard answer **does not work on spatial data**, for a reason Geo 7 already established.
+:::
+
+## Recall the diagnostic
+
+:::{.callout-warning icon=false}
+## We measured this in Geo 7
+
+The regression's residuals are spatially autocorrelated --- correlation **0.33** with their 20-neighbour spatial lag, computed above. Nearby listings have similar prices *and* similar errors.
+
+Now consider what random $k$-fold cross-validation does with that. It shuffles rows and cuts them into five parts. Every test listing has, almost certainly, **several of its immediate neighbours in the training set**.
+
+So the model is not predicting an unseen location. It is **interpolating between points it has already seen** — and interpolation is easy.
+:::
+
+## This is leakage
+
+:::{.callout-important icon=false}
+## The same failure as Bio 2, in different clothing
+
+| | not independent | random CV therefore |
+|---|---|---|
+| taxonomy | strains within a genus | tests on near-duplicates of training sequences |
+| single cell | cells within a donor | treats one donor as thousands of replicates |
+| **geography** | **nearby places** | **tests on the interior of the training set** |
+
+The rule is the same in all three: **split at the level you want to generalise to.** If you want to predict prices in a district you have no data for, your folds must be districts.
+:::
+
+## Setting up an honest test {.scrollable}
+
+:::{.callout-tip icon=false}
+## Features, target, and a projected CRS
+
+```{python}
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import cross_val_score, KFold, GroupKFold
+
+dbm = db.to_crs(epsg=3857)          # metres, so blocks are metres
+xy = numpy.column_stack((dbm.geometry.x, dbm.geometry.y))
+y = dbm["log_price"].values
+
+house = ["accommodates", "bathrooms", "bedrooms", "beds"]
+
+
+def rf():
+    return RandomForestRegressor(n_estimators=120, random_state=0, n_jobs=-1)
+
+
+def blocks(size):
+    """Assign each listing to a square block of `size` metres."""
+    bx = ((xy[:, 0] - xy[:, 0].min()) // size).astype(int)
+    by = ((xy[:, 1] - xy[:, 1].min()) // size).astype(int)
+    return bx * 10_000 + by
+```
+
+**Reproject first.** Blocks must be defined in metres; dividing degrees by 4000 is meaningless.
+:::
+
+## Isolating the leak {.scrollable}
+
+:::{.callout-tip icon=false}
+## Three models, two validation schemes
+
+```{python}
+g = blocks(4000)
+rows = []
+for name, X in [
+    ("coordinates only", xy),
+    ("house features only", dbm[house].values),
+    ("features + coordinates", numpy.column_stack([dbm[house].values, xy])),
+]:
+    r = cross_val_score(rf(), X, y, cv=KFold(5, shuffle=True, random_state=0),
+                        scoring="r2").mean()
+    b = cross_val_score(rf(), X, y, cv=GroupKFold(5), groups=g, scoring="r2").mean()
+    rows.append((name, r, b, r - b))
+
+print(f"{'model':<26}{'random':>9}{'block':>9}{'drop':>8}")
+for n, r, b, d in rows:
+    print(f"{n:<26}{r:>9.3f}{b:>9.3f}{d:>8.3f}")
+```
+:::
+
+## Read that table again
+
+:::{.callout-important icon=false}
+## The coordinates-only model is the proof
+
+Under random CV a model using **nothing but latitude and longitude** scores $R^2 \approx 0.17$. It looks like it learned something about San Diego.
+
+Under block CV the same model scores **negative** — worse than predicting the mean price for every listing.
+
+**All of its apparent skill was memorising neighbours.** Remove the neighbours from the training set and there is nothing left, because there was never anything there.
+:::
+
+:::{.callout-note icon=false}
+## And the contrast
+
+`house features only` barely moves between the two schemes. Bedrooms and bathrooms are not spatial, so blocking costs nothing. The gap belongs to the coordinates, and only to them.
+:::
+
+## How big are the blocks? {.scrollable}
+
+:::{.callout-tip icon=false}
+## Sweep the block size
+
+```{python}
+#| code-fold: true
+X = numpy.column_stack([dbm[house].values, xy])
+rand = cross_val_score(rf(), X, y, cv=KFold(5, shuffle=True, random_state=0),
+                       scoring="r2").mean()
+
+sizes, scores = [], []
+for s in (250, 500, 1000, 2000, 4000, 8000):
+    gg = blocks(s)
+    if len(numpy.unique(gg)) < 5:
+        continue
+    sizes.append(s)
+    scores.append(cross_val_score(rf(), X, y, cv=GroupKFold(5), groups=gg,
+                                  scoring="r2").mean())
+
+for s, sc in zip(sizes, scores):
+    print(f"  block {s:>5} m : R2 = {sc:.3f}")
+print(f"  random CV      : R2 = {rand:.3f}")
+
+f, ax = plt.subplots(figsize=(5, 3))
+ax.semilogx(sizes, scores, "o-", label="block CV")
+ax.axhline(rand, ls="--", color="grey", label="random CV")
+ax.set_xlabel("block size (m)"); ax.set_ylabel("$R^2$"); ax.legend()
+plt.tight_layout(); plt.show()
+```
+:::
+
+## Reading the curve {.scrollable}
+
+:::{.callout-important icon=false}
+## What this curve actually shows
+
+Read the numbers, not the story you expected.
+
+**At 250 m the block score equals random CV** (0.656 vs 0.653). Blocks that small barely separate anything — a 250 m block still leaves neighbours in the training set. That agreement is a useful sanity check: it confirms the mechanism is distance, not the `GroupKFold` machinery.
+
+**The trend is downward but not monotone.** 1 000 m scores *below* 2 000 m here. With five folds over a few hundred blocks, each estimate carries real variance, and a single sweep is noisy. Repeat with several random block origins before reading much into any one point.
+
+**It has not flattened by 8 km.** San Diego spans roughly 40 km, so even 8 km blocks leave training listings fairly close to test ones. The honest conclusion is that we have not yet reached the distance at which leakage stops.
+:::
+
+:::{.callout-warning icon=false}
+## So what do you report?
+
+Not a plateau, because we do not have one. Report the score **at the block size matching your intended use**: if you will predict 5 km from your nearest training data, the 4–8 km numbers are the relevant ones — around 0.57–0.60, against the 0.65 that random CV advertises.
+
+The optimism here is modest precisely *because* most of this model's signal is non-spatial. That is the reassuring case. The coordinates-only model a few slides back is the other one.
+:::
+
+## Buffered leave-one-out
+
+:::{.callout-note icon=false}
+## A stricter variant
+
+Blocks still put some test points right next to a block boundary, and so next to training data. **Buffered LOO** removes that: hold out one observation, and also *delete from the training set* everything within radius $r$ of it.
+
+```python
+for i in range(n):
+    d = distances_from(i)
+    train = (d > buffer_radius)
+    model.fit(X[train], y[train])
+    pred[i] = model.predict(X[[i]])
+```
+
+Expensive — one fit per observation — but it gives a clean answer to "how well do I predict at distance $r$ from any data?", which is often the actual question.
+:::
+
+## Checking the residuals again
+
+:::{.callout-tip icon=false}
+## Close the loop
+
+The residual diagnostic from Geo 7 is also the one that closes this lecture. After fitting any predictive model, compute Moran's I on its residuals.
+
+- **Significant autocorrelation remaining** → there is spatial structure the model has not captured. Consider the spatial regression models and the engineered features from Geo 7.
+- **No autocorrelation** → the spatial structure is accounted for, and the i.i.d. assumption behind your inference is defensible.
+
+It costs three lines and it is the single most informative check you can run on a spatial model.
+:::
+
+# Wrap-up
+
+## What we covered {.scrollable}
+
+:::{.callout-important icon=false}
+## Summary
+
+| idea | point |
+|---|---|
+| in-sample fit | describes the data the model saw, not new locations |
+| random CV on spatial data | **leaks**; the coordinates-only model went from 0.17 to negative |
+| block CV | split at the level you want to generalise to |
+| block size | report the score at the distance you will actually predict at |
+| residual Moran's I | the check that says whether spatial structure is left over |
+:::
+
+## The thread
+
+:::{.callout-note icon=false}
+## One lesson, three courses
+
+Geo 5 and 6 taught you to **measure** spatial dependence. Geo 7 used it to *improve* models; this supplement used it to *distrust* them.
+
+The second use is the transferable one. Spatial autocorrelation is a specific case of the general problem that observations are not independent --- the same problem as related organisms in Bio 2 and cells from one donor in Bio 4.
+
+> Before trusting a score, ask what the unit of independence actually is.
+:::
+
+## Exercises {.scrollable}
+
+:::{.callout-tip icon=false}
+## Try these
+
+1. Repeat the block-CV sweep with a linear model instead of a random forest. Does the optimism gap shrink? Why might a flexible model leak more?
+2. Implement buffered leave-one-out for a subsample of 500 listings. Plot accuracy against buffer radius, and compare the shape to the block-size curve.
+3. Split the data by `coastal` and use it as the CV group. Is predicting inland-from-coastal harder than predicting a random block? What does that tell you about transferability?
+:::
+
+## Further reading {.scrollable}
+
+:::{.callout-note icon=false}
+## Sources
+
+- **Roberts et al.**, *Cross-validation strategies for data with temporal, spatial, hierarchical, or phylogenetic structure*, **Ecography** 40(8), 2017. <https://doi.org/10.1111/ecog.02881> --- the standard reference for block cross-validation
+- **Ploton et al.**, *Spatial validation reveals poor predictive performance of large-scale ecological mapping models*, **Nature Communications** 11, 2020. <https://doi.org/10.1038/s41467-020-18321-y> --- a high-profile demonstration of the optimism this lecture measures
+:::
+
+## Projects
+
+:::{.callout-important icon=false}
+## G4
+
+This supplement supplies the core of **G4** in the [course projects](../projects.qmd): predicting across space, and reporting the accuracy you can defend rather than the one that looks best.
+:::
+
+
+# Wrap-up
+
+## What we covered {.scrollable}
+
+:::{.callout-important icon=false}
+## Summary
+
+| idea | point |
+|---|---|
+| Gini vs Theil | track each other (r = 0.944); their 1969→2017 "disagreement" is an endpoint choice --- report trajectories |
+| Theil decomposition | regions converged to 1994 then partly diverged; within-region rose after the 1970s; the between-share fell from 31% to 12--20% and stayed there |
+| decomposition and grouping | the between/within split is MAUP inside a statistic |
+| Moran's I over time | income clustering weakened steadily, 0.649 → 0.421 |
+| clustering | groups with coherent profiles, found without labels |
+| scaling | distances depend on units --- standardise before clustering |
+| k-means and Ward | similar overall structure; both fragmented in space |
+| regionalization | clustering with a connectivity constraint; the weights define the constraint |
+| coherence | regions are more compact but fit the features worse --- an intrinsic trade-off |
+| hidden structure | the regression's errors cluster in space; the i.i.d. assumption fails |
+| proximity variables | distance to Balboa Park: not significant |
+| spatial fixed effects | let $\alpha$ vary by neighbourhood; coastal areas are the most expensive |
+| spatial regimes | let $\beta$ vary too (coastal vs inland); the Chow test says they differ |
+| SLX | spatial lags of $X$; direct ($\beta$) and indirect ($\gamma$) effects |
+| spatial error, spatial lag | $\lambda$ in the error, $\rho$ on the dependent variable --- need GMM or 2SLS |
+| map matching | location links datasets: counts, raster samples, joins, interpolation |
+| map synthesis | features from your own data: neighbour counts, spatial lags, rings, cluster labels |
+| extensive vs intensive | counts are apportioned, rates are averaged |
+:::
+
+## Exercises {.scrollable}
+
+:::{.callout-tip icon=false}
+## Try these
+
+1. Recompute the Theil decomposition grouping by **state** instead of census region. How much does the between-share change, and what does that tell you about the claim "most inequality is within regions"?
+2. Compute $\sigma$-convergence (the dispersion of county income over time) and compare it against rank mobility between 1969 and 2017. Do they tell the same story?
+:::
+
+## Questions: clustering and regionalization {.scrollable}
+
+:::{.callout-tip icon=false}
+## From the book
+
+1. What disciplines employ regionalization? Cite concrete examples for each discipline you list.
+2. Contrast and compare the concepts of *clusters* and *regions*.
+3. In evaluating the quality of the solution to a regionalization problem, how might traditional measures of cluster evaluation be used? In what ways might those measures be limited and need expansion to consider the geographical dimensions of the problem?
+4. Discuss the implications for the processes of regionalization that follow from the number of *connected components* in the spatial weights matrix that would be used.
+5. Consider two weights matrices for a spatially constrained clustering problem. Both form a single connected component, but they differ in the sparsity of their adjacency graphs (think Rook being less dense than Queen).
+    a. How might the sparsity of the weights matrix affect the quality of the clustering solution?
+    b. Using `libpysal.weights.higher_order`, construct a second-order adjacency matrix of the weights matrix used in this lecture.
+    c. Compare the `pct_nonzero` for both matrices.
+    d. Rerun the analysis with the second-order weights matrix. What changes?
+6. How might solutions to clustering and regionalization problems change if spatial dependence is very strong and positive? Very weak? Very strong and negative?
+7. Using `w = libpysal.weights.lat2W(20, 20)`, how many unique ways are there to partition the graph into 20 clusters of 20 units each, with every cluster a connected component? And for `lat2W(20, 20, rook=False)`?
+:::
+
+## Questions: spatial regression {.scrollable}
+
+:::{.callout-tip icon=false}
+## From the book
+
+1. The "Spatial Durbin Model" combines the SLX model with the spatial lag model; the "Spatial Durbin Error Model" combines SLX with the spatial error model. Fit a Spatial Durbin variant of the models in this lecture.
+    - Do these variants improve the model fit?
+    - What happens to the spatial autocorrelation parameters ($\rho$, $\lambda$) when the SLX term is added? Why might this occur?
+2. Spatial error models recover the same estimates (asymptotically) as OLS, but their confidence intervals change, because OLS miscalculates them under spatial correlation and/or heteroskedasticity. How much do the confidence intervals change when the spatial error model is fit?
+3. A common justification for the SLX model (and the Durbin variants) is *omitted, spatially patterned variables*: if an omitted variable is associated with the included variables *and* is spatially patterned, the spatial structure of the included variables can mimic it. In the spatial lag model:
+    - what variables might be missing that matter for predicting the price of an Airbnb?
+    - would they have a spatial pattern similar to the included variables? Why or why not?
+4. *Spatial* regression focuses on how nearby observations are similar; *platial* models --- multi-level or spatial mixed-effect models --- focus on how observations in the same spatial group are similar. When do these two ideas work well together, and when might they disagree?
+:::
+
+## Questions: spatial feature engineering {.scrollable}
+
+:::{.callout-tip icon=false}
+## From the book
+
+1. Thinking of your own work, give an example where map matching would be a useful spatial feature engineering approach. And one where map synthesis would be useful.
+2. In the counting-nearby-features example, some listings may have their nearby bars and restaurants **under-counted**. Which ones, and why?
+3. How would you correct that under-count?
+4. Dasymetric mapping may introduce spurious spatial autocorrelation through the interpolation process. How does this occur, and why is it important to acknowledge?
+5. Is the SLX model from the regression section a map matching or a map synthesis technique?
+6. Feature engineering can be used in many applied contexts. When might it actually *not* improve a model?
+:::
+
+## Further reading {.scrollable}
+
+:::{.callout-note icon=false}
+## Sources
+
+- **Rey, Arribas-Bel & Wolf**, *Geographic Data Science with Python*, CRC Press, 2023 --- **Part III in full**, chs. 9--12. <https://geographicdata.science>
+- **Shorrocks**, *The class of additively decomposable inequality measures*, **Econometrica** 48(3), 1980. <https://doi.org/10.2307/1913126> --- why Theil decomposes and Gini does not
+- **Cowell**, *Measuring Inequality*, 3rd ed., Oxford University Press, 2011 --- the standard text, free from the author
+- **Rey & Janikas**, *Regional convergence, inequality, and space*, **Journal of Economic Geography** 5(2), 2005. <https://doi.org/10.1093/jnlecg/lbh044> --- the spatial treatment of convergence
+- **Duque, Ramos & Suriñach**, *Supervised regionalization methods: a survey*, **International Regional Science Review** 30(3), 2007. <https://doi.org/10.1177/0160017607301605>
+- `inequality` --- <https://pysal.org/inequality/> --- Gini, Theil and their spatial variants
+- **Anselin**, *Spatial Econometrics: Methods and Models*, Kluwer, 1988 --- the standard reference for the lag and error models
+- **Anselin & Rey**, *Modern Spatial Econometrics in Practice*, GeoDa Press, 2014
+- **Gelman & Hill**, *Data Analysis Using Regression and Multilevel/Hierarchical Models*, Cambridge, 2007 --- chs. 3--4 for the non-spatial foundation
+- **James, Witten, Hastie & Tibshirani**, *An Introduction to Statistical Learning*, 2nd ed., 2021 --- the book's recommended next step for clustering and for machine learning generally
+- `spreg` documentation --- <https://pysal.org/spreg/>
+- `tobler` for areal interpolation --- <https://pysal.org/tobler/>
+:::
+
+## Coming next
+
+:::{.callout-important icon=false}
+## Validation, and the projects
+
+**[Validating spatial predictions](geo7_validation.qmd)** is a supplement to this lecture: Part III never evaluates out-of-sample prediction, and the supplement shows why ordinary cross-validation overstates accuracy on spatial data.
+
+For the [course projects](../projects.qmd): the regression and feature-engineering sections feed **G1** and **G4**, the inequality section feeds **G8**, and regionalization feeds **G9**. G4's cross-validation is in the supplement.
+:::

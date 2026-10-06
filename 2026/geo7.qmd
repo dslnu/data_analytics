@@ -1,6 +1,6 @@
 ---
 title: "GeoScience part 7"
-subtitle: "Advanced topics: inequality, regionalization, regression and validation"
+subtitle: "Advanced topics: inequality, regionalization, regression, feature engineering"
 author:
   - name: MSDE
     affiliation: Lviv University
@@ -2777,203 +2777,6 @@ ax.set_ylim(0, 1250);
 
 The clusters capture some of the variation in price. To use it in a regression, the labels could serve as the basis for **spatial fixed effects**, as in the previous section.
 
-# Validating spatial predictions
-
-## The question nobody asked
-
-:::{.callout-important icon=false}
-## Everything so far was in-sample
-
-Every $R^2$ in this lecture describes how well a model fits the data it was **fitted on**. For explanation that is defensible. For **prediction** it is not, and prediction is what you will usually be asked for.
-
-The standard answer is cross-validation: hold out a fold, fit on the rest, score on the held-out part, repeat.
-
-We are about to see that the standard answer **does not work on spatial data**, for a reason this lecture has already established.
-:::
-
-## Recall the diagnostic
-
-:::{.callout-warning icon=false}
-## We measured this in part 2
-
-Residuals are spatially autocorrelated: $\text{corr}(u, Wu) \approx 0.33$ at $k=20$. Nearby listings have similar prices *and* similar errors.
-
-Now consider what random $k$-fold cross-validation does with that. It shuffles rows and cuts them into five parts. Every test listing has, almost certainly, **several of its immediate neighbours in the training set**.
-
-So the model is not predicting an unseen location. It is **interpolating between points it has already seen** — and interpolation is easy.
-:::
-
-## This is leakage
-
-:::{.callout-important icon=false}
-## The same failure as Bio 2, in different clothing
-
-| | not independent | random CV therefore |
-|---|---|---|
-| taxonomy | strains within a genus | tests on near-duplicates of training sequences |
-| single cell | cells within a donor | treats one donor as thousands of replicates |
-| **geography** | **nearby places** | **tests on the interior of the training set** |
-
-The rule is the same in all three: **split at the level you want to generalise to.** If you want to predict prices in a district you have no data for, your folds must be districts.
-:::
-
-## Setting up an honest test {.scrollable}
-
-:::{.callout-tip icon=false}
-## Features, target, and a projected CRS
-
-```{python}
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import cross_val_score, KFold, GroupKFold
-
-dbm = db.to_crs(epsg=3857)          # metres, so blocks are metres
-xy = numpy.column_stack((dbm.geometry.x, dbm.geometry.y))
-y = dbm["log_price"].values
-
-house = ["accommodates", "bathrooms", "bedrooms", "beds"]
-
-
-def rf():
-    return RandomForestRegressor(n_estimators=120, random_state=0, n_jobs=-1)
-
-
-def blocks(size):
-    """Assign each listing to a square block of `size` metres."""
-    bx = ((xy[:, 0] - xy[:, 0].min()) // size).astype(int)
-    by = ((xy[:, 1] - xy[:, 1].min()) // size).astype(int)
-    return bx * 10_000 + by
-```
-
-**Reproject first.** Blocks must be defined in metres; dividing degrees by 4000 is meaningless.
-:::
-
-## Isolating the leak {.scrollable}
-
-:::{.callout-tip icon=false}
-## Three models, two validation schemes
-
-```{python}
-g = blocks(4000)
-rows = []
-for name, X in [
-    ("coordinates only", xy),
-    ("house features only", dbm[house].values),
-    ("features + coordinates", numpy.column_stack([dbm[house].values, xy])),
-]:
-    r = cross_val_score(rf(), X, y, cv=KFold(5, shuffle=True, random_state=0),
-                        scoring="r2").mean()
-    b = cross_val_score(rf(), X, y, cv=GroupKFold(5), groups=g, scoring="r2").mean()
-    rows.append((name, r, b, r - b))
-
-print(f"{'model':<26}{'random':>9}{'block':>9}{'drop':>8}")
-for n, r, b, d in rows:
-    print(f"{n:<26}{r:>9.3f}{b:>9.3f}{d:>8.3f}")
-```
-:::
-
-## Read that table again
-
-:::{.callout-important icon=false}
-## The coordinates-only model is the proof
-
-Under random CV a model using **nothing but latitude and longitude** scores $R^2 \approx 0.17$. It looks like it learned something about San Diego.
-
-Under block CV the same model scores **negative** — worse than predicting the mean price for every listing.
-
-**All of its apparent skill was memorising neighbours.** Remove the neighbours from the training set and there is nothing left, because there was never anything there.
-:::
-
-:::{.callout-note icon=false}
-## And the contrast
-
-`house features only` barely moves between the two schemes. Bedrooms and bathrooms are not spatial, so blocking costs nothing. The gap belongs to the coordinates, and only to them.
-:::
-
-## How big are the blocks? {.scrollable}
-
-:::{.callout-tip icon=false}
-## Sweep the block size
-
-```{python}
-#| code-fold: true
-X = numpy.column_stack([dbm[house].values, xy])
-rand = cross_val_score(rf(), X, y, cv=KFold(5, shuffle=True, random_state=0),
-                       scoring="r2").mean()
-
-sizes, scores = [], []
-for s in (250, 500, 1000, 2000, 4000, 8000):
-    gg = blocks(s)
-    if len(numpy.unique(gg)) < 5:
-        continue
-    sizes.append(s)
-    scores.append(cross_val_score(rf(), X, y, cv=GroupKFold(5), groups=gg,
-                                  scoring="r2").mean())
-
-for s, sc in zip(sizes, scores):
-    print(f"  block {s:>5} m : R2 = {sc:.3f}")
-print(f"  random CV      : R2 = {rand:.3f}")
-
-f, ax = plt.subplots(figsize=(5, 3))
-ax.semilogx(sizes, scores, "o-", label="block CV")
-ax.axhline(rand, ls="--", color="grey", label="random CV")
-ax.set_xlabel("block size (m)"); ax.set_ylabel("$R^2$"); ax.legend()
-plt.tight_layout(); plt.show()
-```
-:::
-
-## Reading the curve {.scrollable}
-
-:::{.callout-important icon=false}
-## What this curve actually shows
-
-Read the numbers, not the story you expected.
-
-**At 250 m the block score equals random CV** (0.656 vs 0.653). Blocks that small barely separate anything — a 250 m block still leaves neighbours in the training set. That agreement is a useful sanity check: it confirms the mechanism is distance, not the `GroupKFold` machinery.
-
-**The trend is downward but not monotone.** 1 000 m scores *below* 2 000 m here. With five folds over a few hundred blocks, each estimate carries real variance, and a single sweep is noisy. Repeat with several random block origins before reading much into any one point.
-
-**It has not flattened by 8 km.** San Diego spans roughly 40 km, so even 8 km blocks leave training listings fairly close to test ones. The honest conclusion is that we have not yet reached the distance at which leakage stops.
-:::
-
-:::{.callout-warning icon=false}
-## So what do you report?
-
-Not a plateau, because we do not have one. Report the score **at the block size matching your intended use**: if you will predict 5 km from your nearest training data, the 4–8 km numbers are the relevant ones — around 0.57–0.60, against the 0.65 that random CV advertises.
-
-The optimism here is modest precisely *because* most of this model's signal is non-spatial. That is the reassuring case. The coordinates-only model a few slides back is the other one.
-:::
-
-## Buffered leave-one-out
-
-:::{.callout-note icon=false}
-## A stricter variant
-
-Blocks still put some test points right next to a block boundary, and so next to training data. **Buffered LOO** removes that: hold out one observation, and also *delete from the training set* everything within radius $r$ of it.
-
-```python
-for i in range(n):
-    d = distances_from(i)
-    train = (d > buffer_radius)
-    model.fit(X[train], y[train])
-    pred[i] = model.predict(X[[i]])
-```
-
-Expensive — one fit per observation — but it gives a clean answer to "how well do I predict at distance $r$ from any data?", which is often the actual question.
-:::
-
-## Checking the residuals again
-
-:::{.callout-tip icon=false}
-## Close the loop
-
-The diagnostic that opened this lecture is also the one that closes it. After fitting any predictive model, compute Moran's I on its residuals.
-
-- **Significant autocorrelation remaining** → there is spatial structure the model has not captured. Consider the models from the spatial regression section and the features from the feature-engineering section.
-- **No autocorrelation** → the spatial structure is accounted for, and the i.i.d. assumption behind your inference is defensible.
-
-It costs three lines and it is the single most informative check you can run on a spatial model.
-:::
-
 # Wrap-up
 
 ## What we covered {.scrollable}
@@ -3001,21 +2804,6 @@ It costs three lines and it is the single most informative check you can run on 
 | map matching | location links datasets: counts, raster samples, joins, interpolation |
 | map synthesis | features from your own data: neighbour counts, spatial lags, rings, cluster labels |
 | extensive vs intensive | counts are apportioned, rates are averaged |
-| random CV on spatial data | **leaks**; coordinates-only went 0.17 → negative |
-| block CV | split at the level you want to generalise to |
-| the plateau | the number you can defend |
-:::
-
-## The thread
-
-:::{.callout-note icon=false}
-## One lesson, three courses
-
-Geo 5 and 6 taught you to **measure** spatial dependence. This lecture used it twice: once to *improve* models, and once to *distrust* them.
-
-The second use is the transferable one. Spatial autocorrelation is a specific case of the general problem that observations are not independent — the same problem as related organisms in Bio 2 and cells from one donor in Bio 4.
-
-> Before trusting a score, ask what the unit of independence actually is.
 :::
 
 ## Exercises {.scrollable}
@@ -3025,9 +2813,6 @@ The second use is the transferable one. Spatial autocorrelation is a specific ca
 
 1. Recompute the Theil decomposition grouping by **state** instead of census region. How much does the between-share change, and what does that tell you about the claim "most inequality is within regions"?
 2. Compute $\sigma$-convergence (the dispersion of county income over time) and compare it against rank mobility between 1969 and 2017. Do they tell the same story?
-3. Repeat the block-CV sweep with a linear model instead of a random forest. Does the optimism gap shrink? Why might a flexible model leak more?
-4. Implement buffered leave-one-out for a subsample of 500 listings. Plot accuracy against buffer radius, and compare the shape to the block-size curve.
-5. Split the data by `coastal` and use it as the CV group. Is predicting inland-from-coastal harder than predicting a random block? What does that tell you about transferability?
 :::
 
 ## Questions: clustering and regionalization {.scrollable}
@@ -3090,8 +2875,6 @@ The second use is the transferable one. Spatial autocorrelation is a specific ca
 - **Anselin**, *Spatial Econometrics: Methods and Models*, Kluwer, 1988 --- the standard reference for the lag and error models
 - **Anselin & Rey**, *Modern Spatial Econometrics in Practice*, GeoDa Press, 2014
 - **Gelman & Hill**, *Data Analysis Using Regression and Multilevel/Hierarchical Models*, Cambridge, 2007 --- chs. 3--4 for the non-spatial foundation
-- **Roberts et al.**, *Cross-validation strategies for data with temporal, spatial, hierarchical, or phylogenetic structure*, **Ecography** 40(8), 2017 --- the standard reference for block cross-validation
-- **Ploton et al.**, *Spatial validation reveals poor predictive performance of large-scale ecological mapping models*, **Nature Communications** 11, 2020 --- a high-profile demonstration of the optimism this lecture measures
 - **James, Witten, Hastie & Tibshirani**, *An Introduction to Statistical Learning*, 2nd ed., 2021 --- the book's recommended next step for clustering and for machine learning generally
 - `spreg` documentation --- <https://pysal.org/spreg/>
 - `tobler` for areal interpolation --- <https://pysal.org/tobler/>
@@ -3100,9 +2883,9 @@ The second use is the transferable one. Spatial autocorrelation is a specific ca
 ## Coming next
 
 :::{.callout-important icon=false}
-## Projects
+## Validation, and the projects
 
-This lecture supplies the machinery for **G4** in the [course projects](../projects.qmd): predicting across space, and reporting the accuracy you can defend rather than the one that looks best.
+**[Validating spatial predictions](geo7_validation.qmd)** is a supplement to this lecture: Part III never evaluates out-of-sample prediction, and the supplement shows why ordinary cross-validation overstates accuracy on spatial data.
 
-Parts 3 and 4 also feed **G1**, where the engineered feature *is* the analysis.
+For the [course projects](../projects.qmd): the regression and feature-engineering sections feed **G1** and **G4**, the inequality section feeds **G8**, and regionalization feeds **G9**. G4's cross-validation is in the supplement.
 :::
