@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="MSDE">
+
+<title>Geo 6–7 exercises – Big Data analytics / Applied Data analytics</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-6e268169e3b58a97b39eb04411ed87c3.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../styles.css">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">Big Data analytics / Applied Data analytics</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../bigdata.html"> 
+<span class="menu-text">Big Data analytics</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../applied.html"> 
+<span class="menu-text">Applied Data analytics</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../about.html"> 
+<span class="menu-text">About</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#how-these-exercises-work" id="toc-how-these-exercises-work" class="nav-link active" data-scroll-target="#how-these-exercises-work">How these exercises work</a>
+  <ul class="collapse">
+  <li><a href="#map-of-the-exercises" id="toc-map-of-the-exercises" class="nav-link" data-scroll-target="#map-of-the-exercises">Map of the exercises</a></li>
+  <li><a href="#data-sources-used" id="toc-data-sources-used" class="nav-link" data-scroll-target="#data-sources-used">Data sources used</a></li>
+  </ul></li>
+  <li><a href="#sec-p" id="toc-sec-p" class="nav-link" data-scroll-target="#sec-p">P — Point pattern analysis</a>
+  <ul class="collapse">
+  <li><a href="#p1-the-shape-of-a-subduction-zone" id="toc-p1-the-shape-of-a-subduction-zone" class="nav-link" data-scroll-target="#p1-the-shape-of-a-subduction-zone">P1 — The shape of a subduction zone</a></li>
+  <li><a href="#p2-is-crime-clustered-or-is-the-city-just-shaped-that-way" id="toc-p2-is-crime-clustered-or-is-the-city-just-shaped-that-way" class="nav-link" data-scroll-target="#p2-is-crime-clustered-or-is-the-city-just-shaped-that-way">P2 — Is crime clustered, or is the city just shaped that way?</a></li>
+  <li><a href="#p3-a-map-of-birds-or-a-map-of-birdwatchers" id="toc-p3-a-map-of-birds-or-a-map-of-birdwatchers" class="nav-link" data-scroll-target="#p3-a-map-of-birds-or-a-map-of-birdwatchers">P3 — A map of birds, or a map of birdwatchers?</a></li>
+  <li><a href="#p4-aftershocks-clusters-in-space-and-in-time" id="toc-p4-aftershocks-clusters-in-space-and-in-time" class="nav-link" data-scroll-target="#p4-aftershocks-clusters-in-space-and-in-time">P4 — Aftershocks: clusters in space, and in time</a></li>
+  </ul></li>
+  <li><a href="#sec-i" id="toc-sec-i" class="nav-link" data-scroll-target="#sec-i">I — Spatial inequality dynamics</a>
+  <ul class="collapse">
+  <li><a href="#i1-fifty-six-years-of-us-county-income" id="toc-i1-fifty-six-years-of-us-county-income" class="nav-link" data-scroll-target="#i1-fifty-six-years-of-us-county-income">I1 — Fifty-six years of US county income</a></li>
+  <li><a href="#i2-is-europe-converging" id="toc-i2-is-europe-converging" class="nav-link" data-scroll-target="#i2-is-europe-converging">I2 — Is Europe converging?</a></li>
+  <li><a href="#i3-personal-versus-regional-the-world-in-one-chart" id="toc-i3-personal-versus-regional-the-world-in-one-chart" class="nav-link" data-scroll-target="#i3-personal-versus-regional-the-world-in-one-chart">I3 — Personal versus regional: the world in one chart</a></li>
+  <li><a href="#i4-which-places-moved" id="toc-i4-which-places-moved" class="nav-link" data-scroll-target="#i4-which-places-moved">I4 — Which places moved?</a></li>
+  </ul></li>
+  <li><a href="#sec-c" id="toc-sec-c" class="nav-link" data-scroll-target="#sec-c">C — Clustering and regionalization</a>
+  <ul class="collapse">
+  <li><a href="#c1-geodemographics-of-chicago" id="toc-c1-geodemographics-of-chicago" class="nav-link" data-scroll-target="#c1-geodemographics-of-chicago">C1 — Geodemographics of Chicago</a></li>
+  <li><a href="#c2-drawing-contiguous-regions" id="toc-c2-drawing-contiguous-regions" class="nav-link" data-scroll-target="#c2-drawing-contiguous-regions">C2 — Drawing contiguous regions</a></li>
+  <li><a href="#c3-growth-regions-of-europe" id="toc-c3-growth-regions-of-europe" class="nav-link" data-scroll-target="#c3-growth-regions-of-europe">C3 — Growth regions of Europe</a></li>
+  <li><a href="#c4-how-stable-is-a-cluster-map" id="toc-c4-how-stable-is-a-cluster-map" class="nav-link" data-scroll-target="#c4-how-stable-is-a-cluster-map">C4 — How stable is a cluster map?</a></li>
+  </ul></li>
+  <li><a href="#sec-r" id="toc-sec-r" class="nav-link" data-scroll-target="#sec-r">R — Spatial regression</a>
+  <ul class="collapse">
+  <li><a href="#r1-a-hedonic-model-for-chicago-airbnb" id="toc-r1-a-hedonic-model-for-chicago-airbnb" class="nav-link" data-scroll-target="#r1-a-hedonic-model-for-chicago-airbnb">R1 — A hedonic model for Chicago Airbnb</a></li>
+  <li><a href="#r2-is-the-north-side-a-different-market" id="toc-r2-is-the-north-side-a-different-market" class="nav-link" data-scroll-target="#r2-is-the-north-side-a-different-market">R2 — Is the North Side a different market?</a></li>
+  <li><a href="#r3-california-housing-diagnose-then-model-the-dependence" id="toc-r3-california-housing-diagnose-then-model-the-dependence" class="nav-link" data-scroll-target="#r3-california-housing-diagnose-then-model-the-dependence">R3 — California housing: diagnose, then model the dependence</a></li>
+  <li><a href="#r4-β-convergence-across-european-regions" id="toc-r4-β-convergence-across-european-regions" class="nav-link" data-scroll-target="#r4-β-convergence-across-european-regions">R4 — β-convergence across European regions</a></li>
+  </ul></li>
+  <li><a href="#sec-f" id="toc-sec-f" class="nav-link" data-scroll-target="#sec-f">F — Spatial feature engineering</a>
+  <ul class="collapse">
+  <li><a href="#f1-transit-libraries-and-the-price-of-a-room" id="toc-f1-transit-libraries-and-the-price-of-a-room" class="nav-link" data-scroll-target="#f1-transit-libraries-and-the-price-of-a-room">F1 — Transit, libraries, and the price of a room</a></li>
+  <li><a href="#f2-neighbourhood-summaries-without-leakage" id="toc-f2-neighbourhood-summaries-without-leakage" class="nav-link" data-scroll-target="#f2-neighbourhood-summaries-without-leakage">F2 — Neighbourhood summaries without leakage</a></li>
+  <li><a href="#f3-areal-interpolation-with-a-ground-truth" id="toc-f3-areal-interpolation-with-a-ground-truth" class="nav-link" data-scroll-target="#f3-areal-interpolation-with-a-ground-truth">F3 — Areal interpolation with a ground truth</a></li>
+  <li><a href="#f4-location-features-for-california-housing" id="toc-f4-location-features-for-california-housing" class="nav-link" data-scroll-target="#f4-location-features-for-california-housing">F4 — Location features for California housing</a></li>
+  </ul></li>
+  <li><a href="#where-these-lead" id="toc-where-these-lead" class="nav-link" data-scroll-target="#where-these-lead">Where these lead</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Geo 6–7 exercises</h1>
+<p class="subtitle lead">Twenty exercises on open data: point patterns, inequality, regionalization, spatial regression, feature engineering</p>
+</div>
+
+
+<div class="quarto-title-meta-author">
+  <div class="quarto-title-meta-heading">Author</div>
+  <div class="quarto-title-meta-heading">Affiliation</div>
+  
+    <div class="quarto-title-meta-contents">
+    <p class="author">MSDE </p>
+  </div>
+  <div class="quarto-title-meta-contents">
+        <p class="affiliation">
+            Lviv University
+          </p>
+      </div>
+  </div>
+
+<div class="quarto-title-meta">
+
+      
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="how-these-exercises-work" class="level2">
+<h2 class="anchored" data-anchor-id="how-these-exercises-work">How these exercises work</h2>
+<p>There are four exercises for each of the five chapters covered in <a href="../2026/geo6.html">Geo 6</a> (point pattern analysis) and <a href="../2026/geo7.html">Geo 7</a> (inequality, clustering and regionalization, spatial regression, feature engineering). None of them reuse the book’s datasets. Each one starts by <strong>downloading open data</strong> and then asks you to apply that chapter’s methods to it.</p>
+<p>Most exercises have the same three parts:</p>
+<ul>
+<li><strong>Data</strong>: where the data comes from, plus a snippet that downloads it. Every URL was checked in October 2026 and needs no API key.</li>
+<li><strong>Tasks</strong>: numbered steps. The later steps are less prescriptive than the early ones.</li>
+<li><strong>Report</strong>: what to hand in. Usually that is a number, a map and a paragraph that interprets them. A figure with no interpretation does not count as an answer.</li>
+</ul>
+<p>The datasets come back across chapters. Chicago (crimes, community areas, transit stations, Airbnb listings) and the European NUTS regions show up several times, so work from an earlier exercise carries forward.</p>
+<div class="callout callout-style-default callout-tip no-icon callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Shared setup
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Some machines fail with <code>CERTIFICATE_VERIFY_FAILED</code> when <code>pandas</code> or <code>geopandas</code> opens a URL directly, because they don’t use <code>requests</code>’ certificate bundle. To avoid that, download with <code>requests</code> and parse from memory. Every snippet below assumes these helpers:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> io, zipfile, time</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np, pandas <span class="im">as</span> pd, geopandas <span class="im">as</span> gpd, requests</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> get(url, <span class="op">**</span>params):</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    r <span class="op">=</span> requests.get(url, params<span class="op">=</span>params <span class="kw">or</span> <span class="va">None</span>, timeout<span class="op">=</span><span class="dv">300</span>)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    r.raise_for_status()</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> r</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> read_gdf(url):                       <span class="co"># GeoJSON, or a zipped shapefile</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> gpd.read_file(io.BytesIO(get(url).content))</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> socrata(dataset, <span class="op">**</span>params):          <span class="co"># Chicago Data Portal (SODA API)</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.DataFrame(get(<span class="ss">f"https://data.cityofchicago.org/resource/</span><span class="sc">{</span>dataset<span class="sc">}</span><span class="ss">.json"</span>,</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>                            <span class="op">**</span>params).json())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Cache what you download (<code>df.to_parquet(...)</code>, <code>gdf.to_file(... .gpkg)</code>). Then you fetch once rather than once per kernel restart, and the source cannot change while you are halfway through.</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-note no-icon callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Libraries
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><code>geopandas</code>, <code>libpysal</code>, <code>esda</code>, <code>pointpats</code>, <code>inequality</code>, <code>spopt</code>, <code>spreg</code>, <code>tobler</code>, <code>scikit-learn</code>, <code>contextily</code>, <code>matplotlib</code>. These are the same libraries as in the lectures. OpenStreetMap via <code>osmnx</code> is mentioned as an optional extension in a few places. Public Overpass servers are often overloaded, so no exercise requires it.</p>
+</div>
+</div>
+<section id="map-of-the-exercises" class="level3">
+<h3 class="anchored" data-anchor-id="map-of-the-exercises">Map of the exercises</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th>chapter</th>
+<th>exercises</th>
+<th>main data</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>P</strong></td>
+<td>Point pattern analysis (Geo 6)</td>
+<td>P1–P4</td>
+<td>USGS earthquakes, Chicago crimes, GBIF occurrences</td>
+</tr>
+<tr class="even">
+<td><strong>I</strong></td>
+<td>Spatial inequality dynamics (Geo 7)</td>
+<td>I1–I4</td>
+<td>BEA county income to 2024, Eurostat NUTS 2, World Bank</td>
+</tr>
+<tr class="odd">
+<td><strong>C</strong></td>
+<td>Clustering and regionalization (Geo 7)</td>
+<td>C1–C4</td>
+<td>Chicago community areas, Eurostat NUTS 2</td>
+</tr>
+<tr class="even">
+<td><strong>R</strong></td>
+<td>Spatial regression (Geo 7)</td>
+<td>R1–R4</td>
+<td>Inside Airbnb Chicago, California housing, Eurostat NUTS 2</td>
+</tr>
+<tr class="odd">
+<td><strong>F</strong></td>
+<td>Spatial feature engineering (Geo 7)</td>
+<td>F1–F4</td>
+<td>Inside Airbnb Chicago, CTA stations, Census tracts, Natural Earth</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="data-sources-used" class="level3">
+<h3 class="anchored" data-anchor-id="data-sources-used">Data sources used</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>source</th>
+<th>what</th>
+<th>access</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>USGS FDSN event service</td>
+<td>earthquakes, any window and magnitude</td>
+<td><code>earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&amp;...</code></td>
+</tr>
+<tr class="even">
+<td>Chicago Data Portal</td>
+<td>crimes (<code>ijzp-q8t2</code>), community areas (<code>igwz-8jzy</code>), socioeconomic indicators (<code>kn9c-c2s2</code>), CTA ‘L’ stops (<code>8pix-ypme</code>), libraries (<code>x8fc-8rcq</code>)</td>
+<td>SODA API, no key for moderate use</td>
+</tr>
+<tr class="odd">
+<td>GBIF</td>
+<td>species occurrence records</td>
+<td><code>api.gbif.org/v1/occurrence/search</code>. Rate-limited, see P3</td>
+</tr>
+<tr class="even">
+<td>BEA</td>
+<td>county personal income, 1969–2024 (<code>CAINC1</code>)</td>
+<td><code>apps.bea.gov/regional/zip/CAINC1.zip</code></td>
+</tr>
+<tr class="odd">
+<td>Eurostat</td>
+<td>regional GDP per inhabitant (<code>nama_10r_2gdp</code>)</td>
+<td>SDMX-CSV API</td>
+</tr>
+<tr class="even">
+<td>GISCO</td>
+<td>NUTS boundaries (2021 version)</td>
+<td><code>gisco-services.ec.europa.eu/distribution/v2/nuts/</code></td>
+</tr>
+<tr class="odd">
+<td>World Bank</td>
+<td>GDP per capita PPP, population, region metadata</td>
+<td><code>api.worldbank.org/v2/</code></td>
+</tr>
+<tr class="even">
+<td>US Census cartographic files</td>
+<td>tracts, counties, states</td>
+<td><code>www2.census.gov/geo/tiger/GENZ2023/shp/</code></td>
+</tr>
+<tr class="odd">
+<td>Inside Airbnb</td>
+<td>listings for about 120 cities</td>
+<td>links on <code>insideairbnb.com/get-the-data/</code></td>
+</tr>
+<tr class="even">
+<td>scikit-learn</td>
+<td>California housing (1990 census block groups)</td>
+<td><code>sklearn.datasets.fetch_california_housing</code></td>
+</tr>
+<tr class="odd">
+<td>Natural Earth</td>
+<td>coastlines, countries</td>
+<td><code>naciscdn.org/naturalearth/</code></td>
+</tr>
+</tbody>
+</table>
+<p>The US Census <strong>ACS API now requires a (free) key</strong>. That is why the exercises use the City of Chicago’s socioeconomic table and the BEA files instead. If you have a key, the <a href="https://www.census.gov/data/developers/data-sets/acs-5year.html">ACS 5-year API</a> can replace or supplement either.</p>
+</section>
+</section>
+<section id="sec-p" class="level1">
+<h1>P — Point pattern analysis</h1>
+<p>These four exercises use Geo 6’s toolkit: dots, hexbins and KDE, then centrography (mean and median centre, standard distance, standard deviational ellipse), then extent (convex hull, alpha shape, minimum rectangle and circle), then quadrat statistics, then Ripley’s <span class="math inline">\(G\)</span> and <span class="math inline">\(F\)</span> against simulated CSR, and finally DBSCAN.</p>
+<div class="callout callout-style-default callout-warning no-icon callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Project first
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Every distance-based measure in this chapter assumes planar coordinates in metres. Running standard distance or Ripley’s <span class="math inline">\(G\)</span> on raw longitude and latitude does not raise an error. It just returns nonsense. Reproject to a local metric CRS (a UTM zone or a national grid) before doing anything else.</p>
+</div>
+</div>
+<section id="p1-the-shape-of-a-subduction-zone" class="level2">
+<h2 class="anchored" data-anchor-id="p1-the-shape-of-a-subduction-zone">P1 — The shape of a subduction zone</h2>
+<p><strong>Data.</strong> One decade of <span class="math inline">\(M \ge 4.5\)</span> earthquakes around Japan from the USGS catalogue:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>q <span class="op">=</span> read_gdf(<span class="st">"https://earthquake.usgs.gov/fdsnws/event/1/query?"</span> <span class="op">+</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>             <span class="st">"format=geojson&amp;starttime=2015-01-01&amp;endtime=2025-01-01&amp;minmagnitude=4.5"</span> <span class="op">+</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>             <span class="st">"&amp;minlatitude=30&amp;maxlatitude=46&amp;minlongitude=128&amp;maxlongitude=148"</span>)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>q[<span class="st">"depth"</span>] <span class="op">=</span> q.geometry.z                  <span class="co"># km, the third coordinate</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>q <span class="op">=</span> q.to_crs(<span class="dv">6691</span>)                         <span class="co"># JGD2011 / UTM zone 54N, metres</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Tasks.</strong></p>
+<ol type="1">
+<li>Map the events three ways: dots, a hexbin and a KDE. Colour the dots by depth. Say which view makes the Japan Trench easiest to see, and which hides it.</li>
+<li>Split the events into shallow (<span class="math inline">\(&lt;70\)</span> km) and deep (<span class="math inline">\(\ge 70\)</span> km). For each group, compute the mean and median centres, the standard distance and the standard deviational ellipse. Draw both ellipses on one map.</li>
+<li>The Pacific plate subducts westward. Use the ellipse <strong>orientation</strong> and the offset between the two centres to say which way the deep events sit relative to the shallow ones, and roughly how far apart they are.</li>
+<li>Compute the convex hull, an alpha shape, the minimum rotated rectangle and the minimum bounding circle for the shallow events. Which of the five extent measures would you report as “the area affected by shallow seismicity”, and why?</li>
+</ol>
+<p><strong>Report.</strong> The ellipse map, a table with centres, standard distances and ellipse axes for both depth classes, and a short paragraph on what the centrography shows about the geometry of the slab.</p>
+</section>
+<section id="p2-is-crime-clustered-or-is-the-city-just-shaped-that-way" class="level2">
+<h2 class="anchored" data-anchor-id="p2-is-crime-clustered-or-is-the-city-just-shaped-that-way">P2 — Is crime clustered, or is the city just shaped that way?</h2>
+<p><strong>Data.</strong> One year of burglaries in Chicago and the city boundary (dissolved from the 77 community areas):</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>cr <span class="op">=</span> socrata(<span class="st">"ijzp-q8t2"</span>, <span class="op">**</span>{<span class="st">"$where"</span>: <span class="st">"year=2024 AND primary_type='BURGLARY'"</span>,</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>                             <span class="st">"$limit"</span>: <span class="dv">50000</span>})</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>cr <span class="op">=</span> cr.dropna(subset<span class="op">=</span>[<span class="st">"latitude"</span>, <span class="st">"longitude"</span>])</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>pts <span class="op">=</span> gpd.GeoDataFrame(cr, geometry<span class="op">=</span>gpd.points_from_xy(cr.longitude.astype(<span class="bu">float</span>),</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>                                                       cr.latitude.astype(<span class="bu">float</span>)),</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>                       crs<span class="op">=</span><span class="dv">4326</span>).to_crs(<span class="dv">26916</span>)          <span class="co"># UTM 16N</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>city <span class="op">=</span> read_gdf(<span class="st">"https://data.cityofchicago.org/resource/igwz-8jzy.geojson"</span>) <span class="op">\</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>         .to_crs(<span class="dv">26916</span>).dissolve()</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>poly <span class="op">=</span> city.geometry.iloc[<span class="dv">0</span>]</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>pts <span class="op">=</span> pts[pts.within(poly)]                   <span class="co"># a few geocodes fall just outside</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>xy <span class="op">=</span> np.column_stack([pts.geometry.x, pts.geometry.y])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The window is set with <code>hull=</code>. Pass <code>"bbox"</code> for the bounding box, or a shapely polygon for the city:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pointpats <span class="im">import</span> QStatistic, distance_statistics, random</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>sup <span class="op">=</span> np.linspace(<span class="dv">0</span>, <span class="dv">1500</span>, <span class="dv">31</span>)                                <span class="co"># metres</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>g_box  <span class="op">=</span> distance_statistics.g_test(xy, support<span class="op">=</span>sup, hull<span class="op">=</span><span class="st">"bbox"</span>,</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>                                    keep_simulations<span class="op">=</span><span class="va">True</span>, n_simulations<span class="op">=</span><span class="dv">199</span>)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>g_city <span class="op">=</span> distance_statistics.g_test(xy, support<span class="op">=</span>sup, hull<span class="op">=</span>poly,</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>                                    keep_simulations<span class="op">=</span><span class="va">True</span>, n_simulations<span class="op">=</span><span class="dv">199</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Keep <code>n_simulations</code> in the low hundreds. The default is 9,999, and with a polygon window that takes 10–15 minutes per function.</p>
+<p><strong>Tasks.</strong></p>
+<ol type="1">
+<li><p>Run a quadrat test (<code>pointpats.QStatistic</code>) with a regular grid over the <strong>bounding box</strong>. Then generate the CSR benchmark inside the <strong>city polygon</strong> (<code>pointpats.random.poisson(city.geometry.iloc[0], size=n)</code>) and compare the two.</p></li>
+<li><p>Compute Ripley’s <span class="math inline">\(G\)</span> and <span class="math inline">\(F\)</span> with simulation envelopes twice, once with the bounding box as the window and once with the city polygon. Plot all four curves.</p></li>
+<li><p>Quantify the <strong>study-area trap</strong> from Geo 6. With the bounding-box window, how much of the apparent clustering comes only from the empty lake and suburbs inside the box?</p></li>
+<li><p>Now try the harder question: are burglaries clustered <strong>relative to where people live</strong>? A homogeneous Poisson process cannot answer that. Explain what you would need instead (an inhomogeneous intensity, such as the density of residential addresses or population). As a crude proxy, use <strong>all other crimes</strong> as the null. Draw <span class="math inline">\(n\)</span> of them at random (where <span class="math inline">\(n\)</span> is the number of burglaries) 199 times, compute <span class="math inline">\(G\)</span> for each draw, and plot the burglary <span class="math inline">\(G\)</span> against that envelope. Is burglary more or less clustered than crime in general?</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>oth <span class="op">=</span> socrata(<span class="st">"ijzp-q8t2"</span>, <span class="op">**</span>{<span class="st">"$select"</span>: <span class="st">"latitude,longitude"</span>,</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>              <span class="st">"$where"</span>: <span class="st">"year=2024 AND primary_type!='BURGLARY' AND latitude IS NOT NULL"</span>,</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>              <span class="st">"$limit"</span>: <span class="dv">300000</span>})                 <span class="co"># about 250k rows, 20 s</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>For each draw, <code>distance_statistics.g(sample_xy, support=sup)</code> returns <code>(support, G)</code> without running any simulations of its own.</p></li>
+</ol>
+<p><strong>Report.</strong> The four <span class="math inline">\(G\)</span>/<span class="math inline">\(F\)</span> plots, one sentence per plot, and a paragraph on what “clustered” means once the null model changes.</p>
+</section>
+<section id="p3-a-map-of-birds-or-a-map-of-birdwatchers" class="level2">
+<h2 class="anchored" data-anchor-id="p3-a-map-of-birds-or-a-map-of-birdwatchers">P3 — A map of birds, or a map of birdwatchers?</h2>
+<p><strong>Data.</strong> GBIF occurrence records for Ukraine: the white stork (<em>Ciconia ciconia</em>, <code>taxonKey=2481912</code>) and, as a measure of observer effort, all birds (<code>taxonKey=212</code>, class Aves). The search API returns at most 300 records per request. Page through with <code>offset</code>, and <strong>pause between requests</strong>. GBIF answers HTTP 429 to clients that hammer it, and for more than a few tens of thousands of records it asks you to use its <a href="https://www.gbif.org/occurrence/search">download service</a> instead.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> gbif(taxon, n_max<span class="op">=</span><span class="dv">6000</span>, <span class="op">**</span>extra):</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    rows, off <span class="op">=</span> [], <span class="dv">0</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> off <span class="op">&lt;</span> n_max:</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>        page <span class="op">=</span> get(<span class="st">"https://api.gbif.org/v1/occurrence/search"</span>, taxonKey<span class="op">=</span>taxon,</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>                   country<span class="op">=</span><span class="st">"UA"</span>, hasCoordinate<span class="op">=</span><span class="st">"true"</span>, hasGeospatialIssue<span class="op">=</span><span class="st">"false"</span>,</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>                   limit<span class="op">=</span><span class="dv">300</span>, offset<span class="op">=</span>off, <span class="op">**</span>extra).json()</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>        rows <span class="op">+=</span> page[<span class="st">"results"</span>]<span class="op">;</span> off <span class="op">+=</span> <span class="dv">300</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> page[<span class="st">"endOfRecords"</span>]: <span class="cf">break</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>        time.sleep(<span class="dv">1</span>)</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    df <span class="op">=</span> pd.DataFrame(rows)</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> gpd.GeoDataFrame(df, geometry<span class="op">=</span>gpd.points_from_xy(df.decimalLongitude,</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>                            df.decimalLatitude), crs<span class="op">=</span><span class="dv">4326</span>).to_crs(<span class="dv">32635</span>)   <span class="co"># UTM 35N</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>storks <span class="op">=</span> gbif(<span class="dv">2481912</span>, year<span class="op">=</span><span class="st">"2015,2024"</span>)</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>birds  <span class="op">=</span> gbif(<span class="dv">212</span>,     year<span class="op">=</span><span class="st">"2015,2024"</span>, n_max<span class="op">=</span><span class="dv">20000</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Tasks.</strong></p>
+<ol type="1">
+<li>Map the stork KDE. Then map the all-birds KDE. Describe how similar they look.</li>
+<li>Compute the <strong>ratio</strong> of the two surfaces (with a sensible floor on the denominator). Where are storks over-represented relative to birdwatching effort?</li>
+<li>Run Ripley’s <span class="math inline">\(G\)</span> on the storks against CSR within Ukraine’s boundary (Natural Earth countries). Then do it again with a <strong>null drawn from the all-birds points</strong> (sample <span class="math inline">\(n\)</span> of them at random, repeated). The second null keeps the observers fixed and tests only the species. How do the conclusions differ?</li>
+<li>DBSCAN the stork records. Do the clusters correspond to known stork regions or to cities and nature reserves? Name two clusters you believe and two you do not.</li>
+</ol>
+<p><strong>Report.</strong> The ratio map, the two <span class="math inline">\(G\)</span> comparisons and a paragraph separating <em>process</em> from <em>pattern</em>, using Geo 6’s distinction.</p>
+<div class="callout callout-style-default callout-note no-icon callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>CRS
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Pick one metric CRS for all of Ukraine and state it. UTM 35N (<code>EPSG:32635</code>) works for a country-wide analysis. Note the distortion at the eastern edge.</p>
+</div>
+</div>
+</section>
+<section id="p4-aftershocks-clusters-in-space-and-in-time" class="level2">
+<h2 class="anchored" data-anchor-id="p4-aftershocks-clusters-in-space-and-in-time">P4 — Aftershocks: clusters in space, and in time</h2>
+<p><strong>Data.</strong> All <span class="math inline">\(M \ge 2.5\)</span> events in the 2023 Türkiye–Syria sequence window:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>q <span class="op">=</span> read_gdf(<span class="st">"https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson"</span> <span class="op">+</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>             <span class="st">"&amp;starttime=2023-01-01&amp;endtime=2023-12-31&amp;minmagnitude=2.5"</span> <span class="op">+</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>             <span class="st">"&amp;minlatitude=35&amp;maxlatitude=40&amp;minlongitude=34&amp;maxlongitude=41"</span>)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>q <span class="op">=</span> q.to_crs(<span class="dv">32637</span>)                                   <span class="co"># UTM 37N</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>q[<span class="st">"t_days"</span>] <span class="op">=</span> (pd.to_datetime(q[<span class="st">"time"</span>], unit<span class="op">=</span><span class="st">"ms"</span>) <span class="op">-</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>               pd.Timestamp(<span class="st">"2023-01-01"</span>)).dt.total_seconds() <span class="op">/</span> <span class="dv">86400</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Outside the United States the USGS catalogue misses most small events: this query returns about 620 events, the smallest around <span class="math inline">\(M\,3.3\)</span>, against tens of thousands in the regional (AFAD) catalogue. About 470 of them fall in February. Note how that affects anything you conclude about cluster size.</p>
+<p><strong>Tasks.</strong></p>
+<ol type="1">
+<li>Run <code>sklearn.cluster.DBSCAN</code> on the <span class="math inline">\((x, y)\)</span> coordinates three times. First use the defaults. Then use Geo 6’s “sensible parameters” exactly as given there (<code>min_samples</code> = 1% of <span class="math inline">\(n\)</span>, <code>eps=500</code>). Finally keep that <code>min_samples</code> but read <span class="math inline">\(\varepsilon\)</span> off a <strong><span class="math inline">\(k\)</span>-distance plot</strong>: sort every event’s distance to its <code>min_samples</code>-th nearest neighbour and look for the elbow. Map the runs and give the noise share each time. Both of the first two runs label every event as noise. Explain why. (What unit is the default <code>eps=0.5</code> in? What was 500 m tuned for?)</li>
+<li>Make a small grid over <span class="math inline">\(\varepsilon \in \{2, 5, 10, 20\}\)</span> km and <code>min_samples</code> <span class="math inline">\(\in \{5, 10, 25, 50\}\)</span>. Record the number of clusters and the noise share for each cell, and show the grid as a heat map. Which region of the grid gives an answer that stays stable?</li>
+<li>Add time as a third dimension: <span class="math inline">\((x, y, \lambda t)\)</span>, where <span class="math inline">\(\lambda\)</span> converts days into metres. Choose <span class="math inline">\(\lambda\)</span> and justify the choice (“one day is worth ___ km”). Do the two February mainshock sequences separate into two clusters?</li>
+<li>Compare your space–time DBSCAN with <code>sklearn.cluster.HDBSCAN</code>, which needs no <span class="math inline">\(\varepsilon\)</span>. Which result would you show a seismologist?</li>
+</ol>
+<p><strong>Report.</strong> The parameter heat map, the space–time cluster map and a paragraph on what the clusters are (and are not) evidence of.</p>
+</section>
+</section>
+<section id="sec-i" class="level1">
+<h1>I — Spatial inequality dynamics</h1>
+<p>These exercises use Geo 7’s first section: the 20:20 ratio, Gini, Theil and its decomposition, Moran’s <span class="math inline">\(I\)</span> over time, the spatial Gini and near differences. The recurring question is the one from the lecture: <strong>does inequality between regions move with inequality within them?</strong></p>
+<section id="i1-fifty-six-years-of-us-county-income" class="level2">
+<h2 class="anchored" data-anchor-id="i1-fifty-six-years-of-us-county-income">I1 — Fifty-six years of US county income</h2>
+<p><strong>Data.</strong> The book’s county series ends in 2018. BEA now publishes 1969–2024:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>z <span class="op">=</span> zipfile.ZipFile(io.BytesIO(get(<span class="st">"https://apps.bea.gov/regional/zip/CAINC1.zip"</span>).content))</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>d <span class="op">=</span> pd.read_csv(z.<span class="bu">open</span>(<span class="st">"CAINC1__ALL_AREAS_1969_2024.csv"</span>), encoding<span class="op">=</span><span class="st">"latin1"</span>,</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>                low_memory<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>d[<span class="st">"GeoFIPS"</span>] <span class="op">=</span> d.GeoFIPS.<span class="bu">str</span>.strip().<span class="bu">str</span>.strip(<span class="st">'"'</span>).<span class="bu">str</span>.strip()</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>pci <span class="op">=</span> d[(d.LineCode <span class="op">==</span> <span class="dv">3</span>) <span class="op">&amp;</span> <span class="op">~</span>d.GeoFIPS.<span class="bu">str</span>.endswith(<span class="st">"000"</span>)]   <span class="co"># per-capita income, counties</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>counties <span class="op">=</span> read_gdf(<span class="st">"https://www2.census.gov/geo/tiger/GENZ2023/shp/cb_2023_us_county_20m.zip"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The <code>Region</code> column holds the eight BEA regions (1 = New England, …, 8 = Far West), which are the same regions as in the book’s decomposition.</p>
+<p><strong>Tasks.</strong></p>
+<ol type="1">
+<li>Clean the data. Values such as <code>"(NA)"</code> need handling. Keep the lower 48 states. Also handle <strong>Virginia’s independent cities</strong>, which BEA merges into combination areas (FIPS starting <code>51</code> with codes 900 and above) that do not match the Census county polygons. Record every county you drop and why.</li>
+<li>Recompute the 20:20 ratio, Gini and Theil for 1969–2024. Does the post-2018 period (including 2020–21, when transfer payments were large) continue the book’s trend, break it, or reverse it?</li>
+<li>Run the Theil decomposition by BEA region (<code>inequality.theil.TheilD</code>) for every year. Plot the between-region share. Is the long fall in between-region inequality still going?</li>
+<li>Compute Moran’s <span class="math inline">\(I\)</span> and the spatial Gini each year. Then check whether the relationship between near differences and Moran’s <span class="math inline">\(I\)</span> found in the lecture still holds after 2018.</li>
+</ol>
+<p><strong>Report.</strong> Four time series on a shared <span class="math inline">\(x\)</span> axis, one line per series stating what it shows, and a paragraph comparing 1969–2018 with 2018–2024.</p>
+</section>
+<section id="i2-is-europe-converging" class="level2">
+<h2 class="anchored" data-anchor-id="i2-is-europe-converging">I2 — Is Europe converging?</h2>
+<p><strong>Data.</strong> GDP per inhabitant (EUR) for NUTS 2 regions from Eurostat, with GISCO boundaries:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>e <span class="op">=</span> pd.read_csv(io.StringIO(get(</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/"</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"nama_10r_2gdp/A.EUR_HAB.?format=SDMX-CSV&amp;startPeriod=2000"</span>).text))</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>e <span class="op">=</span> e[e.geo.<span class="bu">str</span>.<span class="bu">len</span>() <span class="op">==</span> <span class="dv">4</span>]                       <span class="co"># NUTS 2 codes have 4 characters</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>gdp <span class="op">=</span> e.pivot(index<span class="op">=</span><span class="st">"geo"</span>, columns<span class="op">=</span><span class="st">"TIME_PERIOD"</span>, values<span class="op">=</span><span class="st">"OBS_VALUE"</span>)</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>nuts2 <span class="op">=</span> read_gdf(<span class="st">"https://gisco-services.ec.europa.eu/distribution/v2/nuts/geojson/"</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"NUTS_RG_20M_2021_4326_LEVL_2.geojson"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Tasks.</strong></p>
+<ol type="1">
+<li>Join the data to the boundaries and report how many regions fail to match. NUTS codes are revised every few years (2016, 2021, 2024), and Eurostat back-casts some series but not all. In October 2026, 278 of 285 data regions matched. Decide which regions to drop, which years to keep, and whether to exclude the outermost regions (French overseas departments, the Azores, the Canaries). Write down each choice.</li>
+<li>Plot <strong>σ-convergence</strong>: the coefficient of variation and the Gini of regional GDP per head, 2000–latest year. Then decompose Theil into <strong>between-country</strong> and <strong>within-country</strong> parts (using the first two characters of the NUTS code). A common finding is that disparities <em>between</em> EU countries narrowed while disparities <em>within</em> them widened. Does your decomposition agree?</li>
+<li>EUR at market prices is the wrong unit for a living-standards comparison. Repeat step 2 with PPS per inhabitant (<code>unit=PPS_EU27_2020_HAB</code>; check the code with the API, since unit codes are versioned). Which of your conclusions changes?</li>
+<li>Compute Moran’s <span class="math inline">\(I\)</span> and the spatial Gini over time with a weights matrix that handles islands. Queen contiguity leaves Malta, Cyprus and the islands with no neighbours, so use KNN or a fused queen + KNN matrix. Is Europe’s income map becoming more or less spatially clustered?</li>
+</ol>
+<p><strong>Report.</strong> The decomposition chart for EUR and PPS side by side, the Moran series and a paragraph answering the title.</p>
+</section>
+<section id="i3-personal-versus-regional-the-world-in-one-chart" class="level2">
+<h2 class="anchored" data-anchor-id="i3-personal-versus-regional-the-world-in-one-chart">I3 — Personal versus regional: the world in one chart</h2>
+<p><strong>Data.</strong> World Bank GDP per capita (PPP, constant international $), population and country metadata (region, income group):</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> wb(indicator, dates<span class="op">=</span><span class="st">"1990:2023"</span>):</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    js <span class="op">=</span> get(<span class="ss">f"https://api.worldbank.org/v2/country/all/indicator/</span><span class="sc">{</span>indicator<span class="sc">}</span><span class="ss">"</span>,</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>             <span class="bu">format</span><span class="op">=</span><span class="st">"json"</span>, date<span class="op">=</span>dates, per_page<span class="op">=</span><span class="dv">20000</span>).json()[<span class="dv">1</span>]</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.DataFrame([{<span class="st">"iso3"</span>: r[<span class="st">"countryiso3code"</span>], <span class="st">"year"</span>: <span class="bu">int</span>(r[<span class="st">"date"</span>]),</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>                          <span class="st">"value"</span>: r[<span class="st">"value"</span>]} <span class="cf">for</span> r <span class="kw">in</span> js])</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>y   <span class="op">=</span> wb(<span class="st">"NY.GDP.PCAP.PP.KD"</span>)</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>pop <span class="op">=</span> wb(<span class="st">"SP.POP.TOTL"</span>)</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>meta <span class="op">=</span> pd.DataFrame(get(<span class="st">"https://api.worldbank.org/v2/country"</span>,</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>                        <span class="bu">format</span><span class="op">=</span><span class="st">"json"</span>, per_page<span class="op">=</span><span class="dv">400</span>).json()[<span class="dv">1</span>])</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>meta <span class="op">=</span> meta[meta.region.<span class="bu">apply</span>(<span class="kw">lambda</span> r: r[<span class="st">"value"</span>]) <span class="op">!=</span> <span class="st">"Aggregates"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Tasks.</strong></p>
+<ol type="1">
+<li>Drop the aggregates, keep a <strong>balanced panel</strong> (countries observed every year) and state how many countries are left.</li>
+<li>Compute the Gini for each year twice: unweighted (every country counts once, the “regional” view) and <strong>population-weighted</strong> (each country weighted by its population, which gets closer to the “personal” view in Geo 7’s <em>Personal vs regional</em> slides). The two series move in different directions. Explain why.</li>
+<li>Drop China, then India, then both, and recompute the weighted series. How much of the change in global inequality do those two countries account for?</li>
+<li>Decompose Theil by World Bank region. Does between-region or within-region inequality dominate, and has the dominant component changed since 1990?</li>
+</ol>
+<p><strong>Report.</strong> One chart with the unweighted and weighted Gini plus the two leave-one-out series, and a paragraph on which inequality question each line answers.</p>
+<div class="callout callout-style-default callout-warning no-icon callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>What this does not measure
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Both series treat everyone in a country as earning that country’s mean income, so they ignore inequality inside countries. Say clearly that your weighted series is a <em>between-country</em> measure of personal inequality, not a measure of global personal inequality.</p>
+</div>
+</div>
+</section>
+<section id="i4-which-places-moved" class="level2">
+<h2 class="anchored" data-anchor-id="i4-which-places-moved">I4 — Which places moved?</h2>
+<p>Gini and Theil summarise each year in one number, so they cannot say <em>which</em> regions moved. This exercise uses the local view from Geo 6 over time.</p>
+<p><strong>Data.</strong> Your cleaned panel from I1 (counties) or from I2 (NUTS 2), whichever you completed.</p>
+<p><strong>Tasks.</strong></p>
+<ol type="1">
+<li>Compute LISA (local Moran’s <span class="math inline">\(I_i\)</span>) for the first and last years. Draw both cluster maps at the same significance level, with the same weights and permutation count.</li>
+<li>Cross-tabulate the quadrant labels (HH, LH, LL, HL, not significant) between the two years as a <span class="math inline">\(5 \times 5\)</span> transition table. Which transitions dominate, and where are the HH→not-significant and LL→not-significant regions?</li>
+<li>Rank every region by income in each year and map the change in rank. Compute Kendall’s <span class="math inline">\(\tau\)</span> between the two rankings for the whole sample and within each BEA region or country. Is mobility uniform?</li>
+<li>Pick the five biggest movers in each direction. For each one, find a plausible explanation from the data alone (sector mix, population change from the BEA population line, or a capital-city effect) and say how sure you are of it.</li>
+</ol>
+<p><strong>Report.</strong> The two LISA maps, the transition table and the rank-change map.</p>
+</section>
+</section>
+<section id="sec-c" class="level1">
+<h1>C — Clustering and regionalization</h1>
+<p>These exercises use Geo 7’s clustering chapter: standardisation, <span class="math inline">\(k\)</span>-means, Ward hierarchical clustering, regionalization with a connectivity matrix (<code>AgglomerativeClustering(connectivity=w.sparse)</code>), and the evaluation tools (Calinski–Harabasz, IPQ compactness, adjusted mutual information).</p>
+<section id="c1-geodemographics-of-chicago" class="level2">
+<h2 class="anchored" data-anchor-id="c1-geodemographics-of-chicago">C1 — Geodemographics of Chicago</h2>
+<p><strong>Data.</strong> Seven socioeconomic indicators for Chicago’s 77 community areas, with their boundaries:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>se <span class="op">=</span> socrata(<span class="st">"kn9c-c2s2"</span>)</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>ca <span class="op">=</span> read_gdf(<span class="st">"https://data.cityofchicago.org/resource/igwz-8jzy.geojson"</span>).to_crs(<span class="dv">26916</span>)</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>ca[<span class="st">"ca"</span>] <span class="op">=</span> ca.area_numbe.astype(<span class="bu">int</span>)</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>se <span class="op">=</span> se[pd.to_numeric(se.ca, errors<span class="op">=</span><span class="st">"coerce"</span>).notna()].astype({<span class="st">"ca"</span>: <span class="bu">int</span>})</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>db <span class="op">=</span> ca.merge(se, on<span class="op">=</span><span class="st">"ca"</span>)</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>vars_ <span class="op">=</span> [<span class="st">"percent_of_housing_crowded"</span>, <span class="st">"percent_households_below_poverty"</span>,</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>         <span class="st">"percent_aged_16_unemployed"</span>, <span class="st">"percent_aged_25_without_high_school_diploma"</span>,</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>         <span class="st">"percent_aged_under_18_or_over_64"</span>, <span class="st">"per_capita_income_"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>(Drop <code>hardship_index</code>: it is a composite built from the other six. Ask yourself why clustering on it as well would be double-counting.)</p>
+<p><strong>Tasks.</strong></p>
+<ol type="1">
+<li>Explore before clustering: plot the six choropleths and compute Moran’s <span class="math inline">\(I\)</span> for each variable. Map pairwise correlations with a heat map. Which variables carry nearly the same information?</li>
+<li>Standardise and run <span class="math inline">\(k\)</span>-means for <span class="math inline">\(k = 2, \dots, 8\)</span>. Plot the CH score against <span class="math inline">\(k\)</span> and choose <span class="math inline">\(k\)</span>, defending the choice. Map the clusters and profile them (mean of each variable per cluster, in original units).</li>
+<li>Run Ward clustering with the same <span class="math inline">\(k\)</span>. Compare the two solutions with AMI and say where on the map they disagree.</li>
+<li>Measure the <strong>geographic</strong> coherence of the <span class="math inline">\(k\)</span>-means clusters even though they were not built to be contiguous: IPQ of each cluster’s dissolved shape, and join counts or a contiguity check showing how many separate pieces each cluster has.</li>
+</ol>
+<p><strong>Report.</strong> The cluster map, the profile table and a paragraph naming the clusters in plain words (as geodemographic classifications do), with a note on what the names leave out.</p>
+</section>
+<section id="c2-drawing-contiguous-regions" class="level2">
+<h2 class="anchored" data-anchor-id="c2-drawing-contiguous-regions">C2 — Drawing contiguous regions</h2>
+<p><strong>Data.</strong> As in C1.</p>
+<p><strong>Tasks.</strong></p>
+<ol type="1">
+<li>Build queen weights for the 77 community areas and confirm the graph is connected (<code>w.n_components</code>).</li>
+<li>Run <code>AgglomerativeClustering(linkage="ward", connectivity=w.sparse)</code> with the <span class="math inline">\(k\)</span> chosen in C1. Map the result.</li>
+<li>Measure the <strong>cost of contiguity</strong>: the within-cluster sum of squares (in standardised units) for the regionalization against the unconstrained <span class="math inline">\(k\)</span>-means and Ward solutions. How much homogeneity does the contiguity constraint cost?</li>
+<li>Compare the regions with the city’s official <strong>“sides”</strong> (Far North, Northwest, …, Far Southeast) using AMI. Build the side labels by hand from the community area numbers, using the standard grouping of the 77 areas into nine sides (listed, for example, on Wikipedia’s <em>Community areas in Chicago</em> page). Are the official sides socioeconomically homogeneous?</li>
+<li>Optional: run <code>spopt.region.Skater</code> with the same <span class="math inline">\(k\)</span> and compare it to the Ward regionalization. Where do the boundaries differ?</li>
+</ol>
+<p><strong>Report.</strong> The regionalization map next to the k-means map, a cost-of-contiguity table and a paragraph on whether the official sides would pass as regions.</p>
+</section>
+<section id="c3-growth-regions-of-europe" class="level2">
+<h2 class="anchored" data-anchor-id="c3-growth-regions-of-europe">C3 — Growth regions of Europe</h2>
+<p><strong>Data.</strong> The NUTS 2 GDP panel from I2.</p>
+<p><strong>Tasks.</strong></p>
+<ol type="1">
+<li>Build a feature vector for each region that describes its <strong>trajectory</strong>, not its level: for example, the GDP index relative to the region’s own 2005 value for each year. Explain why this is a different question from clustering on levels.</li>
+<li>Cluster with <span class="math inline">\(k\)</span>-means (several <span class="math inline">\(k\)</span>, CH score) and map the result. Do the trajectory clusters follow country borders?</li>
+<li>Regionalize with a contiguity constraint. Queen weights on NUTS 2 are <strong>disconnected</strong> (islands, Cyprus, the Baltic sea gap to Finland, the Channel), and <code>AgglomerativeClustering</code> gives poor results or warnings on a disconnected graph. Fix the graph explicitly, for example by joining each component to its nearest neighbour or by unioning queen with a KNN matrix. Document which links you added.</li>
+<li>Compute AMI between your clusters and the country labels (first two characters of the NUTS code), for both the unconstrained and the constrained solutions. How “national” is European growth?</li>
+</ol>
+<p><strong>Report.</strong> The two maps, the list of links you added to the graph and the AMI values with a paragraph interpreting them.</p>
+</section>
+<section id="c4-how-stable-is-a-cluster-map" class="level2">
+<h2 class="anchored" data-anchor-id="c4-how-stable-is-a-cluster-map">C4 — How stable is a cluster map?</h2>
+<p>A cluster map looks definitive, but it rests on several arbitrary choices. This exercise measures how much they matter.</p>
+<p><strong>Data.</strong> As in C1 (or C3 if you prefer).</p>
+<p><strong>Tasks.</strong></p>
+<ol type="1">
+<li>Re-run your C1 <span class="math inline">\(k\)</span>-means with 50 different random seeds and <code>n_init=1</code>. Compute pairwise AMI across runs and summarise its distribution. With the default <code>n_init</code>, how often does the “best” solution change?</li>
+<li>Vary the preprocessing: z-scores, robust scaling (median/IQR), rank transform, and z-scores after a log of per-capita income. Compute AMI between every pair of solutions.</li>
+<li>Vary <span class="math inline">\(k\)</span> by <span class="math inline">\(\pm 1\)</span> around your choice and track which community areas change cluster. Map the “fragile” community areas (those whose assignment changes most often across all the variants above).</li>
+<li>Repeat steps 1–3 for the contiguity-constrained solution from C2. Is regionalization more stable, or less?</li>
+</ol>
+<p><strong>Report.</strong> The fragility map and a short methodological note: which result from C1 you would still publish after seeing this, and which you would not.</p>
+</section>
+</section>
+<section id="sec-r" class="level1">
+<h1>R — Spatial regression</h1>
+<p>These exercises use Geo 7’s spatial regression chapter: OLS with <code>spreg</code>, residual diagnostics (Moran’s <span class="math inline">\(I\)</span>, LISA of residuals, <span class="math inline">\(\mathrm{corr}(u, Wu)\)</span>), spatial fixed effects, regimes with the Chow test, SLX, the spatial error model and the spatial lag model. Use the supplement, <a href="../2026/geo7_validation.html">Validating spatial predictions</a>, for any question about prediction accuracy.</p>
+<section id="r1-a-hedonic-model-for-chicago-airbnb" class="level2">
+<h2 class="anchored" data-anchor-id="r1-a-hedonic-model-for-chicago-airbnb">R1 — A hedonic model for Chicago Airbnb</h2>
+<p><strong>Data.</strong> The latest Inside Airbnb snapshot for Chicago. Snapshots are replaced, so copy the current <code>listings.csv.gz</code> link from <a href="https://insideairbnb.com/get-the-data/">insideairbnb.com/get-the-data</a>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span> (<span class="st">"https://data.insideairbnb.com/united-states/il/chicago/"</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>       <span class="st">"2026-06-24/data/listings.csv.gz"</span>)            <span class="co"># replace with the current date</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>ab <span class="op">=</span> pd.read_csv(io.BytesIO(get(url).content), compression<span class="op">=</span><span class="st">"gzip"</span>)</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>ab[<span class="st">"price"</span>] <span class="op">=</span> pd.to_numeric(ab.price.<span class="bu">str</span>.replace(<span class="vs">r"</span><span class="pp">[$,]</span><span class="vs">"</span>, <span class="st">""</span>, regex<span class="op">=</span><span class="va">True</span>),</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>                            errors<span class="op">=</span><span class="st">"coerce"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Tasks.</strong></p>
+<ol type="1">
+<li>Clean the data. Drop listings with no price and decide what to do with extreme prices (look at the tail before choosing a rule). Parse <code>bathrooms_text</code>. Keep listings that are actually rentable. State how many listings remain at each step.</li>
+<li>Fit `log(price) ~ accommodates + bedrooms + bathrooms + beds + room type dummies
+<ul>
+<li>property type dummies<code>with</code>spreg.OLS`. Interpret the intercept and two slopes as percentage effects (<span class="math inline">\(e^{\beta}-1\)</span>), as on Geo 7’s <em>Intercept and slopes</em> slide.</li>
+</ul></li>
+<li>Build KNN weights (<span class="math inline">\(k = 20\)</span>, row-standardised, projected coordinates) and run the residual diagnostics from the lecture: Moran’s <span class="math inline">\(I\)</span> of residuals, <span class="math inline">\(\mathrm{corr}(u, Wu)\)</span>, and a LISA of residuals mapped over a basemap. Where does the model systematically under-price and over-price?</li>
+<li>Add <strong>spatial fixed effects</strong> for <code>neighbourhood_cleansed</code> (one dummy per neighbourhood). How much does <span class="math inline">\(R^2\)</span> change? How much does residual Moran’s <span class="math inline">\(I\)</span> fall? Map the estimated neighbourhood effects.</li>
+</ol>
+<p><strong>Report.</strong> The coefficient table, the residual LISA map, the fixed-effects map and a paragraph on what the fixed effects capture and what they cannot explain.</p>
+</section>
+<section id="r2-is-the-north-side-a-different-market" class="level2">
+<h2 class="anchored" data-anchor-id="r2-is-the-north-side-a-different-market">R2 — Is the North Side a different market?</h2>
+<p><strong>Data.</strong> Your cleaned Chicago listings from R1, joined to community areas (from C1) so that each listing has a community area and an official side.</p>
+<p><strong>Tasks.</strong></p>
+<ol type="1">
+<li>Define two regimes: North (Far North, Northwest, North, Central) and South (the others). Fit <code>spreg.OLS_Regimes</code> with the R1 specification.</li>
+<li>Read the Chow test: which coefficients differ between regimes, and does the global test reject equal coefficients?</li>
+<li>Re-define the regimes as “within 2 km of a CTA ‘L’ station” against “further” (stations from <code>socrata("8pix-ypme")</code>) and repeat. Which partition produces the stronger difference in slopes?</li>
+<li>Explain, as on the <em>Intercept and slopes</em> slide, the difference between letting the <strong>intercept</strong> vary (fixed effects, R1) and letting the <strong>slopes</strong> vary (regimes). Then look at the coefficients. Does an extra bedroom add more on the North Side?</li>
+</ol>
+<p><strong>Report.</strong> The regime coefficient table with the Chow statistics and a paragraph answering the title.</p>
+</section>
+<section id="r3-california-housing-diagnose-then-model-the-dependence" class="level2">
+<h2 class="anchored" data-anchor-id="r3-california-housing-diagnose-then-model-the-dependence">R3 — California housing: diagnose, then model the dependence</h2>
+<p><strong>Data.</strong> The 1990 census block-group data that ships with scikit-learn:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.datasets <span class="im">import</span> fetch_california_housing</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>ca <span class="op">=</span> fetch_california_housing(as_frame<span class="op">=</span><span class="va">True</span>).frame</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>g <span class="op">=</span> gpd.GeoDataFrame(ca, geometry<span class="op">=</span>gpd.points_from_xy(ca.Longitude, ca.Latitude),</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>                     crs<span class="op">=</span><span class="dv">4326</span>).to_crs(<span class="dv">3310</span>)              <span class="co"># California Albers</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Tasks.</strong></p>
+<ol type="1">
+<li>Plot the distribution of <code>MedHouseVal</code>. It is <strong>top-coded</strong> at 5.0 ($500k). Count the capped observations and map them. Then explain what top-coding does to OLS slopes in the expensive coastal areas.</li>
+<li>Fit OLS of <code>log(MedHouseVal)</code> on <code>MedInc</code>, <code>HouseAge</code>, <code>AveRooms</code>, <code>AveBedrms</code>, <code>Population</code> and <code>AveOccup</code> with <code>spat_diag=True</code> and KNN weights. Read the LM tests (LM-lag, LM-error and their robust versions) and say which model they point to.</li>
+<li>Fit SLX (add <span class="math inline">\(W\mathbf{X}\)</span>), <code>GM_Error_Het</code> and <code>GM_Lag</code>. Make one table comparing the coefficient on <code>MedInc</code> across OLS, SLX, error and lag. For the lag model, explain why the coefficient alone is <strong>not</strong> the marginal effect.</li>
+<li>Repeat steps 2–3 without the top-coded observations. Which conclusions survive?</li>
+</ol>
+<p><strong>Report.</strong> The comparison table (all models, with and without capped observations) and a paragraph choosing a model and defending the choice.</p>
+</section>
+<section id="r4-β-convergence-across-european-regions" class="level2">
+<h2 class="anchored" data-anchor-id="r4-β-convergence-across-european-regions">R4 — β-convergence across European regions</h2>
+<p><strong>Data.</strong> The NUTS 2 GDP panel from I2.</p>
+<p><strong>Tasks.</strong></p>
+<ol type="1">
+<li>Compute annualised growth of GDP per head from 2005 to the latest year and regress it on <span class="math inline">\(\log\)</span> GDP per head in 2005. A negative slope means <strong>β-convergence</strong>: poorer regions grew faster. Compute the implied speed of convergence and the half-life.</li>
+<li>Diagnose the residuals with Moran’s <span class="math inline">\(I\)</span> and the LM tests using your fixed island weights from I2 or C3.</li>
+<li>Fit the spatial error model and the spatial lag model. Does <span class="math inline">\(\hat\beta\)</span> change sign, size or significance?</li>
+<li>Add <strong>country fixed effects</strong>. The slope then measures convergence <strong>within</strong> countries. Compare it with the pooled slope and connect the comparison to the between/within Theil decomposition from I2.</li>
+</ol>
+<p><strong>Report.</strong> The β estimates for OLS, error, lag and fixed effects, the half-lives and a paragraph relating them to your I2 findings.</p>
+</section>
+</section>
+<section id="sec-f" class="level1">
+<h1>F — Spatial feature engineering</h1>
+<p>These exercises use Geo 7’s feature-engineering chapter: map matching (distances, counts within a buffer), spatial summary features (<code>DistanceBand</code> lags, <code>lag_categorical</code>), areal interpolation with <code>tobler</code>, and clustering as feature extraction. Every engineered feature is tested in the same way: does it improve a model <strong>under spatially blocked validation</strong>, or only under random cross-validation?</p>
+<div class="callout callout-style-default callout-warning no-icon callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>The leakage rule
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>If a feature for listing <span class="math inline">\(i\)</span> is computed from neighbours that include <span class="math inline">\(i\)</span> itself (for example a neighbourhood mean price that includes <span class="math inline">\(i\)</span>’s own price), it leaks the target. Always exclude self from neighbour summaries of the outcome, and compute outcome-based features inside the training fold only.</p>
+</div>
+</div>
+<section id="f1-transit-libraries-and-the-price-of-a-room" class="level2">
+<h2 class="anchored" data-anchor-id="f1-transit-libraries-and-the-price-of-a-room">F1 — Transit, libraries, and the price of a room</h2>
+<p><strong>Data.</strong> Chicago listings from R1, CTA ‘L’ stations and public libraries:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>st <span class="op">=</span> socrata(<span class="st">"8pix-ypme"</span>)</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>st <span class="op">=</span> gpd.GeoDataFrame(st, geometry<span class="op">=</span>gpd.points_from_xy(</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>        st.location.<span class="bu">str</span>[<span class="st">"longitude"</span>].astype(<span class="bu">float</span>),</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>        st.location.<span class="bu">str</span>[<span class="st">"latitude"</span>].astype(<span class="bu">float</span>)), crs<span class="op">=</span><span class="dv">4326</span>).to_crs(<span class="dv">26916</span>)</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>st <span class="op">=</span> st.dissolve(<span class="st">"map_id"</span>)                  <span class="co"># one point per station, not per platform</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>lib <span class="op">=</span> socrata(<span class="st">"x8fc-8rcq"</span>)                  <span class="co"># parse its `location` the same way</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Tasks.</strong></p>
+<ol type="1">
+<li>For every listing compute: the distance to the nearest station (<code>sjoin_nearest</code>), the number of stations within 500 m and 1 km, and the distance to the nearest library. Also compute the distance to the Loop (an approximate centroid of community area 32).</li>
+<li>Add the features to the R1 model one at a time. Report <span class="math inline">\(R^2\)</span> and the residual Moran’s <span class="math inline">\(I\)</span> after each addition.</li>
+<li>Evaluate with 5-fold random cross-validation and with spatially blocked cross-validation (community areas as groups, <code>GroupKFold</code>). For each feature compute the gain under each scheme and note where the two disagree.</li>
+<li>Optional, if Overpass is reachable: add OSM features (restaurants, bars or tourist attractions within 500 m via <code>osmnx.features_from_place</code>), and report whether they add anything beyond the transit features.</li>
+</ol>
+<p><strong>Report.</strong> A table of features × (in-sample <span class="math inline">\(R^2\)</span>, random CV, blocked CV, residual <span class="math inline">\(I\)</span>), and a paragraph on which feature you would keep.</p>
+</section>
+<section id="f2-neighbourhood-summaries-without-leakage" class="level2">
+<h2 class="anchored" data-anchor-id="f2-neighbourhood-summaries-without-leakage">F2 — Neighbourhood summaries without leakage</h2>
+<p><strong>Data.</strong> As in F1.</p>
+<p><strong>Tasks.</strong></p>
+<ol type="1">
+<li>Compute <span class="math inline">\(W\mathbf{X}\)</span> features (mean <code>accommodates</code>, mean <code>bedrooms</code> of the 20 nearest listings) and a <code>DistanceBand</code> count of listings within 300 m, a local density feature.</li>
+<li>Compute the share of each room type among the 20 nearest neighbours with <code>lag_categorical</code>, or by hand as a proportion.</li>
+<li>Now compute the <strong>neighbourhood mean log price</strong>, first naively (including self, on the full dataset) and then correctly (excluding self, within each training fold). Compare blocked-CV <span class="math inline">\(R^2\)</span> for the two versions and report the size of the leak.</li>
+<li>Compare the leakage-free price lag with the R1 spatial fixed effects. Both try to capture “location”. Which wins under blocked CV, and why might the answer differ under random CV?</li>
+</ol>
+<p><strong>Report.</strong> The naive-against-correct comparison in one table, with a sentence on how you would find this kind of bug in someone else’s code.</p>
+</section>
+<section id="f3-areal-interpolation-with-a-ground-truth" class="level2">
+<h2 class="anchored" data-anchor-id="f3-areal-interpolation-with-a-ground-truth">F3 — Areal interpolation with a ground truth</h2>
+<p>Areal interpolation is usually impossible to check, because the true values on the target zones are unknown. Here they can be checked, because the crimes are points.</p>
+<p><strong>Data.</strong> The 2024 burglaries from P2, Chicago community areas from C1, and Cook County census tracts clipped to the city:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>tracts <span class="op">=</span> read_gdf(<span class="st">"https://www2.census.gov/geo/tiger/GENZ2023/shp/"</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"cb_2023_17_tract_500k.zip"</span>)</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>tracts <span class="op">=</span> tracts[tracts.COUNTYFP <span class="op">==</span> <span class="st">"031"</span>].to_crs(<span class="dv">26916</span>)</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>tracts <span class="op">=</span> gpd.overlay(tracts, city, how<span class="op">=</span><span class="st">"intersection"</span>)      <span class="co"># `city` from P2</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>tracts <span class="op">=</span> tracts[tracts.area <span class="op">&gt;</span> <span class="dv">1_000</span>]                         <span class="co"># drop edge slivers</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Tasks.</strong></p>
+<ol type="1">
+<li>Count burglaries per community area. This is the <strong>source</strong> variable, as if it were the only published data.</li>
+<li>Interpolate the counts to tracts with <code>tobler.area_weighted.area_interpolate</code> (<code>extensive_variables</code>). Then count the points per tract directly: that is the <strong>truth</strong>.</li>
+<li>Measure the error: MAE, the correlation, and a map of the residuals (interpolated minus true). Where does area weighting fail? Relate the failures to the assumption that crime is spread uniformly over each source zone.</li>
+<li>Repeat for an <strong>intensive</strong> variable: interpolate the community-area <code>per_capita_income_</code> and <code>percent_households_below_poverty</code> to tracts. With no ground truth this time, explain what the interpolated value means for a tract that straddles a rich and a poor community area.</li>
+<li>Optional: improve step 2 with <strong>dasymetric</strong> weighting. Mask out water and parks, or weight by residential land use, then measure the error again.</li>
+</ol>
+<p><strong>Report.</strong> The error map, the error statistics and a paragraph on when you would trust interpolated values as model features.</p>
+</section>
+<section id="f4-location-features-for-california-housing" class="level2">
+<h2 class="anchored" data-anchor-id="f4-location-features-for-california-housing">F4 — Location features for California housing</h2>
+<p><strong>Data.</strong> California housing from R3, the Natural Earth 10 m coastline, and California state boundaries:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>coast <span class="op">=</span> read_gdf(<span class="st">"https://naciscdn.org/naturalearth/10m/physical/ne_10m_coastline.zip"</span>)</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>states <span class="op">=</span> read_gdf(<span class="st">"https://www2.census.gov/geo/tiger/GENZ2023/shp/cb_2023_us_state_20m.zip"</span>)</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>ca_poly <span class="op">=</span> states[states.STUSPS <span class="op">==</span> <span class="st">"CA"</span>].to_crs(<span class="dv">3310</span>)</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>coast <span class="op">=</span> gpd.clip(coast.to_crs(<span class="dv">3310</span>), ca_poly.<span class="bu">buffer</span>(<span class="dv">5_000</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Tasks.</strong></p>
+<ol type="1">
+<li>Engineer location features: distance to the coast, distance to the nearest of the five largest cities (choose and geocode them yourself), and KNN lags of <code>MedInc</code> and <code>HouseAge</code> (<span class="math inline">\(k = 10\)</span>).</li>
+<li>Engineer a <strong>cluster feature</strong>: run <span class="math inline">\(k\)</span>-means on the projected coordinates (<span class="math inline">\(k \approx 20\)</span>) and also HDBSCAN. Use the cluster labels as categorical features. Map them.</li>
+<li>Train a gradient-boosted model (<code>HistGradientBoostingRegressor</code>) with four feature sets: (a) attributes only, (b) attributes + raw lat/lon, (c) attributes + engineered features, (d) attributes + everything. Evaluate each under random 5-fold CV and under spatially blocked CV (for example a 50 km grid as groups).</li>
+<li>Explain the pattern in the results using the supplement’s argument. Raw coordinates tend to win under random CV and lose under blocked CV. Do engineered features transfer better than coordinates?</li>
+</ol>
+<p><strong>Report.</strong> A <span class="math inline">\(4 \times 2\)</span> results table (feature set × CV scheme) and a paragraph recommending one feature set for predicting <strong>in a county the model has never seen</strong>.</p>
+</section>
+</section>
+<section id="where-these-lead" class="level1">
+<h1>Where these lead</h1>
+<p>Several exercises are scaled-down versions of the <a href="../projects.html">course projects</a>:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>exercise</th>
+<th>grows into</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>P2, P3 (null models, inhomogeneity)</td>
+<td><strong>G5</strong> — Is that a cluster, or is that what random looks like?</td>
+</tr>
+<tr class="even">
+<td>I1, I4</td>
+<td><strong>G8</strong> — Fifty years of inequality</td>
+</tr>
+<tr class="odd">
+<td>C2, C3, C4</td>
+<td><strong>G9</strong> — Drawing boundaries that have to work</td>
+</tr>
+<tr class="even">
+<td>R1–R3, F1, F2, F4</td>
+<td><strong>G4</strong> — Predicting across space, and the accuracy you should not report</td>
+</tr>
+<tr class="odd">
+<td>F3</td>
+<td><strong>G1</strong> — Accessibility, and the unit you chose to measure it in</td>
+</tr>
+</tbody>
+</table>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/dslnu\.github\.io\/data_analytics\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

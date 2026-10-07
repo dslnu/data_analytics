@@ -6,8 +6,9 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
+<meta name="author" content="MSDE">
 
-<title>Applied Data Analytics – Big Data analytics / Applied Data analytics</title>
+<title>Geo lab3: Point Pattern Analysis – Big Data analytics / Applied Data analytics</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -26,26 +27,61 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
 </style>
 
 
-<script src="site_libs/quarto-nav/quarto-nav.js"></script>
-<script src="site_libs/quarto-nav/headroom.min.js"></script>
-<script src="site_libs/clipboard/clipboard.min.js"></script>
-<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
-<script src="site_libs/quarto-search/fuse.min.js"></script>
-<script src="site_libs/quarto-search/quarto-search.js"></script>
-<meta name="quarto:offset" content="./">
-<script src="site_libs/quarto-html/quarto.js" type="module"></script>
-<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="site_libs/quarto-html/popper.min.js"></script>
-<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
-<script src="site_libs/quarto-html/anchor.min.js"></script>
-<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="site_libs/bootstrap/bootstrap.min.js"></script>
-<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-445b8638c3d06994fee0907d791121c4.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-6e268169e3b58a97b39eb04411ed87c3.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -74,8 +110,37 @@ ul.task-list li input[type="checkbox"] {
   }
 }</script>
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
 
-<link rel="stylesheet" href="styles.css">
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../styles.css">
 </head>
 
 <body class="nav-fixed quarto-light">
@@ -85,7 +150,7 @@ ul.task-list li input[type="checkbox"] {
     <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
-    <a class="navbar-brand" href="./index.html">
+    <a class="navbar-brand" href="../index.html">
     <span class="navbar-title">Big Data analytics / Applied Data analytics</span>
     </a>
   </div>
@@ -96,19 +161,19 @@ ul.task-list li input[type="checkbox"] {
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll me-auto">
   <li class="nav-item">
-    <a class="nav-link" href="./index.html"> 
+    <a class="nav-link" href="../index.html"> 
 <span class="menu-text">Home</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./bigdata.html"> 
+    <a class="nav-link" href="../bigdata.html"> 
 <span class="menu-text">Big Data analytics</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link active" href="./applied.html" aria-current="page"> 
+    <a class="nav-link" href="../applied.html"> 
 <span class="menu-text">Applied Data analytics</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./about.html"> 
+    <a class="nav-link" href="../about.html"> 
 <span class="menu-text">About</span></a>
   </li>  
 </ul>
@@ -127,20 +192,8 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#overview" id="toc-overview" class="nav-link active" data-scroll-target="#overview">Overview</a></li>
-  <li><a href="#projects" id="toc-projects" class="nav-link" data-scroll-target="#projects">Projects</a></li>
-  <li><a href="#lectures" id="toc-lectures" class="nav-link" data-scroll-target="#lectures">Lectures</a>
-  <ul class="collapse">
-  <li><a href="#geoscience" id="toc-geoscience" class="nav-link" data-scroll-target="#geoscience">Geoscience</a></li>
-  <li><a href="#bioinformatics" id="toc-bioinformatics" class="nav-link" data-scroll-target="#bioinformatics">Bioinformatics</a></li>
-  <li><a href="#finance" id="toc-finance" class="nav-link" data-scroll-target="#finance">Finance</a></li>
-  <li><a href="#healthcare" id="toc-healthcare" class="nav-link" data-scroll-target="#healthcare">Healthcare</a></li>
-  <li><a href="#entity-centric-analytics" id="toc-entity-centric-analytics" class="nav-link" data-scroll-target="#entity-centric-analytics">Entity-centric analytics</a></li>
-  </ul></li>
-  <li><a href="#labsprojects" id="toc-labsprojects" class="nav-link" data-scroll-target="#labsprojects">Labs/Projects</a>
-  <ul class="collapse">
-  <li><a href="#geoscience-1" id="toc-geoscience-1" class="nav-link" data-scroll-target="#geoscience-1">Geoscience</a></li>
-  </ul></li>
+  <li><a href="#helpers" id="toc-helpers" class="nav-link active" data-scroll-target="#helpers">Helpers</a></li>
+  <li><a href="#exercise" id="toc-exercise" class="nav-link" data-scroll-target="#exercise">Exercise</a></li>
   </ul>
 </nav>
     </div>
@@ -149,14 +202,27 @@ ul.task-list li input[type="checkbox"] {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Applied Data Analytics</h1>
+<h1 class="title">Geo lab3: Point Pattern Analysis</h1>
 </div>
 
 
+<div class="quarto-title-meta-author">
+  <div class="quarto-title-meta-heading">Author</div>
+  <div class="quarto-title-meta-heading">Affiliation</div>
+  
+    <div class="quarto-title-meta-contents">
+    <p class="author">MSDE </p>
+  </div>
+  <div class="quarto-title-meta-contents">
+        <p class="affiliation">
+            Lviv University
+          </p>
+      </div>
+  </div>
 
 <div class="quarto-title-meta">
 
-    
+      
   
     
   </div>
@@ -166,77 +232,48 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<section id="overview" class="level2">
-<h2 class="anchored" data-anchor-id="overview">Overview</h2>
-<p>Course will cover the following:</p>
-<ul>
-<li>data fetching/preprocessing</li>
-<li>causal inference</li>
-<li>reproducibility</li>
-<li>domains:
-<ul>
-<li>geoscience</li>
-<li>finance/economics</li>
-<li>genetics/bioinformatics</li>
-<li>healthcare</li>
-<li>knowledge graphs/entity-centric analytics</li>
-<li>astronomy</li>
-</ul></li>
-</ul>
+<section id="helpers" class="level2">
+<h2 class="anchored" data-anchor-id="helpers">Helpers</h2>
+<p>You can use these helper functions:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> io, zipfile, time</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np, pandas <span class="im">as</span> pd, geopandas <span class="im">as</span> gpd, requests</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> get(url, <span class="op">**</span>params):</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    r <span class="op">=</span> requests.get(url, params<span class="op">=</span>params <span class="kw">or</span> <span class="va">None</span>, timeout<span class="op">=</span><span class="dv">300</span>)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    r.raise_for_status()</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> r</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> read_gdf(url):                       <span class="co"># GeoJSON, or a zipped shapefile</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> gpd.read_file(io.BytesIO(get(url).content))</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> socrata(dataset, <span class="op">**</span>params):          <span class="co"># Chicago Data Portal (SODA API)</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.DataFrame(get(<span class="ss">f"https://data.cityofchicago.org/resource/</span><span class="sc">{</span>dataset<span class="sc">}</span><span class="ss">.json"</span>,</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>                            <span class="op">**</span>params).json())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Please note that if download is large, you can store it in your data folder to avoid re-downloading it evey time.</p>
 </section>
-<section id="projects" class="level2">
-<h2 class="anchored" data-anchor-id="projects">Projects</h2>
-<p><a href="./projects.html">Course projects</a> — seventeen data-science projects, nine geospatial and eight bioinformatic.</p>
-</section>
-<section id="lectures" class="level2">
-<h2 class="anchored" data-anchor-id="lectures">Lectures</h2>
-<section id="geoscience" class="level3">
-<h3 class="anchored" data-anchor-id="geoscience">Geoscience</h3>
-<p><a href="./2026/geo_intro.html">Geo 1: Intro to Geoscience</a></p>
-<p><a href="./2026/geo2.html">Geo 2: Geoscience part 2</a></p>
-<p><a href="./2026/geo3.html">Geo 3: Geoscience part 3</a></p>
-<p><a href="./2026/geo4.html">Geo 4: Geoscience part 4</a></p>
-<p><a href="./2026/geo5.html">Geo 5: Geoscience part 5</a></p>
-<p><a href="./2026/geo6.html">Geo 6: Geoscience part 6</a></p>
-<p><a href="./2026/geo7.html">Geo 7: Advanced topics — inequality, regionalization, regression, feature engineering</a></p>
-<p><a href="./2026/geo7_validation.html">Geo 7 supplement: Validating spatial predictions</a></p>
-<p><a href="./2026/geo_exercises.html">Geo 6–7 exercises: twenty open-data exercises on point patterns, inequality, regionalization, regression and feature engineering</a></p>
-</section>
-<section id="bioinformatics" class="level3">
-<h3 class="anchored" data-anchor-id="bioinformatics">Bioinformatics</h3>
-<p><a href="./bio/bio1.html">Bio 1: Biological data and sequence alignment</a></p>
-<p><a href="./bio/bio2.html">Bio 2: Homology search and classification</a></p>
-<p><a href="./bio/bio3.html">Bio 3: Single-cell data and preprocessing</a></p>
-<p><a href="./bio/bio4.html">Bio 4: Cellular structure and conditions</a></p>
-<p><a href="./bio/bio_reading.html">Reading notes: companion to Bio 1–4, with source provenance</a></p>
-</section>
-<section id="finance" class="level3">
-<h3 class="anchored" data-anchor-id="finance">Finance</h3>
-<p><a href="./2026/finance_intro.qmd">Finance 1: Intro to Finance</a></p>
-<p><a href="./2026/finance2.qmd">Finance 2: Finance part 2</a></p>
-<p><a href="./2026/finance3.qmd">Finance 3: Finance part 3</a></p>
-</section>
-<section id="healthcare" class="level3">
-<h3 class="anchored" data-anchor-id="healthcare">Healthcare</h3>
-<p><a href="./2026/health_intro.qmd">Healthcare 1: Intro to Healthcare</a></p>
-<p><a href="./2026/health2.qmd">Healthcare 2: Healthcare part 2</a></p>
-<p><a href="./2026/health3.qmd">Healthcare 3: Healthcare part 3</a></p>
-</section>
-<section id="entity-centric-analytics" class="level3">
-<h3 class="anchored" data-anchor-id="entity-centric-analytics">Entity-centric analytics</h3>
-<p><a href="./2026/kg_intro.qmd">Entity-centric analytics 1: Intro to Knowledge Graphs</a></p>
-<p><a href="./2026/kg2.qmd">Knowledge Graphs 2: KG part 2</a></p>
-<p><a href="./2026/kg3.qmd">Knowledge Graphs 3: KG part 3</a></p>
-</section>
-</section>
-<section id="labsprojects" class="level2">
-<h2 class="anchored" data-anchor-id="labsprojects">Labs/Projects</h2>
-<section id="geoscience-1" class="level3">
-<h3 class="anchored" data-anchor-id="geoscience-1">Geoscience</h3>
-<p><a href="./2026/geo_lab1.html">Geo lab 1</a> <a href="./2026/geo_lab2.html">Geo lab 2</a></p>
+<section id="exercise" class="level2">
+<h2 class="anchored" data-anchor-id="exercise">Exercise</h2>
+<p><strong>Data.</strong> One year of burglaries in Chicago and the city boundary (dissolved from the 77 community areas):</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>cr <span class="op">=</span> socrata(<span class="st">"ijzp-q8t2"</span>, <span class="op">**</span>{<span class="st">"$where"</span>: <span class="st">"year=2024 AND primary_type='BURGLARY'"</span>,</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>                             <span class="st">"$limit"</span>: <span class="dv">50000</span>})</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>cr <span class="op">=</span> cr.dropna(subset<span class="op">=</span>[<span class="st">"latitude"</span>, <span class="st">"longitude"</span>])</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>pts <span class="op">=</span> gpd.GeoDataFrame(cr, geometry<span class="op">=</span>gpd.points_from_xy(cr.longitude.astype(<span class="bu">float</span>),</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>                                                       cr.latitude.astype(<span class="bu">float</span>)),</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>                       crs<span class="op">=</span><span class="dv">4326</span>).to_crs(<span class="dv">26916</span>)          <span class="co"># UTM 16N</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>city <span class="op">=</span> read_gdf(<span class="st">"https://data.cityofchicago.org/resource/igwz-8jzy.geojson"</span>) <span class="op">\</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>         .to_crs(<span class="dv">26916</span>).dissolve()</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>poly <span class="op">=</span> city.geometry.iloc[<span class="dv">0</span>]</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>pts <span class="op">=</span> pts[pts.within(poly)]  </span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>xy <span class="op">=</span> np.column_stack([pts.geometry.x, pts.geometry.y])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Tasks.</strong></p>
+<ol type="1">
+<li>Run a quadrat test (<code>pointpats.QStatistic</code>) with a regular grid over the <strong>bounding box</strong>.</li>
+<li>Compute Ripley’s <span class="math inline">\(G\)</span> and <span class="math inline">\(F\)</span> with simulation envelopes twice, once with the bounding box as the window and once with the city polygon. Plot all four curves.</li>
+<li>Are burglaries clustered <strong>relative to where people live</strong>?</li>
+<li>Run DBSCAN with different parameters and show clusters on map.</li>
+</ol>
 
 
-</section>
 </section>
 
 </main> <!-- /main -->

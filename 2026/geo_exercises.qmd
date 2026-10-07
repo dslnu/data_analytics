@@ -1,0 +1,798 @@
+---
+title: "Geo 6--7 exercises"
+subtitle: "Twenty exercises on open data: point patterns, inequality, regionalization, spatial regression, feature engineering"
+author:
+  - name: MSDE
+    affiliation: Lviv University
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    code-overflow: wrap
+execute:
+  enabled: false
+---
+
+## How these exercises work
+
+There are four exercises for each of the five chapters covered in
+[Geo 6](./geo6.qmd) (point pattern analysis) and [Geo 7](./geo7.qmd) (inequality,
+clustering and regionalization, spatial regression, feature engineering). None of them
+reuse the book's datasets. Each one starts by **downloading open data** and then asks
+you to apply that chapter's methods to it.
+
+Most exercises have the same three parts:
+
+- **Data**: where the data comes from, plus a snippet that downloads it. Every URL was
+  checked in October 2026 and needs no API key.
+- **Tasks**: numbered steps. The later steps are less prescriptive than the early ones.
+- **Report**: what to hand in. Usually that is a number, a map and a paragraph that
+  interprets them. A figure with no interpretation does not count as an answer.
+
+The datasets come back across chapters. Chicago (crimes, community areas, transit
+stations, Airbnb listings) and the European NUTS regions show up several times, so
+work from an earlier exercise carries forward.
+
+:::{.callout-tip icon=false}
+## Shared setup
+
+Some machines fail with `CERTIFICATE_VERIFY_FAILED` when `pandas` or `geopandas`
+opens a URL directly, because they don't use `requests`' certificate bundle. To avoid
+that, download with `requests` and parse from memory. Every snippet below assumes
+these helpers:
+
+```python
+import io, zipfile, time
+import numpy as np, pandas as pd, geopandas as gpd, requests
+
+def get(url, **params):
+    r = requests.get(url, params=params or None, timeout=300)
+    r.raise_for_status()
+    return r
+
+def read_gdf(url):                       # GeoJSON, or a zipped shapefile
+    return gpd.read_file(io.BytesIO(get(url).content))
+
+def socrata(dataset, **params):          # Chicago Data Portal (SODA API)
+    return pd.DataFrame(get(f"https://data.cityofchicago.org/resource/{dataset}.json",
+                            **params).json())
+```
+
+Cache what you download (`df.to_parquet(...)`, `gdf.to_file(... .gpkg)`). Then you
+fetch once rather than once per kernel restart, and the source cannot change while
+you are halfway through.
+:::
+
+:::{.callout-note icon=false}
+## Libraries
+
+`geopandas`, `libpysal`, `esda`, `pointpats`, `inequality`, `spopt`, `spreg`, `tobler`,
+`scikit-learn`, `contextily`, `matplotlib`. These are the same libraries as in the
+lectures. OpenStreetMap via `osmnx` is mentioned as an optional extension in a few
+places. Public Overpass servers are often overloaded, so no exercise requires it.
+:::
+
+### Map of the exercises
+
+| | chapter | exercises | main data |
+|---|---|---|---|
+| **P** | Point pattern analysis (Geo 6) | P1--P4 | USGS earthquakes, Chicago crimes, GBIF occurrences |
+| **I** | Spatial inequality dynamics (Geo 7) | I1--I4 | BEA county income to 2024, Eurostat NUTS 2, World Bank |
+| **C** | Clustering and regionalization (Geo 7) | C1--C4 | Chicago community areas, Eurostat NUTS 2 |
+| **R** | Spatial regression (Geo 7) | R1--R4 | Inside Airbnb Chicago, California housing, Eurostat NUTS 2 |
+| **F** | Spatial feature engineering (Geo 7) | F1--F4 | Inside Airbnb Chicago, CTA stations, Census tracts, Natural Earth |
+
+### Data sources used
+
+| source | what | access |
+|---|---|---|
+| USGS FDSN event service | earthquakes, any window and magnitude | `earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&...` |
+| Chicago Data Portal | crimes (`ijzp-q8t2`), community areas (`igwz-8jzy`), socioeconomic indicators (`kn9c-c2s2`), CTA 'L' stops (`8pix-ypme`), libraries (`x8fc-8rcq`) | SODA API, no key for moderate use |
+| GBIF | species occurrence records | `api.gbif.org/v1/occurrence/search`. Rate-limited, see P3 |
+| BEA | county personal income, 1969--2024 (`CAINC1`) | `apps.bea.gov/regional/zip/CAINC1.zip` |
+| Eurostat | regional GDP per inhabitant (`nama_10r_2gdp`) | SDMX-CSV API |
+| GISCO | NUTS boundaries (2021 version) | `gisco-services.ec.europa.eu/distribution/v2/nuts/` |
+| World Bank | GDP per capita PPP, population, region metadata | `api.worldbank.org/v2/` |
+| US Census cartographic files | tracts, counties, states | `www2.census.gov/geo/tiger/GENZ2023/shp/` |
+| Inside Airbnb | listings for about 120 cities | links on `insideairbnb.com/get-the-data/` |
+| scikit-learn | California housing (1990 census block groups) | `sklearn.datasets.fetch_california_housing` |
+| Natural Earth | coastlines, countries | `naciscdn.org/naturalearth/` |
+
+The US Census **ACS API now requires a (free) key**. That is why the exercises use
+the City of Chicago's socioeconomic table and the BEA files instead. If you have a
+key, the [ACS 5-year API](https://www.census.gov/data/developers/data-sets/acs-5year.html)
+can replace or supplement either.
+
+# P --- Point pattern analysis {#sec-p}
+
+These four exercises use Geo 6's toolkit: dots, hexbins and KDE, then centrography
+(mean and median centre, standard distance, standard deviational ellipse), then
+extent (convex hull, alpha shape, minimum rectangle and circle), then
+quadrat statistics, then Ripley's $G$ and $F$ against simulated CSR, and finally
+DBSCAN.
+
+:::{.callout-warning icon=false}
+## Project first
+
+Every distance-based measure in this chapter assumes planar coordinates in metres.
+Running standard distance or Ripley's $G$ on raw longitude and latitude does not
+raise an error. It just returns nonsense. Reproject to a local metric CRS (a UTM zone
+or a national grid) before doing anything else.
+:::
+
+## P1 --- The shape of a subduction zone
+
+**Data.** One decade of $M \ge 4.5$ earthquakes around Japan from the USGS catalogue:
+
+```python
+q = read_gdf("https://earthquake.usgs.gov/fdsnws/event/1/query?" +
+             "format=geojson&starttime=2015-01-01&endtime=2025-01-01&minmagnitude=4.5" +
+             "&minlatitude=30&maxlatitude=46&minlongitude=128&maxlongitude=148")
+q["depth"] = q.geometry.z                  # km, the third coordinate
+q = q.to_crs(6691)                         # JGD2011 / UTM zone 54N, metres
+```
+
+**Tasks.**
+
+1. Map the events three ways: dots, a hexbin and a KDE. Colour the dots by depth.
+   Say which view makes the Japan Trench easiest to see, and which hides it.
+2. Split the events into shallow ($<70$ km) and deep ($\ge 70$ km). For each group,
+   compute the mean and median centres, the standard distance and the standard
+   deviational ellipse. Draw both ellipses on one map.
+3. The Pacific plate subducts westward. Use the ellipse **orientation** and the
+   offset between the two centres to say which way the deep events sit relative to
+   the shallow ones, and roughly how far apart they are.
+4. Compute the convex hull, an alpha shape, the minimum rotated rectangle and the
+   minimum bounding circle for the shallow events. Which of the five extent measures
+   would you report as "the area affected by shallow seismicity", and why?
+
+**Report.** The ellipse map, a table with centres, standard distances and ellipse
+axes for both depth classes, and a short paragraph on what the centrography shows
+about the geometry of the slab.
+
+## P2 --- Is crime clustered, or is the city just shaped that way?
+
+**Data.** One year of burglaries in Chicago and the city boundary (dissolved from the
+77 community areas):
+
+```python
+cr = socrata("ijzp-q8t2", **{"$where": "year=2024 AND primary_type='BURGLARY'",
+                             "$limit": 50000})
+cr = cr.dropna(subset=["latitude", "longitude"])
+pts = gpd.GeoDataFrame(cr, geometry=gpd.points_from_xy(cr.longitude.astype(float),
+                                                       cr.latitude.astype(float)),
+                       crs=4326).to_crs(26916)          # UTM 16N
+city = read_gdf("https://data.cityofchicago.org/resource/igwz-8jzy.geojson") \
+         .to_crs(26916).dissolve()
+```
+
+**Tasks.**
+
+1. Run a quadrat test (`pointpats.QStatistic`) with a regular grid over the
+   **bounding box**. Then generate the CSR benchmark inside the **city polygon**
+   (`pointpats.random.poisson(city.geometry.iloc[0], size=n)`) and compare the two.
+2. Compute Ripley's $G$ and $F$ with simulation envelopes twice, once with the
+   bounding box as the window and once with the city polygon. Plot all four curves.
+3. Quantify the **study-area trap** from Geo 6. With the bounding-box window, how
+   much of the apparent clustering comes only from the empty lake and suburbs inside
+   the box?
+4. Now try the harder question: are burglaries clustered **relative to where people
+   live**? A homogeneous Poisson process cannot answer that. Explain what you would
+   need instead (an inhomogeneous intensity, such as the density of residential
+   addresses or population). As a crude proxy, compare burglaries with all other
+   crime types: is the burglary pattern more or less clustered than all crime
+   combined?
+
+**Report.** The four $G$/$F$ plots, one sentence per plot, and a paragraph on what
+"clustered" means once the null model changes.
+
+## P3 --- A map of birds, or a map of birdwatchers?
+
+**Data.** GBIF occurrence records for Ukraine: the white stork (*Ciconia ciconia*,
+`taxonKey=2481912`) and, as a measure of observer effort, all birds
+(`taxonKey=212`, class Aves). The search API returns at most 300 records per request.
+Page through with `offset`, and **pause between requests**. GBIF answers HTTP 429 to
+clients that hammer it, and for more than a few tens of thousands of records it asks
+you to use its [download service](https://www.gbif.org/occurrence/search) instead.
+
+```python
+def gbif(taxon, n_max=6000, **extra):
+    rows, off = [], 0
+    while off < n_max:
+        page = get("https://api.gbif.org/v1/occurrence/search", taxonKey=taxon,
+                   country="UA", hasCoordinate="true", hasGeospatialIssue="false",
+                   limit=300, offset=off, **extra).json()
+        rows += page["results"]; off += 300
+        if page["endOfRecords"]: break
+        time.sleep(1)
+    df = pd.DataFrame(rows)
+    return gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.decimalLongitude,
+                            df.decimalLatitude), crs=4326).to_crs(32635)   # UTM 35N
+
+storks = gbif(2481912, year="2015,2024")
+birds  = gbif(212,     year="2015,2024", n_max=20000)
+```
+
+**Tasks.**
+
+1. Map the stork KDE. Then map the all-birds KDE. Describe how similar they look.
+2. Compute the **ratio** of the two surfaces (with a sensible floor on the
+   denominator). Where are storks over-represented relative to birdwatching effort?
+3. Run Ripley's $G$ on the storks against CSR within Ukraine's boundary (Natural
+   Earth countries). Then do it again with a **null drawn from the all-birds points**
+   (sample $n$ of them at random, repeated). The second null keeps the observers fixed
+   and tests only the species. How do the conclusions differ?
+4. DBSCAN the stork records. Do the clusters correspond to known stork regions or to
+   cities and nature reserves? Name two clusters you believe and two you do not.
+
+**Report.** The ratio map, the two $G$ comparisons and a paragraph separating
+*process* from *pattern*, using Geo 6's distinction.
+
+:::{.callout-note icon=false}
+## CRS
+
+Pick one metric CRS for all of Ukraine and state it. UTM 35N (`EPSG:32635`) works
+for a country-wide analysis. Note the distortion at the eastern edge.
+:::
+
+## P4 --- Aftershocks: clusters in space, and in time
+
+**Data.** All $M \ge 2.5$ events in the 2023 Türkiye--Syria sequence window:
+
+```python
+q = read_gdf("https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson" +
+             "&starttime=2023-01-01&endtime=2023-12-31&minmagnitude=2.5" +
+             "&minlatitude=35&maxlatitude=40&minlongitude=34&maxlongitude=41")
+q = q.to_crs(32637)                                   # UTM 37N
+q["t_days"] = (pd.to_datetime(q["time"], unit="ms") -
+               pd.Timestamp("2023-01-01")).dt.total_seconds() / 86400
+```
+
+The USGS catalogue is complete only to about $M\,4$ outside the United States, so
+expect a few hundred events rather than the tens of thousands in the regional
+(AFAD) catalogue. Note how that affects anything you conclude about cluster size.
+
+**Tasks.**
+
+1. Run DBSCAN on the $(x, y)$ coordinates with the defaults, then with the "sensible
+   parameters" heuristic from Geo 6 (minimum cluster size as a share of $n$,
+   $\varepsilon$ from the $k$-distance plot). Map both runs and give the share of
+   points labelled noise each time.
+2. Make a small grid over $\varepsilon \in \{2, 5, 10, 20\}$ km and
+   `min_samples` $\in \{5, 10, 25, 50\}$. Record the number of clusters and the noise
+   share for each cell, and show the grid as a heat map. Which region of the grid
+   gives an answer that stays stable?
+3. Add time as a third dimension: $(x, y, \lambda t)$, where $\lambda$ converts days
+   into metres. Choose $\lambda$ and justify the choice ("one day is worth ___ km").
+   Do the two February mainshock sequences separate into two clusters?
+4. Compare your space--time DBSCAN with `sklearn.cluster.HDBSCAN`, which needs no
+   $\varepsilon$. Which result would you show a seismologist?
+
+**Report.** The parameter heat map, the space--time cluster map and a paragraph on
+what the clusters are (and are not) evidence of.
+
+# I --- Spatial inequality dynamics {#sec-i}
+
+These exercises use Geo 7's first section: the 20:20 ratio, Gini, Theil and its
+decomposition, Moran's $I$ over time, the spatial Gini and near differences. The
+recurring question is the one from the lecture: **does inequality between regions
+move with inequality within them?**
+
+## I1 --- Fifty-six years of US county income
+
+**Data.** The book's county series ends in 2018. BEA now publishes 1969--2024:
+
+```python
+z = zipfile.ZipFile(io.BytesIO(get("https://apps.bea.gov/regional/zip/CAINC1.zip").content))
+d = pd.read_csv(z.open("CAINC1__ALL_AREAS_1969_2024.csv"), encoding="latin1",
+                low_memory=False)
+d["GeoFIPS"] = d.GeoFIPS.str.strip().str.strip('"').str.strip()
+pci = d[(d.LineCode == 3) & ~d.GeoFIPS.str.endswith("000")]   # per-capita income, counties
+counties = read_gdf("https://www2.census.gov/geo/tiger/GENZ2023/shp/cb_2023_us_county_20m.zip")
+```
+
+The `Region` column holds the eight BEA regions (1 = New England, ..., 8 = Far
+West), which are the same regions as in the book's decomposition.
+
+**Tasks.**
+
+1. Clean the data. Values such as `"(NA)"` need handling. Keep the lower 48 states.
+   Also handle **Virginia's independent cities**, which BEA merges into combination
+   areas (FIPS starting `51` with codes 900 and above) that do not match the Census
+   county polygons. Record every county you drop and why.
+2. Recompute the 20:20 ratio, Gini and Theil for 1969--2024. Does the post-2018 period
+   (including 2020--21, when transfer payments were large) continue the book's trend,
+   break it, or reverse it?
+3. Run the Theil decomposition by BEA region (`inequality.theil.TheilD`) for every
+   year. Plot the between-region share. Is the long fall in between-region
+   inequality still going?
+4. Compute Moran's $I$ and the spatial Gini each year. Then check whether the
+   relationship between near differences and Moran's $I$ found in the lecture still
+   holds after 2018.
+
+**Report.** Four time series on a shared $x$ axis, one line per series stating what
+it shows, and a paragraph comparing 1969--2018 with 2018--2024.
+
+## I2 --- Is Europe converging?
+
+**Data.** GDP per inhabitant (EUR) for NUTS 2 regions from Eurostat, with GISCO
+boundaries:
+
+```python
+e = pd.read_csv(io.StringIO(get(
+    "https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/"
+    "nama_10r_2gdp/A.EUR_HAB.?format=SDMX-CSV&startPeriod=2000").text))
+e = e[e.geo.str.len() == 4]                       # NUTS 2 codes have 4 characters
+gdp = e.pivot(index="geo", columns="TIME_PERIOD", values="OBS_VALUE")
+nuts2 = read_gdf("https://gisco-services.ec.europa.eu/distribution/v2/nuts/geojson/"
+                 "NUTS_RG_20M_2021_4326_LEVL_2.geojson")
+```
+
+**Tasks.**
+
+1. Join the data to the boundaries and report how many regions fail to match. NUTS
+   codes are revised every few years (2016, 2021, 2024), and Eurostat back-casts some
+   series but not all. In October 2026, 278 of 285 data regions matched. Decide which regions to drop, which years to keep, and whether
+   to exclude the outermost regions (French overseas departments, the Azores, the
+   Canaries). Write down each choice.
+2. Plot **σ-convergence**: the coefficient of variation and the Gini of regional GDP
+   per head, 2000--latest year. Then decompose Theil into **between-country** and
+   **within-country** parts (using the first two characters of the NUTS code). A
+   common finding is that disparities *between* EU countries narrowed while
+   disparities *within* them widened. Does your decomposition agree?
+3. EUR at market prices is the wrong unit for a living-standards comparison. Repeat
+   step 2 with PPS per inhabitant (`unit=PPS_EU27_2020_HAB`; check the code with
+   the API, since unit codes are versioned). Which of your conclusions changes?
+4. Compute Moran's $I$ and the spatial Gini over time with a weights matrix that
+   handles islands. Queen contiguity leaves Malta, Cyprus and the islands with no
+   neighbours, so use KNN or a fused queen + KNN matrix. Is Europe's income map
+   becoming more or less spatially clustered?
+
+**Report.** The decomposition chart for EUR and PPS side by side, the Moran series
+and a paragraph answering the title.
+
+## I3 --- Personal versus regional: the world in one chart
+
+**Data.** World Bank GDP per capita (PPP, constant international \$), population and
+country metadata (region, income group):
+
+```python
+def wb(indicator, dates="1990:2023"):
+    js = get(f"https://api.worldbank.org/v2/country/all/indicator/{indicator}",
+             format="json", date=dates, per_page=20000).json()[1]
+    return pd.DataFrame([{"iso3": r["countryiso3code"], "year": int(r["date"]),
+                          "value": r["value"]} for r in js])
+
+y   = wb("NY.GDP.PCAP.PP.KD")
+pop = wb("SP.POP.TOTL")
+meta = pd.DataFrame(get("https://api.worldbank.org/v2/country",
+                        format="json", per_page=400).json()[1])
+meta = meta[meta.region.apply(lambda r: r["value"]) != "Aggregates"]
+```
+
+**Tasks.**
+
+1. Drop the aggregates, keep a **balanced panel** (countries observed every year)
+   and state how many countries are left.
+2. Compute the Gini for each year twice: unweighted (every country counts once, the
+   "regional" view) and **population-weighted** (each country weighted by its
+   population, which gets closer to the "personal" view in Geo 7's *Personal vs
+   regional* slides). The two series move in different directions. Explain why.
+3. Drop China, then India, then both, and recompute the weighted series. How much of
+   the change in global inequality do those two countries account for?
+4. Decompose Theil by World Bank region. Does between-region or within-region
+   inequality dominate, and has the dominant component changed since 1990?
+
+**Report.** One chart with the unweighted and weighted Gini plus the two
+leave-one-out series, and a paragraph on which inequality question each line answers.
+
+:::{.callout-warning icon=false}
+## What this does not measure
+
+Both series treat everyone in a country as earning that country's mean income, so
+they ignore inequality inside countries. Say clearly that your weighted series is a
+*between-country* measure of personal inequality, not a measure of global personal
+inequality.
+:::
+
+## I4 --- Which places moved?
+
+Gini and Theil summarise each year in one number, so they cannot say *which* regions
+moved. This exercise uses the local view from Geo 6 over time.
+
+**Data.** Your cleaned panel from I1 (counties) or from I2 (NUTS 2), whichever you
+completed.
+
+**Tasks.**
+
+1. Compute LISA (local Moran's $I_i$) for the first and last years. Draw both cluster
+   maps at the same significance level, with the same weights and permutation count.
+2. Cross-tabulate the quadrant labels (HH, LH, LL, HL, not significant) between the
+   two years as a $5 \times 5$ transition table. Which transitions dominate, and
+   where are the HH→not-significant and LL→not-significant regions?
+3. Rank every region by income in each year and map the change in rank. Compute
+   Kendall's $\tau$ between the two rankings for the whole sample and within each
+   BEA region or country. Is mobility uniform?
+4. Pick the five biggest movers in each direction. For each one, find a plausible
+   explanation from the data alone (sector mix, population change from the BEA
+   population line, or a capital-city effect) and say how sure you are of it.
+
+**Report.** The two LISA maps, the transition table and the rank-change map.
+
+# C --- Clustering and regionalization {#sec-c}
+
+These exercises use Geo 7's clustering chapter: standardisation, $k$-means, Ward
+hierarchical clustering, regionalization with a connectivity matrix
+(`AgglomerativeClustering(connectivity=w.sparse)`), and the evaluation tools
+(Calinski--Harabasz, IPQ compactness, adjusted mutual information).
+
+## C1 --- Geodemographics of Chicago
+
+**Data.** Seven socioeconomic indicators for Chicago's 77 community areas, with
+their boundaries:
+
+```python
+se = socrata("kn9c-c2s2")
+ca = read_gdf("https://data.cityofchicago.org/resource/igwz-8jzy.geojson").to_crs(26916)
+ca["ca"] = ca.area_numbe.astype(int)
+se = se[pd.to_numeric(se.ca, errors="coerce").notna()].astype({"ca": int})
+db = ca.merge(se, on="ca")
+vars_ = ["percent_of_housing_crowded", "percent_households_below_poverty",
+         "percent_aged_16_unemployed", "percent_aged_25_without_high_school_diploma",
+         "percent_aged_under_18_or_over_64", "per_capita_income_"]
+```
+
+(Drop `hardship_index`: it is a composite built from the other six. Ask yourself why
+clustering on it as well would be double-counting.)
+
+**Tasks.**
+
+1. Explore before clustering: plot the six choropleths and compute Moran's $I$ for
+   each variable. Map pairwise correlations with a heat map. Which variables carry
+   nearly the same information?
+2. Standardise and run $k$-means for $k = 2, \dots, 8$. Plot the CH score against
+   $k$ and choose $k$, defending the choice. Map the clusters and profile them (mean
+   of each variable per cluster, in original units).
+3. Run Ward clustering with the same $k$. Compare the two solutions with AMI and say
+   where on the map they disagree.
+4. Measure the **geographic** coherence of the $k$-means clusters even though they
+   were not built to be contiguous: IPQ of each cluster's dissolved shape, and join
+   counts or a contiguity check showing how many separate pieces each cluster has.
+
+**Report.** The cluster map, the profile table and a paragraph naming the clusters
+in plain words (as geodemographic classifications do), with a note on what the names
+leave out.
+
+## C2 --- Drawing contiguous regions
+
+**Data.** As in C1.
+
+**Tasks.**
+
+1. Build queen weights for the 77 community areas and confirm the graph is
+   connected (`w.n_components`).
+2. Run `AgglomerativeClustering(linkage="ward", connectivity=w.sparse)` with the
+   $k$ chosen in C1. Map the result.
+3. Measure the **cost of contiguity**: the within-cluster sum of squares (in
+   standardised units) for the regionalization against the unconstrained $k$-means
+   and Ward solutions. How much homogeneity does the contiguity constraint cost?
+4. Compare the regions with the city's official **"sides"** (Far North, Northwest,
+   ..., Far Southeast) using AMI. Build the side labels by hand from the community area
+   numbers, using the standard grouping of the 77 areas into nine sides (listed, for
+   example, on Wikipedia's *Community areas in Chicago* page). Are the official sides
+   socioeconomically homogeneous?
+5. Optional: run `spopt.region.Skater` with the same $k$ and compare it to the Ward
+   regionalization. Where do the boundaries differ?
+
+**Report.** The regionalization map next to the k-means map, a cost-of-contiguity
+table and a paragraph on whether the official sides would pass as regions.
+
+## C3 --- Growth regions of Europe
+
+**Data.** The NUTS 2 GDP panel from I2.
+
+**Tasks.**
+
+1. Build a feature vector for each region that describes its **trajectory**, not its
+   level: for example, the GDP index relative to the region's own 2005 value for each
+   year. Explain why this is a different question from clustering on levels.
+2. Cluster with $k$-means (several $k$, CH score) and map the result. Do the
+   trajectory clusters follow country borders?
+3. Regionalize with a contiguity constraint. Queen weights on NUTS 2 are
+   **disconnected** (islands, Cyprus, the Baltic sea gap to Finland, the Channel), and
+   `AgglomerativeClustering` gives poor results or warnings on a disconnected graph.
+   Fix the graph explicitly, for example by joining each component to its nearest
+   neighbour or by unioning queen with a KNN matrix. Document which links you added.
+4. Compute AMI between your clusters and the country labels (first two characters of
+   the NUTS code), for both the unconstrained and the constrained solutions. How
+   "national" is European growth?
+
+**Report.** The two maps, the list of links you added to the graph and the AMI
+values with a paragraph interpreting them.
+
+## C4 --- How stable is a cluster map?
+
+A cluster map looks definitive, but it rests on several arbitrary choices. This
+exercise measures how much they matter.
+
+**Data.** As in C1 (or C3 if you prefer).
+
+**Tasks.**
+
+1. Re-run your C1 $k$-means with 50 different random seeds and `n_init=1`. Compute
+   pairwise AMI across runs and summarise its distribution. With the default
+   `n_init`, how often does the "best" solution change?
+2. Vary the preprocessing: z-scores, robust scaling (median/IQR), rank transform,
+   and z-scores after a log of per-capita income. Compute AMI between every pair of
+   solutions.
+3. Vary $k$ by $\pm 1$ around your choice and track which community areas change
+   cluster. Map the "fragile" community areas (those whose assignment changes most
+   often across all the variants above).
+4. Repeat steps 1--3 for the contiguity-constrained solution from C2. Is
+   regionalization more stable, or less?
+
+**Report.** The fragility map and a short methodological note: which result from C1
+you would still publish after seeing this, and which you would not.
+
+# R --- Spatial regression {#sec-r}
+
+These exercises use Geo 7's spatial regression chapter: OLS with `spreg`, residual
+diagnostics (Moran's $I$, LISA of residuals, $\mathrm{corr}(u, Wu)$), spatial fixed
+effects, regimes with the Chow test, SLX, the spatial error model and the spatial lag
+model. Use the supplement, [Validating spatial predictions](./geo7_validation.qmd),
+for any question about prediction accuracy.
+
+## R1 --- A hedonic model for Chicago Airbnb
+
+**Data.** The latest Inside Airbnb snapshot for Chicago. Snapshots are replaced, so
+copy the current `listings.csv.gz` link from
+[insideairbnb.com/get-the-data](https://insideairbnb.com/get-the-data/):
+
+```python
+url = ("https://data.insideairbnb.com/united-states/il/chicago/"
+       "2026-06-24/data/listings.csv.gz")            # replace with the current date
+ab = pd.read_csv(io.BytesIO(get(url).content), compression="gzip")
+ab["price"] = pd.to_numeric(ab.price.str.replace(r"[$,]", "", regex=True),
+                            errors="coerce")
+```
+
+**Tasks.**
+
+1. Clean the data. Drop listings with no price and decide what to do with extreme
+   prices (look at the tail before choosing a rule). Parse `bathrooms_text`. Keep
+   listings that are actually rentable. State how many listings remain at each step.
+2. Fit `log(price) ~ accommodates + bedrooms + bathrooms + beds + room type dummies
+   + property type dummies` with `spreg.OLS`. Interpret the intercept and two slopes
+   as percentage effects ($e^{\beta}-1$), as on Geo 7's *Intercept and slopes*
+   slide.
+3. Build KNN weights ($k = 20$, row-standardised, projected coordinates) and run the
+   residual diagnostics from the lecture: Moran's $I$ of residuals,
+   $\mathrm{corr}(u, Wu)$, and a LISA of residuals mapped over a basemap. Where does
+   the model systematically under-price and over-price?
+4. Add **spatial fixed effects** for `neighbourhood_cleansed` (one dummy per
+   neighbourhood). How much does $R^2$ change? How much does residual Moran's $I$
+   fall? Map the estimated neighbourhood effects.
+
+**Report.** The coefficient table, the residual LISA map, the fixed-effects map and
+a paragraph on what the fixed effects capture and what they cannot explain.
+
+## R2 --- Is the North Side a different market?
+
+**Data.** Your cleaned Chicago listings from R1, joined to community areas (from C1)
+so that each listing has a community area and an official side.
+
+**Tasks.**
+
+1. Define two regimes: North (Far North, Northwest, North, Central) and South (the
+   others). Fit `spreg.OLS_Regimes` with the R1 specification.
+2. Read the Chow test: which coefficients differ between regimes, and does the
+   global test reject equal coefficients?
+3. Re-define the regimes as "within 2 km of a CTA 'L' station" against "further"
+   (stations from `socrata("8pix-ypme")`) and repeat. Which partition produces the
+   stronger difference in slopes?
+4. Explain, as on the *Intercept and slopes* slide, the difference between letting
+   the **intercept** vary (fixed effects, R1) and letting the **slopes** vary
+   (regimes). Then look at the coefficients. Does an extra bedroom add more on the
+   North Side?
+
+**Report.** The regime coefficient table with the Chow statistics and a paragraph
+answering the title.
+
+## R3 --- California housing: diagnose, then model the dependence
+
+**Data.** The 1990 census block-group data that ships with scikit-learn:
+
+```python
+from sklearn.datasets import fetch_california_housing
+ca = fetch_california_housing(as_frame=True).frame
+g = gpd.GeoDataFrame(ca, geometry=gpd.points_from_xy(ca.Longitude, ca.Latitude),
+                     crs=4326).to_crs(3310)              # California Albers
+```
+
+**Tasks.**
+
+1. Plot the distribution of `MedHouseVal`. It is **top-coded** at 5.0 (\$500k). Count
+   the capped observations and map them. Then explain what top-coding does to OLS
+   slopes in the expensive coastal areas.
+2. Fit OLS of `log(MedHouseVal)` on `MedInc`, `HouseAge`, `AveRooms`, `AveBedrms`,
+   `Population` and `AveOccup` with `spat_diag=True` and KNN weights. Read the LM
+   tests (LM-lag, LM-error and their robust versions) and say which model they point
+   to.
+3. Fit SLX (add $W\mathbf{X}$), `GM_Error_Het` and `GM_Lag`. Make one table
+   comparing the coefficient on `MedInc` across OLS, SLX, error and lag. For the lag
+   model, explain why the coefficient alone is **not** the marginal effect.
+4. Repeat steps 2--3 without the top-coded observations. Which conclusions survive?
+
+**Report.** The comparison table (all models, with and without capped
+observations) and a paragraph choosing a model and defending the choice.
+
+## R4 --- β-convergence across European regions
+
+**Data.** The NUTS 2 GDP panel from I2.
+
+**Tasks.**
+
+1. Compute annualised growth of GDP per head from 2005 to the latest year and
+   regress it on $\log$ GDP per head in 2005. A negative slope means
+   **β-convergence**: poorer regions grew faster. Compute the implied speed of
+   convergence and the half-life.
+2. Diagnose the residuals with Moran's $I$ and the LM tests using your fixed island
+   weights from I2 or C3.
+3. Fit the spatial error model and the spatial lag model. Does $\hat\beta$ change
+   sign, size or significance?
+4. Add **country fixed effects**. The slope then measures convergence **within**
+   countries. Compare it with the pooled slope and connect the comparison to the
+   between/within Theil decomposition from I2.
+
+**Report.** The β estimates for OLS, error, lag and fixed effects, the half-lives
+and a paragraph relating them to your I2 findings.
+
+# F --- Spatial feature engineering {#sec-f}
+
+These exercises use Geo 7's feature-engineering chapter: map matching (distances,
+counts within a buffer), spatial summary features (`DistanceBand` lags,
+`lag_categorical`), areal interpolation with `tobler`, and clustering as feature
+extraction. Every engineered feature is tested in the same way: does it improve a
+model **under spatially blocked validation**, or only under random cross-validation?
+
+:::{.callout-warning icon=false}
+## The leakage rule
+
+If a feature for listing $i$ is computed from neighbours that include $i$ itself
+(for example a neighbourhood mean price that includes $i$'s own price), it leaks the
+target. Always exclude self from neighbour summaries of the outcome, and compute
+outcome-based features inside the training fold only.
+:::
+
+## F1 --- Transit, libraries, and the price of a room
+
+**Data.** Chicago listings from R1, CTA 'L' stations and public libraries:
+
+```python
+st = socrata("8pix-ypme")
+st = gpd.GeoDataFrame(st, geometry=gpd.points_from_xy(
+        st.location.str["longitude"].astype(float),
+        st.location.str["latitude"].astype(float)), crs=4326).to_crs(26916)
+st = st.dissolve("map_id")                  # one point per station, not per platform
+lib = socrata("x8fc-8rcq")                  # parse its `location` the same way
+```
+
+**Tasks.**
+
+1. For every listing compute: the distance to the nearest station
+   (`sjoin_nearest`), the number of stations within 500 m and 1 km, and the distance
+   to the nearest library. Also compute the distance to the Loop (an approximate
+   centroid of community area 32).
+2. Add the features to the R1 model one at a time. Report $R^2$ and the residual
+   Moran's $I$ after each addition.
+3. Evaluate with 5-fold random cross-validation and with spatially blocked
+   cross-validation (community areas as groups, `GroupKFold`). For each feature
+   compute the gain under each scheme and note where the two disagree.
+4. Optional, if Overpass is reachable: add OSM features (restaurants, bars or
+   tourist attractions within 500 m via `osmnx.features_from_place`), and report
+   whether they add anything beyond the transit features.
+
+**Report.** A table of features × (in-sample $R^2$, random CV, blocked CV, residual
+$I$), and a paragraph on which feature you would keep.
+
+## F2 --- Neighbourhood summaries without leakage
+
+**Data.** As in F1.
+
+**Tasks.**
+
+1. Compute $W\mathbf{X}$ features (mean `accommodates`, mean `bedrooms` of the 20
+   nearest listings) and a `DistanceBand` count of listings within 300 m, a local
+   density feature.
+2. Compute the share of each room type among the 20 nearest neighbours with
+   `lag_categorical`, or by hand as a proportion.
+3. Now compute the **neighbourhood mean log price**, first naively (including self,
+   on the full dataset) and then correctly (excluding self, within each training
+   fold). Compare blocked-CV $R^2$ for the two versions and report the size of the
+   leak.
+4. Compare the leakage-free price lag with the R1 spatial fixed effects. Both try to
+   capture "location". Which wins under blocked CV, and why might the answer differ
+   under random CV?
+
+**Report.** The naive-against-correct comparison in one table, with a sentence on
+how you would find this kind of bug in someone else's code.
+
+## F3 --- Areal interpolation with a ground truth
+
+Areal interpolation is usually impossible to check, because the true values on the
+target zones are unknown. Here they can be checked, because the crimes are points.
+
+**Data.** The 2024 burglaries from P2, Chicago community areas from C1, and Cook
+County census tracts clipped to the city:
+
+```python
+tracts = read_gdf("https://www2.census.gov/geo/tiger/GENZ2023/shp/"
+                  "cb_2023_17_tract_500k.zip")
+tracts = tracts[tracts.COUNTYFP == "031"].to_crs(26916)
+tracts = gpd.overlay(tracts, city, how="intersection")      # `city` from P2
+tracts = tracts[tracts.area > 1_000]                         # drop edge slivers
+```
+
+**Tasks.**
+
+1. Count burglaries per community area. This is the **source** variable, as if it
+   were the only published data.
+2. Interpolate the counts to tracts with `tobler.area_weighted.area_interpolate`
+   (`extensive_variables`). Then count the points per tract directly: that is the
+   **truth**.
+3. Measure the error: MAE, the correlation, and a map of the residuals (interpolated
+   minus true). Where does area weighting fail? Relate the failures to the
+   assumption that crime is spread uniformly over each source zone.
+4. Repeat for an **intensive** variable: interpolate the community-area
+   `per_capita_income_` and `percent_households_below_poverty` to tracts. With no
+   ground truth this time, explain what the interpolated value means for a tract
+   that straddles a rich and a poor community area.
+5. Optional: improve step 2 with **dasymetric** weighting. Mask out water and parks,
+   or weight by residential land use, then measure the error again.
+
+**Report.** The error map, the error statistics and a paragraph on when you would
+trust interpolated values as model features.
+
+## F4 --- Location features for California housing
+
+**Data.** California housing from R3, the Natural Earth 10 m coastline, and
+California state boundaries:
+
+```python
+coast = read_gdf("https://naciscdn.org/naturalearth/10m/physical/ne_10m_coastline.zip")
+states = read_gdf("https://www2.census.gov/geo/tiger/GENZ2023/shp/cb_2023_us_state_20m.zip")
+ca_poly = states[states.STUSPS == "CA"].to_crs(3310)
+coast = gpd.clip(coast.to_crs(3310), ca_poly.buffer(5_000))
+```
+
+**Tasks.**
+
+1. Engineer location features: distance to the coast, distance to the nearest of
+   the five largest cities (choose and geocode them yourself), and KNN lags of
+   `MedInc` and `HouseAge` ($k = 10$).
+2. Engineer a **cluster feature**: run $k$-means on the projected coordinates
+   ($k \approx 20$) and also HDBSCAN. Use the cluster labels as categorical features.
+   Map them.
+3. Train a gradient-boosted model (`HistGradientBoostingRegressor`) with four
+   feature sets: (a) attributes only, (b) attributes + raw lat/lon, (c) attributes +
+   engineered features, (d) attributes + everything. Evaluate each under random
+   5-fold CV and under spatially blocked CV (for example a 50 km grid as groups).
+4. Explain the pattern in the results using the supplement's argument. Raw
+   coordinates tend to win under random CV and lose under blocked CV. Do engineered
+   features transfer better than coordinates?
+
+**Report.** A $4 \times 2$ results table (feature set × CV scheme) and a paragraph
+recommending one feature set for predicting **in a county the model has never
+seen**.
+
+# Where these lead
+
+Several exercises are scaled-down versions of the [course projects](../projects.qmd):
+
+| exercise | grows into |
+|---|---|
+| P2, P3 (null models, inhomogeneity) | **G5** --- Is that a cluster, or is that what random looks like? |
+| I1, I4 | **G8** --- Fifty years of inequality |
+| C2, C3, C4 | **G9** --- Drawing boundaries that have to work |
+| R1--R3, F1, F2, F4 | **G4** --- Predicting across space, and the accuracy you should not report |
+| F3 | **G1** --- Accessibility, and the unit you chose to measure it in |
