@@ -1,0 +1,64 @@
+---
+title: "Geo lab3: Point Pattern Analysis"
+author:
+  - name: MSDE
+    affiliation: Lviv University
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    code-overflow: wrap
+execute:
+  enabled: false
+---
+
+## Helpers
+
+You can use these helper functions:
+
+```python
+import io, zipfile, time
+import numpy as np, pandas as pd, geopandas as gpd, requests
+
+def get(url, **params):
+    r = requests.get(url, params=params or None, timeout=300)
+    r.raise_for_status()
+    return r
+
+def read_gdf(url):                       # GeoJSON, or a zipped shapefile
+    return gpd.read_file(io.BytesIO(get(url).content))
+
+def socrata(dataset, **params):          # Chicago Data Portal (SODA API)
+    return pd.DataFrame(get(f"https://data.cityofchicago.org/resource/{dataset}.json",
+                            **params).json())
+```
+
+Please note that if download is large, you can store it in your data folder to avoid re-downloading it evey time.
+
+## Exercise
+
+**Data.** One year of burglaries in Chicago and the city boundary (dissolved from the
+77 community areas):
+
+```python
+cr = socrata("ijzp-q8t2", **{"$where": "year=2024 AND primary_type='BURGLARY'",
+                             "$limit": 50000})
+cr = cr.dropna(subset=["latitude", "longitude"])
+pts = gpd.GeoDataFrame(cr, geometry=gpd.points_from_xy(cr.longitude.astype(float),
+                                                       cr.latitude.astype(float)),
+                       crs=4326).to_crs(26916)          # UTM 16N
+city = read_gdf("https://data.cityofchicago.org/resource/igwz-8jzy.geojson") \
+         .to_crs(26916).dissolve()
+poly = city.geometry.iloc[0]
+pts = pts[pts.within(poly)]                   # a few geocodes fall just outside
+xy = np.column_stack([pts.geometry.x, pts.geometry.y])
+```
+
+**Tasks.**
+
+1. Run a quadrat test (`pointpats.QStatistic`) with a regular grid over the
+   **bounding box**. 
+2. Compute Ripley's $G$ and $F$ with simulation envelopes twice, once with the
+   bounding box as the window and once with the city polygon. Plot all four curves.
+3. Are burglaries clustered **relative to where people live**? 
+4. Run DBSCAN with different parameters and show clusters on map.
