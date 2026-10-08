@@ -1195,6 +1195,902 @@ client.shutdown()
 ```
 :::
 
+# Dask Delayed
+
+## Dask Delayed {.scrollable}
+:::{.callout-tip icon=false}
+## `dask.delayed` - parallelize any code
+
+What if you don't have an array or dataframe? Instead of having blocks where the function is applied to each block, you can decorate functions with `@delayed` and _have the functions themselves be lazy_.
+
+This is a simple way to use `dask` to parallelize existing codebases or build [complex systems](https://blog.dask.org/2018/02/09/credit-models-with-dask).
+:::
+
+:::{.callout-important icon=false}
+## Related Documentation
+
+* [Delayed documentation](https://docs.dask.org/en/latest/delayed.html)
+* [Delayed screencast](https://www.youtube.com/watch?v=SHqFmynRxVU)
+* [Delayed API](https://docs.dask.org/en/latest/delayed-api.html)
+* [Delayed examples](https://examples.dask.org/delayed.html)
+* [Delayed best practices](https://docs.dask.org/en/latest/delayed-best-practices.html)
+:::
+
+## Dask Delayed
+:::{.callout-tip icon=false}
+## Start the Client
+
+Dask has several ways of executing code in parallel. We'll use the distributed scheduler by creating a `dask.distributed.Client`. For now, this will provide us with some nice diagnostics.
+
+```python
+from dask.distributed import Client
+
+client = Client(n_workers=4)
+client
+```
+:::
+
+## Dask Delayed {.scrollable}
+:::{.callout-tip icon=false}
+## A Typical Workflow
+
+Typically if a workflow contains a for-loop it can benefit from delayed. The following example outlines a read-transform-write:
+
+```python
+import dask
+    
+@dask.delayed
+def process_file(filename):
+    data = read_a_file(filename)
+    data = do_a_transformation(data)
+    destination = f"results/{filename}"
+    write_out_data(data, destination)
+    return destination
+
+results = []
+for filename in filenames:
+    results.append(process_file(filename))
+    
+dask.compute(results)
+```
+:::
+
+## Dask Delayed {.scrollable}
+:::{.callout-tip icon=false}
+## Basics
+
+First let's make some toy functions, `inc` and `add`, that sleep for a while to simulate work. We'll then time running these functions normally.
+
+```python
+from time import sleep
+
+
+def inc(x):
+    sleep(1)
+    return x + 1
+
+
+def add(x, y):
+    sleep(1)
+    return x + y
+```
+
+We time the execution of this normal code using the `%%time` magic, which is a special function of the Jupyter Notebook.
+
+```python
+%%time
+# This takes three seconds to run because we call each
+# function sequentially, one after the other
+
+x = inc(1)
+y = inc(2)
+z = add(x, y)
+```
+:::
+
+## Dask Delayed {.scrollable}
+:::{.callout-tip icon=false}
+## Parallelize with the `dask.delayed` decorator
+
+Those two increment calls *could* be called in parallel, because they are totally independent of one-another.
+
+We'll make the `inc` and `add` functions lazy using the `dask.delayed` decorator. When we call the delayed version by passing the arguments, exactly as before, the original function isn't actually called yet - which is why the cell execution finishes very quickly.
+
+Instead, a *delayed object* is made, which keeps track of the function to call and the arguments to pass to it.
+
+```python
+import dask
+
+
+@dask.delayed
+def inc(x):
+    sleep(1)
+    return x + 1
+
+
+@dask.delayed
+def add(x, y):
+    sleep(1)
+    return x + y
+```
+:::
+
+## Dask Delayed {.scrollable}
+:::{.callout-tip icon=false}
+## Building the graph vs. computing it
+
+```python
+%%time
+# This runs immediately, all it does is build a graph
+
+x = inc(1)
+y = inc(2)
+z = add(x, y)
+```
+
+This ran immediately, since nothing has really happened yet.
+
+To get the result, call `compute`. Notice that this runs faster than the original code.
+
+```python
+%%time
+# This actually runs our computation using a local thread pool
+
+z.compute()
+```
+:::
+
+:::{.callout-note}
+Building the graph takes milliseconds; `z.compute()` returns `5` after about **2 s** instead of 3 s.
+:::
+
+## Dask Delayed {.scrollable}
+:::{.callout-tip icon=false}
+## What just happened?
+
+The `z` object is a lazy `Delayed` object. This object holds everything we need to compute the final result, including references to all of the functions that are required and their inputs and relationship to one-another. We can evaluate the result with `.compute()` as above or we can visualize the task graph for this value with `.visualize()`.
+
+```python
+z
+```
+
+```python
+# Look at the task graph for `z`
+z.visualize()
+```
+
+Notice that this includes the names of the functions from before, and the logical flow of the outputs of the `inc` functions to the inputs of `add`.
+:::
+
+![Output of `z.visualize()`](img/dask_delayed_inc_add.png){height=400}
+
+## Dask Delayed
+:::{.callout-note icon=false}
+## Some questions to consider
+
+-  Why did we go from 3s to 2s? Why weren't we able to parallelize down to 1s?
+-  What would have happened if the inc and add functions didn't include the `sleep(1)`? Would Dask still be able to speed up this code?
+-  What if we have multiple outputs or also want to get access to x or y?
+:::
+
+## Dask Delayed {.scrollable}
+:::{.callout-tip icon=false}
+## Exercise: Parallelize a for loop
+
+`for` loops are one of the most common things that we want to parallelize. Use `dask.delayed` on `inc` and `sum` to parallelize the computation below:
+
+```python
+data = [1, 2, 3, 4, 5, 6, 7, 8]
+```
+
+```python
+%%time
+# Sequential code
+
+
+def inc(x):
+    sleep(1)
+    return x + 1
+
+
+results = []
+for x in data:
+    y = inc(x)
+    results.append(y)
+
+total = sum(results)
+```
+
+```python
+total
+```
+
+```python
+%%time
+# Your parallel code here...
+```
+
+<!-- ```python -->
+<!-- @dask.delayed -->
+<!-- def inc(x): -->
+<!--     sleep(1) -->
+<!--     return x + 1 -->
+
+
+<!-- results = [] -->
+<!-- for x in data: -->
+<!--     y = inc(x) -->
+<!--     results.append(y) -->
+
+<!-- total = sum(results) -->
+<!-- print("Before computing:", total)  # Let's see what type of thing total is -->
+<!-- result = total.compute() -->
+<!-- print("After computing :", result)  # After it's computed -->
+<!-- ``` -->
+:::
+
+## Dask Delayed
+:::{.callout-note icon=false}
+## Delayed `sum`, or plain `sum`?
+
+How do the graph visualizations compare with the given solution, compared to a version with the `sum` function used directly rather than wrapped with `delayed`? Can you explain the latter version? You might find the result of the following expression illuminating:
+
+```python
+inc(1) + inc(2)
+```
+:::
+
+:::{.callout-tip}
+Arithmetic on `Delayed` objects is itself delayed: `inc(1) + inc(2)` is another `Delayed`, not a number. So the built-in `sum` over a list of `Delayed` objects builds a chain of delayed `add` tasks.
+:::
+
+## Dask Delayed {.scrollable}
+:::{.callout-tip icon=false}
+## Exercise: Parallelize a for-loop code with control flow
+
+Often we want to delay only *some* functions, running a few of them immediately. This is especially helpful when those functions are fast and help us to determine what other slower functions we should call. This decision, to delay or not to delay, is usually where we need to be thoughtful when using `dask.delayed`.
+
+In the example below we iterate through a list of inputs. If that input is even then we want to call `inc`. If the input is odd then we want to call `double`. This `is_even` decision to call `inc` or `double` has to be made immediately (not lazily) in order for our graph-building Python code to proceed.
+
+```python
+def double(x):
+    sleep(1)
+    return 2 * x
+
+
+def is_even(x):
+    return not x % 2
+
+
+data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+```
+:::
+
+## Dask Delayed {.scrollable}
+:::{.callout-tip icon=false}
+## Exercise: Parallelize a for-loop code with control flow
+
+```python
+%%time
+# Sequential code
+
+results = []
+for x in data:
+    if is_even(x):
+        y = double(x)
+    else:
+        y = inc(x)
+    results.append(y)
+
+total = sum(results)
+print(total)
+```
+
+```python
+%%time
+# Your parallel code here...
+# TODO: parallelize the sequential code above using dask.delayed
+# You will need to delay some functions, but not all
+```
+
+<!-- ```python -->
+<!-- @dask.delayed -->
+<!-- def double(x): -->
+<!--     sleep(1) -->
+<!--     return 2 * x -->
+
+
+<!-- results = [] -->
+<!-- for x in data: -->
+<!--     if is_even(x):  # even -->
+<!--         y = double(x) -->
+<!--     else:  # odd -->
+<!--         y = inc(x) -->
+<!--     results.append(y) -->
+
+<!-- total = sum(results) -->
+<!-- ``` -->
+
+```python
+%time total.compute()
+```
+
+```python
+total.visualize()
+```
+:::
+
+## Dask Delayed {.scrollable}
+
+![](img/dask_delayed_control_flow.png){width=1200}
+
+## Dask Delayed
+:::{.callout-note icon=false}
+## Some questions to consider
+
+-  What are other examples of control flow where we can't use delayed?
+-  What would have happened if we had delayed the evaluation of `is_even(x)` in the example above?
+-  What are your thoughts on delaying `sum`? This function is both computational but also fast to run.
+:::
+
+## Dask Delayed {.scrollable}
+:::{.callout-tip icon=false}
+## Exercise: Parallelize a Pandas Groupby Reduction
+
+In this exercise we read several CSV files and perform a groupby operation in parallel. We are given sequential code to do this and parallelize it with `dask.delayed`.
+
+The computation we will parallelize is to compute the mean departure delay per airport from some historical flight data. We will do this by using `dask.delayed` together with `pandas`. In the DataFrame section we did this same exercise with `dask.dataframe`.
+:::
+
+:::{.callout-important icon=false}
+## Create data
+
+This downloads and extracts some historical flight data for flights out of NYC between 1990 and 2000. 
+
+```python
+%run prep.py -d flights
+```
+:::
+
+## Dask Delayed {.scrollable}
+:::{.callout-tip icon=false}
+## Inspect data
+
+```python
+import os
+
+sorted(os.listdir(os.path.join("data", "nycflights")))
+```
+:::
+
+:::{.callout-tip icon=false}
+## Read one file with `pandas.read_csv` and compute mean departure delay
+
+```python
+import pandas as pd
+
+df = pd.read_csv(os.path.join("data", "nycflights", "1990.csv"))
+df.head()
+```
+
+```python
+# What is the schema?
+df.dtypes
+```
+
+```python
+# What originating airports are in the data?
+df.Origin.unique()
+```
+
+```python
+# Mean departure delay per-airport for one year
+df.groupby("Origin").DepDelay.mean()
+```
+:::
+
+## Dask Delayed {.scrollable}
+:::{.callout-tip icon=false}
+## Sequential code: Mean Departure Delay Per Airport
+
+The above cell computes the mean departure delay per-airport for one year. Here we expand that to all years using a sequential for loop.
+
+```python
+from glob import glob
+
+filenames = sorted(glob(os.path.join("data", "nycflights", "*.csv")))
+```
+
+```python
+%%time
+
+sums = []
+counts = []
+for fn in filenames:
+    # Read in file
+    df = pd.read_csv(fn)
+
+    # Groupby origin airport
+    by_origin = df.groupby("Origin")
+
+    # Sum of all departure delays by origin
+    total = by_origin.DepDelay.sum()
+
+    # Number of flights by origin
+    count = by_origin.DepDelay.count()
+
+    # Save the intermediates
+    sums.append(total)
+    counts.append(count)
+
+# Combine intermediates to get total mean-delay-per-origin
+total_delays = sum(sums)
+n_flights = sum(counts)
+mean = total_delays / n_flights
+```
+
+```python
+mean
+```
+:::
+
+## Dask Delayed {.scrollable}
+:::{.callout-tip icon=false}
+## Parallelize the code above
+
+Use `dask.delayed` to parallelize the code above. Some extra things you will need to know.
+
+1.  Methods and attribute access on delayed objects work automatically, so if you have a delayed object you can perform normal arithmetic, slicing, and method calls on it and it will produce the correct delayed calls.
+    
+2.  Calling the `.compute()` method works well when you have a single output. When you have multiple outputs you might want to use the `dask.compute` function. This way Dask can share the intermediate values.
+    
+So your goal is to parallelize the code above using `dask.delayed`. You may also want to visualize a bit of the computation to see if you're doing it correctly.
+
+```python
+%%time
+# your code here
+```
+:::
+
+<!-- ```python -->
+<!-- %%time -->
+
+<!-- # This is just one possible solution, there are -->
+<!-- # several ways to do this using `dask.delayed` -->
+
+
+<!-- @dask.delayed -->
+<!-- def read_file(filename): -->
+<!--     # Read in file -->
+<!--     return pd.read_csv(filename) -->
+
+
+<!-- sums = [] -->
+<!-- counts = [] -->
+<!-- for fn in filenames: -->
+<!--     # Delayed read in file -->
+<!--     df = read_file(fn) -->
+
+<!--     # Groupby origin airport -->
+<!--     by_origin = df.groupby("Origin") -->
+
+<!--     # Sum of all departure delays by origin -->
+<!--     total = by_origin.DepDelay.sum() -->
+
+<!--     # Number of flights by origin -->
+<!--     count = by_origin.DepDelay.count() -->
+
+<!--     # Save the intermediates -->
+<!--     sums.append(total) -->
+<!--     counts.append(count) -->
+
+<!-- # Combine intermediates to get total mean-delay-per-origin -->
+<!-- total_delays = sum(sums) -->
+<!-- n_flights = sum(counts) -->
+<!-- mean, *_ = dask.compute(total_delays / n_flights) -->
+<!-- ``` -->
+
+<!-- ```python -->
+<!-- (sum(sums)).visualize() -->
+<!-- ``` -->
+
+<!-- ```python -->
+<!-- # ensure the results still match -->
+<!-- mean -->
+<!-- ``` -->
+
+## Dask Delayed {.scrollable}
+
+![](img/dask_delayed_groupby_sums.png){width=350}
+
+## Dask Delayed
+:::{.callout-note icon=false}
+## Some questions to consider
+
+- How much speedup did you get? Is this how much speedup you'd expect?
+- Experiment with where to call `compute`. What happens when you call it on `sums` and `counts`? What happens if you wait and call it on `mean`?
+- Experiment with delaying the call to `sum`. What does the graph look like if `sum` is delayed? What does the graph look like if it isn't?
+- Can you think of any reason why you'd want to do the reduction one way over the other?
+:::
+
+## Dask Delayed
+:::{.callout-important icon=false}
+## Learn More
+
+Visit the [Delayed documentation](https://docs.dask.org/en/latest/delayed.html). In particular, this [delayed screencast](https://www.youtube.com/watch?v=SHqFmynRxVU) will reinforce the concepts you learned here and the [delayed best practices](https://docs.dask.org/en/latest/delayed-best-practices.html) document collects advice on using `dask.delayed` well.
+:::
+
+:::{.callout-note icon=false}
+## Close the Client
+
+Before moving on to the next exercise, make sure to close your client or stop this kernel.
+
+```python
+client.close()
+```
+:::
+
+# Futures
+
+## Futures {.scrollable}
+:::{.callout-tip icon=false}
+## Futures - non-blocking distributed calculations
+
+Submit arbitrary functions for computation in a parallelized, eager, and non-blocking way.
+
+- provides fine-grained real-time execution for custom situations
+- we can submit individual functions for evaluation with one set of inputs, or evaluated over a sequence of inputs with `submit()` and `map()`
+- the call returns immediately, giving one or more *futures*, whose status begins as "pending" and later becomes "finished"
+- there is no blocking of the local Python session.
+:::
+
+## Futures {.scrollable}
+:::{.callout-important icon=false}
+## Lazy vs. eager
+
+Both can be used to support arbitrary task scheduling, however:
+
+- delayed is **lazy** (it just constructs a graph)
+- futures are **eager.**
+
+With futures, as soon as the inputs are available and there is compute available, the computation starts.
+:::
+
+## Futures {.scrollable}
+:::{.callout-important icon=false}
+## Related Documentation
+
+* [Futures documentation](https://docs.dask.org/en/latest/futures.html)
+* [Futures screencast](https://www.youtube.com/watch?v=07EiCpdhtDE)
+* [Futures examples](https://examples.dask.org/futures.html)
+:::
+
+:::{.callout-tip icon=false}
+## Start the Client
+
+Futures need the distributed scheduler: they live on a cluster.
+
+```python
+from dask.distributed import Client
+
+client = Client(n_workers=4)
+client
+```
+:::
+
+## Futures {.scrollable}
+:::{.callout-tip icon=false}
+## A Typical Workflow
+
+This is the same workflow that we saw in the delayed section. It is for-loopy and the data is not necessarily an array or a dataframe. The following example outlines a read-transform-write:
+
+```python
+def process_file(filename):
+    data = read_a_file(filename)
+    data = do_a_transformation(data)
+    destination = f"results/{filename}"
+    write_out_data(data, destination)
+    return destination
+
+futures = []
+for filename in filenames:
+    future = client.submit(process_file, filename)
+    futures.append(future)
+    
+futures
+```
+:::
+
+:::{.callout-note}
+Compare with the delayed version: no decorator, and no `dask.compute` at the end. Each `client.submit` starts work immediately.
+:::
+
+## Futures {.scrollable}
+:::{.callout-tip icon=false}
+## Basics
+
+Just like we did in the delayed section, let's make some toy functions, `inc` and `add`, that sleep for a while to simulate work.
+
+```python
+from time import sleep
+
+
+def inc(x):
+    sleep(1)
+    return x + 1
+
+
+def double(x):
+    sleep(2)
+    return 2 * x
+
+
+def add(x, y):
+    sleep(1)
+    return x + y
+```
+
+We can run these locally
+
+```python
+inc(1)
+```
+:::
+
+## Futures {.scrollable}
+:::{.callout-tip icon=false}
+## Submitting a function
+
+Or we can submit them to run remotely with Dask. This immediately returns a future that points to the ongoing computation, and eventually to the stored result.
+
+```python
+future = client.submit(inc, 1)  # returns immediately with pending future
+future
+```
+
+If you wait a second, and then check on the future again, you'll see that it has finished.
+
+```python
+future
+```
+
+You can block on the computation and gather the result with the `.result()` method.
+
+```python
+future.result()
+```
+:::
+
+## Futures {.scrollable}
+:::{.callout-tip icon=false}
+## Other ways to wait for a future
+
+```python
+from dask.distributed import wait, progress
+progress(future)
+```
+
+shows a progress bar in *this* notebook, rather than having to go to the dashboard. This progress bar is also asynchronous, and doesn't block the execution of other code in the meanwhile.
+
+```python
+wait(future)
+```
+
+blocks and forces the notebook to wait until the computation pointed to by `future` is done. However, note that if the result of `inc()` is sitting in the cluster, it would take **no time** to execute the computation now, because Dask notices that we are asking for the result of a computation it already knows about.
+:::
+
+:::{.callout-tip icon=false}
+## Other ways to gather results
+
+```python
+client.gather(futures)
+```
+
+gathers results from more than one future.
+:::
+
+## Futures {.scrollable}
+:::{.callout-tip icon=false}
+## `client.compute`
+
+Generally, any Dask operation that is executed using `.compute()` or `dask.compute()` can be submitted for asynchronous execution using `client.compute()` instead.
+
+Here is an example from the delayed section:
+
+```python
+import dask
+
+
+@dask.delayed
+def inc(x):
+    sleep(1)
+    return x + 1
+
+
+@dask.delayed
+def add(x, y):
+    sleep(1)
+    return x + y
+
+
+x = inc(1)
+y = inc(2)
+z = add(x, y)
+```
+:::
+
+## Futures {.scrollable}
+:::{.callout-tip icon=false}
+## `client.compute`
+
+So far we have a regular `dask.delayed` output. When we pass `z` to `client.compute` we get a future back and Dask starts evaluating the task graph.
+
+```python
+# notice the difference from z.compute()
+# notice that this cell completes immediately
+future = client.compute(z)
+future
+```
+
+```python
+future.result()  # waits until result is ready
+```
+
+When using futures, the *computation moves to the data* rather than the other way around, and the client, in the local Python session, need never see the intermediate values.
+:::
+
+## Futures {.scrollable}
+:::{.callout-tip icon=false}
+## `client.submit`
+
+`client.submit` takes a function and arguments, pushes these to the cluster, returning a `Future` representing the result to be computed. The function is passed to a worker process for evaluation. This looks a lot like doing `client.compute()`, above, except now we are passing the function and arguments directly to the cluster.
+
+```python
+def inc(x):
+    sleep(1)
+    return x + 1
+
+
+future_x = client.submit(inc, 1)
+future_y = client.submit(inc, 2)
+future_z = client.submit(sum, [future_x, future_y])
+future_z
+```
+
+```python
+future_z.result()  # waits until result is ready
+```
+
+The arguments to `client.submit` can be regular Python functions and objects, futures from other submit operations or `dask.delayed` objects.
+:::
+
+## Futures
+:::{.callout-tip icon=false}
+## Explicit methods
+
+- we can explicitly pass data from our local session into the cluster using `client.scatter()`. Usually it is better to construct functions that do the loading of data within the workers themselves
+- similarly, we normally don't want to `gather()` results that are too big in memory.
+:::
+
+## Futures {.scrollable}
+:::{.callout-tip icon=false}
+## Example: Sporadically failing task
+
+Let's imagine a task that sometimes fails. You might encounter this when dealing with input data where sometimes a file is malformed, or maybe a request times out.
+
+```python
+from random import random
+
+
+def flaky_inc(i):
+    if random() < 0.2:
+        raise ValueError("You hit the error!")
+    return i + 1
+```
+
+If you run this function over and over again, it will sometimes fail.
+
+```python
+>>> flaky_inc(2)
+---------------------------------------------------------------------------
+ValueError                                Traceback (most recent call last)
+----> 1 flaky_inc(2)
+
+      3 def flaky_inc(i):
+      4     if random() < 0.2:
+----> 5         raise ValueError("You hit the error!")
+      6     return i + 1
+
+ValueError: You hit the error!
+```
+:::
+
+## Futures {.scrollable}
+:::{.callout-tip icon=false}
+## Example: Sporadically failing task
+
+We can run this function on a range of inputs using `client.map`.
+
+```python
+futures = client.map(flaky_inc, range(10))
+```
+
+Notice how the cell returned even though some of the computations failed. We can inspect these futures one by one and find the ones that failed:
+
+```python
+for i, future in enumerate(futures):
+    print(i, future.status)
+```
+
+You can rerun those specific futures to try to get the task to successfully complete:
+
+```python
+futures[5].retry()
+```
+
+```python
+for i, future in enumerate(futures):
+    print(i, future.status)
+```
+:::
+
+## Futures {.scrollable}
+:::{.callout-tip icon=false}
+## Retrying automatically
+
+A more concise way of retrying in the case of sporadic failures is by setting the number of retries in the `client.compute`, `client.submit` or `client.map` method.
+
+```python
+futures = client.map(flaky_inc, range(10), retries=5, pure=False)
+future_z = client.submit(sum, futures)
+future_z.result()
+```
+
+You will see a lot of warnings, but the computation should eventually succeed.
+:::
+
+:::{.callout-warning icon=false}
+## Why `pure=False`?
+
+In this example we also need to set `pure=False` to let Dask know that the arguments to the function do not totally determine the output.
+
+By default Dask treats functions as *pure*: the key of a task is a hash of the function and its arguments, so submitting `flaky_inc(3)` twice gives the **same** future, and the second call reuses the first result (or the first error). With `pure=False` every call gets a fresh key.
+:::
+
+## Futures
+:::{.callout-tip icon=false}
+## Why use Futures?
+
+The futures API offers a work submission style that can easily emulate the map/reduce paradigm. If that is familiar to you then futures might be the simplest entrypoint into Dask.
+
+The other big benefit of futures is that the intermediate results, represented by futures, can be passed to new tasks without having to pull data locally from the cluster. New operations can be setup to work on the output of previous jobs that haven't even begun yet.
+:::
+
+## Delayed vs. Futures {.scrollable}
+
+:::{.callout-important icon=false}
+## Side by side
+
+| | `dask.delayed` | futures |
+|---|---|---|
+| evaluation | **lazy**: builds a graph, runs on `.compute()` | **eager**: runs as soon as inputs and a worker are free |
+| entry point | `@dask.delayed`, `dask.compute(...)` | `client.submit`, `client.map`, `client.compute` |
+| scheduler | any (threads, processes, distributed) | distributed only (needs a `Client`) |
+| result | returned to the local session by `compute` | stays on the cluster until `.result()` / `client.gather` |
+| intermediate values | discarded after `compute` (unless `persist`) | kept while a future references them |
+| failures | the whole `compute` raises | per-future `status`, `.retry()`, `retries=` |
+| graph | whole graph known up front, optimised before running | built incrementally; new work can depend on running work |
+:::
+
+## Futures
+:::{.callout-note icon=false}
+## Close the Client
+
+```python
+client.close()
+```
+:::
+
 ## Useful Links {.font8}
 
 *  Reference
