@@ -6,6 +6,7 @@ author:
 code-fold: false
 execute:
   enabled: true
+  echo: true
   cache: true
 diagram:
   cache: true
@@ -31,7 +32,6 @@ format:
       id: 'c98a9f6491ac4446afaff3a81eced102c969d99b2e789cbc609eeb67a517bb73'
 ---
 
-
 ## Intro
 ![](https://docs.dask.org/en/latest/_images/dask_horizontal.svg){height=250}
 
@@ -48,39 +48,68 @@ uv add pyarrow
 ```
 :::
 
+## Data for this lecture
+:::{.callout-important icon=false}
+## Download and set `DATA_DIR`
 
-## An example Dask computation {.font8}
+Download `dask_data.zip` and unzip it anywhere. It contains the NYC flights CSVs (1990--1999), a 200k-row extract of the 2015 NYC taxi data, and `prep.py`, which generates the remaining datasets.
+
+Every code cell below reads its data through one variable. Set it to the folder you unzipped into:
+
+```{python}
+import os
+
+# Folder where you unzipped dask_data.zip -- change this to your own path
+DATA_DIR = "_data/dask"
+```
+:::
+
+```{python}
+#| include: false
+# Render only: use an absolute path and work inside the data folder,
+# so that files written by .visualize() (mydask.png) stay out of the repo
+DATA_DIR = os.path.abspath(DATA_DIR)
+os.chdir(DATA_DIR)
+```
+
+
+## An example Dask computation {.font8 .scrollable}
 
 :::{.callout-note icon=false}
 ## Example
 In the following lines of code, we're reading the NYC taxi cab data from 2015 and finding the mean tip amount. 
 
 1. Import
-```python
+```{python}
 import dask.dataframe as dd
 from dask.distributed import Client
 ```
 
 2. Create client.
-```python
+```{python}
 client = Client()
 client
 ```
 
 3. Read data.
-```python
+```{python}
 ddf = dd.read_parquet(
-    "s3://dask-data/nyc-taxi/nyc-2015.parquet/part.*.parquet",
+    os.path.join(DATA_DIR, "taxi.parquet"),  # 200k-row extract of the 2015 data
     columns=["passenger_count", "tip_amount"],
-    storage_options={"anon": True},
 )
 ```
 
 4. Groupby and mean
-```python
+```{python}
 result = ddf.groupby("passenger_count").tip_amount.mean().compute()
 result
 ```
+
+```{python}
+#| include: false
+client.close()
+```
+
 :::
 
 ## What is [Dask]("https://www.dask.org/")?
@@ -133,7 +162,7 @@ In addition to the core Dask library and its distributed scheduler, the Dask eco
 - Dask-bigquery
 :::
 
-## Dask Ecosystem {.font8}
+## Dask Ecosystem {.font8 .scrollable}
 
 :::{.callout-tip icon=false}
 ## Community ibraries
@@ -215,14 +244,14 @@ Dask becomes useful when the datasets exceed the above rule.
 In this notebook, you will be working with the New York City Airline data. This dataset is only ~200MB, so that you can download it in a reasonable time, but `dask.dataframe` will scale to  datasets **much** larger than memory.
 :::
 
-## DataFrame
+## DataFrame {.scrollable}
 :::{.callout-important icon=false}
 ## Create datasets
 
 Create the datasets you will be using in this notebook:
 
-```python
-%run prep.py -d flights
+```{python}
+%run {DATA_DIR}/prep.py -d flights
 ```
 :::
 
@@ -231,7 +260,7 @@ Create the datasets you will be using in this notebook:
 
 Create a local Dask cluster and connect it to the client. 
 
-```python
+```{python}
 from dask.distributed import Client
 
 client = Client(n_workers=4)
@@ -249,13 +278,13 @@ Dask Distributed provides a useful Dashboard to visualize the state of your clus
 Click on the dashboard link displayed in the Client details above: <http://127.0.0.1:8787/status>. It will open a new browser tab with the Dashboard.
 :::
 
-## DataFrame
+## DataFrame {.scrollable}
 :::{.callout-tip icon=false}
 ## Reading and working with datasets
 
 Let's read an extract of flights in the USA across several years. This data is specific to flights out of the three airports in the New York City area.
 
-```python
+```{python}
 import os
 import dask
 ```
@@ -270,17 +299,26 @@ The term "Dask DataFrame" is slightly overloaded. Depending on the context, it c
 - `DataFrame` (note the CamelCase) refers to the object.
 :::
 
-## DataFrame
+## DataFrame {.scrollable}
 :::{.callout-tip icon=false}
 ## Reading and working with datasets
 The following filename includes a glob pattern `*`, so all files in the path matching that pattern will be read into the same `DataFrame`.
 
-```python
+```{python}
 import dask.dataframe as dd
+import pandas as pd
 
-ddf = dd.read_csv(
-    os.path.join("data", "nycflights", "*.csv"), parse_dates={"Date": [0, 1, 2]}
-)
+# pandas 3 removed parse_dates={"Date": [0, 1, 2]}; build the same Date column per partition
+def add_date(df):
+    date = pd.to_datetime(
+        df[["Year", "Month", "DayofMonth"]].rename(columns={"DayofMonth": "Day"}),
+        errors="coerce",
+    )
+    return df.drop(columns=["Year", "Month", "DayofMonth"]).assign(Date=date)
+
+
+ddf = dd.read_csv(os.path.join(DATA_DIR, "nycflights", "*.csv"))
+ddf = ddf.map_partitions(add_date)
 ddf
 ```
 :::
@@ -299,7 +337,7 @@ Dask has not loaded the data yet, it has:
 Notice that the representation of the `DataFrame` object contains no data - Dask has just done enough to read the start of the first file, and infer the column names and `dtype`s.
 :::
 
-## DataFrame
+## DataFrame {.scrollable}
 :::{.callout-tip icon=false}
 ## Lazy Evaluation
 
@@ -308,7 +346,7 @@ Most Dask Collections, including Dask `DataFrame` are evaluated lazily, which me
 You can view this task graph using `.visualize()`.
 
 
-```python
+```{python}
 ddf.visualize()
 ```
 
@@ -331,16 +369,21 @@ len(ddf)
 ```
 :::
 
+:::{.callout-note}
+Not run here: with current pandas (3.x), reading every file already hits the dtype problem shown for `ddf.tail()` on the next slides. `len(ddf)` is run after the fix.
+:::
+
 ## DataFrame {.scrollable}
 :::{.callout-tip icon=false}
 ## Lazy Evaluation
 You can view the start and end of the data as you would in pandas:
 
-```python
+```{python}
 ddf.head()
 ```
 
-```python
+```{python}
+#| error: true
 ddf.tail()
 
 # ValueError: Mismatched dtypes found in `pd.read_csv`/`pd.read_table`.
@@ -381,26 +424,30 @@ In this case, the datatypes inferred in the sample are incorrect. The first `n` 
 - Use `assume_missing` to make `dask` assume that columns inferred to be `int` (which don't allow missing values) are actually `floats` (which do allow missing values). In our particular case this doesn't apply.
 :::
 
-## DataFrame
+## DataFrame {.scrollable}
 :::{.callout-tip icon=false}
 ## Handling conflicting types
 
 In our case we'll use the first option and directly specify the `dtypes` of the offending columns. 
 
-```python
+```{python}
 ddf = dd.read_csv(
-    os.path.join("data", "nycflights", "*.csv"),
-    parse_dates={"Date": [0, 1, 2]},
+    os.path.join(DATA_DIR, "nycflights", "*.csv"),
     dtype={"TailNum": str, "CRSElapsedTime": float, "Cancelled": bool},
 )
+ddf = ddf.map_partitions(add_date)
 ```
 
-```python
+```{python}
 ddf.tail()  # now works
+```
+
+```{python}
+len(ddf)  # and so does counting the rows
 ```
 :::
 
-## DataFrame
+## DataFrame {.scrollable}
 :::{.callout-tip icon=false}
 ## Reading from remote storage
 
@@ -414,10 +461,12 @@ ddf = dd.read_parquet(
 )
 ```
 
+Not executed here: the `nyc-tlc` bucket is no longer publicly readable (it now returns *Access Denied*).
+
 You can also leverage Parquet-specific optimizations like column selection and metadata handling, learn more in [the Dask documentation on working with Parquet files](https://docs.dask.org/en/stable/dataframe-parquet.html).
 :::
 
-## DataFrame
+## DataFrame {.scrollable}
 :::{.callout-tip icon=false}
 ## Computations with `dask.dataframe`
 
@@ -425,27 +474,27 @@ Let's compute the maximum of the flight delay.
 
 With just pandas, we would loop over each file to find the individual maximums, then find the final maximum over all the individual maximums.
 
-```python
+```{python}
 import pandas as pd
 
-files = os.listdir(os.path.join('data', 'nycflights'))
+files = os.listdir(os.path.join(DATA_DIR, 'nycflights'))
 
 maxes = []
 
 for file in files:
-    df = pd.read_csv(os.path.join('data', 'nycflights', file))
+    df = pd.read_csv(os.path.join(DATA_DIR, 'nycflights', file))
     maxes.append(df.DepDelay.max())
     
 final_max = max(maxes)
 ```
 :::
 
-## DataFrame
+## DataFrame {.scrollable}
 :::{.callout-tip icon=false}
 ## Computations with `dask.dataframe`
 `dask.dataframe` lets us write pandas-like code, that operates on larger-than-memory datasets in parallel.
 
-```python
+```{python}
 %%time
 result = ddf.DepDelay.max()
 result.compute()
@@ -454,7 +503,7 @@ result.compute()
 This creates the lazy computation for us and then runs it.  
 :::
 
-## DataFrame
+## DataFrame {.scrollable}
 :::{.callout-note}
 ## Computations with `dask.dataframe`
 
@@ -462,7 +511,7 @@ Dask will delete intermediate results (like the full pandas DataFrame for each f
 
 You can view the underlying task graph using `.visualize()`:
 
-```python
+```{python}
 # notice the parallelism
 result.visualize()
 ```
@@ -474,7 +523,7 @@ result.visualize()
 
 1. How many rows are in our dataset?
 
-```python
+```{python}
 # Your code here
 ```
 
@@ -488,7 +537,7 @@ result.visualize()
 
 _Hint_: use [boolean indexing](https://pandas.pydata.org/pandas-docs/stable/indexing.html#boolean-indexing).
 
-```python
+```{python}
 # Your code here
 ```
 
@@ -506,7 +555,7 @@ _Hint_: use [boolean indexing](https://pandas.pydata.org/pandas-docs/stable/inde
 
 *Hint*: use [groupby](https://pandas.pydata.org/pandas-docs/stable/groupby.html).
 
-```python
+```{python}
 # Your code here
 ```
 
@@ -518,7 +567,7 @@ _Hint_: use [boolean indexing](https://pandas.pydata.org/pandas-docs/stable/inde
 
 4. What was the average departure delay from each airport?
 
-```python
+```{python}
 # Your code here
 ```
 
@@ -535,7 +584,7 @@ _Hint_: use [boolean indexing](https://pandas.pydata.org/pandas-docs/stable/inde
 
 5. What day of the week has the worst average departure delay?
 
-```python
+```{python}
 # Your code here
 ```
 
@@ -547,7 +596,7 @@ _Hint_: use [boolean indexing](https://pandas.pydata.org/pandas-docs/stable/inde
 
 6. Let's say the distance column is erroneous and you need to add 1 to all values, how would you do this?
 
-```python
+```{python}
 # Your code here
 ```
 
@@ -574,14 +623,13 @@ For example, let's compute the mean and standard deviation for departure delay o
 
 If you compute them with two calls to compute, there is no sharing of intermediate computations.
 
-```python
+```{python}
 non_canceled = ddf[~ddf.Cancelled]
 mean_delay = non_canceled.DepDelay.mean()
 std_delay = non_canceled.DepDelay.std()
 ```
 
-```python
-#| tags: []
+```{python}
 %%time
 
 mean_delay_res = mean_delay.compute()
@@ -589,14 +637,13 @@ std_delay_res = std_delay.compute()
 ```
 :::
 
-## DataFrame
+## DataFrame {.scrollable}
 :::{.callout-tip icon=false}
 ## `dask.compute`
 
 But let's try by passing both to a single `compute` call.
 
-```python
-#| tags: []
+```{python}
 %%time
 
 mean_delay_res, std_delay_res = dask.compute(mean_delay, std_delay)
@@ -609,7 +656,7 @@ Using `dask.compute` takes roughly 1/2 the time. This is because the task graphs
 - some of the necessary reductions (`sum`, `count`)
 :::
 
-## DataFrame
+## DataFrame {.scrollable}
 :::{.callout-tip icon=false}
 ## Visualization
 
@@ -621,7 +668,11 @@ dask.visualize(mean_delay, std_delay, engine="cytoscape")
 ```
 :::
 
-## DataFrame
+:::{.callout-warning}
+Not executed here: with current Dask (2026.x), `dask.visualize` on **several** DataFrame collections raises `NotImplementedError`. A single one still works, e.g. `mean_delay.visualize()`.
+:::
+
+## DataFrame {.scrollable}
 :::{.callout-tip icon=false}
 ## `.persist()`
 
@@ -631,30 +682,30 @@ While using a distributed scheduler (you will learn more about schedulers in the
 
 If you want to analyze data only for non-canceled flights departing from JFK airport, you can either have two compute calls like in the previous section:
 
-```python
+```{python}
 non_cancelled = ddf[~ddf.Cancelled]
 ddf_jfk = non_cancelled[non_cancelled.Origin == "JFK"]
 ```
 
-```python
+```{python}
 %%time
 ddf_jfk.DepDelay.mean().compute()
 ddf_jfk.DepDelay.sum().compute()
 ```
 :::
 
-## DataFrame
+## DataFrame {.scrollable}
 :::{.callout-tip icon=false}
 ## `.persist()`
 Or, consider persisting that subset of data in memory.
 
 See the "Graph" dashboard plot, the red squares indicate persisted data stored as Futures in memory. You will also notice an increase in Worker Memory (another dashboard plot) consumption.
 
-```python
+```{python}
 ddf_jfk = ddf_jfk.persist()  # returns back control immediately
 ```
 
-```python
+```{python}
 %%time
 ddf_jfk.DepDelay.mean().compute()
 ddf_jfk.DepDelay.std().compute()
@@ -692,14 +743,13 @@ In case it's a custom function or tricky to implement, `dask.dataframe` provides
 ## `map_partitions`
 Let's take a quick look at the `map_partitions()` function:
 
-```python
-#| tags: []
+```{python}
 help(ddf.map_partitions)
 ```
 
 The "Distance" column in `ddf` is currently in miles. Let's say we want to convert the units to kilometers and we have a general helper function as shown below. In this case, we can use `map_partitions` to apply this function across each of the internal pandas `DataFrame`s in parallel. 
 
-```python
+```{python}
 def my_custom_converter(df, multiplier=1):
     return df * multiplier
 
@@ -711,11 +761,11 @@ distance_km = ddf.Distance.map_partitions(
 )
 ```
 
-```python
+```{python}
 distance_km.visualize()
 ```
 
-```python
+```{python}
 distance_km.head()
 ```
 :::
@@ -731,12 +781,12 @@ Since Dask operates lazily, it doesn't always have enough information to infer t
 Even though there are many ways to define `meta`, we suggest using a small pandas Series or DataFrame that matches the structure of your final output.
 :::
 
-## Close you local Dask Cluster
+## Close you local Dask Cluster {.scrollable}
 
 :::{.callout-important}
 It's good practice to always close any Dask cluster you create:
 
-```python
+```{python}
 client.shutdown()
 ```
 :::
@@ -772,22 +822,22 @@ Parallel, larger-than-memory, n-dimensional array using blocked algorithms.
 :::
 
 
-## Dask Arrays
+## Dask Arrays {.scrollable}
 :::{.callout-note icon=false}
 ## Create datasets
 
 Create the datasets you will be using in this notebook:
 
-```python
-%run prep.py -d random
+```{python}
+%run {DATA_DIR}/prep.py -d random
 ```
 :::
 
-## Dask Arrays
+## Dask Arrays {.scrollable}
 :::{.callout-note icon=false}
 ## Start the Client
 
-```python
+```{python}
 from dask.distributed import Client
 
 client = Client(n_workers=4)
@@ -801,12 +851,12 @@ client
 
 Let's do side by side the sum of the elements of an array using a NumPy array and a Dask array. 
 
-```python
+```{python}
 import numpy as np
 import dask.array as da
 ```
 
-```python
+```{python}
 # NumPy array
 a_np = np.ones(10)
 a_np
@@ -818,7 +868,7 @@ a_np
 ## Blocked Algorithms in a nutshell
 We know that we can use `sum()` to compute the sum of the elements of our array, but to show what a blocksized operation would look like, let's do:
 
-```python
+```{python}
 a_np_sum = a_np[:5].sum() + a_np[5:].sum()
 a_np_sum
 ```
@@ -826,39 +876,39 @@ a_np_sum
 Now notice that each sum in the computation above is completely independent so they could be done in parallel. 
 To do this with Dask array, we need to define our "slices", we do this by defining the amount of elements we want per block using the variable `chunks`. 
 
-```python
+```{python}
 a_da = da.ones(10, chunks=5)
 a_da
 ```
 :::
 
-## Dask Arrays
+## Dask Arrays {.scrollable}
 :::{.callout-important}
 
 Note here that to get two blocks, we specify `chunks=5`, in other words, we have 5 elements per block. 
 
-```python
+```{python}
 a_da_sum = a_da.sum()
 a_da_sum
 ```
 :::
 
-## Dask Arrays
+## Dask Arrays {.scrollable}
 :::{.callout-note icon=false}
 ## Task Graphs
 
-```python
+```{python}
 # visualize the low level Dask graph using cytoscape
 a_da_sum.visualize(engine="cytoscape")
 ```
 
 And then compute:
-```python
+```{python}
 a_da_sum.compute()
 ```
 :::
 
-## Dask Arrays
+## Dask Arrays {.scrollable}
 :::{.callout-note icon=false}
 ## Performance comparison
 
@@ -875,16 +925,16 @@ yn
 
 #### Dask array version
 
-```python
+```{python}
 xd = da.random.normal(10, 0.1, size=(30_000, 30_000), chunks=(3000, 3000))
 xd
 ```
 
-```python
+```{python}
 xd.nbytes / 1e9  # Gigabytes of the input processed lazily
 ```
 
-```python
+```{python}
 yd = xd.mean(axis=0)
 yd
 ```
@@ -902,7 +952,7 @@ yd.compute()
 ```
 :::
 
-## Dask Arrays
+## Dask Arrays {.scrollable}
 :::{.callout-note icon=false}
 ## Exercise
 
@@ -910,7 +960,7 @@ yd.compute()
 * What happens if the Dask chunks=(30,30)?
 * For Dask arrays, compute the mean along `axis=1` of the sum of the x array and its transpose. 
 
-```python
+```{python}
 # Your code here
 ```
 
@@ -925,7 +975,7 @@ yd.compute()
 <!-- ``` -->
 :::
 
-## Dask Arrays
+## Dask Arrays {.scrollable}
 :::{.callout-note icon=false}
 ## Choosing good chunk sizes
 
@@ -934,7 +984,7 @@ We can think of Dask arrays as a big structure composed by chunks of a smaller s
 If you have a Dask array and want to know more information about chunks and their size, you can use the `chunksize` and `chunks` attributes to access this information. If you are in a jupyter notebook
 you can also visualize the Dask array via its HTML representation. 
 
-```python
+```{python}
 darr = da.random.random((1000, 1000, 1000))
 darr
 ```
@@ -948,11 +998,11 @@ Notice that when we created the Dask array, we did not specify the `chunks`. Das
 - `darr.chunksize` shows the largest chunk size.
 - But if your array have irregular chunks, `darr.chunks` will show you the explicit sizes of all the chunks along all the dimensions of your dask array.
 
-```python
+```{python}
 darr.chunksize
 ```
 
-```python
+```{python}
 darr.chunks
 ```
 :::
@@ -962,19 +1012,19 @@ darr.chunks
 ## Choosing good chunk sizes
 Let's modify our example to see explore chunking a bit more. We can rechunk our array:
 
-```python
+```{python}
 darr = darr.rechunk({0: -1, 1: 100, 2: "auto"})
 ```
 
-```python
+```{python}
 darr
 ```
 
-```python
+```{python}
 darr.chunksize
 ```
 
-```python
+```{python}
 darr.chunks
 ```
 :::
@@ -1018,10 +1068,10 @@ darr.chunks
 - The time taken to compute each task should be much larger than the time needed to schedule the task. The Dask scheduler takes roughly 1 millisecond to coordinate a single task, so a good task computation time would be in the order of seconds (not milliseconds).
 - Chunks should be aligned with array storage on disk. Modern NDArray storage formats (HDF5, NetCDF, TIFF, Zarr) allow arrays to be stored in chunks so that the blocks of data can be pulled efficiently. However, data stores often chunk more finely than is ideal for Dask array, so it is common to choose a chunking that is a multiple of your storage chunk size, otherwise you might incur high overhead. For example,  if you are loading data that is chunked in blocks of (100, 100), the  you might might choose a chunking strategy more like (1000, 2000) that is larger but still divisible by (100, 100). 
 
-For more more advice on chunking see https://docs.dask.org/en/stable/array-chunks.html
+For more more advice on chunking see <https://docs.dask.org/en/stable/array-chunks.html>
 :::
 
-## Dask Arrays
+## Dask Arrays {.scrollable}
 :::{.callout-note icon=false}
 ## Example of chunked data with Zarr
 
@@ -1031,33 +1081,33 @@ For extra material check the [Zarr tutorial](https://zarr.readthedocs.io/en/stab
 
 **Let's read an array from zarr:**
 
-```python
+```{python}
 import zarr
 ```
 
-```python
-a = da.from_zarr("data/random.zarr")
+```{python}
+a = da.from_zarr(os.path.join(DATA_DIR, "random.zarr"))
 ```
 
-```python
+```{python}
 a
 ```
 :::
 
-## Dask Arrays
+## Dask Arrays {.scrollable}
 :::{.callout-note icon=false}
 ## Example of chunked data with Zarr
 Notice that the array is already chunked, and we didn't specify anything when loading it. Now notice that the chunks have a nice chunk size, let's compute the mean and see how long it takes to run
 
-```python
+```{python}
 %%time
 a.mean().compute()
 ```
 
 Let's load a separate example where the `chunksize` is much smaller, and see what happen
 
-```python
-b = da.from_zarr("data/random_sc.zarr")
+```{python}
+b = da.from_zarr(os.path.join(DATA_DIR, "random_sc.zarr"))
 b
 ```
 
@@ -1067,13 +1117,13 @@ b.mean().compute()
 ```
 :::
 
-## Dask Arrays
+## Dask Arrays {.scrollable}
 :::{.callout-note icon=false}
 ## Exercise
 
 Provide a `chunksize` when reading `b` that will improve the time of computation of the mean. Try multiple `chunks` values and see what happens.
 
-```python
+```{python}
 # Your code here
 ```
 
@@ -1081,11 +1131,16 @@ Provide a `chunksize` when reading `b` that will improve the time of computation
 <!-- #| jupyter: {source_hidden: true} -->
 <!-- #| tags: [] -->
 <!-- # 1 possible Solution (imitate original). chunks will vary if you are in binder -->
-<!-- c = da.from_zarr("data/random_sc.zarr", chunks=(6250000,)) -->
+<!-- c = da.from_zarr(os.path.join(DATA_DIR, "random_sc.zarr"), chunks=(6250000,)) -->
 <!-- c -->
 <!-- ``` -->
 
-```python
+```{python}
+#| include: false
+c = da.from_zarr(os.path.join(DATA_DIR, "random_sc.zarr"), chunks=(6250000,))
+```
+
+```{python}
 %%time
 c.mean().compute()
 ```
@@ -1100,11 +1155,11 @@ In some applications we have multidimensional data, and sometimes working with a
 
 Let's learn how to use xarray and Dask together:
 
-```python
+```{python}
 import xarray as xr
 ```
 
-```python
+```{python}
 ds = xr.tutorial.open_dataset(
     "air_temperature",
     chunks={  # this tells xarray to open the dataset as a dask array
@@ -1116,36 +1171,36 @@ ds = xr.tutorial.open_dataset(
 ds
 ```
 
-```python
+```{python}
 ds.air
 ```
 
-```python
+```{python}
 ds.air.chunks
 ```
 
-```python
+```{python}
 mean = ds.air.mean("time")  # no activity on dashboard
 mean  # contains a dask array
 ```
 
-```python
+```{python}
 # we will see dashboard activity
 mean.load()
 ```
 :::
 
-## Dask Arrays
+## Dask Arrays {.scrollable}
 :::{.callout-note icon=false}
 ## Standard Xarray Operations
 
 Let's grab the air variable and do some operations. Operations using xarray objects are identical, regardless if the underlying data is stored as a Dask array or a NumPy array.
 
-```python
+```{python}
 dair = ds.air
 ```
 
-```python
+```{python}
 dair2 = dair.groupby("time.month").mean("time")
 dair_new = dair - dair2
 dair_new
@@ -1153,23 +1208,23 @@ dair_new
 
 Call `.compute()` or `.load()` when you want your result as a `xarray.DataArray` with data stored as NumPy arrays.
 
-```python
+```{python}
 # things happen in the dashboard
 dair_new.load()
 ```
 :::
 
-## Dask Arrays
+## Dask Arrays {.scrollable}
 :::{.callout-note icon=false}
 ## Time Series Operations with xarray
 
 Because we have a datetime index time-series operations work efficiently, for example we can do a resample and then plot the result.
 
-```python
+```{python}
 dair_resample = dair.resample(time="1w").mean("time").std("time")
 ```
 
-```python
+```{python}
 dair_resample.load().plot(figsize=(12, 8))
 ```
 :::
@@ -1184,13 +1239,13 @@ Both xarray and zarr have their own tutorials that go into greater depth:
 * [Xarray tutorial](https://tutorial.xarray.dev/intro.html)
 :::
 
-## Dask Arrays
+## Dask Arrays {.scrollable}
 :::{.callout-note icon=false}
 ## Close your cluster
 
 It's good practice to close any Dask cluster you create:
 
-```python
+```{python}
 client.shutdown()
 ```
 :::
@@ -1216,13 +1271,13 @@ This is a simple way to use `dask` to parallelize existing codebases or build [c
 * [Delayed best practices](https://docs.dask.org/en/latest/delayed-best-practices.html)
 :::
 
-## Dask Delayed
+## Dask Delayed {.scrollable}
 :::{.callout-tip icon=false}
 ## Start the Client
 
 Dask has several ways of executing code in parallel. We'll use the distributed scheduler by creating a `dask.distributed.Client`. For now, this will provide us with some nice diagnostics.
 
-```python
+```{python}
 from dask.distributed import Client
 
 client = Client(n_workers=4)
@@ -1261,7 +1316,7 @@ dask.compute(results)
 
 First let's make some toy functions, `inc` and `add`, that sleep for a while to simulate work. We'll then time running these functions normally.
 
-```python
+```{python}
 from time import sleep
 
 
@@ -1277,7 +1332,7 @@ def add(x, y):
 
 We time the execution of this normal code using the `%%time` magic, which is a special function of the Jupyter Notebook.
 
-```python
+```{python}
 %%time
 # This takes three seconds to run because we call each
 # function sequentially, one after the other
@@ -1298,7 +1353,7 @@ We'll make the `inc` and `add` functions lazy using the `dask.delayed` decorator
 
 Instead, a *delayed object* is made, which keeps track of the function to call and the arguments to pass to it.
 
-```python
+```{python}
 import dask
 
 
@@ -1319,7 +1374,7 @@ def add(x, y):
 :::{.callout-tip icon=false}
 ## Building the graph vs. computing it
 
-```python
+```{python}
 %%time
 # This runs immediately, all it does is build a graph
 
@@ -1332,7 +1387,7 @@ This ran immediately, since nothing has really happened yet.
 
 To get the result, call `compute`. Notice that this runs faster than the original code.
 
-```python
+```{python}
 %%time
 # This actually runs our computation using a local thread pool
 
@@ -1350,11 +1405,12 @@ Building the graph takes milliseconds; `z.compute()` returns `5` after about **2
 
 The `z` object is a lazy `Delayed` object. This object holds everything we need to compute the final result, including references to all of the functions that are required and their inputs and relationship to one-another. We can evaluate the result with `.compute()` as above or we can visualize the task graph for this value with `.visualize()`.
 
-```python
+```{python}
 z
 ```
 
-```python
+```{python}
+#| output: false   # the rendered graph is shown as an image below
 # Look at the task graph for `z`
 z.visualize()
 ```
@@ -1366,7 +1422,7 @@ Notice that this includes the names of the functions from before, and the logica
 
 ## Dask Delayed
 :::{.callout-note icon=false}
-## Some questions to consider
+## Exercise
 
 -  Why did we go from 3s to 2s? Why weren't we able to parallelize down to 1s?
 -  What would have happened if the inc and add functions didn't include the `sleep(1)`? Would Dask still be able to speed up this code?
@@ -1379,7 +1435,7 @@ Notice that this includes the names of the functions from before, and the logica
 
 `for` loops are one of the most common things that we want to parallelize. Use `dask.delayed` on `inc` and `sum` to parallelize the computation below:
 
-```python
+```{python}
 data = [1, 2, 3, 4, 5, 6, 7, 8]
 ```
 
@@ -1401,14 +1457,37 @@ for x in data:
 total = sum(results)
 ```
 
-```python
+```{python}
+#| include: false
+# same result as the sequential loop above, without the sleeps
+total = sum(x + 1 for x in data)
+```
+
+```{python}
 total
 ```
 
-```python
+```{python}
 %%time
 # Your parallel code here...
 ```
+
+```{python}
+#| include: false
+@dask.delayed
+def inc(x):
+    sleep(1)
+    return x + 1
+
+
+results = []
+for x in data:
+    y = inc(x)
+    results.append(y)
+
+total = sum(results)
+```
+
 
 <!-- ```python -->
 <!-- @dask.delayed -->
@@ -1429,13 +1508,13 @@ total
 <!-- ``` -->
 :::
 
-## Dask Delayed
+## Dask Delayed {.scrollable}
 :::{.callout-note icon=false}
 ## Delayed `sum`, or plain `sum`?
 
 How do the graph visualizations compare with the given solution, compared to a version with the `sum` function used directly rather than wrapped with `delayed`? Can you explain the latter version? You might find the result of the following expression illuminating:
 
-```python
+```{python}
 inc(1) + inc(2)
 ```
 :::
@@ -1452,7 +1531,7 @@ Often we want to delay only *some* functions, running a few of them immediately.
 
 In the example below we iterate through a list of inputs. If that input is even then we want to call `inc`. If the input is odd then we want to call `double`. This `is_even` decision to call `inc` or `double` has to be made immediately (not lazily) in order for our graph-building Python code to proceed.
 
-```python
+```{python}
 def double(x):
     sleep(1)
     return 2 * x
@@ -1486,12 +1565,32 @@ total = sum(results)
 print(total)
 ```
 
-```python
+```{python}
 %%time
 # Your parallel code here...
 # TODO: parallelize the sequential code above using dask.delayed
 # You will need to delay some functions, but not all
 ```
+
+```{python}
+#| include: false
+@dask.delayed
+def double(x):
+    sleep(1)
+    return 2 * x
+
+
+results = []
+for x in data:
+    if is_even(x):  # even
+        y = double(x)
+    else:  # odd
+        y = inc(x)
+    results.append(y)
+
+total = sum(results)
+```
+
 
 <!-- ```python -->
 <!-- @dask.delayed -->
@@ -1511,11 +1610,12 @@ print(total)
 <!-- total = sum(results) -->
 <!-- ``` -->
 
-```python
+```{python}
 %time total.compute()
 ```
 
-```python
+```{python}
+#| output: false   # the rendered graph is shown as an image below
 total.visualize()
 ```
 :::
@@ -1526,7 +1626,7 @@ total.visualize()
 
 ## Dask Delayed
 :::{.callout-note icon=false}
-## Some questions to consider
+## Exercise
 
 -  What are other examples of control flow where we can't use delayed?
 -  What would have happened if we had delayed the evaluation of `is_even(x)` in the example above?
@@ -1547,8 +1647,8 @@ The computation we will parallelize is to compute the mean departure delay per a
 
 This downloads and extracts some historical flight data for flights out of NYC between 1990 and 2000. 
 
-```python
-%run prep.py -d flights
+```{python}
+%run {DATA_DIR}/prep.py -d flights
 ```
 :::
 
@@ -1556,34 +1656,34 @@ This downloads and extracts some historical flight data for flights out of NYC b
 :::{.callout-tip icon=false}
 ## Inspect data
 
-```python
+```{python}
 import os
 
-sorted(os.listdir(os.path.join("data", "nycflights")))
+sorted(os.listdir(os.path.join(DATA_DIR, "nycflights")))
 ```
 :::
 
 :::{.callout-tip icon=false}
 ## Read one file with `pandas.read_csv` and compute mean departure delay
 
-```python
+```{python}
 import pandas as pd
 
-df = pd.read_csv(os.path.join("data", "nycflights", "1990.csv"))
+df = pd.read_csv(os.path.join(DATA_DIR, "nycflights", "1990.csv"))
 df.head()
 ```
 
-```python
+```{python}
 # What is the schema?
 df.dtypes
 ```
 
-```python
+```{python}
 # What originating airports are in the data?
 df.Origin.unique()
 ```
 
-```python
+```{python}
 # Mean departure delay per-airport for one year
 df.groupby("Origin").DepDelay.mean()
 ```
@@ -1595,13 +1695,13 @@ df.groupby("Origin").DepDelay.mean()
 
 The above cell computes the mean departure delay per-airport for one year. Here we expand that to all years using a sequential for loop.
 
-```python
+```{python}
 from glob import glob
 
-filenames = sorted(glob(os.path.join("data", "nycflights", "*.csv")))
+filenames = sorted(glob(os.path.join(DATA_DIR, "nycflights", "*.csv")))
 ```
 
-```python
+```{python}
 %%time
 
 sums = []
@@ -1629,14 +1729,14 @@ n_flights = sum(counts)
 mean = total_delays / n_flights
 ```
 
-```python
+```{python}
 mean
 ```
 :::
 
 ## Dask Delayed {.scrollable}
 :::{.callout-tip icon=false}
-## Parallelize the code above
+## Exercise
 
 Use `dask.delayed` to parallelize the code above. Some extra things you will need to know.
 
@@ -1646,7 +1746,7 @@ Use `dask.delayed` to parallelize the code above. Some extra things you will nee
     
 So your goal is to parallelize the code above using `dask.delayed`. You may also want to visualize a bit of the computation to see if you're doing it correctly.
 
-```python
+```{python}
 %%time
 # your code here
 ```
@@ -1705,7 +1805,7 @@ So your goal is to parallelize the code above using `dask.delayed`. You may also
 
 ## Dask Delayed
 :::{.callout-note icon=false}
-## Some questions to consider
+## Exercise
 
 - How much speedup did you get? Is this how much speedup you'd expect?
 - Experiment with where to call `compute`. What happens when you call it on `sums` and `counts`? What happens if you wait and call it on `mean`?
@@ -1713,7 +1813,7 @@ So your goal is to parallelize the code above using `dask.delayed`. You may also
 - Can you think of any reason why you'd want to do the reduction one way over the other?
 :::
 
-## Dask Delayed
+## Dask Delayed {.scrollable}
 :::{.callout-important icon=false}
 ## Learn More
 
@@ -1725,7 +1825,7 @@ Visit the [Delayed documentation](https://docs.dask.org/en/latest/delayed.html).
 
 Before moving on to the next exercise, make sure to close your client or stop this kernel.
 
-```python
+```{python}
 client.close()
 ```
 :::
@@ -1770,7 +1870,7 @@ With futures, as soon as the inputs are available and there is compute available
 
 Futures need the distributed scheduler: they live on a cluster.
 
-```python
+```{python}
 from dask.distributed import Client
 
 client = Client(n_workers=4)
@@ -1811,7 +1911,7 @@ Compare with the delayed version: no decorator, and no `dask.compute` at the end
 
 Just like we did in the delayed section, let's make some toy functions, `inc` and `add`, that sleep for a while to simulate work.
 
-```python
+```{python}
 from time import sleep
 
 
@@ -1832,7 +1932,7 @@ def add(x, y):
 
 We can run these locally
 
-```python
+```{python}
 inc(1)
 ```
 :::
@@ -1843,20 +1943,25 @@ inc(1)
 
 Or we can submit them to run remotely with Dask. This immediately returns a future that points to the ongoing computation, and eventually to the stored result.
 
-```python
+```{python}
 future = client.submit(inc, 1)  # returns immediately with pending future
 future
 ```
 
 If you wait a second, and then check on the future again, you'll see that it has finished.
 
-```python
+```{python}
+#| include: false
+sleep(1.5)  # let the submitted task finish
+```
+
+```{python}
 future
 ```
 
 You can block on the computation and gather the result with the `.result()` method.
 
-```python
+```{python}
 future.result()
 ```
 :::
@@ -1879,7 +1984,7 @@ wait(future)
 blocks and forces the notebook to wait until the computation pointed to by `future` is done. However, note that if the result of `inc()` is sitting in the cluster, it would take **no time** to execute the computation now, because Dask notices that we are asking for the result of a computation it already knows about.
 :::
 
-:::{.callout-tip icon=false}
+:::{.callout-note icon=false}
 ## Other ways to gather results
 
 ```python
@@ -1897,7 +2002,7 @@ Generally, any Dask operation that is executed using `.compute()` or `dask.compu
 
 Here is an example from the delayed section:
 
-```python
+```{python}
 import dask
 
 
@@ -1925,14 +2030,14 @@ z = add(x, y)
 
 So far we have a regular `dask.delayed` output. When we pass `z` to `client.compute` we get a future back and Dask starts evaluating the task graph.
 
-```python
+```{python}
 # notice the difference from z.compute()
 # notice that this cell completes immediately
 future = client.compute(z)
 future
 ```
 
-```python
+```{python}
 future.result()  # waits until result is ready
 ```
 
@@ -1945,7 +2050,7 @@ When using futures, the *computation moves to the data* rather than the other wa
 
 `client.submit` takes a function and arguments, pushes these to the cluster, returning a `Future` representing the result to be computed. The function is passed to a worker process for evaluation. This looks a lot like doing `client.compute()`, above, except now we are passing the function and arguments directly to the cluster.
 
-```python
+```{python}
 def inc(x):
     sleep(1)
     return x + 1
@@ -1957,7 +2062,7 @@ future_z = client.submit(sum, [future_x, future_y])
 future_z
 ```
 
-```python
+```{python}
 future_z.result()  # waits until result is ready
 ```
 
@@ -1978,12 +2083,12 @@ The arguments to `client.submit` can be regular Python functions and objects, fu
 
 Let's imagine a task that sometimes fails. You might encounter this when dealing with input data where sometimes a file is malformed, or maybe a request times out.
 
-```python
-from random import random
+```{python}
+import random
 
 
 def flaky_inc(i):
-    if random() < 0.2:
+    if random.random() < 0.2:
         raise ValueError("You hit the error!")
     return i + 1
 ```
@@ -1997,7 +2102,7 @@ ValueError                                Traceback (most recent call last)
 ----> 1 flaky_inc(2)
 
       3 def flaky_inc(i):
-      4     if random() < 0.2:
+      4     if random.random() < 0.2:
 ----> 5         raise ValueError("You hit the error!")
       6     return i + 1
 
@@ -2011,24 +2116,24 @@ ValueError: You hit the error!
 
 We can run this function on a range of inputs using `client.map`.
 
-```python
+```{python}
 futures = client.map(flaky_inc, range(10))
 ```
 
 Notice how the cell returned even though some of the computations failed. We can inspect these futures one by one and find the ones that failed:
 
-```python
+```{python}
 for i, future in enumerate(futures):
     print(i, future.status)
 ```
 
 You can rerun those specific futures to try to get the task to successfully complete:
 
-```python
+```{python}
 futures[5].retry()
 ```
 
-```python
+```{python}
 for i, future in enumerate(futures):
     print(i, future.status)
 ```
@@ -2040,7 +2145,7 @@ for i, future in enumerate(futures):
 
 A more concise way of retrying in the case of sporadic failures is by setting the number of retries in the `client.compute`, `client.submit` or `client.map` method.
 
-```python
+```{python}
 futures = client.map(flaky_inc, range(10), retries=5, pure=False)
 future_z = client.submit(sum, futures)
 future_z.result()
@@ -2061,9 +2166,9 @@ By default Dask treats functions as *pure*: the key of a task is a hash of the f
 :::{.callout-tip icon=false}
 ## Why use Futures?
 
-The futures API offers a work submission style that can easily emulate the map/reduce paradigm. If that is familiar to you then futures might be the simplest entrypoint into Dask.
+- the futures API offers a work submission style that can easily emulate the map/reduce paradigm. If that is familiar to you then futures might be the simplest entrypoint into Dask.
 
-The other big benefit of futures is that the intermediate results, represented by futures, can be passed to new tasks without having to pull data locally from the cluster. New operations can be setup to work on the output of previous jobs that haven't even begun yet.
+- the other big benefit of futures is that the intermediate results, represented by futures, can be passed to new tasks without having to pull data locally from the cluster. New operations can be setup to work on the output of previous jobs that haven't even begun yet.
 :::
 
 ## Delayed vs. Futures {.scrollable}
@@ -2082,11 +2187,11 @@ The other big benefit of futures is that the intermediate results, represented b
 | graph | whole graph known up front, optimised before running | built incrementally; new work can depend on running work |
 :::
 
-## Futures
+## Futures {.scrollable}
 :::{.callout-note icon=false}
 ## Close the Client
 
-```python
+```{python}
 client.close()
 ```
 :::
