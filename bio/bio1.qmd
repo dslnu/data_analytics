@@ -1,0 +1,1347 @@
+---
+title: "Bioinformatics 1"
+subtitle: "Biological data and sequence alignment"
+author:
+  - name: MSDE
+    affiliation: Lviv University
+code-fold: false
+execute:
+  enabled: true
+  cache: true
+  echo: true
+diagram:
+  cache: true
+  cache-dir: ./cache
+  engine:
+    tikz:
+      execpath: lualatex
+      additional-packages: |
+        \usetikzlibrary{arrows.meta}
+        \usetikzlibrary{positioning}
+        \usetikzlibrary{decorations.pathreplacing}
+filters:
+  - diagram
+format:
+  revealjs:
+    css: custom.css
+    preview-links: auto
+    slide-number: true
+    theme: default
+    multiplex:
+      url: 'https://mplex.vitv.ly'
+      secret: '04a7bbbb5a7ec68e43c6d059cfd0b620'
+      id: 'c1c05966d7094c54b63a9d02668b279610b06479786c58416d7abdf1be0213ee'
+---
+
+```{python}
+#| include: false
+import warnings
+
+warnings.filterwarnings("ignore")
+
+import matplotlib
+
+matplotlib.rcParams["figure.figsize"] = (7, 4)
+matplotlib.rcParams["figure.dpi"] = 110
+matplotlib.rcParams["font.size"] = 8
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+```
+
+## Sequence bioinformatics
+
+:::{.callout-tip icon=false}
+## Source
+
+This lecture follows **An Introduction to Applied Bioinformatics** (2nd ed.)
+
+> J. Gregory Caporaso --- <https://readiab.org>
+> Licensed CC BY-NC-SA 4.0
+
+Chapters 1--3: *Introduction*, *Biological Information*, *Pairwise sequence alignment*.
+
+We use **scikit-bio** (the book's library) and **Biopython** (the one you are more likely to meet) side by side.
+:::
+
+:::{.callout-note icon=false}
+## Why this belongs in a data-analytics course
+
+Sequence alignment is a **dynamic programming** problem --- the same technique as edit distance, and a close relative of the DAG scheduling from the Big Data lectures.
+
+It is also a case study in a recurring theme: an exact algorithm that is *provably optimal* and *too slow at scale*, which the field abandoned for heuristics.
+:::
+
+## Reading these slides
+
+:::{.callout-note icon=false}
+## What comes from the book, and what does not
+
+Slides without a badge follow the book. Two badges mark everything else:
+
+- [beyond the book]{.badge-beyond} --- not in readIAB at all; added for this course
+- [extends the book]{.badge-extends} --- a topic the book raises, taken further than it goes
+
+The reading notes (`bio_reading.qmd`) map every slide to its source section.
+:::
+
+## Roadmap
+
+:::{.callout-important icon=false}
+## Four questions
+
+1. **What is biological information?** --- why DNA is a base-4 code and what that lets us compute
+2. **What is an alignment?** --- and why it is a *hypothesis*, not an answer
+3. **How do we compute one?** --- Needleman-Wunsch, Smith-Waterman, and the scoring choices they hide
+4. **What does it cost?** --- $O(mn)$, measured, and why that forced the invention of BLAST
+:::
+
+<!-- ==========================================================================
+     SOURCE: readIAB ch.2 "Biological Information"
+             https://readiab.org/biological-information.html
+             sections: "Central Dogma of Molecular Biology", "Binary and decimal
+             numerical systems", "Encoding messages in bits", "Protein sequences
+             are encoded in a base 4 system", "Quantifying information",
+             "The genetic code"
+     ========================================================================== -->
+
+# Biological information
+
+## The central dogma
+
+:::{.callout-tip icon=false}
+## Information flow
+
+$$\text{DNA} \xrightarrow{\ \text{transcription}\ } \text{RNA} \xrightarrow{\ \text{translation}\ } \text{protein}$$
+
+- **DNA** --- the archive. Four bases: adenine, cytosine, guanine, thymine.
+- **RNA** --- the working copy. Thymine is replaced by uracil.
+- **Protein** --- the machine. Twenty amino acids, folded into a shape that does something.
+
+Every step is a **transformation of a string**, which is why so much of bioinformatics is string algorithms.
+:::
+
+## Messages in bits {.scrollable}
+
+:::{.callout-tip icon=false}
+## The book's starting point: a code is an agreement
+
+A single bit distinguishes two messages --- a photosensor reporting *day* (0) or *dark* (1) is enough to switch a light. Add bits and the number of distinguishable messages grows exponentially:
+
+$$n_{\text{messages}} = n_{\text{symbols}}^{\,p}$$
+
+for a message $p$ symbols long. Two bits give $2^2 = 4$ messages; a byte gives $2^8 = 256$.
+
+The bits mean nothing until sender and receiver agree on a **code**. ASCII is one such agreement --- 7 bits per keyboard character:
+
+```{python}
+print("messages in one byte :", 2**8)
+for bits in ["1000001", "1000010", "1000011"]:
+    print(f"  {bits} -> {int(bits, 2):>3} -> {chr(int(bits, 2))!r}")
+```
+:::
+
+:::{.callout-note icon=false}
+## Why a data course cares
+
+Every file format in this course --- CSV, Parquet, FASTA, `h5ad` --- is such an agreement. The genetic code is the same idea, settled by evolution rather than by a standards committee.
+:::
+
+## DNA is a base-4 code
+
+:::{.callout-tip icon=false}
+## Information content
+
+A binary digit distinguishes 2 states and carries 1 bit. A DNA base distinguishes 4, so it carries
+
+$$\log_2 4 = 2 \text{ bits}$$
+
+```{python}
+import math
+
+for alphabet, size in [("binary", 2), ("DNA/RNA", 4), ("protein", 20)]:
+    print(f"  {alphabet:9} {size:>2} symbols -> {math.log2(size):.2f} bits per position")
+```
+
+The human genome is about $3.2 \times 10^9$ bases --- roughly **800 MB** if packed at 2 bits per base. Uncompressed as ASCII it is 3.2 GB, which is why every genomics format has a 2-bit packing mode.
+:::
+
+## Protein is encoded in base 4
+
+:::{.callout-note icon=false}
+## Why codons are three bases long
+
+Protein uses 20 amino acids. How many DNA bases must encode one?
+
+| codon length | combinations | enough for 20? |
+|---|---|---|
+| 1 | $4^1 = 4$ | no |
+| 2 | $4^2 = 16$ | **no** |
+| 3 | $4^3 = 64$ | yes, with room to spare |
+
+Three is the smallest that works. The 44 spare combinations are not wasted: the code is **degenerate**, with several codons per amino acid, plus three stop codons.
+
+That degeneracy is why a DNA substitution may leave the protein unchanged --- a *synonymous* mutation.
+:::
+
+## Decoding protein messages {.scrollable}
+
+:::{.callout-tip icon=false}
+## The book's worked example
+
+Read the RNA three bases at a time and look each codon up in the genetic code:
+
+```{python}
+from Bio.Seq import Seq
+
+rna = Seq("AUGUAUGAGGGUACUAAUUAA")
+codons = [str(rna[i : i + 3]) for i in range(0, len(rna), 3)]
+print("codons :", " ".join(codons))
+print("protein:", rna.translate())
+```
+
+`M Y E G T N`, then `*` --- `UAA` is a stop codon, and translation ends there. A stop codon is the code's *end of message* marker.
+:::
+
+## Decoding protein messages {.scrollable .extends}
+
+:::{.callout-tip icon=false}
+## Translating in practice
+
+```{python}
+dna = Seq("ATGGCCATTGTAATGGGCCGCTGAAAGGGTGCCCGATAG")
+print("DNA        :", dna)
+print("transcribed:", dna.transcribe())
+print("protein    :", dna.translate())
+print("complement :", dna.reverse_complement())
+```
+
+The `*` marks a stop codon. Note `translate()` silently assumes reading frame 1 --- a DNA sequence has **six** reading frames (three forward, three reverse), and choosing the wrong one produces confident nonsense.
+:::
+
+## The genetic code is a molecule
+
+:::{.callout-tip icon=false}
+## Who actually reads the code
+
+The codon table is not stored anywhere as a table. It is implemented by **transfer RNA** (tRNA): each tRNA carries one amino acid and has an **anticodon** loop that base-pairs with the matching codon on the mRNA. The ribosome brings them together and joins the amino acids in order.
+
+A tRNA can be described at three levels:
+
+- **primary structure** --- its sequence of bases
+- **secondary structure** --- which bases pair with which, folding it into the cloverleaf
+- **tertiary structure** --- the 3-D shape that pairing produces
+:::
+
+:::{.callout-note icon=false}
+## The data-analytic point in the book
+
+Secondary and tertiary structure are usually **predicted, not measured** --- and the predictions lean on sequence similarity to molecules whose structure *is* known. Comparing sequences is therefore the foundation even for questions that are not about sequence. That is the problem the rest of this lecture solves.
+:::
+
+## Limitations of the analogy
+
+:::{.callout-warning icon=false}
+## A genome is not just a list of protein messages
+
+The bits-and-codons picture is useful and incomplete:
+
+- most of a genome does **not** encode protein; much of it regulates *when* and *how much* other genes are expressed
+- the **structure** of DNA and RNA carries information too, affecting expression
+- **alternative splicing** lets one gene produce several different proteins
+- real sequence data contains positions the instrument could not resolve --- written `N` for "any base"
+
+A model that is good enough to compute with is not the same as a complete description. That distinction recurs in every lecture of this series.
+:::
+
+## Sequences as data {.beyond}
+
+:::{.callout-tip icon=false}
+## FASTA and FASTQ
+
+**FASTA** --- a header line and the sequence. No quality information.
+
+```
+>NP_000508.1 hemoglobin subunit alpha [Homo sapiens]
+MVLSPADKTNVKAAWGKVGAHAGEYGAEALERMFLSFPTTKTYFPHF...
+```
+
+**FASTQ** --- adds a per-base **quality score**, which is what a sequencer actually produces:
+
+```
+@read_001
+GGTCTTCGCTAGGCTTTCATCGGG
++
+IIIIIIIIIIIIIIIIIIII9<<<
+```
+
+Quality is Phred-encoded: $Q = -10 \log_{10} P(\text{error})$, offset by 33 into printable ASCII. `I` is $Q=40$, i.e. a 1-in-10 000 error probability; `9` is $Q=24$.
+:::
+
+## Sequences as data {.scrollable .beyond}
+
+:::{.callout-tip icon=false}
+## Two libraries, same idea
+
+```{python}
+from skbio import DNA
+import skbio
+
+seq = DNA("ACCGGTGGAACCGGTAACACCCAC")
+print("scikit-bio", skbio.__version__)
+print("  sequence     :", str(seq))
+print("  GC content   :", round(seq.gc_content(), 3))
+print("  reverse comp :", str(seq.reverse_complement()))
+print("  frequencies  :", dict(seq.frequencies()))
+```
+
+`scikit-bio` models a sequence as a typed object that knows its alphabet --- so `DNA("ACGU")` is an error, not a silent bug.
+:::
+
+## $k$-mers {.beyond}
+
+:::{.callout-tip icon=false}
+## Turning a sequence into features
+
+A **$k$-mer** is a substring of length $k$. Sliding a window over a sequence of length $n$ yields $n - k + 1$ of them.
+
+```{python}
+s = "ACCGGTGGAACC"
+for k in (3, 5):
+    kmers = [s[i : i + k] for i in range(len(s) - k + 1)]
+    print(f"  k={k}: {len(kmers)} k-mers, {len(set(kmers))} distinct -> {kmers[:4]} ...")
+```
+
+$k$-mers turn a sequence into a **bag of features** --- a vector you can index, hash, or feed to a classifier. Every fast alignment method in the next lecture is built on them, and so is the taxonomy classifier.
+:::
+
+<!-- source: readIAB ch.2 "Biological Information" -- strandedness is implicit in
+     the Central Dogma section; made explicit here because it is a constant
+     source of bugs in student code -->
+## Reading the other strand {.scrollable .beyond}
+
+:::{.callout-warning icon=false}
+## DNA has two strands, and your data only gives you one
+
+A sequencing read may come from either strand. The same physical locus therefore appears in your data in two different forms, and they do not look alike:
+
+```{python}
+from skbio import DNA
+
+locus = DNA("ATGGCGTTAACGTAA")
+print("  as read      :", str(locus))
+print("  complement   :", str(locus.complement()))
+print("  reverse comp :", str(locus.reverse_complement()))
+```
+
+The **reverse complement** is the same molecule read from the other end. An alignment tool that does not try both orientations will report no hit for a perfectly good match --- and report it as absence, not as failure.
+:::
+
+:::{.callout-note icon=false}
+## Where this bites
+
+- `blastn` searches both strands by default; a hand-rolled $k$-mer index does **not**, unless you add the reverse complement of every query or canonicalise each $k$-mer to `min(kmer, revcomp(kmer))`.
+- Protein sequences have no second strand --- but a nucleotide sequence has **six reading frames** (three per strand), which is what `blastx` enumerates for you.
+- A gene on the minus strand has coordinates that increase while the gene is read in the opposite direction. Off-by-one and off-by-orientation errors here are endemic.
+:::
+
+## The alphabet is not four letters {.scrollable .extends}
+
+:::{.callout-note icon=false}
+## Ambiguity codes
+
+Real sequence data contains positions the instrument could not resolve. IUPAC gives each possibility set a letter:
+
+| code | means | | code | means |
+|---|---|---|---|---|
+| `N` | any base | | `R` | `A` or `G` (purine) |
+| `W` | `A` or `T` | | `Y` | `C` or `T` (pyrimidine) |
+| `S` | `C` or `G` | | `K` | `G` or `T` |
+
+So the practical DNA alphabet has **15 letters plus a gap**, and protein sequences add `X` (unknown), `B`, `Z`, and `*` for a stop.
+
+This is why a typed sequence class earns its keep: `DNA("ACGN")` is valid, `DNA("ACGU")` is an error, and code that assumes `set(seq) <= {"A","C","G","T"}` will fail on the first real FASTA file it meets --- usually silently, by dropping reads.
+:::
+
+<!-- ==========================================================================
+     SOURCE: readIAB ch.3 "Pairwise sequence alignment"
+             https://readiab.org/pairwise-alignment.html
+             sections: "What is a sequence alignment?", "A first algorithm for
+             aligning a pair of sequences", "Why this simple procedure is too
+             simplistic"
+     ========================================================================== -->
+
+# What is an alignment?
+
+## Sequences evolve
+
+:::{.callout-important icon=false}
+## Three kinds of mutation
+
+Over evolutionary time a DNA sequence changes, mostly through errors in replication:
+
+- **substitution** --- one base replaced by another
+- **insertion** --- one or more bases added
+- **deletion** --- one or more bases removed
+
+Two sequences descended from a common ancestor are **homologs**.
+
+Because we almost never have the ancestral sequence, we cannot tell an insertion in one lineage from a deletion in the other --- hence the compound term **indel**.
+:::
+
+<!-- source: readIAB ch.3, opening -- hemoglobin r1/r2/q1/q2 Hamming example,
+     sequences and accessions exactly as in the book -->
+## Which reference is the query closest to? {.scrollable}
+
+:::{.callout-tip icon=false}
+## The book's opening example: four hemoglobins
+
+```{python}
+from scipy.spatial.distance import hamming
+
+# NCBI NP_000508.1 -- human hemoglobin subunit alpha
+r1 = "MVLSPADKTNVKAAWGKVGAHAGEYGAEALERMFLSFPTTKTYFPHFDLSHGSAQVKGHGKKVADALTNAVAHVDDMPNALSALSDLHAHKLRVDPVNFKLLSHCLLVTLAAHLPAEFTPAVHASLDKFLASVSTVLTSKYR"
+# NCBI NP_001004376.1 -- chicken hemoglobin subunit alpha
+r2 = "MVLSAADKNNVKGIFTKIAGHAEEYGAETLERMFTTYPPTKTYFPHFDLSHGSAQIKGHGKKVVAALIEAANHIDDIAGTLSKLSDLHAHKLRVDPVNFKLLGQCFLVVVAIHHPAALTPEVHASLDKFLCAVGTVLTAKYR"
+# GenBank QFF91579.1 -- sei whale hemoglobin subunit alpha
+q1 = "MVLFPADKSNVKATWAKIGNHGAEYGAEALERMFMNFPSTKTYFPHFDLGHDSAQVKGHGKKVADALTKAAGHMDNLLDALSDLSDLHAHKLRVDPVNFKLLSHCLLVTLALHLPAEFTPSVHASLDKFLASVSTVLTSKYR"
+# NCBI XP_028905054.1 -- platypus; one residue shorter, so "-" is appended
+q2 = "MLTDAEKKEVTALWGKAAGHGEEYGAEALERLFQAFPTTKTYFSHFDLSHGSAQIKAHGKKVADALSTAAGHFDDMDSALSALSDLHAHKLRVDPVNFKLLAHCILVVLARHCPGEFTPSAHAAMDKFLSKVATVLTSKYR-"
+
+for name, q in [("whale   ", q1), ("platypus", q2)]:
+    print(f"  {name}: to human {hamming(list(q), list(r1)):.3f}   "
+          f"to chicken {hamming(list(q), list(r2)):.3f}")
+```
+:::
+
+:::{.callout-important icon=false}
+## One answer that makes sense, one that does not
+
+The whale is closer to human (0.17) than to chicken (0.32) --- mammals together, birds apart. Exactly what we would expect.
+
+The platypus is also a mammal, but its distances are **0.91 and 0.92**: by this measure it barely resembles either. The reason is a single **deletion** near the start of its sequence. Every residue after it is compared against the wrong partner.
+:::
+
+## Which reference is the query closest to? {.scrollable}
+
+:::{.callout-note icon=false}
+## This is already a classifier
+
+"Assign the query to the reference it is nearest to" is a **1-nearest-neighbour classifier**, and the distance function *is* the model. A wrong distance does not fail loudly; it returns a confident, wrong ranking.
+
+The book's remedy is to align first. Human and chicken both start `MVL`, the platypus `ML` --- so move the gap there:
+
+```{python}
+q2_aligned = "M-" + q2[1:-1]       # the gap moved from the end to position 2
+print(f"  aligned platypus: to human {hamming(list(q2_aligned), list(r1)):.3f}   "
+      f"to chicken {hamming(list(q2_aligned), list(r2)):.3f}")
+```
+
+Mammal again, and plausibly so: further from human than the whale is, closer than the chicken. That one hand-placed gap *is* an alignment.
+
+Choosing a distance before trusting a nearest-neighbour answer is a lesson that returns in Bio 2 (search and classification) and Bio 3--4 (cells as points in gene space).
+:::
+
+## Why not just compare position by position? {.scrollable .extends}
+
+:::{.callout-tip icon=false}
+## Hamming distance, and where it breaks
+
+The obvious similarity measure counts positions that differ:
+
+```{python}
+def hamming(a, b):
+    if len(a) != len(b):
+        raise ValueError("Hamming distance needs equal lengths")
+    return sum(x != y for x, y in zip(a, b))
+
+
+ref = "ACCGGTGGAACCGGTAACACCCAC"
+sub = ref[:15] + "T" + ref[16:]          # one substitution, mid-sequence
+ins = ref[:1] + "T" + ref[1:-1]          # one insertion near the start
+
+print("reference        :", ref)
+print("one substitution :", sub, "-> Hamming", hamming(ref, sub))
+print("one insertion    :", ins, "-> Hamming", hamming(ref, ins))
+print()
+print(f"the insertion differs at {hamming(ref, ins)} of {len(ref)} positions "
+      f"({100 * hamming(ref, ins) / len(ref):.0f}%)")
+```
+
+A single substitution costs **1**. A single **insertion** costs far more --- here 14 of 24 positions --- because everything downstream is now compared against the wrong partner. The two sequences are one mutation apart and Hamming calls them barely related.
+
+Hamming distance cannot express indels at all. That is the entire reason alignment exists: **we need to decide where the gaps go before we can compare.**
+:::
+
+:::{.callout-important icon=false}
+## A hypothesis, not a fact
+
+> The goal of pairwise sequence alignment is, given two sequences, to generate a **hypothesis** about which sequence positions derived from a common ancestral position.
+
+We build that hypothesis by inserting gaps to maximise similarity --- a **maximum parsimony** argument, an application of Occam's razor: assume the fewest mutation events.
+
+An alignment from BLAST is a hypothesis in exactly the same sense as one you sketch by hand. It can be wrong, and for distant sequences it often is.
+:::
+
+:::{.callout-note icon=false}
+## As a table
+
+An alignment is a table: rows are sequences, columns are positions. All rows have the same length by construction, and **each column is a claim** that those positions share an ancestor.
+:::
+
+## A first, naive algorithm {.scrollable}
+
+:::{.callout-tip icon=false}
+## Find the long diagonals
+
+Build a matrix with one sequence on each axis, mark cells where the characters match, and look for long diagonal runs --- each run is a conserved stretch.
+
+```{python}
+seq1, seq2 = "ACCGGTGGAACCGGTAACACCCAC", "ACCGGTAACCGGTTAACACCCAC"
+
+M = np.array([[1 if a == b else 0 for b in seq2] for a in seq1])
+# length of the diagonal run ending at each cell
+D = M.copy()
+for i in range(1, D.shape[0]):
+    for j in range(1, D.shape[1]):
+        if M[i, j]:
+            D[i, j] = D[i - 1, j - 1] + 1
+print("longest diagonal run:", D.max())
+```
+:::
+
+## A first, naive algorithm {.scrollable}
+
+```{python}
+#| code-fold: true
+f, ax = plt.subplots(figsize=(6, 6))
+ax.imshow(D, cmap="Greys", interpolation="nearest")
+ax.set_xticks(range(len(seq2)), list(seq2), fontsize=6)
+ax.set_yticks(range(len(seq1)), list(seq1), fontsize=6)
+ax.set_xlabel("seq2"); ax.set_ylabel("seq1")
+ax.set_title("diagonal run lengths")
+plt.tight_layout(); plt.show()
+```
+
+The dark diagonal segments are the conserved blocks. You can read an alignment off them by eye --- but nothing here *chooses* between competing diagonals, and that is the whole difficulty.
+
+<!-- source: extends readIAB ch.3 "Step 3: Identify the longest diagonals" -->
+## What the matrix shows you {.scrollable .extends}
+
+:::{.callout-tip icon=false}
+## Dot plots reveal structure no score can
+
+```{python}
+#| code-fold: true
+def dotplot(ax, a, b, k=3, title=""):
+    A = [a[i:i+k] for i in range(len(a)-k+1)]
+    B = [b[i:i+k] for i in range(len(b)-k+1)]
+    M = np.array([[1 if x == y else 0 for y in B] for x in A])
+    ax.imshow(M, cmap="Greys", interpolation="nearest")
+    ax.set_title(title, fontsize=9); ax.set_xticks([]); ax.set_yticks([])
+
+core = "".join(np.random.default_rng(1).choice(list("ACGT"), 60))
+f, axs = plt.subplots(1, 3, figsize=(10, 3.4))
+dotplot(axs[0], core, core, title="identical")
+dotplot(axs[1], core + core, core, title="tandem repeat")
+rc = core.translate(str.maketrans("ACGT", "TGCA"))[::-1]
+dotplot(axs[2], core[:30] + rc[:30], core, title="inversion")
+plt.tight_layout(); plt.show()
+```
+
+- **one diagonal** --- a straightforward correspondence
+- **two parallel diagonals** --- a repeat; the same region matches twice
+- **an anti-diagonal** --- an inversion; the segment is reversed
+
+A single alignment score collapses all of this into one number. The dot plot is how you notice that a "poor alignment" is actually a rearrangement.
+:::
+
+<!-- source: readIAB ch.3, "Why this simple procedure is too simplistic" -->
+## Why that is too simplistic
+
+:::{.callout-warning icon=false}
+## Two bad assumptions
+
+1. **All matches are equally good and all mismatches equally bad.** For proteins this is plainly false: replacing leucine with isoleucine (both hydrophobic, similar size) is far more tolerable than replacing it with aspartate.
+2. **Every gap costs the same.** But a single 5-base indel is *one* mutational event, while five separate 1-base indels are five. Charging them equally misrepresents the biology.
+
+> All scoring schemes have limitations, and you should remember that when you're working with software that generates alignments for you.
+
+The rest of this lecture is the two fixes.
+:::
+
+<!-- SOURCE: readIAB ch.3, "Differential scoring of matches and mismatches"
+     https://readiab.org/pairwise-alignment.html -->
+
+# Scoring
+
+## Substitution matrices
+
+:::{.callout-tip icon=false}
+## Scores from observed substitution frequencies
+
+A substitution matrix gives a score for every pair of residues, derived from how often they actually replace one another in alignments of related proteins:
+
+$$S_{ij} = \frac{1}{\lambda}\log\frac{p_{ij}}{q_i q_j}$$
+
+a log-odds ratio of the observed joint frequency against what independence would predict. Positive means "more often than chance" --- a conservative substitution.
+
+- **PAM** --- Margaret Dayhoff, 1970s: built from closely related sequences, extrapolated by matrix powers
+- **BLOSUM** --- Steven and Jorja Henikoff, early 1990s: built from blocks of aligned, more distant sequences. **BLOSUM62** is the default almost everywhere; the book's worked examples use **BLOSUM50**.
+
+Both are **estimated from data** --- counted from alignments people trusted. A substitution matrix is a fitted model, and it inherits the biases of the alignments it was fitted to.
+:::
+
+## BLOSUM62 {.scrollable}
+
+```{python}
+from Bio.Align import substitution_matrices
+
+blosum62 = substitution_matrices.load("BLOSUM62")
+aas = list("AVLIFWDEKRQ")
+sub = pd.DataFrame(
+    [[blosum62[a, b] for b in aas] for a in aas], index=aas, columns=aas
+).astype(int)
+sub
+```
+
+Read the diagonal: identity scores differ by residue --- tryptophan (`W`) scores 11 because it is rare and rarely substituted, alanine (`A`) only 4. And `L`/`I` scores **+2** despite being a mismatch: chemically they are interchangeable.
+
+## BLOSUM62 {.scrollable}
+
+```{python}
+#| code-fold: true
+f, ax = plt.subplots(figsize=(5.5, 4.5))
+im = ax.imshow(sub.values, cmap="RdBu_r", vmin=-4, vmax=11)
+ax.set_xticks(range(len(aas)), aas); ax.set_yticks(range(len(aas)), aas)
+for i in range(len(aas)):
+    for j in range(len(aas)):
+        ax.text(j, i, sub.values[i, j], ha="center", va="center", fontsize=6)
+plt.colorbar(im, label="BLOSUM62 score")
+plt.tight_layout(); plt.show()
+```
+
+The hydrophobic block (`A V L I F W`) is blue-to-neutral among itself and red against the charged block (`D E K R`) --- the matrix has learned chemistry from evolution, without being told any.
+
+## Choosing a matrix {.scrollable .beyond}
+
+:::{.callout-important icon=false}
+## Match the matrix to the distance you expect
+
+A substitution matrix is built from sequences at a particular divergence, and it is most sensitive at roughly that divergence. Using one tuned for close relatives to find remote ones is a common and invisible mistake.
+
+| matrix | built from | use for |
+|---|---|---|
+| BLOSUM80 | blocks $\ge$ 80% identical | closely related sequences |
+| **BLOSUM62** | blocks $\ge$ 62% identical | the general-purpose default |
+| BLOSUM45 | blocks $\ge$ 45% identical | remote homology |
+
+**The BLOSUM numbering runs the opposite way to PAM's.** BLOSUM62 is built from sequences at least 62% identical; PAM250 is extrapolated out to 250 accepted point mutations per 100 residues, so it is the *distant* one. High BLOSUM number = close; high PAM number = distant. They are easy to swap by accident and the result is simply reduced sensitivity, with no error.
+:::
+
+:::{.callout-note icon=false}
+## Gap penalties are part of the choice
+
+BLOSUM62 with $(-11, -1)$ is a package, tuned together. Changing the matrix without changing the gap penalties --- or vice versa --- gives a scoring scheme nobody calibrated. This is one reason percent identity is not comparable across tools.
+:::
+
+<!-- SOURCE: readIAB ch.3, "A better approach for global pairwise alignment
+     using the Needleman-Wunsch algorithm" -- Stepwise NW alignment, steps 1-3,
+     "Automating Needleman-Wunsch alignment with Python", "A note on computing F and T"
+     https://readiab.org/pairwise-alignment.html -->
+
+# Needleman-Wunsch
+
+## Global alignment as dynamic programming
+
+:::{.callout-important icon=false}
+## The recurrence
+
+Let $F_{ij}$ be the best score for aligning the first $i$ characters of $s_1$ with the first $j$ of $s_2$. Then
+
+$$F_{ij} = \max \begin{cases} F_{i-1,j-1} + s(a_i, b_j) & \text{align } a_i \text{ with } b_j \\ F_{i-1,j} + d & \text{gap in } s_2 \\ F_{i,j-1} + d & \text{gap in } s_1 \end{cases}$$
+
+with $F_{0j} = j \cdot d$ and $F_{i0} = i \cdot d$.
+
+**This is the same shape as edit distance.** Each cell depends only on three already-computed neighbours, which is precisely what makes a DP table fillable in one pass.
+:::
+
+## The two matrices
+
+:::{.callout-tip icon=false}
+## $F$ and $T$
+
+- $F$ --- the **score** matrix. $F_{mn}$ is the score of the best global alignment.
+- $T$ --- the **traceback** matrix. Records *which* of the three choices won in each cell.
+
+You need $T$ because $F_{mn}$ tells you the score but not the alignment. Walking backwards through $T$ from the bottom-right corner reconstructs it.
+
+Some implementations skip $T$ and recompute the choice from neighbouring $F$ values --- saving memory at the cost of arithmetic.
+:::
+
+## Filling the matrix by hand {.scrollable}
+
+:::{.callout-tip icon=false}
+## The book's protein example: `HEAGAWGHEE` vs `PAWHEAE`, BLOSUM50, gap $d = -8$
+
+Row 0 and column 0 are just accumulated gaps: $0, -8, -16, \dots$ Every other cell takes the best of three moves. Try cells $(1,1)$, $(1,2)$ and $(2,1)$ on paper first, then check:
+
+```{python}
+blosum50 = substitution_matrices.load("BLOSUM50")
+
+
+def nw_tables(s1, s2, score, d=-8):
+    """F and T for global alignment with a linear gap penalty d."""
+    F = np.zeros((len(s1) + 1, len(s2) + 1), dtype=int)
+    T = np.full(F.shape, " ", dtype=object)
+    F[:, 0] = np.arange(len(s1) + 1) * d
+    F[0, :] = np.arange(len(s2) + 1) * d
+    T[1:, 0], T[0, 1:], T[0, 0] = "↑", "←", "•"
+    for i in range(1, len(s1) + 1):
+        for j in range(1, len(s2) + 1):
+            moves = {"↖": F[i - 1, j - 1] + score[s1[i - 1], s2[j - 1]],
+                     "↑": F[i - 1, j] + d,
+                     "←": F[i, j - 1] + d}
+            T[i, j] = max(moves, key=moves.get)
+            F[i, j] = moves[T[i, j]]
+    return F, T
+
+
+Fp, Tp = nw_tables("PAWHEAE", "HEAGAWGHEE", blosum50)
+cols, rows = ["-"] + list("HEAGAWGHEE"), ["-"] + list("PAWHEAE")
+print(pd.DataFrame(Fp, index=rows, columns=cols).to_string())
+```
+:::
+
+## Filling the matrix by hand {.scrollable}
+
+:::{.callout-tip icon=false}
+## The traceback matrix, as arrows
+
+```{python}
+print(pd.DataFrame(Tp, index=rows, columns=cols).to_string())
+print("\nglobal alignment score:", Fp[-1, -1])
+```
+
+Follow the arrows back from the bottom-right corner: `↖` aligns two residues, `↑` and `←` insert a gap. The path *is* the alignment.
+
+Cell $(1,1)$ is $\max(0 + s(P,H),\ -8 - 8,\ -8 - 8) = s(P,H) = -2$. Nothing about the algorithm is harder than that cell --- it is the same three-way choice, $m \times n$ times.
+:::
+
+:::{.callout-note icon=false}
+## From the book: re-run it with your own sequences
+
+Change the two strings and re-run. The book's suggestion is to keep doing this until you can predict the traceback before you print it.
+:::
+
+## Implementing it {.scrollable}
+
+```{python}
+def needleman_wunsch(s1, s2, match=1, mismatch=-1, gap=-2):
+    n, m = len(s1), len(s2)
+    F = np.zeros((n + 1, m + 1))
+    T = np.empty((n + 1, m + 1), dtype=object)
+
+    F[0, :] = np.arange(m + 1) * gap
+    F[:, 0] = np.arange(n + 1) * gap
+    T[0, 1:] = "left"
+    T[1:, 0] = "up"
+
+    for i in range(1, n + 1):
+        for j in range(1, m + 1):
+            s = match if s1[i - 1] == s2[j - 1] else mismatch
+            options = {
+                "diag": F[i - 1, j - 1] + s,
+                "up": F[i - 1, j] + gap,
+                "left": F[i, j - 1] + gap,
+            }
+            T[i, j] = max(options, key=options.get)
+            F[i, j] = options[T[i, j]]
+    return F, T
+```
+
+## Traceback {.scrollable}
+
+```{python}
+def traceback(s1, s2, T):
+    i, j = len(s1), len(s2)
+    a1, a2 = [], []
+    while i > 0 or j > 0:
+        move = T[i, j]
+        if move == "diag":
+            a1.append(s1[i - 1]); a2.append(s2[j - 1]); i -= 1; j -= 1
+        elif move == "up":
+            a1.append(s1[i - 1]); a2.append("-"); i -= 1
+        else:
+            a1.append("-"); a2.append(s2[j - 1]); j -= 1
+    return "".join(reversed(a1)), "".join(reversed(a2))
+
+
+F, T = needleman_wunsch(seq1, seq2)
+a1, a2 = traceback(seq1, seq2, T)
+print("score:", F[-1, -1])
+print(a1)
+print("".join("|" if x == y else " " for x, y in zip(a1, a2)))
+print(a2)
+```
+
+## The filled matrix {.scrollable}
+
+```{python}
+#| code-fold: true
+f, ax = plt.subplots(figsize=(7, 6))
+im = ax.imshow(F, cmap="viridis")
+ax.set_xticks(range(len(seq2) + 1), ["-"] + list(seq2), fontsize=5)
+ax.set_yticks(range(len(seq1) + 1), ["-"] + list(seq1), fontsize=5)
+ax.set_title("Needleman-Wunsch $F$ matrix")
+plt.colorbar(im); plt.tight_layout(); plt.show()
+```
+
+The optimal path runs from the top-left to the bottom-right corner. Note that **every cell is computed** --- the algorithm has no way to know in advance which region the optimal path will use, and that is exactly the property the heuristics of the next lecture give up.
+
+## Checking against the libraries {.scrollable}
+
+```{python}
+from skbio.alignment import global_pairwise_align_nucleotide
+from Bio.Align import PairwiseAligner
+
+msa, sk_score, _ = global_pairwise_align_nucleotide(
+    DNA(seq1), DNA(seq2), gap_open_penalty=2, gap_extend_penalty=2,
+    match_score=1, mismatch_score=-1,
+)
+
+bio = PairwiseAligner(mode="global", match_score=1, mismatch_score=-1,
+                      open_gap_score=-2, extend_gap_score=-2)
+
+print("ours          :", F[-1, -1])
+print("scikit-bio    :", sk_score)
+print("Biopython     :", bio.align(seq1, seq2).score)
+```
+
+Three implementations, one number. Writing the algorithm yourself is how you learn what the library is doing; **using the library is how you get it fast and correct**.
+
+<!-- SOURCE: readIAB ch.3, "Global versus local alignment" and
+     "Smith-Waterman local sequence alignment"
+     https://readiab.org/pairwise-alignment.html -->
+
+# Smith-Waterman
+
+## Local alignment
+
+:::{.callout-important icon=false}
+## When global is the wrong question
+
+Global alignment forces the **entire** length of both sequences into correspondence. That is right when the sequences are the same kind of thing --- two full-length proteins, one of which has a solved crystal structure you want to map position by position onto the other.
+
+It is wrong when you want to find a short conserved domain inside two otherwise unrelated proteins, or match a 100 bp read against a chromosome. Forcing the ends to align buries the real signal in gap penalties.
+
+The book's framing of the main use case: concatenate a whole reference database into **one long sequence**, and a local alignment against it finds the region holding the best match. That is database search --- and the next lecture.
+:::
+
+:::{.callout-tip icon=false}
+## Three changes, and that is all
+
+$$F_{ij} = \max \begin{cases} 0 & \leftarrow \textbf{the new term} \\ F_{i-1,j-1} + s(a_i,b_j) \\ F_{i-1,j} + d \\ F_{i,j-1} + d \end{cases}$$
+
+1. **Initialise row 0 and column 0 to zero**, not to accumulated gap penalties --- an alignment may start anywhere.
+2. **Clamp at zero** --- a prefix whose score has gone negative is abandoned rather than carried.
+3. **Start the traceback at the maximum cell**, not the corner, and stop at the first zero.
+:::
+
+## Implementing it {.scrollable}
+
+```{python}
+def smith_waterman(s1, s2, match=2, mismatch=-3, gap=-2):
+    n, m = len(s1), len(s2)
+    F = np.zeros((n + 1, m + 1))
+    T = np.empty((n + 1, m + 1), dtype=object)
+    best, best_pos = 0, (0, 0)
+
+    for i in range(1, n + 1):
+        for j in range(1, m + 1):
+            s = match if s1[i - 1] == s2[j - 1] else mismatch
+            options = {
+                "diag": F[i - 1, j - 1] + s,
+                "up": F[i - 1, j] + gap,
+                "left": F[i, j - 1] + gap,
+                "stop": 0,
+            }
+            T[i, j] = max(options, key=options.get)
+            F[i, j] = options[T[i, j]]
+            if F[i, j] > best:
+                best, best_pos = F[i, j], (i, j)
+    return F, T, best, best_pos
+
+
+Fl, Tl, best, pos = smith_waterman(seq1, seq2)
+print("best local score:", best, "at", pos)
+```
+
+## Global vs local, side by side {.scrollable}
+
+```{python}
+#| code-fold: true
+f, axs = plt.subplots(1, 2, figsize=(11, 4.6))
+for ax, M, title in [(axs[0], F, "Needleman-Wunsch (global)"),
+                     (axs[1], Fl, "Smith-Waterman (local)")]:
+    im = ax.imshow(M, cmap="viridis")
+    ax.set_title(title)
+    plt.colorbar(im, ax=ax, fraction=0.046)
+plt.tight_layout(); plt.show()
+```
+
+The global matrix has a strong negative gradient into the corners --- the cost of forcing the ends to align. The local matrix is **zero over most of its area**, with score concentrated along the conserved block. That flat floor is the clamp doing its work.
+
+<!-- source: extends readIAB ch.3 "Global versus local alignment" -- the book
+     covers global and local; semi-global/overlap added because read mapping
+     and assembly depend on them -->
+## Four modes, one algorithm {.scrollable .extends}
+
+:::{.callout-tip icon=false}
+## Global and local are not the only options
+
+Everything is the same recurrence. What changes is **how the edges are initialised** and **where the traceback starts and stops**.
+
+| mode | initialise row/col 0 | traceback from | for |
+|---|---|---|---|
+| **global** (NW) | $id$, $jd$ | corner $F_{mn}$ | two whole, comparable sequences |
+| **local** (SW) | 0, plus clamp at 0 | max cell, stop at 0 | a shared domain inside longer sequences |
+| **semi-global** | 0 | max of last row/col | a **short read** inside a long reference |
+| **overlap** | 0 | max of last row/col | suffix-prefix, for **assembly** |
+
+**Semi-global is the one that matters most in practice** and is the one students most often get wrong by reaching for local. Free end gaps mean a 150 bp read can align fully into a 3 Gb chromosome without paying for the 3 Gb it does not cover --- but the *read* is still aligned end to end, so a truncated match is visible as a truncated match rather than quietly trimmed away, which is exactly what local alignment would do.
+
+In Biopython this is `mode="global"` plus `target_end_gap_score = 0` and `query_end_gap_score = 0`.
+:::
+
+<!-- source: not in readIAB -- added to connect to the DAG/parallelism material
+     in the big-data lectures -->
+## Where the parallelism is {.beyond}
+
+:::{.callout-note icon=false}
+## The dependence structure decides everything
+
+Each cell needs three already-computed neighbours: $(i-1,j-1)$, $(i-1,j)$, $(i,j-1)$. So no cell on a row can start before the cell to its left is done --- **rows are inherently sequential**.
+
+But every cell on an **anti-diagonal** $i + j = c$ depends only on cells in $c-1$ and $c-2$. The cells within one anti-diagonal are mutually independent and can all be computed at once.
+
+$$\text{work} = \Theta(mn) \qquad \text{span} = \Theta(m + n) \qquad \text{parallelism} = \Theta\!\left(\tfrac{mn}{m+n}\right)$$
+
+For $m = n$ that is $\Theta(n/2)$ --- substantial, and available for free once you look at the dependence graph the right way.
+:::
+
+## Where the parallelism is {.beyond}
+
+:::{.callout-tip icon=false}
+## This is the same analysis as lecture 3
+
+Work, span, and the ratio between them. The DP table is a DAG, the anti-diagonals are its levels, and the span is the critical path.
+
+Hardware aligners exploit this at register width, in two different ways: **anti-diagonal** vectorisation (Wozniak, 1997) computes cells of one anti-diagonal together, exactly as above; **striped** vectorisation (Farrar, 2007 --- the basis of the SSW library the book uses) instead splits the *query* into interleaved segments and processes them in parallel, fixing up the few dependencies that cross segments afterwards.
+:::
+
+:::{.callout-warning icon=false}
+## And what parallelism cannot do
+
+Parallelism divides the runtime by a constant. It does **not** change the $O(mn)$ shape --- a point the book makes with a plot, which we reproduce at the end of this section.
+:::
+
+<!-- SOURCE: readIAB ch.3, "Differential scoring of gaps" and
+     "How long does pairwise sequence alignment take?"
+     https://readiab.org/pairwise-alignment.html
+     NOTE: the book benchmarks local_pairwise_align_ssw, removed in
+     scikit-bio 0.7.x -- Biopython substituted as the fast implementation. -->
+
+# Gaps and cost
+
+## Affine gap penalties
+
+:::{.callout-important icon=false}
+## One event, not five
+
+A 5-base deletion is a single mutational event. Charging $5d$ for it, as a linear penalty does, says it is five times as unlikely as a 1-base deletion --- which is biologically wrong.
+
+**Affine** penalties separate the two costs:
+
+$$\text{gap cost} = g_{\text{open}} + (L - 1) \cdot g_{\text{extend}}$$
+
+with $g_{\text{open}} \gg g_{\text{extend}}$ --- typically $-11$ and $-1$ for BLOSUM62 protein alignment.
+
+The result: alignments with **few, longer** gaps rather than many scattered ones, which matches how indels actually happen --- small indels arise mostly through *replication slippage*, one event at a time.
+:::
+
+## Affine gaps in the recurrence {.scrollable}
+
+:::{.callout-tip icon=false}
+## The book's version: let $T$ decide open versus extend
+
+When a gap move is considered, look at the arrow already in the cell it comes from. If it is the **same kind of gap**, this is an extension; otherwise it is an opening:
+
+$$F_{ij} = \max \begin{cases} 0 \\ F_{i-1,j-1} + s(c_i, c_j) \\ F_{i-1,j} - \begin{cases} d^e & \text{if } T_{i-1,j} = \uparrow \\ d^o & \text{otherwise} \end{cases} \\ F_{i,j-1} - \begin{cases} d^e & \text{if } T_{i,j-1} = \leftarrow \\ d^o & \text{otherwise} \end{cases} \end{cases}$$
+
+**Quiz from the book:** is this a Smith-Waterman or a Needleman-Wunsch scoring function? How can you tell?
+:::
+
+:::{.callout-note icon=false}
+## And a subtlety the book leaves for later [extends the book]{.badge-extends}
+
+Deciding open-versus-extend from $T$ is **greedy**: each cell remembers only its single best predecessor, so a slightly worse path that *would* have allowed a cheap extension is forgotten. Gotoh (1982) fixes it exactly by keeping **three** matrices --- best score ending in a match, in a gap in $s_1$, in a gap in $s_2$ --- at the same $O(mn)$ cost. That is what Biopython and every production aligner implement, and it is the answer to exercise 2.
+:::
+
+## Affine in practice {.scrollable}
+
+```{python}
+p1 = "HEAGAWGHEE"
+p2 = "PAWHEAE"
+
+for og, eg, label in [(-2, -2, "linear  (open=extend=-2)"),
+                      (-11, -1, "affine  (open=-11, extend=-1)")]:
+    al = PairwiseAligner(mode="global", open_gap_score=og, extend_gap_score=eg)
+    al.substitution_matrix = blosum62
+    r = al.align(p1, p2)[0]
+    print(f"{label}   score={r.score:6.1f}")
+    print("   " + str(r).replace("\n", "\n   "))
+```
+
+Same sequences, same substitution matrix --- different gap model, and the alignment reorganises.
+
+## How long does this take? {.scrollable}
+
+:::{.callout-important icon=false}
+## $O(mn)$, and you can feel it
+
+Both algorithms fill an $m \times n$ table, doing constant work per cell. Time and memory are both quadratic.
+
+```{python}
+import timeit
+
+rng = np.random.default_rng(0)
+aligner = PairwiseAligner(mode="global", match_score=1, mismatch_score=-1,
+                          open_gap_score=-2, extend_gap_score=-0.5)
+
+print("  n      time      cells       time/cell")
+prev = None
+for n in (200, 400, 800, 1600):
+    a = "".join(rng.choice(list("ACGT"), n))
+    b = "".join(rng.choice(list("ACGT"), n))
+    t = min(timeit.repeat(lambda: aligner.align(a, b).score, number=5, repeat=3)) / 5
+    ratio = f"  ({t / prev:.1f}x)" if prev else ""
+    print(f"  {n:<6} {t * 1000:7.2f} ms  {n * n:>9,}   {t / n**2 * 1e9:5.1f} ns{ratio}")
+    prev = t
+```
+
+Doubling the length **quadruples** the time, and the time per cell stays flat. That is the definition of $O(n^2)$.
+:::
+
+## Implementation matters too {.scrollable}
+
+```{python}
+from skbio.alignment import local_pairwise_align_nucleotide
+
+s1 = "GGTCTTCGCTAGGCTTTCATCGGGTTCGGCATCTACTCTGAGTTACTACG"
+s2 = "GGTCTTCAGGCTTTCATCGGGAACGGCATCTCTGAGTTACTACC"
+d1, d2 = DNA(s1), DNA(s2)
+
+t_skbio = min(timeit.repeat(
+    lambda: local_pairwise_align_nucleotide(d1, d2, gap_open_penalty=8, gap_extend_penalty=1),
+    number=3, repeat=3)) / 3
+
+al = PairwiseAligner(mode="local", match_score=2, mismatch_score=-3,
+                     open_gap_score=-8, extend_gap_score=-1)
+t_bio = min(timeit.repeat(lambda: al.align(s1, s2).score, number=300, repeat=3)) / 300
+
+_, sk_score, _ = local_pairwise_align_nucleotide(d1, d2, gap_open_penalty=8, gap_extend_penalty=1)
+print(f"  scikit-bio (pure Python) : {t_skbio * 1000:8.3f} ms   score {sk_score}")
+print(f"  Biopython  (C)           : {t_bio * 1000:8.3f} ms   score {al.align(s1, s2).score}")
+print(f"  speedup                  : {t_skbio / t_bio:,.0f}x")
+```
+
+**Same algorithm, same answer, ~700x apart.** The asymptotic complexity is identical --- what differs is the constant, and at this scale the constant is what you feel.
+
+## Exact, or heuristic?
+
+:::{.callout-important icon=false}
+## What the book actually compares
+
+The book's fast aligner is not merely the same algorithm in C. `local_pairwise_align_ssw` (Striped Smith-Waterman) also uses tricks that **skip parts of $F$ and $T$** --- it is a *heuristic*, and on the book's two sequences it returns a slightly different alignment:
+
+```
+exact SW : GGTCTTCGCTAGGCTTTCATCGGGTTCGGCATCTACTCTGAGTTACTAC
+           GGTCTTC---AGGCTTTCATCGGGAACGGCATCT---CTGAGTTACTAC
+SSW      : GGTCTTCGCTAGGCTTTCATCGGGTTCGGCATCTACTCTGAGTTACTAC
+           GGTCTTC---AGGCTTTCATCGGGAACGGCAT---CTCTGAGTTACTAC
+```
+
+Same score, gap placed three positions apart. Two questions decide whether a heuristic is acceptable --- and they are the evaluation questions of the whole next lecture:
+
+1. **how much faster is it?**
+2. **how often does it give the same answer as the exact algorithm?**
+:::
+
+:::{.callout-note icon=false}
+## Why the deck cannot rerun this
+
+SSW was **removed in scikit-bio 0.7**, so the alignments above are copied from the book. Biopython's `PairwiseAligner`, used on the previous slide, is *exact* --- which makes that 700$\times$ a pure implementation effect, not a heuristic one.
+:::
+
+## Runtime as a function of length {.scrollable}
+
+:::{.callout-tip icon=false}
+## The book's experiment: linear, quadratic or exponential?
+
+```{python}
+rng_len = np.random.default_rng(42)
+lengths = np.arange(1000, 8001, 1000)
+times = []
+for n in lengths:
+    a = "".join(rng_len.choice(list("ACGT"), n))
+    b = "".join(rng_len.choice(list("ACGT"), n))
+    times.append(min(timeit.repeat(lambda: aligner.align(a, b).score, number=1, repeat=3)))
+times = np.array(times)
+
+f, ax = plt.subplots(figsize=(5.5, 3.2))
+ax.plot(lengths, times, "o", label="one processor")
+ax.plot(lengths, times / 4, "s", label="four processors (ideal)")
+fit = np.polyfit(lengths, times, 2)
+xs = np.linspace(0, lengths.max(), 100)
+ax.plot(xs, np.polyval(fit, xs), "-", lw=0.8, color="grey")
+ax.plot(xs, np.polyval(fit, xs) / 4, "-", lw=0.8, color="grey")
+ax.set_xlabel("sequence length"); ax.set_ylabel("runtime (s)")
+ax.set_xlim(0); ax.set_ylim(0); ax.legend()
+plt.tight_layout(); plt.show()
+```
+:::
+
+:::{.callout-important icon=false}
+## What the plot says
+
+The points sit on a **parabola**: runtime $\approx c \cdot n^2$. Splitting the work over four processors divides every point by four --- and leaves **the same parabola**, only flatter.
+
+> Parallelization can reduce the runtime of an algorithm, but it won't change its computational complexity.
+
+That sentence from the book is the reason the Big Data half of this course spends as long on algorithms as on clusters.
+:::
+
+<!-- source: extends readIAB ch.3 "How long does pairwise sequence alignment
+     take?" with the space dimension and banded alignment -->
+## Memory, not just time {.scrollable .beyond}
+
+:::{.callout-important icon=false}
+## The $T$ matrix is the expensive part
+
+Time is $O(mn)$, and so is **space** --- you keep the whole traceback matrix.
+
+```{python}
+for n in (1_000, 10_000, 100_000):
+    score_only = 2 * n * 8 / 1e6          # two rows of float64
+    full = n * n * 8 / 1e9                # full matrix, GB
+    print(f"  n={n:>7,}: two rows {score_only:8.2f} MB   full matrix {full:9.2f} GB")
+```
+
+For the **score alone** you only need the previous row --- $O(\min(m,n))$ space. But then you cannot trace back.
+
+**Hirschberg's algorithm** recovers the alignment in linear space by divide and conquer: find where the optimal path crosses the middle column, then recurse on both halves. It doubles the time and reduces space from $O(mn)$ to $O(\min(m,n))$ --- which is what makes whole-chromosome alignment possible at all.
+:::
+
+## Banded alignment {.beyond}
+
+:::{.callout-tip icon=false}
+## If you already know the answer is near the diagonal
+
+When two sequences are similar and of similar length, the optimal path never strays far from the main diagonal. So compute only a **band** of width $2w+1$ around it:
+
+$$O(mn) \longrightarrow O(mw)$$
+
+For $w \ll n$ this is effectively linear. It is used everywhere in read mapping, where a 150 bp read is known to align end-to-end with few indels.
+
+**The catch, as always with a heuristic:** if the true alignment contains an indel larger than $w$, the band excludes it and you get a confidently wrong answer. Tools pick $w$ from the expected indel distribution --- and get it wrong for structural variants.
+:::
+
+<!-- source: not in readIAB (2nd ed. ch.3 stops at pairwise) -- MSA added
+     because profile methods in Bio 2 depend on it and because it is the
+     course's cleanest example of an NP-hard problem solved greedily -->
+# Beyond pairs
+
+## Aligning more than two {.beyond}
+
+:::{.callout-tip icon=false}
+## Why you would want to
+
+Most of what you actually want to know needs a **family**, not a pair:
+
+- which positions are conserved across all members --- the functional sites
+- a **profile** or HMM to search with, which is what makes remote homology detectable
+- a phylogeny, which is estimated from a multiple alignment
+- where in a protein an indel is tolerated, and where it never is
+
+A multiple sequence alignment (MSA) is a matrix: one row per sequence, gaps inserted so that columns are hypotheses about **common ancestral positions** --- the same claim as before, now across $N$ sequences at once.
+:::
+
+## Exact MSA is out of reach {.scrollable .beyond}
+
+:::{.callout-important icon=false}
+## The recurrence generalises; the cost explodes
+
+Dynamic programming extends to $N$ sequences directly: an $N$-dimensional table, where each cell now looks back at $2^N - 1$ predecessors instead of 3.
+
+$$O(n^N \cdot 2^N)$$
+
+For $N = 5$ sequences of length 200 that is already $\sim10^{13}$ cell computations. For a Pfam family of 10 000 sequences it is not a number worth writing down.
+
+And this is not merely an inefficient formulation: **multiple sequence alignment under the sum-of-pairs objective is NP-hard** (Wang & Jiang 1994). There is no polynomial algorithm to be found.
+:::
+
+:::{.callout-note icon=false}
+## The familiar shape
+
+Optimal and unusable, again --- exactly as with scheduling in the big-data lectures. And the response is the same one: a **greedy** algorithm with no guarantee, plus empirical evidence that it is good enough.
+:::
+
+## Progressive alignment {.beyond}
+
+:::{.callout-tip icon=false}
+## The greedy heuristic everybody uses
+
+1. Align every pair to get rough distances --- $O(N^2)$ pairwise alignments.
+2. Build a **guide tree** from those distances.
+3. Walk the tree from the leaves, aligning the two most similar things at each node --- sequence to sequence, then sequence to profile, then profile to profile.
+
+This is Clustal, MUSCLE and MAFFT. It is $O(N^2 n^2)$ rather than exponential, and it is what produced essentially every alignment in every paper you will read.
+:::
+
+## Once a gap, always a gap {.beyond}
+
+:::{.callout-warning icon=false}
+## The defining weakness of progressive alignment
+
+A gap placed early, when only two sequences were visible, is **never revisited** --- later sequences must align around a decision made without them. An early mistake propagates to the whole family.
+
+Mitigations are iterative rather than principled: MUSCLE and MAFFT re-estimate the guide tree from the alignment and realign; consistency-based methods (T-Coffee, ProbCons) score a pairwise alignment by how well it agrees with the others before committing.
+
+**Practical consequence:** the guide tree shapes the alignment, and the alignment is then used to estimate a phylogeny. Inferring a tree from an alignment built on a tree is circular, and the circularity is rarely acknowledged.
+:::
+
+## What to distrust in an MSA {.beyond}
+
+:::{.callout-warning icon=false}
+## Columns are not equally trustworthy
+
+- **Well-aligned core regions are reliable.** Gappy, variable regions are largely arbitrary, and different tools will align them differently.
+- **This matters downstream.** Phylogenetic inference and conservation scores are sensitive to exactly the columns that are least reliable, which is why pipelines run trimming tools (`trimAl`, Gblocks) to drop ambiguous columns before tree-building.
+- **Alignment uncertainty is almost never propagated.** A tree is normally estimated from one alignment as though it were observed data rather than an estimate --- and the resulting confidence is correspondingly overstated.
+
+This is the same selective-inference problem that returns in Bio 4: a quantity estimated from the data is then treated as fixed by the analysis that follows.
+:::
+
+<!-- source: readIAB ch.3 closing, motivating ch.4 -->
+## Conclusions on scalability
+
+:::{.callout-tip icon=false}
+## Where the book lands
+
+For a *pair* of sequences, quadratic is fine: a few seconds for two ~100 000-base DNA sequences. The trouble starts when we want more than one pair:
+
+- **many sequences aligned to each other** --- multiple sequence alignment (the last section of this lecture)
+- **one sequence against many** --- database searching (the next lecture)
+
+Both multiply a quadratic cost by a large count. The book's answer, in the next chapter, is to *approximate*.
+:::
+
+## The problem this creates {.extends}
+
+:::{.callout-warning icon=false}
+## Why exact alignment does not scale to search
+
+Aligning two 1 kb sequences is $10^6$ cells --- instant. But the usual task is not aligning *two* sequences; it is searching **one against a database**.
+
+GenBank holds on the order of $10^{12}$ bases. A single full Smith-Waterman query against it is $\sim10^{15}$ cell computations.
+
+At the ~5 ns per cell we just measured, that is **over a month** --- for one query.
+
+This is the gap that the next lecture fills: give up the guarantee of optimality, use $k$-mer seeds to skip almost all of the matrix, and get an answer in seconds. That is what BLAST is.
+:::
+
+# Wrap-up
+
+## What we covered
+
+:::{.callout-important icon=false}
+## Summary
+
+| idea | result |
+|---|---|
+| a code is an agreement | $n_{\text{messages}} = n_{\text{symbols}}^{\,p}$ |
+| DNA as a base-4 code | 2 bits/base; codons must be 3 long |
+| the code is a molecule | tRNA reads codons; structure is predicted from sequence |
+| Hamming distance | breaks on a single indel --- the distance *is* the classifier |
+| alignment | a **hypothesis** about shared ancestry |
+| naive diagonals | finds conserved blocks, cannot choose between them |
+| substitution matrices | scores learned from observed evolution |
+| Needleman-Wunsch | optimal **global** alignment, DP, $O(mn)$ |
+| Smith-Waterman | optimal **local** alignment: clamp at 0 |
+| affine gaps | one indel event, not $L$ of them |
+| exact vs heuristic | judge a heuristic by speed **and** by how often it agrees |
+| complexity | $O(mn)$ --- measured; parallelism divides it, never reshapes it |
+:::
+
+## The recurring lesson
+
+:::{.callout-note icon=false}
+## Optimal and unusable
+
+Needleman-Wunsch and Smith-Waterman are **provably optimal** given a scoring scheme. They are also, at database scale, unusable --- and the field responded by abandoning optimality rather than waiting for faster computers.
+
+That trade recurs throughout this course: greedy list scheduling instead of optimal scheduling, approximate nearest neighbours instead of exact ones, sampling instead of global state.
+
+> Be skeptical of automated approaches to solve complex problems.
+:::
+
+## Exercises
+
+:::{.callout-tip icon=false}
+## Try these
+
+1. Change `match`, `mismatch` and `gap` in `needleman_wunsch` and watch the alignment change. Can you find parameters that produce a biologically silly result?
+2. Add an affine gap model to the from-scratch implementation. You will need two extra matrices --- why?
+3. Modify `needleman_wunsch` to return only the score, not $T$. How much memory does that save for two 10 kb sequences?
+4. Align human and chicken hemoglobin (fetch with `Bio.Entrez`), then human and *E. coli*. At what evolutionary distance does the alignment stop being convincing?
+5. Implement Hamming distance and compare it with alignment score on sequences that differ by one indel. Why does Hamming fail?
+6. Time the from-scratch `needleman_wunsch` against Biopython on the same input. How much of the ~700x gap is Python, and how much is the algorithm?
+
+**From the book**
+
+7. By hand: fill row 0, column 0 and cells $(1,1)$, $(1,2)$, $(2,1)$ of $F$ and $T$ for `HEAGAWGHEE` / `PAWHEAE` before running `nw_tables`.
+8. Decode `1000001`, then `AUG UAU GAG GGU ACU AAU UAA`, without a computer.
+9. For the book's sequences `ACCGGTGGAACCGGTAACACCCAC` / `ACCGGTAACCGGTTAACACCCAC`, write down every substitution, insertion and deletion you think happened. Is there one most likely alignment?
+10. Is the affine-gap recurrence on the *Affine gaps in the recurrence* slide Smith-Waterman or Needleman-Wunsch? How do you know?
+:::
+
+## Further reading {.scrollable}
+
+:::{.callout-note icon=false}
+## Sources
+
+- **Caporaso**, *An Introduction to Applied Bioinformatics*, 2nd ed. <https://readiab.org> --- CC BY-NC-SA 4.0
+- **Needleman & Wunsch**, *A general method applicable to the search for similarities in the amino acid sequence of two proteins*, **J. Mol. Biol.** 48(3), 1970, 443--453. <https://doi.org/10.1016/0022-2836(70)90057-4>
+- **Smith & Waterman**, *Identification of common molecular subsequences*, **J. Mol. Biol.** 147(1), 1981, 195--197. <https://doi.org/10.1016/0022-2836(81)90087-5>
+- **Henikoff & Henikoff**, *Amino acid substitution matrices from protein blocks* (BLOSUM), **PNAS** 89(22), 1992. <https://doi.org/10.1073/pnas.89.22.10915>
+- **Farrar**, *Striped Smith-Waterman speeds database searches six times over other SIMD implementations*, **Bioinformatics** 23(2), 2007. <https://doi.org/10.1093/bioinformatics/btl582>
+- **Gotoh**, *An improved algorithm for matching biological sequences* (affine gaps), **J. Mol. Biol.** 162(3), 1982, 705--708. <https://doi.org/10.1016/0022-2836(82)90398-9>
+- **Hirschberg**, *A linear space algorithm for computing maximal common subsequences*, **CACM** 18(6), 1975, 341--343. <https://doi.org/10.1145/360825.360861>
+- **Wang & Jiang**, *On the complexity of multiple sequence alignment*, **Journal of Computational Biology** 1(4), 1994, 337--348.
+- **Katoh & Standley**, *MAFFT multiple sequence alignment software version 7*, **Molecular Biology and Evolution** 30(4), 2013.
+- **Durbin, Eddy, Krogh & Mitchison**, *Biological Sequence Analysis*, Cambridge University Press, 1998 --- the standard reference
+:::
+
+## Coming next
+
+:::{.callout-important icon=false}
+## Homology search and classification
+
+$O(mn)$ per comparison against a $10^{12}$-base database does not work. The next lecture is about what to do instead:
+
+- **$k$-mer indexing** and seed-and-extend --- how BLAST skips most of the matrix
+- **Evaluating a heuristic** --- sensitivity, specificity, E-values
+- **Machine learning over $k$-mers** --- taxonomic classification, and the cross-validation traps
+:::
