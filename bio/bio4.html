@@ -248,6 +248,16 @@ MSDE
 </div>
 </div>
 </div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Reading these slides</strong></p>
+</div>
+<div class="callout-content">
+<p>Unbadged slides follow the book. <span class="badge-beyond">beyond the book</span> marks material it does not contain; <span class="badge-extends">extends the book</span> marks a book topic taken further. The book’s examples use a bone-marrow dataset (and, for conditions, an interferon-stimulation study); these decks keep PBMC3k and simulate what it lacks, and say so.</p>
+</div>
+</div>
+</div>
 </section>
 <section id="setting-up" class="slide level2 scrollable">
 <h2>Setting up</h2>
@@ -257,7 +267,7 @@ MSDE
 <p><strong>The same PBMC3k, preprocessed as in lecture 3</strong></p>
 </div>
 <div class="callout-content">
-<div id="7d00155d" class="cell" data-execution_count="3">
+<div id="b8ebcd87" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a aria-label="1"></a>adata <span class="op">=</span> sc.datasets.pbmc3k()</span>
 <span id="cb1-2"><a aria-label="2"></a>sc.pp.filter_cells(adata, min_genes<span class="op">=</span><span class="dv">200</span>)</span>
 <span id="cb1-3"><a aria-label="3"></a>sc.pp.filter_genes(adata, min_cells<span class="op">=</span><span class="dv">20</span>)</span>
@@ -288,7 +298,7 @@ MSDE
 </div>
 <!-- =========================================================================
      SOURCE: sc-best-practices, Identifying cellular structure / "Clustering"
-       https://www.sc-best-practices.org/cellular_structure/clustering.html
+       https://www.sc-best-practices.org/cellular-structure/clustering/
        Motivation | graph-based community detection | Leiden | resolution
        Leiden vs Louvain: Traag et al. 2019, doi 10.1038/s41598-019-41695-z
      ========================================================================= -->
@@ -306,7 +316,7 @@ MSDE
 <p><strong>Not k-means on the expression matrix</strong></p>
 </div>
 <div class="callout-content">
-<p>We do <strong>not</strong> cluster in gene space. We cluster the <strong>neighbour graph</strong> built in PCA space — the <code>connectivities</code> matrix from last lecture.</p>
+<p>We do <strong>not</strong> cluster in gene space. We cluster the <strong>neighbour graph</strong> built in PCA space — the <code>connectivities</code> matrix from last lecture: Euclidean distances between cells in the top ~30 PCs, each cell joined to its <span class="math inline">\(K\)</span> most similar cells.</p>
 <p>The task becomes <em>community detection</em>: find groups of nodes that are more densely connected to each other than to the rest of the graph.</p>
 <p>This matters because it inherits every choice made upstream: the number of PCs, <span class="math inline">\(k\)</span>, and the feature selection all shaped the graph, and the graph is all the clustering algorithm sees.</p>
 </div>
@@ -327,7 +337,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="modularity" class="slide level2">
+<section id="modularity" class="slide level2 beyond">
 <h2>Modularity</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -353,7 +363,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="louvain-then-leiden" class="slide level2">
+<section id="louvain-then-leiden" class="slide level2 extends">
 <h2>Louvain, then Leiden</h2>
 <div class="callout callout-note no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -365,8 +375,9 @@ MSDE
 <p><strong>Leiden</strong> (2019) fixes a real defect: Louvain can produce <strong>internally disconnected communities</strong> — a “cluster” that is actually two groups with no path between them inside the cluster. Traag et al.&nbsp;showed this is not rare.</p>
 <p>Leiden adds a refinement phase guaranteeing every community is internally connected, and is usually faster too.</p>
 <blockquote>
-<p>Use Leiden. Louvain remains in the codebase for reproducing older analyses.</p>
+<p>Use Leiden. Louvain is no longer maintained, and remains in the codebase only for reproducing older analyses.</p>
 </blockquote>
+<p><code>n_iterations</code> sets how many refinement passes Leiden makes: <code>-1</code> runs to convergence (slow on large data), and even <code>2</code> already prevents disconnected clusters. On a GPU, <code>rapids-singlecell</code>’s Leiden routinely runs 50–100× faster — clustering a million-cell graph is one of the worst CPU bottlenecks in the pipeline.</p>
 </div>
 </div>
 </div>
@@ -380,7 +391,7 @@ MSDE
 </div>
 <div class="callout-content">
 <p>Resolution <span class="math inline">\(\gamma\)</span> scales the penalty term in the objective. Low <span class="math inline">\(\gamma\)</span> → few large clusters; high <span class="math inline">\(\gamma\)</span> → many small ones. It does <strong>not</strong> have a correct value.</p>
-<div id="5ca21081" class="cell" data-execution_count="4">
+<div id="6d6f7a16" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a aria-label="1"></a><span class="cf">for</span> res <span class="kw">in</span> (<span class="fl">0.25</span>, <span class="fl">0.5</span>, <span class="fl">1.0</span>, <span class="fl">2.0</span>):</span>
 <span id="cb3-2"><a aria-label="2"></a>    sc.tl.leiden(</span>
 <span id="cb3-3"><a aria-label="3"></a>        adata,</span>
@@ -406,7 +417,7 @@ MSDE
 </section>
 <section id="the-resolution-parameter-1" class="slide level2 scrollable">
 <h2>The resolution parameter</h2>
-<div id="4af0e3ce" class="cell" data-execution_count="5">
+<div id="28280ed0" class="cell" data-execution_count="5">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a aria-label="1"></a>sc.pl.umap(</span>
@@ -428,7 +439,7 @@ MSDE
 </div>
 <p>The large populations stay stable; it is the <strong>boundaries between related subtypes</strong> that split and re-split as <span class="math inline">\(\gamma\)</span> rises. <strong>Neither extreme is wrong</strong> — they answer different questions, at different levels of the cell-type hierarchy.</p>
 </section>
-<section id="how-to-choose" class="slide level2">
+<section id="how-to-choose" class="slide level2 beyond">
 <h2>How to choose</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -466,7 +477,7 @@ MSDE
 </div>
 <div class="callout-content">
 <p>The practical answer to the resolution problem: cluster coarsely, then <strong>re-cluster within a group of interest</strong>. The sub-graph is rebuilt from only those cells, so the variable genes and PCs are chosen for <em>their</em> heterogeneity rather than the whole dataset’s.</p>
-<div id="c6ef3f37" class="cell" data-execution_count="6">
+<div id="4056b8b8" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a aria-label="1"></a>big <span class="op">=</span> adata.obs[<span class="st">"leiden_0.25"</span>].value_counts().idxmax()</span>
 <span id="cb6-2"><a aria-label="2"></a>sub <span class="op">=</span> adata[adata.obs[<span class="st">"leiden_0.25"</span>] <span class="op">==</span> big].copy()</span>
 <span id="cb6-3"><a aria-label="3"></a><span class="bu">print</span>(<span class="ss">f"sub-clustering cluster </span><span class="sc">{</span>big<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>sub<span class="sc">.</span>n_obs<span class="sc">}</span><span class="ss"> cells"</span>)</span>
@@ -483,13 +494,14 @@ sub-clusters found: 4</code></pre>
 </div>
 </div>
 <p>Structure that was invisible at the top level becomes resolvable, because the PCA is no longer dominated by the difference between <em>T cells and monocytes</em>.</p>
+<p>The book’s caution: sub-clustering finds cell-type-specific states and finer labels — and <strong>patterns that are only noise</strong>. Zoom in far enough and every population splits.</p>
 </div>
 </div>
 </div>
 </section>
 <section id="sub-clustering-1" class="slide level2 scrollable">
 <h2>Sub-clustering</h2>
-<div id="091612d3" class="cell" data-execution_count="7">
+<div id="aedc2516" class="cell" data-execution_count="7">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a aria-label="1"></a>sc.tl.umap(sub)</span>
@@ -506,7 +518,7 @@ sub-clusters found: 4</code></pre>
 </div>
 </div>
 </section>
-<section id="is-a-cluster-real" class="slide level2 scrollable">
+<section id="is-a-cluster-real" class="slide level2 scrollable beyond">
 <h2>Is a cluster real?</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -515,7 +527,7 @@ sub-clusters found: 4</code></pre>
 </div>
 <div class="callout-content">
 <p>Cluster repeatedly on random subsamples. A partition that survives resampling is more credible than one that does not.</p>
-<div id="00c108ab" class="cell" data-execution_count="8">
+<div id="f38f46ed" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a aria-label="1"></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> adjusted_rand_score</span>
 <span id="cb9-2"><a aria-label="2"></a></span>
 <span id="cb9-3"><a aria-label="3"></a>rng_s <span class="op">=</span> np.random.default_rng(<span class="dv">0</span>)</span>
@@ -543,7 +555,7 @@ mean: 0.894</code></pre>
 </div>
 <!-- =========================================================================
      SOURCE: sc-best-practices, Identifying cellular structure / "Annotation"
-       https://www.sc-best-practices.org/cellular_structure/annotation.html
+       https://www.sc-best-practices.org/cellular-structure/annotation/
        Manual annotation | From markers to cluster annotation | From cluster
        DE genes to annotation (incl. the inflated p-value warning) |
        Marker-gene classifiers | Wider-gene-set classifiers (CellTypist) |
@@ -603,6 +615,40 @@ mean: 0.894</code></pre>
 </div>
 </div>
 </section>
+<section id="markers-in-practice" class="slide level2 scrollable">
+<h2>Markers in practice</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>What the book’s bone-marrow example teaches</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>Markers are rarely unique.</strong> Each marker is expressed in some subset of cells; a cell type is where the subsets <strong>intersect</strong>.</li>
+<li><strong>Negative markers</strong> count too: B1 B cells are expected <em>not</em> to express <code>IGHD</code> and <code>IGHM</code>, plasmablasts not <code>PAX5</code>.</li>
+<li><strong>Protein markers do not always transfer to RNA.</strong> A FACS marker may be barely detectable as mRNA; markers from RNA-based studies work better.</li>
+<li><strong>Markers that work in one dataset may fail in another</strong> — different depth, different protocol, different sample.</li>
+<li>Work <strong>with a biologist</strong> who knows the tissue. The book says this outright.</li>
+</ul>
+<div id="a149135f" class="cell" data-execution_count="9">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a aria-label="1"></a>sc.pl.umap(adata, color<span class="op">=</span>[<span class="st">"MS4A1"</span>, <span class="st">"CD79A"</span>, <span class="st">"CD8A"</span>, <span class="st">"NKG7"</span>], ncols<span class="op">=</span><span class="dv">4</span>,</span>
+<span id="cb11-2"><a aria-label="2"></a>           vmax<span class="op">=</span><span class="st">"p99"</span>, cmap<span class="op">=</span><span class="st">"Reds"</span>, show<span class="op">=</span><span class="va">False</span>)   <span class="co"># p99: one extreme cell cannot wash out the rest</span></span>
+<span id="cb11-3"><a aria-label="3"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure>
+<p><img data-src="bio4_files/figure-revealjs/cell-9-output-1.png" width="2072" height="397"></p>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
 <section id="markers-per-cluster" class="slide level2 scrollable">
 <h2>Markers per cluster</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
@@ -611,12 +657,12 @@ mean: 0.894</code></pre>
 <p><strong>Wilcoxon rank-sum, one cluster against the rest</strong></p>
 </div>
 <div class="callout-content">
-<div id="65a966d3" class="cell" data-execution_count="9">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a aria-label="1"></a>adata.obs[<span class="st">"leiden"</span>] <span class="op">=</span> adata.obs[<span class="st">"leiden_1.0"</span>]</span>
-<span id="cb11-2"><a aria-label="2"></a>sc.tl.rank_genes_groups(adata, <span class="st">"leiden"</span>, method<span class="op">=</span><span class="st">"wilcoxon"</span>)</span>
-<span id="cb11-3"><a aria-label="3"></a></span>
-<span id="cb11-4"><a aria-label="4"></a>pd.DataFrame(adata.uns[<span class="st">"rank_genes_groups"</span>][<span class="st">"names"</span>]).head(<span class="dv">5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display" data-execution_count="8">
+<div id="24cfd707" class="cell" data-execution_count="10">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a aria-label="1"></a>adata.obs[<span class="st">"leiden"</span>] <span class="op">=</span> adata.obs[<span class="st">"leiden_1.0"</span>]</span>
+<span id="cb12-2"><a aria-label="2"></a>sc.tl.rank_genes_groups(adata, <span class="st">"leiden"</span>, method<span class="op">=</span><span class="st">"wilcoxon"</span>)</span>
+<span id="cb12-3"><a aria-label="3"></a></span>
+<span id="cb12-4"><a aria-label="4"></a>pd.DataFrame(adata.uns[<span class="st">"rank_genes_groups"</span>][<span class="st">"names"</span>]).head(<span class="dv">5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="9">
 <div>
 <style scoped="">
     .dataframe tbody tr th:only-of-type {
@@ -743,7 +789,7 @@ mean: 0.894</code></pre>
 </div>
 </div>
 </section>
-<section id="the-double-dipping-problem" class="slide level2">
+<section id="the-double-dipping-problem" class="slide level2 extends">
 <h2>The double-dipping problem</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -761,9 +807,9 @@ mean: 0.894</code></pre>
 </div>
 </div>
 <!-- source: sc-best-practices, Annotation / "From cluster DE genes to annotation"
-     https://www.sc-best-practices.org/cellular_structure/annotation.html -->
+     https://www.sc-best-practices.org/cellular-structure/annotation/ -->
 </section>
-<section id="which-test-and-does-it-matter" class="slide level2 scrollable">
+<section id="which-test-and-does-it-matter" class="slide level2 scrollable extends">
 <h2>Which test, and does it matter?</h2>
 <div class="callout callout-note no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -817,7 +863,7 @@ mean: 0.894</code></pre>
 </div>
 </div>
 </section>
-<section id="ranking-is-not-selecting" class="slide level2">
+<section id="ranking-is-not-selecting" class="slide level2 beyond">
 <h2>Ranking is not selecting</h2>
 <div class="callout callout-warning no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -844,19 +890,19 @@ mean: 0.894</code></pre>
 <p><strong>A literature marker set</strong></p>
 </div>
 <div class="callout-content">
-<div id="8007dd11" class="cell" data-execution_count="10">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a aria-label="1"></a>markers <span class="op">=</span> {</span>
-<span id="cb12-2"><a aria-label="2"></a>    <span class="st">"CD4 T"</span>:          [<span class="st">"IL7R"</span>, <span class="st">"CCR7"</span>],</span>
-<span id="cb12-3"><a aria-label="3"></a>    <span class="st">"CD8 T"</span>:          [<span class="st">"CD8A"</span>, <span class="st">"CD8B"</span>],</span>
-<span id="cb12-4"><a aria-label="4"></a>    <span class="st">"NK"</span>:             [<span class="st">"GNLY"</span>, <span class="st">"NKG7"</span>],</span>
-<span id="cb12-5"><a aria-label="5"></a>    <span class="st">"B"</span>:              [<span class="st">"MS4A1"</span>, <span class="st">"CD79A"</span>],</span>
-<span id="cb12-6"><a aria-label="6"></a>    <span class="st">"CD14+ Mono"</span>:     [<span class="st">"CD14"</span>, <span class="st">"LYZ"</span>],</span>
-<span id="cb12-7"><a aria-label="7"></a>    <span class="st">"FCGR3A+ Mono"</span>:   [<span class="st">"FCGR3A"</span>, <span class="st">"MS4A7"</span>],</span>
-<span id="cb12-8"><a aria-label="8"></a>    <span class="st">"Dendritic"</span>:      [<span class="st">"FCER1A"</span>, <span class="st">"CST3"</span>],</span>
-<span id="cb12-9"><a aria-label="9"></a>    <span class="st">"Platelet"</span>:       [<span class="st">"PPBP"</span>],</span>
-<span id="cb12-10"><a aria-label="10"></a>}</span>
-<span id="cb12-11"><a aria-label="11"></a>present <span class="op">=</span> {k: [g <span class="cf">for</span> g <span class="kw">in</span> v <span class="cf">if</span> g <span class="kw">in</span> adata.var_names] <span class="cf">for</span> k, v <span class="kw">in</span> markers.items()}</span>
-<span id="cb12-12"><a aria-label="12"></a><span class="bu">print</span>({k: <span class="bu">len</span>(v) <span class="cf">for</span> k, v <span class="kw">in</span> present.items()})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="66751ab3" class="cell" data-execution_count="11">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a aria-label="1"></a>markers <span class="op">=</span> {</span>
+<span id="cb13-2"><a aria-label="2"></a>    <span class="st">"CD4 T"</span>:          [<span class="st">"IL7R"</span>, <span class="st">"CCR7"</span>],</span>
+<span id="cb13-3"><a aria-label="3"></a>    <span class="st">"CD8 T"</span>:          [<span class="st">"CD8A"</span>, <span class="st">"CD8B"</span>],</span>
+<span id="cb13-4"><a aria-label="4"></a>    <span class="st">"NK"</span>:             [<span class="st">"GNLY"</span>, <span class="st">"NKG7"</span>],</span>
+<span id="cb13-5"><a aria-label="5"></a>    <span class="st">"B"</span>:              [<span class="st">"MS4A1"</span>, <span class="st">"CD79A"</span>],</span>
+<span id="cb13-6"><a aria-label="6"></a>    <span class="st">"CD14+ Mono"</span>:     [<span class="st">"CD14"</span>, <span class="st">"LYZ"</span>],</span>
+<span id="cb13-7"><a aria-label="7"></a>    <span class="st">"FCGR3A+ Mono"</span>:   [<span class="st">"FCGR3A"</span>, <span class="st">"MS4A7"</span>],</span>
+<span id="cb13-8"><a aria-label="8"></a>    <span class="st">"Dendritic"</span>:      [<span class="st">"FCER1A"</span>, <span class="st">"CST3"</span>],</span>
+<span id="cb13-9"><a aria-label="9"></a>    <span class="st">"Platelet"</span>:       [<span class="st">"PPBP"</span>],</span>
+<span id="cb13-10"><a aria-label="10"></a>}</span>
+<span id="cb13-11"><a aria-label="11"></a>present <span class="op">=</span> {k: [g <span class="cf">for</span> g <span class="kw">in</span> v <span class="cf">if</span> g <span class="kw">in</span> adata.var_names] <span class="cf">for</span> k, v <span class="kw">in</span> markers.items()}</span>
+<span id="cb13-12"><a aria-label="12"></a><span class="bu">print</span>({k: <span class="bu">len</span>(v) <span class="cf">for</span> k, v <span class="kw">in</span> present.items()})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>{'CD4 T': 2, 'CD8 T': 2, 'NK': 2, 'B': 2, 'CD14+ Mono': 2, 'FCGR3A+ Mono': 2, 'Dendritic': 2, 'Platelet': 1}</code></pre>
 </div>
@@ -867,42 +913,42 @@ mean: 0.894</code></pre>
 </section>
 <section id="canonical-pbmc-markers-1" class="slide level2 scrollable">
 <h2>Canonical PBMC markers</h2>
-<div id="6719895b" class="cell" data-execution_count="11">
+<div id="24141463" class="cell" data-execution_count="12">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a aria-label="1"></a>sc.pl.dotplot(adata, present, groupby<span class="op">=</span><span class="st">"leiden"</span>, standard_scale<span class="op">=</span><span class="st">"var"</span>, show<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb14-2"><a aria-label="2"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a aria-label="1"></a>sc.pl.dotplot(adata, present, groupby<span class="op">=</span><span class="st">"leiden"</span>, standard_scale<span class="op">=</span><span class="st">"var"</span>, show<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb15-2"><a aria-label="2"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div>
 <figure>
-<p><img data-src="bio4_files/figure-revealjs/cell-11-output-1.png" width="712" height="661"></p>
+<p><img data-src="bio4_files/figure-revealjs/cell-12-output-1.png" width="712" height="661"></p>
 </figure>
 </div>
 </div>
 </div>
 <p>Read it column-block by column-block: each cluster lights up for one marker set. <strong>Dot size</strong> is the fraction of cells expressing; <strong>colour</strong> is mean expression among them. The fraction matters as much as the level — a marker expressed strongly in 5% of a cluster is telling you the cluster is not homogeneous.</p>
 </section>
-<section id="how-specific-is-a-marker" class="slide level2 scrollable">
+<section id="how-specific-is-a-marker" class="slide level2 scrollable extends">
 <h2>How specific is a marker?</h2>
-<div id="1a4b81a1" class="cell" data-execution_count="12">
+<div id="c28ab776" class="cell" data-execution_count="13">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a aria-label="1"></a>sc.pl.violin(adata, [<span class="st">"NKG7"</span>, <span class="st">"CD79A"</span>, <span class="st">"LYZ"</span>], groupby<span class="op">=</span><span class="st">"leiden"</span>,</span>
-<span id="cb15-2"><a aria-label="2"></a>             rotation<span class="op">=</span><span class="dv">90</span>, show<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb15-3"><a aria-label="3"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a aria-label="1"></a>sc.pl.violin(adata, [<span class="st">"NKG7"</span>, <span class="st">"CD79A"</span>, <span class="st">"LYZ"</span>], groupby<span class="op">=</span><span class="st">"leiden"</span>,</span>
+<span id="cb16-2"><a aria-label="2"></a>             rotation<span class="op">=</span><span class="dv">90</span>, show<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb16-3"><a aria-label="3"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div>
 <figure>
-<p><img data-src="bio4_files/figure-revealjs/cell-12-output-1.png" width="1619" height="391"></p>
+<p><img data-src="bio4_files/figure-revealjs/cell-13-output-1.png" width="1619" height="391"></p>
 </figure>
 </div>
 </div>
 </div>
 <p><code>CD79A</code> and <code>LYZ</code> are close to ideal: high in one cluster, near zero elsewhere. <code>NKG7</code> is <strong>not</strong> — it is high in several clusters, because NK and cytotoxic T cells share it. That single fact is what misleads the automatic assignment two slides from now.</p>
 </section>
-<section id="assigning-labels" class="slide level2 scrollable">
+<section id="assigning-labels" class="slide level2 scrollable beyond">
 <h2>Assigning labels</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -910,10 +956,10 @@ mean: 0.894</code></pre>
 <p><strong>From the dot plot to names</strong></p>
 </div>
 <div class="callout-content">
-<div id="bfce92ef" class="cell" data-execution_count="13">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a aria-label="1"></a>top <span class="op">=</span> pd.DataFrame(adata.uns[<span class="st">"rank_genes_groups"</span>][<span class="st">"names"</span>]).head(<span class="dv">8</span>)</span>
-<span id="cb16-2"><a aria-label="2"></a><span class="cf">for</span> cl <span class="kw">in</span> adata.obs[<span class="st">"leiden"</span>].cat.categories:</span>
-<span id="cb16-3"><a aria-label="3"></a>    <span class="bu">print</span>(<span class="ss">f"  cluster </span><span class="sc">{</span>cl<span class="sc">:&gt;2}</span><span class="ss">: </span><span class="sc">{</span><span class="st">', '</span><span class="sc">.</span>join(top[cl][:<span class="dv">6</span>])<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="55a42c11" class="cell" data-execution_count="14">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a aria-label="1"></a>top <span class="op">=</span> pd.DataFrame(adata.uns[<span class="st">"rank_genes_groups"</span>][<span class="st">"names"</span>]).head(<span class="dv">8</span>)</span>
+<span id="cb17-2"><a aria-label="2"></a><span class="cf">for</span> cl <span class="kw">in</span> adata.obs[<span class="st">"leiden"</span>].cat.categories:</span>
+<span id="cb17-3"><a aria-label="3"></a>    <span class="bu">print</span>(<span class="ss">f"  cluster </span><span class="sc">{</span>cl<span class="sc">:&gt;2}</span><span class="ss">: </span><span class="sc">{</span><span class="st">', '</span><span class="sc">.</span>join(top[cl][:<span class="dv">6</span>])<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>  cluster  0: CCL5, GZMK, IL32, NKG7, B2M, CTSW
   cluster  1: CD74, HLA-DRA, CD79A, CD79B, HLA-DPB1, MS4A1
@@ -934,7 +980,7 @@ mean: 0.894</code></pre>
 </div>
 </div>
 </section>
-<section id="assigning-labels-1" class="slide level2 scrollable">
+<section id="assigning-labels-1" class="slide level2 scrollable beyond">
 <h2>Assigning labels</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -942,22 +988,22 @@ mean: 0.894</code></pre>
 <p><strong>Mapping clusters to cell types</strong></p>
 </div>
 <div class="callout-content">
-<div id="39fe0dc8" class="cell" data-execution_count="14">
+<div id="e9a10e29" class="cell" data-execution_count="15">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a aria-label="1"></a><span class="co"># assign each cluster the marker set whose mean expression is highest in it</span></span>
-<span id="cb18-2"><a aria-label="2"></a>scores <span class="op">=</span> {}</span>
-<span id="cb18-3"><a aria-label="3"></a><span class="cf">for</span> ct, genes <span class="kw">in</span> present.items():</span>
-<span id="cb18-4"><a aria-label="4"></a>    <span class="cf">if</span> genes:</span>
-<span id="cb18-5"><a aria-label="5"></a>        sub <span class="op">=</span> adata[:, genes].layers[<span class="st">"log1p_norm"</span>]</span>
-<span id="cb18-6"><a aria-label="6"></a>        scores[ct] <span class="op">=</span> np.asarray(sub.mean(axis<span class="op">=</span><span class="dv">1</span>)).ravel()</span>
-<span id="cb18-7"><a aria-label="7"></a>score_df <span class="op">=</span> pd.DataFrame(scores, index<span class="op">=</span>adata.obs_names)</span>
-<span id="cb18-8"><a aria-label="8"></a>score_df[<span class="st">"leiden"</span>] <span class="op">=</span> adata.obs[<span class="st">"leiden"</span>].values</span>
-<span id="cb18-9"><a aria-label="9"></a>per_cluster <span class="op">=</span> score_df.groupby(<span class="st">"leiden"</span>, observed<span class="op">=</span><span class="va">True</span>).mean()</span>
-<span id="cb18-10"><a aria-label="10"></a>assignment <span class="op">=</span> per_cluster.idxmax(axis<span class="op">=</span><span class="dv">1</span>)</span>
-<span id="cb18-11"><a aria-label="11"></a></span>
-<span id="cb18-12"><a aria-label="12"></a>adata.obs[<span class="st">"cell_type"</span>] <span class="op">=</span> adata.obs[<span class="st">"leiden"</span>].<span class="bu">map</span>(assignment).astype(<span class="st">"category"</span>)</span>
-<span id="cb18-13"><a aria-label="13"></a><span class="bu">print</span>(assignment.to_string())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a aria-label="1"></a><span class="co"># assign each cluster the marker set whose mean expression is highest in it</span></span>
+<span id="cb19-2"><a aria-label="2"></a>scores <span class="op">=</span> {}</span>
+<span id="cb19-3"><a aria-label="3"></a><span class="cf">for</span> ct, genes <span class="kw">in</span> present.items():</span>
+<span id="cb19-4"><a aria-label="4"></a>    <span class="cf">if</span> genes:</span>
+<span id="cb19-5"><a aria-label="5"></a>        sub <span class="op">=</span> adata[:, genes].layers[<span class="st">"log1p_norm"</span>]</span>
+<span id="cb19-6"><a aria-label="6"></a>        scores[ct] <span class="op">=</span> np.asarray(sub.mean(axis<span class="op">=</span><span class="dv">1</span>)).ravel()</span>
+<span id="cb19-7"><a aria-label="7"></a>score_df <span class="op">=</span> pd.DataFrame(scores, index<span class="op">=</span>adata.obs_names)</span>
+<span id="cb19-8"><a aria-label="8"></a>score_df[<span class="st">"leiden"</span>] <span class="op">=</span> adata.obs[<span class="st">"leiden"</span>].values</span>
+<span id="cb19-9"><a aria-label="9"></a>per_cluster <span class="op">=</span> score_df.groupby(<span class="st">"leiden"</span>, observed<span class="op">=</span><span class="va">True</span>).mean()</span>
+<span id="cb19-10"><a aria-label="10"></a>assignment <span class="op">=</span> per_cluster.idxmax(axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb19-11"><a aria-label="11"></a></span>
+<span id="cb19-12"><a aria-label="12"></a>adata.obs[<span class="st">"cell_type"</span>] <span class="op">=</span> adata.obs[<span class="st">"leiden"</span>].<span class="bu">map</span>(assignment).astype(<span class="st">"category"</span>)</span>
+<span id="cb19-13"><a aria-label="13"></a><span class="bu">print</span>(assignment.to_string())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>leiden
@@ -998,23 +1044,23 @@ mean: 0.894</code></pre>
 </section>
 <section id="the-annotated-map" class="slide level2 scrollable">
 <h2>The annotated map</h2>
-<div id="c1c6b189" class="cell" data-execution_count="15">
+<div id="d2d52e97" class="cell" data-execution_count="16">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a aria-label="1"></a>sc.pl.umap(adata, color<span class="op">=</span><span class="st">"cell_type"</span>, legend_loc<span class="op">=</span><span class="st">"right margin"</span>, show<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb20-2"><a aria-label="2"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a aria-label="1"></a>sc.pl.umap(adata, color<span class="op">=</span><span class="st">"cell_type"</span>, legend_loc<span class="op">=</span><span class="st">"right margin"</span>, show<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb21-2"><a aria-label="2"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div>
 <figure>
-<p><img data-src="bio4_files/figure-revealjs/cell-15-output-1.png" width="639" height="381"></p>
+<p><img data-src="bio4_files/figure-revealjs/cell-16-output-1.png" width="639" height="381"></p>
 </figure>
 </div>
 </div>
 </div>
-<div id="dde58a2f" class="cell" data-execution_count="16">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a aria-label="1"></a>adata.obs[<span class="st">"cell_type"</span>].value_counts()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display" data-execution_count="15">
+<div id="f3f5a679" class="cell" data-execution_count="17">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a aria-label="1"></a>adata.obs[<span class="st">"cell_type"</span>].value_counts()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="16">
 <pre><code>cell_type
 CD4 T           1126
 NK               528
@@ -1061,6 +1107,35 @@ Name: count, dtype: int64</code></pre>
 </div>
 </div>
 </section>
+<section id="classifiers-trained-on-atlases" class="slide level2">
+<h2>Classifiers trained on atlases</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>CellTypist, as the book runs it</strong></p>
+</div>
+<div class="callout-content">
+<p>A <strong>logistic regression</strong> over thousands of genes, pre-trained on annotated atlases. A model trained on a cross-dataset atlas — the Human Lung Cell Atlas combines 14 studies — generalises better than one trained on a single study. To smooth noisy per-cell calls it <strong>over-clusters</strong> the query (resolution 10) and takes a <strong>majority vote</strong> within each small cluster.</p>
+<p>Why use one at all: no reference data to download or preprocess, no clustering needed, prior annotations reused directly — and shared models push a field towards <strong>shared definitions</strong> of cell types.</p>
+<p>How to check one: compare with your manual labels (they agree only partially, and a model’s coarse and fine outputs can even disagree with each other), look at the label <strong>dendrogram</strong> for types that cluster in the wrong place, and read the <strong>confidence scores</strong> — low scores in misplaced clusters are where manual work is needed.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="large-language-models-and-foundation-models" class="slide level2">
+<h2>Large language models and foundation models</h2>
+<div class="callout callout-warning no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The book’s position, in its newest edition</strong></p>
+</div>
+<div class="callout-content">
+<p>LLMs given a cluster’s marker genes agree well with manual annotation of <strong>major</strong> cell types — less well for subtypes, very differently between models, and sensitive to how the input markers were chosen. Their training data is undisclosed and they can <strong>hallucinate</strong>; and because they rely on previously described knowledge, they are weakest exactly on <strong>novel or context-specific states</strong>.</p>
+<p>Recommendation: reference- and marker-based methods first; LLMs and foundation models at most as a quick additional first pass, always checked against marker expression.</p>
+</div>
+</div>
+</div>
+</section>
 <section id="uncertainty" class="slide level2 scrollable">
 <h2>Uncertainty</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
@@ -1078,9 +1153,147 @@ Name: count, dtype: int64</code></pre>
 </div>
 </div>
 </div>
+</section>
+<section id="label-transfer-is-k-nearest-neighbours" class="slide level2 scrollable">
+<h2>Label transfer is <span class="math inline">\(k\)</span>-nearest neighbours</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The book’s procedure, on a split of our own data</strong></p>
+</div>
+<div class="callout-content">
+<p>Embed query and reference together, then for each query cell look at its nearest <strong>reference</strong> cells: the most common label is the transfer; the fraction that disagree is the <strong>uncertainty</strong>. We use half of PBMC3k as a “reference” (with the labels assigned above) and hide every <strong>B cell</strong> from it, to see what an unseen cell type does:</p>
+<div id="d97a654b" class="cell" data-execution_count="18">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a aria-label="1"></a><span class="im">from</span> sklearn.neighbors <span class="im">import</span> NearestNeighbors</span>
+<span id="cb24-2"><a aria-label="2"></a></span>
+<span id="cb24-3"><a aria-label="3"></a>rng_t <span class="op">=</span> np.random.default_rng(<span class="dv">4</span>)</span>
+<span id="cb24-4"><a aria-label="4"></a>labels_all <span class="op">=</span> np.asarray(adata.obs[<span class="st">"cell_type"</span>].astype(<span class="bu">str</span>), dtype<span class="op">=</span><span class="bu">object</span>)</span>
+<span id="cb24-5"><a aria-label="5"></a>is_ref <span class="op">=</span> rng_t.random(adata.n_obs) <span class="op">&lt;</span> <span class="fl">0.5</span></span>
+<span id="cb24-6"><a aria-label="6"></a>ref_mask <span class="op">=</span> is_ref <span class="op">&amp;</span> (labels_all <span class="op">!=</span> <span class="st">"B"</span>)                 <span class="co"># B cells exist only in the query</span></span>
+<span id="cb24-7"><a aria-label="7"></a>Z <span class="op">=</span> adata.obsm[<span class="st">"X_pca"</span>][:, :<span class="dv">30</span>]</span>
+<span id="cb24-8"><a aria-label="8"></a></span>
+<span id="cb24-9"><a aria-label="9"></a>nn <span class="op">=</span> NearestNeighbors(n_neighbors<span class="op">=</span><span class="dv">15</span>).fit(Z[ref_mask])</span>
+<span id="cb24-10"><a aria-label="10"></a>votes <span class="op">=</span> labels_all[ref_mask][nn.kneighbors(Z[<span class="op">~</span>is_ref], return_distance<span class="op">=</span><span class="va">False</span>)]</span>
+<span id="cb24-11"><a aria-label="11"></a>top <span class="op">=</span> [pd.Series(v).value_counts() <span class="cf">for</span> v <span class="kw">in</span> votes]</span>
+<span id="cb24-12"><a aria-label="12"></a>pred <span class="op">=</span> np.array([t.index[<span class="dv">0</span>] <span class="cf">for</span> t <span class="kw">in</span> top])</span>
+<span id="cb24-13"><a aria-label="13"></a>uncertainty <span class="op">=</span> np.array([<span class="dv">1</span> <span class="op">-</span> t.iloc[<span class="dv">0</span>] <span class="op">/</span> <span class="dv">15</span> <span class="cf">for</span> t <span class="kw">in</span> top])</span>
+<span id="cb24-14"><a aria-label="14"></a></span>
+<span id="cb24-15"><a aria-label="15"></a>res <span class="op">=</span> pd.DataFrame({<span class="st">"true"</span>: labels_all[<span class="op">~</span>is_ref], <span class="st">"transferred"</span>: pred, <span class="st">"uncertainty"</span>: uncertainty})</span>
+<span id="cb24-16"><a aria-label="16"></a>res[<span class="st">"final"</span>] <span class="op">=</span> np.where(res.uncertainty <span class="op">&gt;</span> <span class="fl">0.2</span>, <span class="st">"unknown"</span>, res.transferred)</span>
+<span id="cb24-17"><a aria-label="17"></a>summary <span class="op">=</span> res.groupby(<span class="st">"true"</span>).agg(cells<span class="op">=</span>(<span class="st">"uncertainty"</span>, <span class="st">"size"</span>),</span>
+<span id="cb24-18"><a aria-label="18"></a>                                  mean_uncertainty<span class="op">=</span>(<span class="st">"uncertainty"</span>, <span class="st">"mean"</span>),</span>
+<span id="cb24-19"><a aria-label="19"></a>                                  set_to_unknown<span class="op">=</span>(<span class="st">"final"</span>, <span class="kw">lambda</span> f: (f <span class="op">==</span> <span class="st">"unknown"</span>).mean()))</span>
+<span id="cb24-20"><a aria-label="20"></a>summary.<span class="bu">round</span>(<span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="17">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+
+<table class="dataframe caption-top" data-border="1">
+<thead>
+<tr class="header" style="text-align: right;">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">cells</th>
+<th data-quarto-table-cell-role="th">mean_uncertainty</th>
+<th data-quarto-table-cell-role="th">set_to_unknown</th>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">true</th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">B</th>
+<td>171</td>
+<td>0.13</td>
+<td>0.13</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">CD14+ Mono</th>
+<td>263</td>
+<td>0.02</td>
+<td>0.03</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">CD4 T</th>
+<td>566</td>
+<td>0.01</td>
+<td>0.02</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">Dendritic</th>
+<td>19</td>
+<td>0.22</td>
+<td>0.42</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">FCGR3A+ Mono</th>
+<td>85</td>
+<td>0.06</td>
+<td>0.12</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">NK</th>
+<td>270</td>
+<td>0.08</td>
+<td>0.17</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">Platelet</th>
+<td>8</td>
+<td>0.69</td>
+<td>1.00</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="label-transfer-is-k-nearest-neighbours-1" class="slide level2 scrollable">
+<h2>Label transfer is <span class="math inline">\(k\)</span>-nearest neighbours</h2>
+<div id="873d70ef" class="cell" data-execution_count="19">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a aria-label="1"></a>res.loc[res.true <span class="op">==</span> <span class="st">"B"</span>, <span class="st">"transferred"</span>].value_counts().head(<span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="18">
+<pre><code>transferred
+CD4 T    170
+NK         1
+Name: count, dtype: int64</code></pre>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Read the B-cell row</strong></p>
+</div>
+<div class="callout-content">
+<p>The B cells had no counterpart in the reference, so the method <strong>still gave them a label</strong>: almost all became <code>CD4 T</code>, their nearest lymphocyte neighbours. And their uncertainty stayed <strong>low</strong> — most of their 15 reference neighbours agreed, because they were consistently near <em>one</em> type. The book’s rule (uncertainty above 0.2 → <code>unknown</code>) caught only a small fraction.</p>
+<p>Meanwhile the rule <em>did</em> flag the tiny dendritic and platelet populations, which are genuinely mixed with their neighbours. Uncertainty measures <strong>disagreement among neighbours</strong>, not <strong>novelty</strong>. The book says as much: uncertainty scores are imperfect and “in some cases fail to highlight new cell types or states”.</p>
+<p>This is the Bio 2 classifier problem again, in a different costume — a classifier cannot say “none of the above” unless you build abstention in, and stability is not the same as novelty. The book’s last word on annotation: <strong>validate transferred labels against marker genes.</strong></p>
+</div>
+</div>
+</div>
 <!-- =========================================================================
      SOURCE: sc-best-practices, Identifying cellular structure / "Integration"
-       https://www.sc-best-practices.org/cellular_structure/integration.html
+       https://www.sc-best-practices.org/cellular-structure/integration/
        NOTE: that chapter leans on R (18 rpy2/%%R references). This deck uses
        the Python path only: harmonypy directly, plus scVI/BBKNN described.
        The synthetic batch effect is ours, not the book's.
@@ -1115,7 +1328,80 @@ Name: count, dtype: int64</code></pre>
 </div>
 </div>
 </section>
-<section id="design-beats-correction" class="slide level2">
+<section id="what-counts-as-a-batch" class="slide level2">
+<h2>What counts as a batch?</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The book’s example, and the choice it forces</strong></p>
+</div>
+<div class="callout-content">
+<p>Two labs sample the same cohort. Lab A has tuned its dissociation to stress cells as little as possible; lab B has not. Lab B’s cells now express more stress-response genes (<code>JUN</code>, <code>JUNB</code>, <code>FOS</code>) — although the cells were identical in the tissue.</p>
+<p>Every integration makes two decisions: the <strong>method</strong>, and the <strong>batch covariate</strong> — which level of variation to remove:</p>
+<table class="caption-top">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>batch =</th>
+<th>removes differences between</th>
+<th>but also removes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>sample</td>
+<td>every sample</td>
+<td>e.g.&nbsp;two tissue <strong>locations</strong> sampled separately</td>
+</tr>
+<tr class="even">
+<td>donor</td>
+<td>individuals</td>
+<td>real person-to-person biology</td>
+</tr>
+<tr class="odd">
+<td>dataset</td>
+<td>studies</td>
+<td>— keeps within-study variation</td>
+</tr>
+</tbody>
+</table>
+<p>The finer the batch, the more is removed — and the more likely it is <strong>confounded with biology you wanted</strong>. <em>Do you want to see differences between individuals, or what is common within a cell type?</em> Choose the covariate from the question.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="look-before-you-correct" class="slide level2">
+<h2>Look before you correct</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Integration is not always needed</strong></p>
+</div>
+<div class="callout-content">
+<p>Plot the <strong>unintegrated</strong> data first, coloured by batch and (if you have them) by cell type. If batches already overlap, or meaningful clusters appear without correction, <strong>do not integrate</strong> — correction can only remove signal. Confirm a batch effect with more than a UMAP: marker-gene distributions per batch, or a mixing metric like the one below.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Practical cases from the book</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>mixing <strong>UMI and full-length</strong> protocols: convert full-length counts to a gene-length-corrected unit (e.g.&nbsp;TPM) first</li>
+<li><strong>tumours</strong>: separate malignant from non-malignant cells (copy-number inference, e.g.&nbsp;inferCNV), and integrate only the non-malignant ones across patients — malignant cells differ <em>by patient</em> for real reasons</li>
+<li>with labels across datasets, <strong>harmonise</strong> them first (“T cell” in one, “CD8+ T cell” in another) — usually with an expert</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="design-beats-correction" class="slide level2 beyond">
 <h2>Design beats correction</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1135,7 +1421,7 @@ Name: count, dtype: int64</code></pre>
 </div>
 </div>
 </section>
-<section id="same-lesson-as-bio-2" class="slide level2">
+<section id="same-lesson-as-bio-2" class="slide level2 beyond">
 <h2>Same lesson as Bio 2</h2>
 <div class="callout callout-note no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1148,7 +1434,7 @@ Name: count, dtype: int64</code></pre>
 </div>
 </div>
 </section>
-<section id="a-controlled-demonstration" class="slide level2 scrollable">
+<section id="a-controlled-demonstration" class="slide level2 scrollable beyond">
 <h2>A controlled demonstration</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1156,31 +1442,31 @@ Name: count, dtype: int64</code></pre>
 <p><strong>Manufacture a batch effect we know the truth about</strong></p>
 </div>
 <div class="callout-content">
-<div id="4c86e305" class="cell" data-execution_count="17">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a aria-label="1"></a>bdata <span class="op">=</span> sc.datasets.pbmc3k()</span>
-<span id="cb23-2"><a aria-label="2"></a>sc.pp.filter_cells(bdata, min_genes<span class="op">=</span><span class="dv">200</span>)</span>
-<span id="cb23-3"><a aria-label="3"></a>sc.pp.filter_genes(bdata, min_cells<span class="op">=</span><span class="dv">20</span>)</span>
-<span id="cb23-4"><a aria-label="4"></a></span>
-<span id="cb23-5"><a aria-label="5"></a>rng <span class="op">=</span> np.random.default_rng(<span class="dv">0</span>)</span>
-<span id="cb23-6"><a aria-label="6"></a>bdata.obs[<span class="st">"batch"</span>] <span class="op">=</span> pd.Categorical(rng.choice([<span class="st">"A"</span>, <span class="st">"B"</span>], bdata.n_obs))</span>
-<span id="cb23-7"><a aria-label="7"></a></span>
-<span id="cb23-8"><a aria-label="8"></a><span class="co"># batch B up-regulates a random third of genes.</span></span>
-<span id="cb23-9"><a aria-label="9"></a><span class="co"># </span><span class="al">NOTE</span><span class="co">: it must be *gene*-specific -- a per-cell scaling would be</span></span>
-<span id="cb23-10"><a aria-label="10"></a><span class="co"># removed exactly by normalize_total, and produce no batch effect at all.</span></span>
-<span id="cb23-11"><a aria-label="11"></a>affected <span class="op">=</span> rng.choice(bdata.n_vars, size<span class="op">=</span>bdata.n_vars <span class="op">//</span> <span class="dv">3</span>, replace<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb23-12"><a aria-label="12"></a>factor <span class="op">=</span> np.ones(bdata.n_vars)</span>
-<span id="cb23-13"><a aria-label="13"></a>factor[affected] <span class="op">=</span> <span class="fl">3.0</span></span>
-<span id="cb23-14"><a aria-label="14"></a></span>
-<span id="cb23-15"><a aria-label="15"></a>isB <span class="op">=</span> bdata.obs.batch.values <span class="op">==</span> <span class="st">"B"</span></span>
-<span id="cb23-16"><a aria-label="16"></a>X <span class="op">=</span> bdata.X.tolil()</span>
-<span id="cb23-17"><a aria-label="17"></a>X[isB] <span class="op">=</span> X[isB].multiply(factor).tolil()</span>
-<span id="cb23-18"><a aria-label="18"></a>bdata.X <span class="op">=</span> X.tocsr()</span>
-<span id="cb23-19"><a aria-label="19"></a></span>
-<span id="cb23-20"><a aria-label="20"></a>sc.pp.normalize_total(bdata)</span>
-<span id="cb23-21"><a aria-label="21"></a>sc.pp.log1p(bdata)</span>
-<span id="cb23-22"><a aria-label="22"></a>sc.pp.highly_variable_genes(bdata, n_top_genes<span class="op">=</span><span class="dv">2000</span>)</span>
-<span id="cb23-23"><a aria-label="23"></a>sc.pp.pca(bdata, n_comps<span class="op">=</span><span class="dv">50</span>, mask_var<span class="op">=</span><span class="st">"highly_variable"</span>)</span>
-<span id="cb23-24"><a aria-label="24"></a><span class="bu">print</span>(<span class="st">"batches:"</span>, <span class="bu">dict</span>(bdata.obs.batch.value_counts()))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="cb435e94" class="cell" data-execution_count="20">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a aria-label="1"></a>bdata <span class="op">=</span> sc.datasets.pbmc3k()</span>
+<span id="cb27-2"><a aria-label="2"></a>sc.pp.filter_cells(bdata, min_genes<span class="op">=</span><span class="dv">200</span>)</span>
+<span id="cb27-3"><a aria-label="3"></a>sc.pp.filter_genes(bdata, min_cells<span class="op">=</span><span class="dv">20</span>)</span>
+<span id="cb27-4"><a aria-label="4"></a></span>
+<span id="cb27-5"><a aria-label="5"></a>rng <span class="op">=</span> np.random.default_rng(<span class="dv">0</span>)</span>
+<span id="cb27-6"><a aria-label="6"></a>bdata.obs[<span class="st">"batch"</span>] <span class="op">=</span> pd.Categorical(rng.choice([<span class="st">"A"</span>, <span class="st">"B"</span>], bdata.n_obs))</span>
+<span id="cb27-7"><a aria-label="7"></a></span>
+<span id="cb27-8"><a aria-label="8"></a><span class="co"># batch B up-regulates a random third of genes.</span></span>
+<span id="cb27-9"><a aria-label="9"></a><span class="co"># </span><span class="al">NOTE</span><span class="co">: it must be *gene*-specific -- a per-cell scaling would be</span></span>
+<span id="cb27-10"><a aria-label="10"></a><span class="co"># removed exactly by normalize_total, and produce no batch effect at all.</span></span>
+<span id="cb27-11"><a aria-label="11"></a>affected <span class="op">=</span> rng.choice(bdata.n_vars, size<span class="op">=</span>bdata.n_vars <span class="op">//</span> <span class="dv">3</span>, replace<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb27-12"><a aria-label="12"></a>factor <span class="op">=</span> np.ones(bdata.n_vars)</span>
+<span id="cb27-13"><a aria-label="13"></a>factor[affected] <span class="op">=</span> <span class="fl">3.0</span></span>
+<span id="cb27-14"><a aria-label="14"></a></span>
+<span id="cb27-15"><a aria-label="15"></a>isB <span class="op">=</span> bdata.obs.batch.values <span class="op">==</span> <span class="st">"B"</span></span>
+<span id="cb27-16"><a aria-label="16"></a>X <span class="op">=</span> bdata.X.tolil()</span>
+<span id="cb27-17"><a aria-label="17"></a>X[isB] <span class="op">=</span> X[isB].multiply(factor).tolil()</span>
+<span id="cb27-18"><a aria-label="18"></a>bdata.X <span class="op">=</span> X.tocsr()</span>
+<span id="cb27-19"><a aria-label="19"></a></span>
+<span id="cb27-20"><a aria-label="20"></a>sc.pp.normalize_total(bdata)</span>
+<span id="cb27-21"><a aria-label="21"></a>sc.pp.log1p(bdata)</span>
+<span id="cb27-22"><a aria-label="22"></a>sc.pp.highly_variable_genes(bdata, n_top_genes<span class="op">=</span><span class="dv">2000</span>)</span>
+<span id="cb27-23"><a aria-label="23"></a>sc.pp.pca(bdata, n_comps<span class="op">=</span><span class="dv">50</span>, mask_var<span class="op">=</span><span class="st">"highly_variable"</span>)</span>
+<span id="cb27-24"><a aria-label="24"></a><span class="bu">print</span>(<span class="st">"batches:"</span>, <span class="bu">dict</span>(bdata.obs.batch.value_counts()))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>batches: {'B': np.int64(1401), 'A': np.int64(1299)}</code></pre>
 </div>
@@ -1189,7 +1475,34 @@ Name: count, dtype: int64</code></pre>
 </div>
 </div>
 </section>
-<section id="measuring-the-damage" class="slide level2 scrollable">
+<section id="batch-aware-feature-selection" class="slide level2 scrollable">
+<h2>Batch-aware feature selection</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Choose variable genes <em>within</em> batches</strong></p>
+</div>
+<div class="callout-content">
+<p>Genes that are variable across the whole dataset may be variable <strong>because of</strong> the batch — and a cell type present in only one sample has markers that are variable <em>there</em> but not overall. The book therefore selects highly variable genes per batch and keeps those variable in the most batches. In <code>scanpy</code> it is one argument:</p>
+<div id="5e322bc0" class="cell" data-execution_count="21">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a aria-label="1"></a>sc.pp.highly_variable_genes(adata, n_top_genes<span class="op">=</span><span class="dv">2000</span>, batch_key<span class="op">=</span><span class="st">"sample"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The book’s advice on the number: published analyses use 1 000–6 000, scvi-tools recommends 1 000–10 000; err on the side of <strong>slightly too many</strong>, at a cost in runtime.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-warning no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Why it is not demonstrated on our synthetic batch <span class="badge-beyond">beyond the book</span></strong></p>
+</div>
+<div class="callout-content">
+<p>Our batch effect multiplies a third of the genes by 3 in batch B. For a count, that also multiplies variance/mean — the dispersion <code>highly_variable_genes</code> ranks by — <em>within</em> batch B. So the affected genes look variable even inside a batch, and batch-aware selection cannot help here. A demonstration that would mislead is worse than none; on real data with batch-specific cell states, the book shows the difference.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="measuring-the-damage" class="slide level2 scrollable beyond">
 <h2>Measuring the damage</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1197,22 +1510,22 @@ Name: count, dtype: int64</code></pre>
 <p><strong>What fraction of a cell’s neighbours share its batch?</strong></p>
 </div>
 <div class="callout-content">
-<div id="b861d97a" class="cell" data-execution_count="18">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a aria-label="1"></a><span class="kw">def</span> batch_mixing(adata, rep):</span>
-<span id="cb25-2"><a aria-label="2"></a>    <span class="co">"""1.0 = fully separated by batch, 0.5 = perfectly mixed."""</span></span>
-<span id="cb25-3"><a aria-label="3"></a>    sc.pp.neighbors(adata, use_rep<span class="op">=</span>rep, key_added<span class="op">=</span><span class="st">"tmp"</span>, n_neighbors<span class="op">=</span><span class="dv">15</span>)</span>
-<span id="cb25-4"><a aria-label="4"></a>    graph <span class="op">=</span> adata.obsp[<span class="st">"tmp_connectivities"</span>]</span>
-<span id="cb25-5"><a aria-label="5"></a>    codes <span class="op">=</span> np.asarray(pd.Categorical(adata.obs[<span class="st">"batch"</span>]).codes)</span>
-<span id="cb25-6"><a aria-label="6"></a>    same <span class="op">=</span> total <span class="op">=</span> <span class="dv">0</span></span>
-<span id="cb25-7"><a aria-label="7"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(adata.n_obs):</span>
-<span id="cb25-8"><a aria-label="8"></a>        nb <span class="op">=</span> graph[i].indices</span>
-<span id="cb25-9"><a aria-label="9"></a>        <span class="cf">if</span> <span class="bu">len</span>(nb):</span>
-<span id="cb25-10"><a aria-label="10"></a>            same <span class="op">+=</span> (codes[nb] <span class="op">==</span> codes[i]).<span class="bu">sum</span>()</span>
-<span id="cb25-11"><a aria-label="11"></a>            total <span class="op">+=</span> <span class="bu">len</span>(nb)</span>
-<span id="cb25-12"><a aria-label="12"></a>    <span class="cf">return</span> same <span class="op">/</span> total</span>
-<span id="cb25-13"><a aria-label="13"></a></span>
-<span id="cb25-14"><a aria-label="14"></a></span>
-<span id="cb25-15"><a aria-label="15"></a><span class="bu">print</span>(<span class="ss">f"raw PCA : </span><span class="sc">{</span>batch_mixing(bdata, <span class="st">'X_pca'</span>)<span class="sc">:.3f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="2925c7eb" class="cell" data-execution_count="22">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a aria-label="1"></a><span class="kw">def</span> batch_mixing(adata, rep):</span>
+<span id="cb30-2"><a aria-label="2"></a>    <span class="co">"""1.0 = fully separated by batch, 0.5 = perfectly mixed."""</span></span>
+<span id="cb30-3"><a aria-label="3"></a>    sc.pp.neighbors(adata, use_rep<span class="op">=</span>rep, key_added<span class="op">=</span><span class="st">"tmp"</span>, n_neighbors<span class="op">=</span><span class="dv">15</span>)</span>
+<span id="cb30-4"><a aria-label="4"></a>    graph <span class="op">=</span> adata.obsp[<span class="st">"tmp_connectivities"</span>]</span>
+<span id="cb30-5"><a aria-label="5"></a>    codes <span class="op">=</span> np.asarray(pd.Categorical(adata.obs[<span class="st">"batch"</span>]).codes)</span>
+<span id="cb30-6"><a aria-label="6"></a>    same <span class="op">=</span> total <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb30-7"><a aria-label="7"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(adata.n_obs):</span>
+<span id="cb30-8"><a aria-label="8"></a>        nb <span class="op">=</span> graph[i].indices</span>
+<span id="cb30-9"><a aria-label="9"></a>        <span class="cf">if</span> <span class="bu">len</span>(nb):</span>
+<span id="cb30-10"><a aria-label="10"></a>            same <span class="op">+=</span> (codes[nb] <span class="op">==</span> codes[i]).<span class="bu">sum</span>()</span>
+<span id="cb30-11"><a aria-label="11"></a>            total <span class="op">+=</span> <span class="bu">len</span>(nb)</span>
+<span id="cb30-12"><a aria-label="12"></a>    <span class="cf">return</span> same <span class="op">/</span> total</span>
+<span id="cb30-13"><a aria-label="13"></a></span>
+<span id="cb30-14"><a aria-label="14"></a></span>
+<span id="cb30-15"><a aria-label="15"></a><span class="bu">print</span>(<span class="ss">f"raw PCA : </span><span class="sc">{</span>batch_mixing(bdata, <span class="st">'X_pca'</span>)<span class="sc">:.3f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>raw PCA : 0.808</code></pre>
 </div>
@@ -1222,7 +1535,7 @@ Name: count, dtype: int64</code></pre>
 </div>
 </div>
 </section>
-<section id="harmony" class="slide level2 scrollable">
+<section id="harmony" class="slide level2 scrollable extends">
 <h2>Harmony</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1231,30 +1544,30 @@ Name: count, dtype: int64</code></pre>
 </div>
 <div class="callout-content">
 <p>Harmony iterates between soft-clustering cells and computing, per cluster, a linear correction that removes batch-specific offsets. It adjusts the <strong>embedding</strong>, not the expression matrix — fast, and it leaves your counts untouched.</p>
-<div id="3134224b" class="cell" data-execution_count="19">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a aria-label="1"></a><span class="im">import</span> harmonypy</span>
-<span id="cb27-2"><a aria-label="2"></a></span>
-<span id="cb27-3"><a aria-label="3"></a></span>
-<span id="cb27-4"><a aria-label="4"></a><span class="kw">def</span> harmony_integrate(adata, key, basis<span class="op">=</span><span class="st">"X_pca"</span>, adjusted_basis<span class="op">=</span><span class="st">"X_pca_harmony"</span>, <span class="op">**</span>kw):</span>
-<span id="cb27-5"><a aria-label="5"></a>    <span class="co">"""Version-robust stand-in for sc.external.pp.harmony_integrate.</span></span>
-<span id="cb27-6"><a aria-label="6"></a></span>
-<span id="cb27-7"><a aria-label="7"></a><span class="co">    scanpy &lt;= 1.12 does `Z_corr.T` unconditionally, but harmonypy &gt;= 2</span></span>
-<span id="cb27-8"><a aria-label="8"></a><span class="co">    already returns (cells, components) -- so that transpose corrupts the</span></span>
-<span id="cb27-9"><a aria-label="9"></a><span class="co">    result. Decide the orientation from the shape instead of assuming it.</span></span>
-<span id="cb27-10"><a aria-label="10"></a><span class="co">    """</span></span>
-<span id="cb27-11"><a aria-label="11"></a>    X <span class="op">=</span> adata.obsm[basis].astype(np.float64)</span>
-<span id="cb27-12"><a aria-label="12"></a>    n_cells, n_comps <span class="op">=</span> X.shape</span>
-<span id="cb27-13"><a aria-label="13"></a>    Z <span class="op">=</span> np.asarray(harmonypy.run_harmony(X, adata.obs, key, <span class="op">**</span>kw).Z_corr)</span>
-<span id="cb27-14"><a aria-label="14"></a>    <span class="cf">if</span> Z.shape <span class="op">==</span> (n_comps, n_cells):</span>
-<span id="cb27-15"><a aria-label="15"></a>        Z <span class="op">=</span> Z.T</span>
-<span id="cb27-16"><a aria-label="16"></a>    <span class="cf">if</span> Z.shape <span class="op">!=</span> (n_cells, n_comps):</span>
-<span id="cb27-17"><a aria-label="17"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="ss">f"unexpected Z_corr shape </span><span class="sc">{</span>Z<span class="sc">.</span>shape<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb27-18"><a aria-label="18"></a>    adata.obsm[adjusted_basis] <span class="op">=</span> Z</span>
-<span id="cb27-19"><a aria-label="19"></a>    <span class="cf">return</span> adata</span>
-<span id="cb27-20"><a aria-label="20"></a></span>
-<span id="cb27-21"><a aria-label="21"></a></span>
-<span id="cb27-22"><a aria-label="22"></a>harmony_integrate(bdata, <span class="st">"batch"</span>)</span>
-<span id="cb27-23"><a aria-label="23"></a><span class="bu">print</span>(<span class="ss">f"harmony : </span><span class="sc">{</span>batch_mixing(bdata, <span class="st">'X_pca_harmony'</span>)<span class="sc">:.3f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="13eee7c0" class="cell" data-execution_count="23">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a aria-label="1"></a><span class="im">import</span> harmonypy</span>
+<span id="cb32-2"><a aria-label="2"></a></span>
+<span id="cb32-3"><a aria-label="3"></a></span>
+<span id="cb32-4"><a aria-label="4"></a><span class="kw">def</span> harmony_integrate(adata, key, basis<span class="op">=</span><span class="st">"X_pca"</span>, adjusted_basis<span class="op">=</span><span class="st">"X_pca_harmony"</span>, <span class="op">**</span>kw):</span>
+<span id="cb32-5"><a aria-label="5"></a>    <span class="co">"""Version-robust stand-in for sc.external.pp.harmony_integrate.</span></span>
+<span id="cb32-6"><a aria-label="6"></a></span>
+<span id="cb32-7"><a aria-label="7"></a><span class="co">    scanpy &lt;= 1.12 does `Z_corr.T` unconditionally, but harmonypy &gt;= 2</span></span>
+<span id="cb32-8"><a aria-label="8"></a><span class="co">    already returns (cells, components) -- so that transpose corrupts the</span></span>
+<span id="cb32-9"><a aria-label="9"></a><span class="co">    result. Decide the orientation from the shape instead of assuming it.</span></span>
+<span id="cb32-10"><a aria-label="10"></a><span class="co">    """</span></span>
+<span id="cb32-11"><a aria-label="11"></a>    X <span class="op">=</span> adata.obsm[basis].astype(np.float64)</span>
+<span id="cb32-12"><a aria-label="12"></a>    n_cells, n_comps <span class="op">=</span> X.shape</span>
+<span id="cb32-13"><a aria-label="13"></a>    Z <span class="op">=</span> np.asarray(harmonypy.run_harmony(X, adata.obs, key, <span class="op">**</span>kw).Z_corr)</span>
+<span id="cb32-14"><a aria-label="14"></a>    <span class="cf">if</span> Z.shape <span class="op">==</span> (n_comps, n_cells):</span>
+<span id="cb32-15"><a aria-label="15"></a>        Z <span class="op">=</span> Z.T</span>
+<span id="cb32-16"><a aria-label="16"></a>    <span class="cf">if</span> Z.shape <span class="op">!=</span> (n_cells, n_comps):</span>
+<span id="cb32-17"><a aria-label="17"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="ss">f"unexpected Z_corr shape </span><span class="sc">{</span>Z<span class="sc">.</span>shape<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb32-18"><a aria-label="18"></a>    adata.obsm[adjusted_basis] <span class="op">=</span> Z</span>
+<span id="cb32-19"><a aria-label="19"></a>    <span class="cf">return</span> adata</span>
+<span id="cb32-20"><a aria-label="20"></a></span>
+<span id="cb32-21"><a aria-label="21"></a></span>
+<span id="cb32-22"><a aria-label="22"></a>harmony_integrate(bdata, <span class="st">"batch"</span>)</span>
+<span id="cb32-23"><a aria-label="23"></a><span class="bu">print</span>(<span class="ss">f"harmony : </span><span class="sc">{</span>batch_mixing(bdata, <span class="st">'X_pca_harmony'</span>)<span class="sc">:.3f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>harmony : 0.499</code></pre>
 </div>
@@ -1264,7 +1577,7 @@ Name: count, dtype: int64</code></pre>
 </div>
 </div>
 </section>
-<section id="a-bug-worth-knowing-about" class="slide level2 scrollable">
+<section id="a-bug-worth-knowing-about" class="slide level2 scrollable beyond">
 <h2>A bug worth knowing about</h2>
 <div class="callout callout-warning no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1273,7 +1586,7 @@ Name: count, dtype: int64</code></pre>
 </div>
 <div class="callout-content">
 <p>The scanpy wrapper ends with</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a aria-label="1"></a>adata.obsm[adjusted_basis] <span class="op">=</span> harmony_out.Z_corr.T   <span class="co"># scanpy 1.12.4</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a aria-label="1"></a>adata.obsm[adjusted_basis] <span class="op">=</span> harmony_out.Z_corr.T   <span class="co"># scanpy 1.12.4</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>That transpose was correct when harmonypy returned <code>(components, cells)</code>. Version 2 returns <code>(cells, components)</code> already, so the transpose produces a <code>(50,)</code> array and AnnData rejects it:</p>
 <pre><code>ValueError: Value passed for key 'X_pca_harmony' is of incorrect shape.
 Values of obsm must match dimensions ('obs',) of parent.
@@ -1310,40 +1623,40 @@ Value had shape (50,) while it should have had (2700,).</code></pre>
 </div>
 </div>
 </section>
-<section id="before-and-after" class="slide level2 scrollable">
+<section id="before-and-after" class="slide level2 scrollable beyond">
 <h2>Before and after</h2>
-<div id="3217d6fe" class="cell" data-execution_count="20">
+<div id="61ca045e" class="cell" data-execution_count="24">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a aria-label="1"></a>sc.pp.neighbors(bdata, use_rep<span class="op">=</span><span class="st">"X_pca"</span>, n_neighbors<span class="op">=</span><span class="dv">15</span>)</span>
-<span id="cb31-2"><a aria-label="2"></a>sc.tl.umap(bdata)</span>
-<span id="cb31-3"><a aria-label="3"></a>bdata.obsm[<span class="st">"X_umap_raw"</span>] <span class="op">=</span> bdata.obsm[<span class="st">"X_umap"</span>].copy()</span>
-<span id="cb31-4"><a aria-label="4"></a></span>
-<span id="cb31-5"><a aria-label="5"></a>sc.pp.neighbors(bdata, use_rep<span class="op">=</span><span class="st">"X_pca_harmony"</span>, n_neighbors<span class="op">=</span><span class="dv">15</span>)</span>
-<span id="cb31-6"><a aria-label="6"></a>sc.tl.umap(bdata)</span>
-<span id="cb31-7"><a aria-label="7"></a></span>
-<span id="cb31-8"><a aria-label="8"></a>f, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">4</span>))</span>
-<span id="cb31-9"><a aria-label="9"></a>axs[<span class="dv">0</span>].scatter(<span class="op">*</span>bdata.obsm[<span class="st">"X_umap_raw"</span>].T, s<span class="op">=</span><span class="dv">2</span>,</span>
-<span id="cb31-10"><a aria-label="10"></a>               c<span class="op">=</span>pd.Categorical(bdata.obs.batch).codes, cmap<span class="op">=</span><span class="st">"coolwarm"</span>)</span>
-<span id="cb31-11"><a aria-label="11"></a>axs[<span class="dv">0</span>].set_title(<span class="st">"before: PCA"</span>)</span>
-<span id="cb31-12"><a aria-label="12"></a>axs[<span class="dv">1</span>].scatter(<span class="op">*</span>bdata.obsm[<span class="st">"X_umap"</span>].T, s<span class="op">=</span><span class="dv">2</span>,</span>
-<span id="cb31-13"><a aria-label="13"></a>               c<span class="op">=</span>pd.Categorical(bdata.obs.batch).codes, cmap<span class="op">=</span><span class="st">"coolwarm"</span>)</span>
-<span id="cb31-14"><a aria-label="14"></a>axs[<span class="dv">1</span>].set_title(<span class="st">"after: Harmony"</span>)</span>
-<span id="cb31-15"><a aria-label="15"></a><span class="cf">for</span> ax <span class="kw">in</span> axs:</span>
-<span id="cb31-16"><a aria-label="16"></a>    ax.set_xticks([])<span class="op">;</span> ax.set_yticks([])</span>
-<span id="cb31-17"><a aria-label="17"></a>plt.tight_layout()</span>
-<span id="cb31-18"><a aria-label="18"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a aria-label="1"></a>sc.pp.neighbors(bdata, use_rep<span class="op">=</span><span class="st">"X_pca"</span>, n_neighbors<span class="op">=</span><span class="dv">15</span>)</span>
+<span id="cb36-2"><a aria-label="2"></a>sc.tl.umap(bdata)</span>
+<span id="cb36-3"><a aria-label="3"></a>bdata.obsm[<span class="st">"X_umap_raw"</span>] <span class="op">=</span> bdata.obsm[<span class="st">"X_umap"</span>].copy()</span>
+<span id="cb36-4"><a aria-label="4"></a></span>
+<span id="cb36-5"><a aria-label="5"></a>sc.pp.neighbors(bdata, use_rep<span class="op">=</span><span class="st">"X_pca_harmony"</span>, n_neighbors<span class="op">=</span><span class="dv">15</span>)</span>
+<span id="cb36-6"><a aria-label="6"></a>sc.tl.umap(bdata)</span>
+<span id="cb36-7"><a aria-label="7"></a></span>
+<span id="cb36-8"><a aria-label="8"></a>f, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">4</span>))</span>
+<span id="cb36-9"><a aria-label="9"></a>axs[<span class="dv">0</span>].scatter(<span class="op">*</span>bdata.obsm[<span class="st">"X_umap_raw"</span>].T, s<span class="op">=</span><span class="dv">2</span>,</span>
+<span id="cb36-10"><a aria-label="10"></a>               c<span class="op">=</span>pd.Categorical(bdata.obs.batch).codes, cmap<span class="op">=</span><span class="st">"coolwarm"</span>)</span>
+<span id="cb36-11"><a aria-label="11"></a>axs[<span class="dv">0</span>].set_title(<span class="st">"before: PCA"</span>)</span>
+<span id="cb36-12"><a aria-label="12"></a>axs[<span class="dv">1</span>].scatter(<span class="op">*</span>bdata.obsm[<span class="st">"X_umap"</span>].T, s<span class="op">=</span><span class="dv">2</span>,</span>
+<span id="cb36-13"><a aria-label="13"></a>               c<span class="op">=</span>pd.Categorical(bdata.obs.batch).codes, cmap<span class="op">=</span><span class="st">"coolwarm"</span>)</span>
+<span id="cb36-14"><a aria-label="14"></a>axs[<span class="dv">1</span>].set_title(<span class="st">"after: Harmony"</span>)</span>
+<span id="cb36-15"><a aria-label="15"></a><span class="cf">for</span> ax <span class="kw">in</span> axs:</span>
+<span id="cb36-16"><a aria-label="16"></a>    ax.set_xticks([])<span class="op">;</span> ax.set_yticks([])</span>
+<span id="cb36-17"><a aria-label="17"></a>plt.tight_layout()</span>
+<span id="cb36-18"><a aria-label="18"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div>
 <figure>
-<p><img data-src="bio4_files/figure-revealjs/cell-20-output-1.png" width="1075" height="415"></p>
+<p><img data-src="bio4_files/figure-revealjs/cell-24-output-1.png" width="1075" height="415"></p>
 </figure>
 </div>
 </div>
 </div>
 </section>
-<section id="the-methods-landscape" class="slide level2">
+<section id="the-methods-landscape" class="slide level2 extends">
 <h2>The methods landscape</h2>
 <div class="callout callout-note no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1351,6 +1664,7 @@ Value had shape (50,) while it should have had (2700,).</code></pre>
 <p><strong>What to reach for</strong></p>
 </div>
 <div class="callout-content">
+<p>The book sorts methods into four families, in order of development:</p>
 <table class="caption-top">
 <colgroup>
 <col style="width: 33%">
@@ -1359,39 +1673,35 @@ Value had shape (50,) while it should have had (2700,).</code></pre>
 </colgroup>
 <thead>
 <tr class="header">
-<th>method</th>
-<th>corrects</th>
-<th>notes</th>
+<th>family</th>
+<th>idea</th>
+<th>examples</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td><strong>Harmony</strong></td>
-<td>the embedding</td>
-<td>fast, strong default, linear</td>
+<td><strong>global models</strong></td>
+<td>one additive/multiplicative batch effect for all cells (from bulk RNA-seq)</td>
+<td><strong>ComBat</strong> (<code>sc.pp.combat</code>)</td>
 </tr>
 <tr class="even">
+<td><strong>linear embedding</strong></td>
+<td>embed (SVD), find similar cells across batches, correct locally</td>
+<td><strong>Harmony</strong>, <strong>Seurat</strong> / <strong>MNN</strong>, Scanorama</td>
+</tr>
+<tr class="odd">
+<td><strong>graph-based</strong></td>
+<td>force each cell’s neighbours to come from every batch</td>
 <td><strong>BBKNN</strong></td>
-<td>the <em>graph</em></td>
-<td>very fast; modifies neighbours directly</td>
-</tr>
-<tr class="odd">
-<td><strong>scVI / scANVI</strong></td>
-<td>latent space</td>
-<td>deep generative; handles counts natively; scANVI uses labels</td>
 </tr>
 <tr class="even">
-<td><strong>Scanorama</strong></td>
-<td>embedding + expression</td>
-<td>panorama stitching; good with partial overlap</td>
-</tr>
-<tr class="odd">
-<td><strong>ComBat</strong></td>
-<td>expression</td>
-<td>classic bulk method; <code>sc.pp.combat</code>; assumes shared composition</td>
+<td><strong>deep learning</strong></td>
+<td>autoencoder conditioned on batch (CVAE)</td>
+<td><strong>scVI</strong>, <strong>scANVI</strong> (uses labels), scGen</td>
 </tr>
 </tbody>
 </table>
+<p>Output format matters too: an integrated <strong>embedding</strong> (Harmony, scVI), a <strong>graph</strong> (BBKNN — few tools accept it), or a corrected <strong>expression matrix</strong> (ComBat, Seurat/MNN) — the last is what downstream tools needing expression values require. MNN-style methods integrate batches pairwise, so 20 batches means many integrations; scVI scales better on large data.</p>
 <p>The <strong>scIB</strong> benchmark scores methods jointly on <em>batch removal</em> and <em>biological conservation</em> — because the two trade off, and a method that scores perfectly on the first has usually destroyed the second.</p>
 </div>
 </div>
@@ -1418,7 +1728,7 @@ Value had shape (50,) while it should have had (2700,).</code></pre>
 </div>
 </div>
 </section>
-<section id="over-correction" class="slide level2">
+<section id="over-correction" class="slide level2 extends">
 <h2>Over-correction</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1487,15 +1797,30 @@ Value had shape (50,) while it should have had (2700,).</code></pre>
 <p><strong>No method wins everywhere</strong></p>
 </div>
 <div class="callout-content">
-<p>No method wins everywhere. Broadly: for <strong>simple batch effects</strong>, Harmony is fast and hard to beat; for <strong>atlas-scale</strong> integration across many studies, scVI and scANVI rank highest; <strong>BBKNN</strong> is the cheapest and adjusts only the graph. And the more aggressive the correction, the more biological signal it costs — the trade-off is visible directly in the two columns.</p>
+<p>No method wins everywhere. The book separates two tasks of different difficulty:</p>
+<ul>
+<li><strong>batch correction</strong> — samples from one experiment, same cell types throughout, a roughly linear effect. <strong>Harmony</strong> and <strong>Seurat</strong> consistently do well; in early comparisons of global models, ComBat scored best on kBET</li>
+<li><strong>data integration</strong> — datasets from different labs and protocols, nested effects, cell types not shared by all. <strong>scANVI</strong>, <strong>scVI</strong>, <strong>scGen</strong> and <strong>Scanorama</strong> do best, and methods that can use <strong>cell-type labels</strong> do better across tasks</li>
+</ul>
+<p><strong>BBKNN</strong> is the cheapest and adjusts only the graph. And the more aggressive the correction, the more biological signal it costs — the trade-off is visible directly in the two columns.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-warning no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Reading a benchmark table of your own</strong></p>
+</div>
+<div class="callout-content">
+<p>The book min–max scales each metric across the methods you ran: worst = 0, best = 1. Those scores are <strong>relative to that set of methods only</strong> — add a method and they change; a method scaled to 0 may still have scored very well in absolute terms. And bio-conservation metrics need <strong>ground-truth labels</strong>, which is exactly what a new dataset lacks. Test several methods, define success quantitatively <em>before</em> looking, then choose.</p>
 </div>
 </div>
 </div>
 <!-- =========================================================================
      SOURCE: sc-best-practices, Conditions / "Differential gene expression"
-       https://www.sc-best-practices.org/conditions/differential_gene_expression.html
+       https://www.sc-best-practices.org/conditions/differential-gene-expression/
        + "Compositional analysis"
-       https://www.sc-best-practices.org/conditions/compositional.html
+       https://www.sc-best-practices.org/conditions/compositional/
        Pseudoreplication argument: Squair et al. 2021, doi 10.1038/s41467-021-25960-2
      ========================================================================= -->
 </section></section>
@@ -1547,23 +1872,23 @@ Value had shape (50,) while it should have had (2700,).</code></pre>
 </div>
 <div class="callout-content">
 <p>Collapse each donor’s cells of a given type into one profile, then use well-understood bulk RNA-seq methods on the result.</p>
-<div id="b19c9a2e" class="cell" data-execution_count="21">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a aria-label="1"></a>rng2 <span class="op">=</span> np.random.default_rng(<span class="dv">1</span>)</span>
-<span id="cb32-2"><a aria-label="2"></a>adata.obs[<span class="st">"donor"</span>] <span class="op">=</span> pd.Categorical(rng2.choice([<span class="st">"d1"</span>, <span class="st">"d2"</span>, <span class="st">"d3"</span>, <span class="st">"d4"</span>], adata.n_obs))</span>
-<span id="cb32-3"><a aria-label="3"></a></span>
-<span id="cb32-4"><a aria-label="4"></a>counts <span class="op">=</span> pd.DataFrame(</span>
-<span id="cb32-5"><a aria-label="5"></a>    adata.layers[<span class="st">"counts"</span>].toarray(), index<span class="op">=</span>adata.obs_names, columns<span class="op">=</span>adata.var_names</span>
-<span id="cb32-6"><a aria-label="6"></a>)</span>
-<span id="cb32-7"><a aria-label="7"></a>pseudobulk <span class="op">=</span> counts.groupby(</span>
-<span id="cb32-8"><a aria-label="8"></a>    [adata.obs[<span class="st">"donor"</span>], adata.obs[<span class="st">"cell_type"</span>]], observed<span class="op">=</span><span class="va">True</span></span>
-<span id="cb32-9"><a aria-label="9"></a>).<span class="bu">sum</span>()</span>
-<span id="cb32-10"><a aria-label="10"></a></span>
-<span id="cb32-11"><a aria-label="11"></a><span class="bu">print</span>(<span class="st">"pseudobulk shape:"</span>, pseudobulk.shape, <span class="st">" = (donor x cell type) x genes"</span>)</span>
-<span id="cb32-12"><a aria-label="12"></a>pseudobulk.iloc[:<span class="dv">4</span>, :<span class="dv">5</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="f36fe622" class="cell" data-execution_count="25">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a aria-label="1"></a>rng2 <span class="op">=</span> np.random.default_rng(<span class="dv">1</span>)</span>
+<span id="cb37-2"><a aria-label="2"></a>adata.obs[<span class="st">"donor"</span>] <span class="op">=</span> pd.Categorical(rng2.choice([<span class="st">"d1"</span>, <span class="st">"d2"</span>, <span class="st">"d3"</span>, <span class="st">"d4"</span>], adata.n_obs))</span>
+<span id="cb37-3"><a aria-label="3"></a></span>
+<span id="cb37-4"><a aria-label="4"></a>counts <span class="op">=</span> pd.DataFrame(</span>
+<span id="cb37-5"><a aria-label="5"></a>    adata.layers[<span class="st">"counts"</span>].toarray(), index<span class="op">=</span>adata.obs_names, columns<span class="op">=</span>adata.var_names</span>
+<span id="cb37-6"><a aria-label="6"></a>)</span>
+<span id="cb37-7"><a aria-label="7"></a>pseudobulk <span class="op">=</span> counts.groupby(</span>
+<span id="cb37-8"><a aria-label="8"></a>    [adata.obs[<span class="st">"donor"</span>], adata.obs[<span class="st">"cell_type"</span>]], observed<span class="op">=</span><span class="va">True</span></span>
+<span id="cb37-9"><a aria-label="9"></a>).<span class="bu">sum</span>()</span>
+<span id="cb37-10"><a aria-label="10"></a></span>
+<span id="cb37-11"><a aria-label="11"></a><span class="bu">print</span>(<span class="st">"pseudobulk shape:"</span>, pseudobulk.shape, <span class="st">" = (donor x cell type) x genes"</span>)</span>
+<span id="cb37-12"><a aria-label="12"></a>pseudobulk.iloc[:<span class="dv">4</span>, :<span class="dv">5</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>pseudobulk shape: (28, 9713)  = (donor x cell type) x genes</code></pre>
 </div>
-<div class="cell-output cell-output-display" data-execution_count="20">
+<div class="cell-output cell-output-display" data-execution_count="23">
 <div>
 <style scoped="">
     .dataframe tbody tr th:only-of-type {
@@ -1674,7 +1999,273 @@ Value had shape (50,) while it should have had (2700,).</code></pre>
 </div>
 </div>
 </section>
-<section id="how-many-samples" class="slide level2">
+<section id="pseudoreplication-measured" class="slide level2 scrollable extends">
+<h2>Pseudoreplication, measured</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>A simulation where we know which genes changed</strong></p>
+</div>
+<div class="callout-content">
+<p>The book’s example is an interferon-β stimulation study (8 patients, control vs stimulated). PBMC3k has no conditions, so we <strong>simulate</strong> one on its largest population, the CD4 T cells: 8 donors × {ctrl, stim}, a donor effect shared by both conditions, an independent <strong>sample</strong> effect for each of the 16 samples — ordinary biological variation between replicates — and a true 4-fold change in 100 genes only.</p>
+<div id="b5315bef" class="cell" data-execution_count="26">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a aria-label="1"></a><span class="im">from</span> scipy <span class="im">import</span> stats</span>
+<span id="cb39-2"><a aria-label="2"></a></span>
+<span id="cb39-3"><a aria-label="3"></a>rng_de <span class="op">=</span> np.random.default_rng(<span class="dv">21</span>)</span>
+<span id="cb39-4"><a aria-label="4"></a>ct <span class="op">=</span> adata.obs[<span class="st">"cell_type"</span>].value_counts().idxmax()             <span class="co"># the largest population</span></span>
+<span id="cb39-5"><a aria-label="5"></a>Y <span class="op">=</span> adata[adata.obs[<span class="st">"cell_type"</span>] <span class="op">==</span> ct].layers[<span class="st">"counts"</span>].toarray().astype(<span class="bu">float</span>)</span>
+<span id="cb39-6"><a aria-label="6"></a>Y <span class="op">=</span> Y[:, Y.<span class="bu">sum</span>(<span class="dv">0</span>) <span class="op">&gt;=</span> <span class="dv">100</span>]                                      <span class="co"># reasonably expressed genes</span></span>
+<span id="cb39-7"><a aria-label="7"></a>n_cells, n_genes <span class="op">=</span> Y.shape</span>
+<span id="cb39-8"><a aria-label="8"></a></span>
+<span id="cb39-9"><a aria-label="9"></a>donor <span class="op">=</span> rng_de.integers(<span class="dv">0</span>, <span class="dv">8</span>, n_cells)</span>
+<span id="cb39-10"><a aria-label="10"></a>cond <span class="op">=</span> rng_de.integers(<span class="dv">0</span>, <span class="dv">2</span>, n_cells)                     <span class="co"># 0 = ctrl, 1 = stim</span></span>
+<span id="cb39-11"><a aria-label="11"></a>sample <span class="op">=</span> <span class="dv">2</span> <span class="op">*</span> donor <span class="op">+</span> cond                                 <span class="co"># 16 biological samples</span></span>
+<span id="cb39-12"><a aria-label="12"></a>is_true <span class="op">=</span> np.zeros(n_genes, <span class="bu">bool</span>)</span>
+<span id="cb39-13"><a aria-label="13"></a>is_true[rng_de.choice(n_genes, <span class="dv">100</span>, replace<span class="op">=</span><span class="va">False</span>)] <span class="op">=</span> <span class="va">True</span></span>
+<span id="cb39-14"><a aria-label="14"></a>log_factor <span class="op">=</span> (rng_de.normal(<span class="dv">0</span>, <span class="fl">0.3</span>, (<span class="dv">8</span>, n_genes))[donor]          <span class="co"># donor effect</span></span>
+<span id="cb39-15"><a aria-label="15"></a>              <span class="op">+</span> rng_de.normal(<span class="dv">0</span>, <span class="fl">0.5</span>, (<span class="dv">16</span>, n_genes))[sample]      <span class="co"># sample effect</span></span>
+<span id="cb39-16"><a aria-label="16"></a>              <span class="op">+</span> cond[:, <span class="va">None</span>] <span class="op">*</span> np.log(<span class="dv">4</span>) <span class="op">*</span> is_true)               <span class="co"># the real change</span></span>
+<span id="cb39-17"><a aria-label="17"></a>Ysim <span class="op">=</span> rng_de.poisson(Y <span class="op">*</span> np.exp(log_factor)).astype(<span class="bu">float</span>)</span>
+<span id="cb39-18"><a aria-label="18"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>ct<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>n_cells<span class="sc">}</span><span class="ss"> cells, </span><span class="sc">{</span>n_genes<span class="sc">}</span><span class="ss"> genes, 16 samples, </span><span class="sc">{</span>is_true<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">}</span><span class="ss"> truly changed genes"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>CD4 T: 1126 cells, 2436 genes, 16 samples, 100 truly changed genes</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="pseudoreplication-measured-1" class="slide level2 scrollable extends">
+<h2>Pseudoreplication, measured</h2>
+<div id="7d233188" class="cell" data-execution_count="27">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a aria-label="1"></a><span class="im">from</span> formulaic <span class="im">import</span> model_matrix</span>
+<span id="cb41-2"><a aria-label="2"></a><span class="im">from</span> statsmodels.stats.multitest <span class="im">import</span> multipletests</span>
+<span id="cb41-3"><a aria-label="3"></a></span>
+<span id="cb41-4"><a aria-label="4"></a><span class="co"># per cell: log-normalise, Wilcoxon stim vs ctrl over all cells</span></span>
+<span id="cb41-5"><a aria-label="5"></a>lib <span class="op">=</span> Ysim.<span class="bu">sum</span>(<span class="dv">1</span>, keepdims<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb41-6"><a aria-label="6"></a>L <span class="op">=</span> np.log1p(Ysim <span class="op">/</span> lib <span class="op">*</span> np.median(lib))</span>
+<span id="cb41-7"><a aria-label="7"></a>p_cell <span class="op">=</span> stats.mannwhitneyu(L[cond <span class="op">==</span> <span class="dv">1</span>], L[cond <span class="op">==</span> <span class="dv">0</span>], axis<span class="op">=</span><span class="dv">0</span>).pvalue</span>
+<span id="cb41-8"><a aria-label="8"></a></span>
+<span id="cb41-9"><a aria-label="9"></a><span class="co"># pseudobulk: sum per sample, then a linear model  ~ donor + condition  (paired)</span></span>
+<span id="cb41-10"><a aria-label="10"></a>PB <span class="op">=</span> np.vstack([Ysim[sample <span class="op">==</span> s].<span class="bu">sum</span>(<span class="dv">0</span>) <span class="cf">for</span> s <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">16</span>)])</span>
+<span id="cb41-11"><a aria-label="11"></a>meta <span class="op">=</span> pd.DataFrame({<span class="st">"donor"</span>: [<span class="ss">f"d</span><span class="sc">{</span>s <span class="op">//</span> <span class="dv">2</span><span class="sc">}</span><span class="ss">"</span> <span class="cf">for</span> s <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">16</span>)],</span>
+<span id="cb41-12"><a aria-label="12"></a>                     <span class="st">"condition"</span>: [<span class="st">"ctrl"</span>, <span class="st">"stim"</span>] <span class="op">*</span> <span class="dv">8</span>})</span>
+<span id="cb41-13"><a aria-label="13"></a>design <span class="op">=</span> model_matrix(<span class="st">"~ donor + condition"</span>, meta)</span>
+<span id="cb41-14"><a aria-label="14"></a>Xd <span class="op">=</span> np.asarray(design)</span>
+<span id="cb41-15"><a aria-label="15"></a></span>
+<span id="cb41-16"><a aria-label="16"></a><span class="co"># DESeq2-style median-of-ratios size factors: robust when some genes really change</span></span>
+<span id="cb41-17"><a aria-label="17"></a>pos <span class="op">=</span> (PB <span class="op">&gt;</span> <span class="dv">0</span>).<span class="bu">all</span>(<span class="dv">0</span>)</span>
+<span id="cb41-18"><a aria-label="18"></a>log_geo <span class="op">=</span> np.log(PB[:, pos]).mean(<span class="dv">0</span>)</span>
+<span id="cb41-19"><a aria-label="19"></a>size_factor <span class="op">=</span> np.exp(np.median(np.log(PB[:, pos]) <span class="op">-</span> log_geo, axis<span class="op">=</span><span class="dv">1</span>))</span>
+<span id="cb41-20"><a aria-label="20"></a>logcpm <span class="op">=</span> np.log2(PB <span class="op">/</span> size_factor[:, <span class="va">None</span>] <span class="op">+</span> <span class="dv">1</span>)</span>
+<span id="cb41-21"><a aria-label="21"></a></span>
+<span id="cb41-22"><a aria-label="22"></a>beta, <span class="op">*</span>_ <span class="op">=</span> np.linalg.lstsq(Xd, logcpm, rcond<span class="op">=</span><span class="va">None</span>)</span>
+<span id="cb41-23"><a aria-label="23"></a>dof <span class="op">=</span> Xd.shape[<span class="dv">0</span>] <span class="op">-</span> Xd.shape[<span class="dv">1</span>]</span>
+<span id="cb41-24"><a aria-label="24"></a>sigma2 <span class="op">=</span> ((logcpm <span class="op">-</span> Xd <span class="op">@</span> beta) <span class="op">**</span> <span class="dv">2</span>).<span class="bu">sum</span>(<span class="dv">0</span>) <span class="op">/</span> dof</span>
+<span id="cb41-25"><a aria-label="25"></a>sigma2 <span class="op">=</span> (<span class="dv">4</span> <span class="op">*</span> np.median(sigma2) <span class="op">+</span> dof <span class="op">*</span> sigma2) <span class="op">/</span> (<span class="dv">4</span> <span class="op">+</span> dof)       <span class="co"># shrink variances (limma-style)</span></span>
+<span id="cb41-26"><a aria-label="26"></a>j <span class="op">=</span> <span class="bu">list</span>(design.columns).index(<span class="st">"condition[T.stim]"</span>)</span>
+<span id="cb41-27"><a aria-label="27"></a>t_stat <span class="op">=</span> beta[j] <span class="op">/</span> np.sqrt(sigma2 <span class="op">*</span> np.linalg.inv(Xd.T <span class="op">@</span> Xd)[j, j])</span>
+<span id="cb41-28"><a aria-label="28"></a>p_pb <span class="op">=</span> <span class="dv">2</span> <span class="op">*</span> stats.t.sf(np.<span class="bu">abs</span>(t_stat), dof <span class="op">+</span> <span class="dv">4</span>)</span>
+<span id="cb41-29"><a aria-label="29"></a></span>
+<span id="cb41-30"><a aria-label="30"></a><span class="cf">for</span> name, p <span class="kw">in</span> [(<span class="st">"per-cell Wilcoxon"</span>, p_cell), (<span class="st">"pseudobulk, paired"</span>, p_pb)]:</span>
+<span id="cb41-31"><a aria-label="31"></a>    fdr <span class="op">=</span> multipletests(p, method<span class="op">=</span><span class="st">"fdr_bh"</span>)[<span class="dv">0</span>]</span>
+<span id="cb41-32"><a aria-label="32"></a>    <span class="bu">print</span>(<span class="ss">f"  </span><span class="sc">{</span>name<span class="sc">:&lt;19}</span><span class="ss"> false-positive rate </span><span class="sc">{</span>np<span class="sc">.</span>mean(p[<span class="op">~</span>is_true] <span class="op">&lt;</span> <span class="fl">0.05</span>)<span class="sc">:5.1%}</span><span class="ss">   "</span></span>
+<span id="cb41-33"><a aria-label="33"></a>          <span class="ss">f"power </span><span class="sc">{</span>np<span class="sc">.</span>mean(p[is_true] <span class="op">&lt;</span> <span class="fl">0.05</span>)<span class="sc">:5.1%}</span><span class="ss">   "</span></span>
+<span id="cb41-34"><a aria-label="34"></a>          <span class="ss">f"BH discoveries </span><span class="sc">{</span>fdr<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:4d}</span><span class="ss">, of them false </span><span class="sc">{</span>np<span class="sc">.</span><span class="bu">sum</span>(fdr <span class="op">&amp;</span> <span class="op">~</span>is_true)<span class="sc">:4d}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  per-cell Wilcoxon   false-positive rate 16.9%   power 74.0%   BH discoveries  199, of them false  147
+  pseudobulk, paired  false-positive rate  3.8%   power 97.0%   BH discoveries   27, of them false    0</code></pre>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Read the false-positive rate</strong></p>
+</div>
+<div class="callout-content">
+<p>At <span class="math inline">\(\alpha = 0.05\)</span> a calibrated test flags about 5% of unchanged genes. The per-cell test flags <strong>three times that</strong>, and after Benjamini–Hochberg most of its “discoveries” are genes that never changed: it sees hundreds of cells per condition and mistakes sample-to-sample variation for the treatment. Pseudobulk, with <span class="math inline">\(n = 16\)</span> samples and the donor in the model, stays near 5% and its discoveries are real. This is the result of Squair <em>et al.</em> (2021), and the reason the book recommends the <strong>sample-level view</strong>.</p>
+<p>Two details of the pseudobulk fit come straight from bulk RNA-seq practice: <strong>median-of-ratios size factors</strong> (DESeq2), which do not let 100 strongly changed genes distort every other gene’s normalization, and <strong>variance shrinkage</strong> towards the typical gene, because 7 residual degrees of freedom cannot estimate one gene’s variance well on their own.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="the-books-pseudobulk-workflow" class="slide level2 scrollable">
+<h2>The book’s pseudobulk workflow</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>1. Quality-control the pseudobulks, 2. look for the main axes of variation</strong></p>
+</div>
+<div class="callout-content">
+<p>Drop pseudobulk samples built from too few cells or counts (a common guideline: <strong>at least 10 cells and 1 000 counts</strong>). Then run <strong>PCA on the pseudobulk samples</strong> and see which metadata the top components track — anything that explains substantial variance belongs in the design.</p>
+<div id="4f8281cf" class="cell" data-execution_count="28">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a aria-label="1"></a>centred <span class="op">=</span> logcpm <span class="op">-</span> logcpm.mean(<span class="dv">0</span>)</span>
+<span id="cb43-2"><a aria-label="2"></a>top_var <span class="op">=</span> np.argsort(centred.var(<span class="dv">0</span>))[<span class="op">-</span><span class="dv">500</span>:]</span>
+<span id="cb43-3"><a aria-label="3"></a>U, S_, _ <span class="op">=</span> np.linalg.svd(centred[:, top_var], full_matrices<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb43-4"><a aria-label="4"></a>pcs <span class="op">=</span> U[:, :<span class="dv">2</span>] <span class="op">*</span> S_[:<span class="dv">2</span>]</span>
+<span id="cb43-5"><a aria-label="5"></a>f, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">9</span>, <span class="fl">3.2</span>))</span>
+<span id="cb43-6"><a aria-label="6"></a><span class="cf">for</span> ax, col <span class="kw">in</span> <span class="bu">zip</span>(axs, [<span class="st">"condition"</span>, <span class="st">"donor"</span>]):</span>
+<span id="cb43-7"><a aria-label="7"></a>    <span class="cf">for</span> lvl <span class="kw">in</span> <span class="bu">sorted</span>(meta[col].unique()):</span>
+<span id="cb43-8"><a aria-label="8"></a>        m <span class="op">=</span> (meta[col] <span class="op">==</span> lvl).values</span>
+<span id="cb43-9"><a aria-label="9"></a>        ax.scatter(pcs[m, <span class="dv">0</span>], pcs[m, <span class="dv">1</span>], s<span class="op">=</span><span class="dv">30</span>, label<span class="op">=</span>lvl)</span>
+<span id="cb43-10"><a aria-label="10"></a>    ax.set_title(<span class="ss">f"pseudobulk PCA, coloured by </span><span class="sc">{</span>col<span class="sc">}</span><span class="ss">"</span>)<span class="op">;</span> ax.set_xlabel(<span class="st">"PC1"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"PC2"</span>)</span>
+<span id="cb43-11"><a aria-label="11"></a>    ax.legend(fontsize<span class="op">=</span><span class="dv">6</span>, ncol<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb43-12"><a aria-label="12"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure>
+<p><img data-src="bio4_files/figure-revealjs/cell-28-output-1.png" width="966" height="327"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Here PC1 is the <strong>condition</strong>, as it should be; PC2 picks out one <strong>donor</strong> (d6) in <em>both</em> conditions. Donor-level variation is real and visible, which is why the donor goes into the design and the comparison is paired.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="the-books-pseudobulk-workflow-1" class="slide level2 scrollable">
+<h2>The book’s pseudobulk workflow</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>3. Filter genes per cell type, 4. write the design down</strong></p>
+</div>
+<div class="callout-content">
+<p>Remove lowly expressed genes <strong>separately for each cell type</strong> — different cell types express different genes (the book uses edgeR-style <code>filter_by_expr</code> / <code>filter_by_prop</code>, choosing thresholds at the dip of a bimodal distribution).</p>
+<p>The design matrix is where the experiment is written down:</p>
+<div id="1aea5156" class="cell" data-execution_count="29">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a aria-label="1"></a>design.head(<span class="dv">4</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="27">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+
+<table class="dataframe caption-top" data-border="1">
+<thead>
+<tr class="header" style="text-align: right;">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">Intercept</th>
+<th data-quarto-table-cell-role="th">donor[T.d1]</th>
+<th data-quarto-table-cell-role="th">donor[T.d2]</th>
+<th data-quarto-table-cell-role="th">donor[T.d3]</th>
+<th data-quarto-table-cell-role="th">donor[T.d4]</th>
+<th data-quarto-table-cell-role="th">donor[T.d5]</th>
+<th data-quarto-table-cell-role="th">donor[T.d6]</th>
+<th data-quarto-table-cell-role="th">donor[T.d7]</th>
+<th data-quarto-table-cell-role="th">condition[T.stim]</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>1.0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>1.0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>1.0</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>1.0</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<p><code>~ a + b</code> fits both effects; <code>~ a + b + a:b</code> (shorthand <code>~ a * b</code>) adds an <strong>interaction</strong> — does the effect of the condition <em>differ between cell types</em>? With <code>~ condition * cell_type</code> and a <strong>contrast</strong>, the book asks exactly that: which genes respond to interferon more strongly in monocytes than in T cells.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>5. Fit with shrinkage</strong></p>
+</div>
+<div class="callout-content">
+<p>The book fits <strong>PyDESeq2</strong>: negative-binomial models whose gene-wise dispersions are <strong>shrunk towards a fitted mean–dispersion trend</strong>, because with a handful of samples per group no gene’s variance can be estimated well alone. The linear model above is a simpler relative: log-scale instead of negative binomial, and shrinkage towards a single typical variance instead of a trend.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="reading-the-result" class="slide level2 scrollable">
+<h2>Reading the result</h2>
+<div id="486d6fed" class="cell" data-execution_count="30">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb45"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a aria-label="1"></a>f, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="fl">3.4</span>))</span>
+<span id="cb45-2"><a aria-label="2"></a><span class="cf">for</span> ax, (p, name) <span class="kw">in</span> <span class="bu">zip</span>(axs, [(p_cell, <span class="st">"per-cell Wilcoxon"</span>), (p_pb, <span class="st">"pseudobulk"</span>)]):</span>
+<span id="cb45-3"><a aria-label="3"></a>    lfc <span class="op">=</span> beta[j] <span class="cf">if</span> name <span class="op">==</span> <span class="st">"pseudobulk"</span> <span class="cf">else</span> <span class="op">\</span></span>
+<span id="cb45-4"><a aria-label="4"></a>        np.log2((Ysim[cond <span class="op">==</span> <span class="dv">1</span>].mean(<span class="dv">0</span>) <span class="op">+</span> <span class="fl">1e-3</span>) <span class="op">/</span> (Ysim[cond <span class="op">==</span> <span class="dv">0</span>].mean(<span class="dv">0</span>) <span class="op">+</span> <span class="fl">1e-3</span>))</span>
+<span id="cb45-5"><a aria-label="5"></a>    ax.scatter(lfc[<span class="op">~</span>is_true], <span class="op">-</span>np.log10(p[<span class="op">~</span>is_true]), s<span class="op">=</span><span class="dv">3</span>, alpha<span class="op">=</span><span class="fl">0.4</span>, label<span class="op">=</span><span class="st">"unchanged"</span>)</span>
+<span id="cb45-6"><a aria-label="6"></a>    ax.scatter(lfc[is_true], <span class="op">-</span>np.log10(p[is_true]), s<span class="op">=</span><span class="dv">8</span>, color<span class="op">=</span><span class="st">"crimson"</span>, label<span class="op">=</span><span class="st">"truly changed"</span>)</span>
+<span id="cb45-7"><a aria-label="7"></a>    ax.axhline(<span class="op">-</span>np.log10(<span class="fl">0.05</span>), color<span class="op">=</span><span class="st">"grey"</span>, ls<span class="op">=</span><span class="st">"--"</span>, lw<span class="op">=</span><span class="fl">0.8</span>)</span>
+<span id="cb45-8"><a aria-label="8"></a>    ax.set_title(<span class="ss">f"volcano: </span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">"</span>)<span class="op">;</span> ax.set_xlabel(<span class="st">"log2 fold change"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"-log10 p"</span>)</span>
+<span id="cb45-9"><a aria-label="9"></a>axs[<span class="dv">0</span>].legend(fontsize<span class="op">=</span><span class="dv">7</span>)<span class="op">;</span> plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure>
+<p><img data-src="bio4_files/figure-revealjs/cell-30-output-1.png" width="1075" height="349"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>A <strong>volcano plot</strong> puts effect size and significance on one picture: the interesting genes sit up and out to the sides. On the per-cell side, the cloud of unchanged genes rises far above the dashed line. The book also uses the <strong>MA plot</strong> (fold change against mean expression) to check whether discoveries are biased towards lowly or highly expressed genes — single-cell-specific methods were found to mislabel highly expressed genes as differential.</p>
+</section>
+<section id="how-many-samples" class="slide level2 beyond">
 <h2>How many samples?</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1715,7 +2306,7 @@ Value had shape (50,) while it should have had (2700,).</code></pre>
 </div>
 </div>
 </section>
-<section id="effect-size-not-just-significance" class="slide level2">
+<section id="effect-size-not-just-significance" class="slide level2 extends">
 <h2>Effect size, not just significance</h2>
 <div class="callout callout-warning no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1749,7 +2340,138 @@ Value had shape (50,) while it should have had (2700,).</code></pre>
 </div>
 </div>
 </section>
-<section id="multiple-testing" class="slide level2">
+<section id="one-cell-type-expands" class="slide level2 scrollable extends">
+<h2>One cell type expands</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The book’s example, simulated</strong></p>
+</div>
+<div class="callout-content">
+<p>In the book’s mouse gut data (Haber <em>et al.</em> 2017), <em>Salmonella</em> infection strongly expands <strong>enterocytes</strong>. The original univariate analysis also reported stem and transit-amplifying cells <em>decreasing</em> — which scCODA does not. Simulate the same situation: five cell types, six control and six infected samples, and only type A truly changes (×4 in absolute number):</p>
+<div id="8ac505f8" class="cell" data-execution_count="31">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a aria-label="1"></a>rng_c <span class="op">=</span> np.random.default_rng(<span class="dv">13</span>)</span>
+<span id="cb46-2"><a aria-label="2"></a>types <span class="op">=</span> [<span class="st">"A (enterocyte)"</span>, <span class="st">"B"</span>, <span class="st">"C"</span>, <span class="st">"D"</span>, <span class="st">"E (reference)"</span>]</span>
+<span id="cb46-3"><a aria-label="3"></a>base_n <span class="op">=</span> np.array([<span class="dv">300</span>, <span class="dv">250</span>, <span class="dv">200</span>, <span class="dv">150</span>, <span class="dv">100</span>])</span>
+<span id="cb46-4"><a aria-label="4"></a>truth <span class="op">=</span> np.array([<span class="fl">4.0</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>])                     <span class="co"># only A changes</span></span>
+<span id="cb46-5"><a aria-label="5"></a>counts_c <span class="op">=</span> np.vstack([rng_c.poisson(base_n <span class="op">*</span> (truth <span class="cf">if</span> inf <span class="cf">else</span> <span class="dv">1</span>) <span class="op">*</span> rng_c.lognormal(<span class="dv">0</span>, <span class="fl">0.15</span>, <span class="dv">5</span>))</span>
+<span id="cb46-6"><a aria-label="6"></a>                      <span class="cf">for</span> inf <span class="kw">in</span> [<span class="dv">0</span>] <span class="op">*</span> <span class="dv">6</span> <span class="op">+</span> [<span class="dv">1</span>] <span class="op">*</span> <span class="dv">6</span>])</span>
+<span id="cb46-7"><a aria-label="7"></a>infected <span class="op">=</span> np.array([<span class="dv">0</span>] <span class="op">*</span> <span class="dv">6</span> <span class="op">+</span> [<span class="dv">1</span>] <span class="op">*</span> <span class="dv">6</span>, <span class="bu">bool</span>)</span>
+<span id="cb46-8"><a aria-label="8"></a>props <span class="op">=</span> counts_c <span class="op">/</span> counts_c.<span class="bu">sum</span>(<span class="dv">1</span>, keepdims<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb46-9"><a aria-label="9"></a>alr <span class="op">=</span> np.log(counts_c <span class="op">/</span> counts_c[:, [<span class="op">-</span><span class="dv">1</span>]])              <span class="co"># log-ratio to an unchanged reference</span></span>
+<span id="cb46-10"><a aria-label="10"></a></span>
+<span id="cb46-11"><a aria-label="11"></a>rows_c <span class="op">=</span> []</span>
+<span id="cb46-12"><a aria-label="12"></a><span class="cf">for</span> k, t <span class="kw">in</span> <span class="bu">enumerate</span>(types[:<span class="op">-</span><span class="dv">1</span>]):</span>
+<span id="cb46-13"><a aria-label="13"></a>    rows_c.append((t, stats.ttest_ind(props[infected, k], props[<span class="op">~</span>infected, k]).pvalue,</span>
+<span id="cb46-14"><a aria-label="14"></a>                   stats.ttest_ind(alr[infected, k], alr[<span class="op">~</span>infected, k]).pvalue))</span>
+<span id="cb46-15"><a aria-label="15"></a>pd.DataFrame(rows_c, columns<span class="op">=</span>[<span class="st">"cell type"</span>, <span class="st">"p, proportion (univariate)"</span>, <span class="st">"p, log-ratio to E"</span>]</span>
+<span id="cb46-16"><a aria-label="16"></a>             ).set_index(<span class="st">"cell type"</span>).<span class="bu">map</span>(<span class="kw">lambda</span> v: <span class="ss">f"</span><span class="sc">{</span>v<span class="sc">:.1e}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="29">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+
+<table class="dataframe caption-top" data-border="1">
+<thead>
+<tr class="header" style="text-align: right;">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">p, proportion (univariate)</th>
+<th data-quarto-table-cell-role="th">p, log-ratio to E</th>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">cell type</th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">A (enterocyte)</th>
+<td>7.2e-07</td>
+<td>6.6e-06</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">B</th>
+<td>6.3e-04</td>
+<td>9.1e-01</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">C</th>
+<td>1.7e-05</td>
+<td>6.1e-01</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">D</th>
+<td>1.7e-05</td>
+<td>8.0e-02</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="one-cell-type-expands-1" class="slide level2 scrollable extends">
+<h2>One cell type expands</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>What the table says</strong></p>
+</div>
+<div class="callout-content">
+<p>Testing <strong>proportions</strong> one type at a time, every unchanged type looks significantly <em>depleted</em> — B, C and D lost share only because A grew. Testing each type <strong>relative to a reference type</strong> that did not change, only A stands out.</p>
+<p>That is scCODA’s design: a hierarchical <strong>Dirichlet–multinomial</strong> model of all cell-type counts jointly, with results stated <strong>relative to a reference cell type</strong> — one believed unchanged, chosen by you or automatically (the type with the most constant relative abundance). Change the reference and the interpretation changes with it.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="without-predefined-clusters" class="slide level2">
+<h2>Without predefined clusters</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>tascCODA and Milo</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>tascCODA</strong> — the same model, but tests effects on whole <strong>branches</strong> of a cell-type tree (a lineage, or a clustering hierarchy): “all T cells expanded” rather than one subtype at a time</li>
+<li><strong>Milo</strong> — for changes that do not follow cluster boundaries (development, transitional states). Neighbourhoods on the <span class="math inline">\(k\)</span>-NN graph replace clusters; cells per sample are counted in each and tested with edgeR- or DESeq2-style models</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-warning no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Milo’s practical checks, from the book</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>power</strong>: a neighbourhood should hold at least ~3 cells per sample — so with 10 samples, ≥ 30 cells. Small neighbourhoods give underpowered tests</li>
+<li><strong>multiple testing</strong>: neighbourhoods overlap, so plain BH is replaced by a <em>spatial FDR</em>, weighting each test by how isolated its neighbourhood is</li>
+<li><strong>diagnostics</strong>: null p-values should be uniform. A second peak near 1 signals neighbourhoods with no variance between replicates — often a <strong>batch effect confounded with condition</strong></li>
+<li>confounders can be put in the model, or removed by integration before building the graph — but if batch and condition are confounded by design, removing one removes the other</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="multiple-testing" class="slide level2 extends">
 <h2>Multiple testing</h2>
 <div class="callout callout-note no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1767,7 +2489,7 @@ Value had shape (50,) while it should have had (2700,).</code></pre>
 </div>
 </div>
 <!-- source: sc-best-practices, Conditions / "Gene set enrichment and pathway analysis"
-     https://www.sc-best-practices.org/conditions/gsea_pathway.html -->
+     https://www.sc-best-practices.org/conditions/gsea-pathway/ -->
 </section>
 <section id="from-genes-to-pathways" class="slide level2 scrollable">
 <h2>From genes to pathways</h2>
@@ -1787,6 +2509,68 @@ Value had shape (50,) while it should have had (2700,).</code></pre>
 </div>
 </div>
 </div>
+</section>
+<section id="three-inputs-two-kinds-of-test" class="slide level2 scrollable">
+<h2>Three inputs, two kinds of test</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>What every enrichment analysis needs</strong></p>
+</div>
+<div class="callout-content">
+<ol type="1">
+<li><strong>molecular readouts</strong> — a ranked gene list from DE, or expression per cell</li>
+<li><strong>prior knowledge</strong> — <em>gene sets</em> (MSigDB: GO, Reactome, KEGG, Hallmark) or <em>footprints</em> — signed, weighted genes that change <strong>downstream</strong> of an active pathway (PROGENy for signalling, DoRothEA for transcription factors, CytoSig for cytokines). Footprints sit closer to what transcriptomics measures; gene sets assume expression tracks protein activity</li>
+<li><strong>an inference method</strong></li>
+</ol>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Competitive or self-contained?</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>self-contained</strong>: are the genes in this set differentially expressed? Needs several samples per group; can call a set enriched on the strength of <strong>one</strong> gene; unstable when a sample is removed</li>
+<li><strong>competitive</strong>: are the genes in this set <em>more</em> differential than genes outside it? Works from a single gene-level statistic — the book uses only competitive methods, for their stability</li>
+</ul>
+<p>And three findings from benchmarks the book cites: the <strong>choice of gene sets matters more than the method</strong>; sets with fewer than <strong>10–15 genes</strong> should be dropped (their statistics are noisy); and <strong>normalization</strong> changes the results, rank-based methods such as AUCell especially.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="over-representation-by-hand" class="slide level2 scrollable extends">
+<h2>Over-representation, by hand</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>A hypergeometric test on the simulated DE result</strong></p>
+</div>
+<div class="callout-content">
+<p>Suppose a curated “response” gene set happens to contain 30 of the genes that truly changed and 20 that did not. Is it over-represented among the pseudobulk discoveries?</p>
+<div id="34d6304b" class="cell" data-execution_count="32">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a aria-label="1"></a>rng_o <span class="op">=</span> np.random.default_rng(<span class="dv">2</span>)</span>
+<span id="cb47-2"><a aria-label="2"></a>gene_set <span class="op">=</span> np.zeros(n_genes, <span class="bu">bool</span>)</span>
+<span id="cb47-3"><a aria-label="3"></a>gene_set[rng_o.choice(np.flatnonzero(is_true), <span class="dv">30</span>, replace<span class="op">=</span><span class="va">False</span>)] <span class="op">=</span> <span class="va">True</span></span>
+<span id="cb47-4"><a aria-label="4"></a>gene_set[rng_o.choice(np.flatnonzero(<span class="op">~</span>is_true), <span class="dv">20</span>, replace<span class="op">=</span><span class="va">False</span>)] <span class="op">=</span> <span class="va">True</span></span>
+<span id="cb47-5"><a aria-label="5"></a></span>
+<span id="cb47-6"><a aria-label="6"></a><span class="cf">for</span> name, p <span class="kw">in</span> [(<span class="st">"pseudobulk"</span>, p_pb), (<span class="st">"per-cell"</span>, p_cell)]:</span>
+<span id="cb47-7"><a aria-label="7"></a>    hits <span class="op">=</span> multipletests(p, method<span class="op">=</span><span class="st">"fdr_bh"</span>)[<span class="dv">0</span>]</span>
+<span id="cb47-8"><a aria-label="8"></a>    k, M, n_set, N_hits <span class="op">=</span> (hits <span class="op">&amp;</span> gene_set).<span class="bu">sum</span>(), n_genes, gene_set.<span class="bu">sum</span>(), hits.<span class="bu">sum</span>()</span>
+<span id="cb47-9"><a aria-label="9"></a>    p_ora <span class="op">=</span> stats.hypergeom.sf(k <span class="op">-</span> <span class="dv">1</span>, M, n_set, N_hits)</span>
+<span id="cb47-10"><a aria-label="10"></a>    <span class="bu">print</span>(<span class="ss">f"  </span><span class="sc">{</span>name<span class="sc">:&lt;11}</span><span class="ss"> </span><span class="sc">{</span>N_hits<span class="sc">:5d}</span><span class="ss"> DE genes, </span><span class="sc">{</span>k<span class="sc">:3d}</span><span class="ss"> in the set of </span><span class="sc">{</span>n_set<span class="sc">}</span><span class="ss">   "</span></span>
+<span id="cb47-11"><a aria-label="11"></a>          <span class="ss">f"expected </span><span class="sc">{</span>N_hits <span class="op">*</span> n_set <span class="op">/</span> M<span class="sc">:5.1f}</span><span class="ss">   ORA p = </span><span class="sc">{</span>p_ora<span class="sc">:.1e}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  pseudobulk     27 DE genes,   9 in the set of 50   expected   0.6   ORA p = 1.1e-09
+  per-cell      199 DE genes,  20 in the set of 50   expected   4.1   ORA p = 3.7e-10</code></pre>
+</div>
+</div>
+<p>The <strong>universe</strong> is every gene that was tested (<span class="math inline">\(M\)</span>), not the whole genome — using the genome inflates every enrichment. And note what the test cannot see: <strong>both</strong> lists come out enriched, although three quarters of the per-cell list is false discoveries. ORA inherits whatever errors the DE step made; it does not check them.</p>
+</div>
+</div>
+</div>
 <div class="callout callout-warning no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
@@ -1800,7 +2584,7 @@ Value had shape (50,) while it should have had (2700,).</code></pre>
 <!-- source: sc-best-practices Parts IV-VI (trajectories, mechanisms, spatial) --
      named here as pointers only; not covered in this series -->
 </section>
-<section id="what-this-series-does-not-cover" class="slide level2">
+<section id="what-this-series-does-not-cover" class="slide level2 beyond">
 <h2>What this series does not cover</h2>
 <div class="callout callout-note no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1866,6 +2650,11 @@ Value had shape (50,) while it should have had (2700,).</code></pre>
 </div>
 <div class="callout-content">
 <table class="caption-top">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
 <thead>
 <tr class="header">
 <th>step</th>
@@ -1890,19 +2679,29 @@ Value had shape (50,) while it should have had (2700,).</code></pre>
 <td>named cell types</td>
 </tr>
 <tr class="even">
-<td>integration</td>
-<td><code>harmonypy</code>, scVI, BBKNN</td>
-<td>batch-free embedding</td>
+<td>label transfer</td>
+<td><span class="math inline">\(k\)</span>-NN to a reference + uncertainty</td>
+<td>labels, and where not to trust them</td>
 </tr>
 <tr class="odd">
-<td>DE</td>
-<td>pseudobulk + edgeR/DESeq2</td>
-<td>genes changed per type</td>
+<td>integration</td>
+<td>batch-aware HVGs; <code>harmonypy</code>, scVI, BBKNN</td>
+<td>batch-free embedding</td>
 </tr>
 <tr class="even">
+<td>DE</td>
+<td>pseudobulk + design matrix + edgeR/DESeq2</td>
+<td>genes changed per type</td>
+</tr>
+<tr class="odd">
 <td>composition</td>
-<td>scCODA</td>
+<td>scCODA (vs a reference type), Milo</td>
 <td>populations changed</td>
+</tr>
+<tr class="even">
+<td>enrichment</td>
+<td>competitive tests on curated sets</td>
+<td>pathways, not gene lists</td>
 </tr>
 </tbody>
 </table>
@@ -1950,9 +2749,13 @@ Value had shape (50,) while it should have had (2700,).</code></pre>
 <li>Run Leiden at resolution 0.1 and 5.0. At what point do the clusters stop corresponding to anything in the dot plot?</li>
 <li>Sub-cluster only the T cells (<code>adata[adata.obs.cell_type == "CD4 T"]</code>) and re-run the pipeline. Do you recover naive vs memory structure?</li>
 <li>In the batch demo, change the affected fraction from 1/3 to 1/50. At what point does Harmony stop being needed — and how would you know without the ground truth?</li>
-<li>Build the pseudobulk matrix with <code>mean</code> instead of <code>sum</code>. Why is <code>sum</code> the right choice for count-based DE methods?</li>
+<li>Build the pseudobulk matrix with <code>mean</code> instead of <code>sum</code>. Count-based models (DESeq2, edgeR) expect sums — yet the book notes that whether sum or mean aggregation performs better “requires further investigation” (Murphy &amp; Skene 2022). Rerun the pseudoreplication simulation both ways and compare false-positive rates.</li>
 <li>Take one cluster, split it randomly in half, and run <code>rank_genes_groups</code> between the halves. You should find “significant” genes. Explain why, in terms of the double-dipping section.</li>
 <li>Compare <code>sc.pp.combat</code> with Harmony on the synthetic batch data using <code>batch_mixing</code>. Does correcting the expression matrix beat correcting the embedding?</li>
+<li>In the pseudoreplication simulation, set the sample-effect standard deviation to 0. What happens to the per-cell false-positive rate, and what does that tell you about <em>where</em> the problem comes from?</li>
+<li>In the label-transfer demo, hide a different cell type from the reference. Which unseen types are caught by the uncertainty threshold, and which are confidently mislabelled?</li>
+<li>In the compositional simulation, use type B as the reference instead of E. How do the results read now?</li>
+<li>Re-run Harmony on the synthetic batch data with <em>batch-aware</em> HVGs. Does the mixing score change?</li>
 </ol>
 </div>
 </div>

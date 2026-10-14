@@ -250,23 +250,32 @@ MSDE
 </div>
 </div>
 </div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Reading these slides</strong></p>
+</div>
+<div class="callout-content">
+<p>Unbadged slides follow the book. <span class="badge-beyond">beyond the book</span> marks material it does not contain; <span class="badge-extends">extends the book</span> marks a book topic taken further. The book’s own code leans on R in places (SoupX, scDblFinder, scran, scry); these decks stay in Python and say so where they substitute.</p>
+</div>
+</div>
+</div>
 </section>
 <section id="roadmap" class="slide level2 scrollable">
 <h2>Roadmap</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
-<p><strong>Five preprocessing steps</strong></p>
+<p><strong>The book’s preprocessing chapters, in order</strong></p>
 </div>
 <div class="callout-content">
-<p>The book organises everything before analysis into five steps, in this order:</p>
 <ol type="1">
-<li><strong>Doublet detection</strong> — two cells in one droplet</li>
-<li><strong>Quality control</strong> — remove dying and broken cells</li>
+<li><strong>Quality control</strong> — remove dying and broken cells, correct ambient RNA, flag doublets (two cells in one droplet)</li>
 <li><strong>Normalization</strong> — make cells comparable</li>
 <li><strong>Feature selection</strong> — discard uninformative genes</li>
 <li><strong>Dimensionality reduction</strong> — 30 000 genes down to 2</li>
 </ol>
+<p>Before all of it sits <strong>raw data processing</strong>: turning sequencer output into the count matrix.</p>
 <blockquote>
 <p>The algorithms selected throughout this process can heavily affect downstream analysis and interpretation of the data.</p>
 </blockquote>
@@ -287,9 +296,9 @@ MSDE
 </div>
 <!-- =========================================================================
      SOURCE: sc-best-practices, Introduction / "Single-cell RNA sequencing"
-       https://www.sc-best-practices.org/introduction/scrna_seq.html
+       https://www.sc-best-practices.org/introduction/scrna-seq/
        + "Raw data processing"
-       https://www.sc-best-practices.org/introduction/raw_data_processing.html
+       https://www.sc-best-practices.org/introduction/raw-data-processing/
      ========================================================================= -->
 </section>
 <section>
@@ -377,10 +386,47 @@ MSDE
 <li>order cells along a developmental trajectory</li>
 <li>see which cell type responds to a treatment</li>
 </ul>
-<p>The cost: far less RNA per measurement, so far more noise and far more zeros.</p>
+<p>The cost: far less RNA per measurement, so far more noise and far more zeros. The book adds two more: single-cell experiments are <strong>more expensive and harder to run well</strong>, and the extra resolution makes it <strong>easier to draw false conclusions</strong>.</p>
 </div>
 </div>
 </div>
+</section>
+<section id="why-counts-are-not-poisson" class="slide level2 scrollable">
+<h2>Why counts are not Poisson</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Transcription comes in bursts</strong></p>
+</div>
+<div class="callout-content">
+<p>A typical mammalian cell holds 100 000 – 1 000 000 mRNA molecules, but genes are not transcribed at a steady rate: they switch on, fire a <strong>burst</strong> of transcripts, and switch off. A cell caught mid-burst has far more copies of a gene than one caught between bursts.</p>
+<p>Counting events at a constant rate gives a <strong>Poisson</strong> distribution, whose variance must equal its mean. Bursting breaks that. Let the rate itself vary from cell to cell — following a gamma distribution — and the counts become <strong>negative binomial</strong>: still counts, with a second parameter, the <em>dispersion</em>, absorbing the extra spread.</p>
+</div>
+</div>
+</div>
+<div id="06ab01de" class="cell" data-execution_count="3">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a aria-label="1"></a>rng_nb <span class="op">=</span> np.random.default_rng(<span class="dv">0</span>)</span>
+<span id="cb1-2"><a aria-label="2"></a>poisson <span class="op">=</span> rng_nb.poisson(<span class="dv">5</span>, <span class="dv">20_000</span>)</span>
+<span id="cb1-3"><a aria-label="3"></a>bursty <span class="op">=</span> rng_nb.poisson(rng_nb.gamma(shape<span class="op">=</span><span class="fl">0.5</span>, scale<span class="op">=</span><span class="dv">10</span>, size<span class="op">=</span><span class="dv">20_000</span>))   <span class="co"># mean 5, bursting</span></span>
+<span id="cb1-4"><a aria-label="4"></a></span>
+<span id="cb1-5"><a aria-label="5"></a>f, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="fl">2.8</span>), sharey<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-6"><a aria-label="6"></a><span class="cf">for</span> ax, x, t <span class="kw">in</span> [(axs[<span class="dv">0</span>], poisson, <span class="st">"Poisson, mean 5"</span>), (axs[<span class="dv">1</span>], bursty, <span class="st">"gamma-Poisson (NB), mean 5"</span>)]:</span>
+<span id="cb1-7"><a aria-label="7"></a>    ax.hist(x, bins<span class="op">=</span>np.arange(<span class="dv">0</span>, <span class="dv">41</span>), color<span class="op">=</span><span class="st">"steelblue"</span>)</span>
+<span id="cb1-8"><a aria-label="8"></a>    ax.set_title(<span class="ss">f"</span><span class="sc">{</span>t<span class="sc">}</span><span class="ss">:  var </span><span class="sc">{</span>x<span class="sc">.</span>var()<span class="sc">:.0f}</span><span class="ss">,  zeros </span><span class="sc">{</span>np<span class="sc">.</span>mean(x <span class="op">==</span> <span class="dv">0</span>)<span class="sc">:.0%}</span><span class="ss">"</span>)</span>
+<span id="cb1-9"><a aria-label="9"></a>    ax.set_xlabel(<span class="st">"counts per cell"</span>)</span>
+<span id="cb1-10"><a aria-label="10"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure>
+<p><img data-src="bio3_files/figure-revealjs/cell-3-output-1.png" width="1078" height="283"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Same mean. The Poisson cell almost always lands between 0 and 11; the bursting gene gives <strong>many zeros alongside cells with 30 or more</strong> — and the dispersion lets a model treat both as ordinary observations instead of calling the 30 an outlier. This is why every count model from here on, from normalization to scVI to DESeq2, is negative binomial.</p>
 </section>
 <section id="how-the-cells-get-separated" class="slide level2">
 <h2>How the cells get separated</h2>
@@ -407,6 +453,73 @@ MSDE
 <div class="callout-content">
 <p>Cells are sorted into individual wells of a plate. Far fewer cells (hundreds), but <strong>full-length transcript coverage</strong> and much greater depth per cell.</p>
 <p><strong>The trade-off in one line:</strong> droplets buy you cells, plates buy you depth per cell.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="full-length-or-tag-based" class="slide level2">
+<h2>Full-length or tag-based</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Two ways to quantify a transcript</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>full-length</strong> (plate-based only) — reads cover the whole transcript, so <strong>splice variants</strong> are visible; coverage is still not perfectly even along the gene</li>
+<li><strong>tag-based</strong> — only the 3′ or 5′ end is sequenced; cheaper per cell, and it allows <strong>UMIs</strong></li>
+</ul>
+<p>Which one produced your data decides which genes you can see and which biases you inherit. Integrating samples from both kinds (Bio 4) needs a gene-length correction such as TPM first.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="the-instrument-is-part-of-the-data" class="slide level2">
+<h2>The instrument is part of the data</h2>
+<div class="callout callout-warning no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Same tissue, three droplet protocols (Zhang <em>et al.</em> 2019, as the book reports it)</strong></p>
+</div>
+<div class="callout-content">
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th></th>
+<th>10x Genomics</th>
+<th>Drop-seq</th>
+<th>inDrop</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>reads from valid barcodes</td>
+<td><strong>75%</strong></td>
+<td>30%</td>
+<td>25%</td>
+</tr>
+<tr class="even">
+<td>transcripts per cell (mean)</td>
+<td>~17 000</td>
+<td>~8 000</td>
+<td>~2 700</td>
+</tr>
+<tr class="odd">
+<td>genes per cell (mean)</td>
+<td>~3 000</td>
+<td>~2 500</td>
+<td>~1 250</td>
+</tr>
+<tr class="even">
+<td>bias</td>
+<td>short genes, <strong>high GC</strong></td>
+<td><strong>low GC</strong></td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p>10x wins on almost every measure — at about twice the cost per cell, and with a measurable preference for some genes over others.</p>
+<p>A gene that looks “more expressed” in one study than another may simply be easier for that protocol to capture. <strong>The assay is a covariate.</strong> Record it, and never compare across protocols without accounting for it.</p>
 </div>
 </div>
 </div>
@@ -478,11 +591,12 @@ MSDE
 </tbody>
 </table>
 <p>The low mitochondrial content matters later: the QC thresholds in this lecture assume single-<strong>cell</strong> data.</p>
+<p><strong>Dissociation is a filter on what you can observe.</strong> Fragile cell types die in the process: in mouse neocortex, fast-spiking parvalbumin interneurons and subcortically projecting neurons turn up in lower proportions than expected (Tasic <em>et al.</em> 2018). A missing cell type may be absent from the tissue — or just from the tube. That is selection bias, decided at the bench, before any data exists.</p>
 </div>
 </div>
 </div>
 </section>
-<section id="from-reads-to-a-count-matrix" class="slide level2 scrollable">
+<section id="from-reads-to-a-count-matrix" class="slide level2 scrollable extends">
 <h2>From reads to a count matrix</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -511,10 +625,144 @@ MSDE
 </div>
 </div>
 </div>
+</section>
+<section id="check-the-reads-first" class="slide level2">
+<h2>Check the reads first</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Raw data quality control</strong></p>
+</div>
+<div class="callout-content">
+<p>Before any of the four steps, run <strong>FastQC</strong> on the FASTQ files. The per-base quality plot is a boxplot of the <strong>Phred scores</strong> from Bio 1 at every read position: a gradual drop towards the end of the read is normal for sequencing-by-synthesis; a sudden collapse, or one bad region of the flow cell, is not.</p>
+<p>Two single-cell-specific cautions from the book:</p>
+<ul>
+<li>judge the <strong>biological</strong> read (read 2 on 10x) — the technical read holds barcodes and UMIs, which never have biological base composition</li>
+<li>FastQC’s thresholds are uniform across platforms, so a red flag is a prompt to look, not a verdict</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="mapping-choices" class="slide level2">
+<h2>Mapping choices</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Where reads are placed, and how carefully</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>alignment</strong> (STARsolo, Cell Ranger) finds the exact position of each read; <strong>lightweight mapping</strong> (alevin-fry, kallisto|bustools) only finds which transcripts it is compatible with — much faster and smaller, and enough for counting</li>
+<li>the reference can be the <strong>genome</strong>, the <strong>spliced transcriptome</strong>, or the transcriptome <strong>augmented with introns</strong> — the last matters for single-nucleus data, where many reads come from unspliced RNA</li>
+</ul>
+<p>The book’s guidance: lightweight mapping for standard analyses; alignment when you need reads outside the transcriptome or genomic positions; STARsolo over Cell Ranger, being much faster with near-identical results.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="correcting-cell-barcodes" class="slide level2 scrollable">
+<h2>Correcting cell barcodes</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>A sequencing error in the barcode puts a read in the wrong cell</strong></p>
+</div>
+<div class="callout-content">
+<p>10x draws its barcodes from a known <strong>permit list</strong>. A barcode not on the list is corrected to the permitted barcode at <strong>Hamming distance 1</strong> — the distance from Bio 1, back again:</p>
+<div id="6bfd4faf" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a aria-label="1"></a><span class="kw">def</span> hamming1_neighbours(bc):</span>
+<span id="cb2-2"><a aria-label="2"></a>    <span class="cf">return</span> {bc[:i] <span class="op">+</span> b <span class="op">+</span> bc[i <span class="op">+</span> <span class="dv">1</span>:] <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(bc)) <span class="cf">for</span> b <span class="kw">in</span> <span class="st">"ACGT"</span> <span class="cf">if</span> b <span class="op">!=</span> bc[i]}</span>
+<span id="cb2-3"><a aria-label="3"></a></span>
+<span id="cb2-4"><a aria-label="4"></a></span>
+<span id="cb2-5"><a aria-label="5"></a>rng_bc <span class="op">=</span> np.random.default_rng(<span class="dv">5</span>)</span>
+<span id="cb2-6"><a aria-label="6"></a>permit <span class="op">=</span> {<span class="st">""</span>.join(rng_bc.choice(<span class="bu">list</span>(<span class="st">"ACGT"</span>), <span class="dv">16</span>)) <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">5000</span>)}</span>
+<span id="cb2-7"><a aria-label="7"></a></span>
+<span id="cb2-8"><a aria-label="8"></a></span>
+<span id="cb2-9"><a aria-label="9"></a><span class="kw">def</span> correct(bc):</span>
+<span id="cb2-10"><a aria-label="10"></a>    <span class="cf">if</span> bc <span class="kw">in</span> permit:</span>
+<span id="cb2-11"><a aria-label="11"></a>        <span class="cf">return</span> bc</span>
+<span id="cb2-12"><a aria-label="12"></a>    hits <span class="op">=</span> hamming1_neighbours(bc) <span class="op">&amp;</span> permit</span>
+<span id="cb2-13"><a aria-label="13"></a>    <span class="cf">return</span> hits.pop() <span class="cf">if</span> <span class="bu">len</span>(hits) <span class="op">==</span> <span class="dv">1</span> <span class="cf">else</span> <span class="va">None</span>      <span class="co"># ambiguous or unknown -&gt; discard</span></span>
+<span id="cb2-14"><a aria-label="14"></a></span>
+<span id="cb2-15"><a aria-label="15"></a></span>
+<span id="cb2-16"><a aria-label="16"></a>true_bc <span class="op">=</span> <span class="bu">sorted</span>(permit)[<span class="dv">0</span>]</span>
+<span id="cb2-17"><a aria-label="17"></a>misread <span class="op">=</span> true_bc[:<span class="dv">7</span>] <span class="op">+</span> (<span class="st">"A"</span> <span class="cf">if</span> true_bc[<span class="dv">7</span>] <span class="op">!=</span> <span class="st">"A"</span> <span class="cf">else</span> <span class="st">"C"</span>) <span class="op">+</span> true_bc[<span class="dv">8</span>:]</span>
+<span id="cb2-18"><a aria-label="18"></a><span class="bu">print</span>(<span class="st">"observed :"</span>, misread, <span class="st">"-&gt;"</span>, correct(misread))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>observed : AAAAACCAGACAGGGC -&gt; AAAAACCCGACAGGGC</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="callout callout-warning no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>When correction becomes ambiguous</strong></p>
+</div>
+<div class="callout-content">
+<p>With 5 000 random barcodes the neighbourhoods never overlap. The real 10x v3 list is far denser: a permitted barcode with one substituted base sits at distance 1 from <strong>two or more</strong> permitted barcodes about <strong>81%</strong> of the time. Those reads cannot be assigned unambiguously and are usually discarded — data lost to a decoding problem.</p>
+<p>Without a permit list, barcodes are ranked by read count and the <strong>knee</strong> of that curve separates real cells from the long tail of errors and empty droplets — the same plot as the next section’s.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="collapsing-umis-is-graph-clustering" class="slide level2 scrollable">
+<h2>Collapsing UMIs is graph clustering</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>One molecule, many observed UMIs</strong></p>
+</div>
+<div class="callout-content">
+<p>PCR copies a molecule many times, and sequencing errors mutate some copies’ UMIs. Counting distinct UMIs therefore <strong>over-counts</strong> molecules. The fix is a graph: UMIs are nodes, edges join UMIs at Hamming distance 1, and each connected group is collapsed to one molecule.</p>
+<div id="87dd3c96" class="cell" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a aria-label="1"></a>rng_u <span class="op">=</span> np.random.default_rng(<span class="dv">8</span>)</span>
+<span id="cb4-2"><a aria-label="2"></a>true_umis <span class="op">=</span> [<span class="st">""</span>.join(rng_u.choice(<span class="bu">list</span>(<span class="st">"ACGT"</span>), <span class="dv">10</span>)) <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">6</span>)]   <span class="co"># 6 molecules</span></span>
+<span id="cb4-3"><a aria-label="3"></a><span class="kw">def</span> one_error(u):</span>
+<span id="cb4-4"><a aria-label="4"></a>    p <span class="op">=</span> rng_u.integers(<span class="bu">len</span>(u))</span>
+<span id="cb4-5"><a aria-label="5"></a>    <span class="cf">return</span> u[:p] <span class="op">+</span> rng_u.choice([b <span class="cf">for</span> b <span class="kw">in</span> <span class="st">"ACGT"</span> <span class="cf">if</span> b <span class="op">!=</span> u[p]]) <span class="op">+</span> u[p <span class="op">+</span> <span class="dv">1</span>:]</span>
+<span id="cb4-6"><a aria-label="6"></a></span>
+<span id="cb4-7"><a aria-label="7"></a></span>
+<span id="cb4-8"><a aria-label="8"></a>reads <span class="op">=</span> []</span>
+<span id="cb4-9"><a aria-label="9"></a><span class="cf">for</span> u <span class="kw">in</span> true_umis:</span>
+<span id="cb4-10"><a aria-label="10"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(rng_u.integers(<span class="dv">20</span>, <span class="dv">60</span>)):                               <span class="co"># PCR copies</span></span>
+<span id="cb4-11"><a aria-label="11"></a>        reads.append(u <span class="cf">if</span> rng_u.random() <span class="op">&gt;</span> <span class="fl">0.1</span> <span class="cf">else</span> one_error(u))         <span class="co"># 10% misread once</span></span>
+<span id="cb4-12"><a aria-label="12"></a>observed <span class="op">=</span> pd.Series(reads).value_counts()</span>
+<span id="cb4-13"><a aria-label="13"></a></span>
+<span id="cb4-14"><a aria-label="14"></a>parent <span class="op">=</span> {u: u <span class="cf">for</span> u <span class="kw">in</span> observed.index}</span>
+<span id="cb4-15"><a aria-label="15"></a><span class="kw">def</span> find(u):</span>
+<span id="cb4-16"><a aria-label="16"></a>    <span class="cf">while</span> parent[u] <span class="op">!=</span> u:</span>
+<span id="cb4-17"><a aria-label="17"></a>        u <span class="op">=</span> parent[u]</span>
+<span id="cb4-18"><a aria-label="18"></a>    <span class="cf">return</span> u</span>
+<span id="cb4-19"><a aria-label="19"></a><span class="cf">for</span> u <span class="kw">in</span> observed.index:                       <span class="co"># union UMIs one substitution apart</span></span>
+<span id="cb4-20"><a aria-label="20"></a>    <span class="cf">for</span> v <span class="kw">in</span> hamming1_neighbours(u) <span class="op">&amp;</span> <span class="bu">set</span>(observed.index):</span>
+<span id="cb4-21"><a aria-label="21"></a>        parent[find(u)] <span class="op">=</span> find(v)</span>
+<span id="cb4-22"><a aria-label="22"></a></span>
+<span id="cb4-23"><a aria-label="23"></a><span class="bu">print</span>(<span class="ss">f"  reads </span><span class="sc">{</span><span class="bu">len</span>(reads)<span class="sc">}</span><span class="ss">   distinct UMIs </span><span class="sc">{</span><span class="bu">len</span>(observed)<span class="sc">}</span><span class="ss">   "</span></span>
+<span id="cb4-24"><a aria-label="24"></a>      <span class="ss">f"after collapsing </span><span class="sc">{</span><span class="bu">len</span>({find(u) <span class="cf">for</span> u <span class="kw">in</span> observed.index})<span class="sc">}</span><span class="ss">   true molecules 6"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  reads 254   distinct UMIs 30   after collapsing 6   true molecules 6</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Where the simple rule breaks</strong></p>
+</div>
+<div class="callout-content">
+<p>Real tools refine the graph — UMI-tools’ <em>directional</em> rule only joins a rare UMI to a much more abundant one — and must also handle reads that map to several genes (<strong>multimapping</strong>; discarding them biases counts) and two molecules that happen to share a UMI. The book’s conclusion: the count matrix is <strong>at best an approximation</strong> of the molecules in the sample, built with heuristics at several steps.</p>
+</div>
+</div>
+</div>
 <!-- =========================================================================
      SOURCE: sc-best-practices, Introduction /
        "Fundamental data structures and frameworks"
-       https://www.sc-best-practices.org/introduction/fundamental_data_structures_and_frameworks.html
+       https://www.sc-best-practices.org/introduction/fundamental-data-structures-and-frameworks/
      ========================================================================= -->
 </section></section>
 <section>
@@ -600,13 +848,33 @@ MSDE
 <td>per-gene arrays: <code>PCs</code></td>
 </tr>
 <tr class="odd">
+<td><code>.obsp</code></td>
+<td><span class="math inline">\(n_{obs} \times n_{obs}\)</span></td>
+<td>cell–cell graphs: the neighbour <code>connectivities</code> and <code>distances</code></td>
+</tr>
+<tr class="even">
+<td><code>.varp</code></td>
+<td><span class="math inline">\(n_{vars} \times n_{vars}\)</span></td>
+<td>gene–gene graphs</td>
+</tr>
+<tr class="odd">
 <td><code>.uns</code></td>
 <td>—</td>
-<td>anything else: graphs, parameters, colours</td>
+<td>anything else: parameters, colours</td>
 </tr>
 </tbody>
 </table>
 <p><strong>Subsetting <code>adata[cells, genes]</code> slices every one of them consistently.</strong> That is the entire value proposition.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-warning no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Orientation differs between ecosystems</strong></p>
+</div>
+<div class="callout-content">
+<p>AnnData is <strong>cells × genes</strong>. R’s Bioconductor (<code>SingleCellExperiment</code>) and Seurat store the <strong>transpose</strong>, genes × cells. Moving data between Python and R — as the book does in several chapters — is the classic place for a silent transpose bug. Bio 4 shows one that bit <code>scanpy</code> itself.</p>
 </div>
 </div>
 </div>
@@ -620,14 +888,14 @@ MSDE
 </div>
 <div class="callout-content">
 <p>We use PBMC3k throughout — <strong>peripheral blood mononuclear cells</strong> from a healthy donor, the <em>Iris dataset</em> of single-cell analysis. 2 700 cells, 5.6 MB.</p>
-<div id="5c8675dc" class="cell" data-execution_count="3">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a aria-label="1"></a><span class="im">import</span> scanpy <span class="im">as</span> sc</span>
-<span id="cb1-2"><a aria-label="2"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb1-3"><a aria-label="3"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb1-4"><a aria-label="4"></a></span>
-<span id="cb1-5"><a aria-label="5"></a>adata <span class="op">=</span> sc.datasets.pbmc3k()</span>
-<span id="cb1-6"><a aria-label="6"></a>adata</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display" data-execution_count="2">
+<div id="57d53c48" class="cell" data-execution_count="6">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a aria-label="1"></a><span class="im">import</span> scanpy <span class="im">as</span> sc</span>
+<span id="cb6-2"><a aria-label="2"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb6-3"><a aria-label="3"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb6-4"><a aria-label="4"></a></span>
+<span id="cb6-5"><a aria-label="5"></a>adata <span class="op">=</span> sc.datasets.pbmc3k()</span>
+<span id="cb6-6"><a aria-label="6"></a>adata</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="163">
 <pre><code>AnnData object with n_obs × n_vars = 2700 × 32738
     var: 'gene_ids'
     layers: None (.X)</code></pre>
@@ -645,16 +913,16 @@ MSDE
 <p><strong>The matrix is sparse, and must be</strong></p>
 </div>
 <div class="callout-content">
-<div id="7a6fbba0" class="cell" data-execution_count="4">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a aria-label="1"></a><span class="im">from</span> scipy <span class="im">import</span> sparse</span>
-<span id="cb3-2"><a aria-label="2"></a></span>
-<span id="cb3-3"><a aria-label="3"></a>X <span class="op">=</span> adata.X</span>
-<span id="cb3-4"><a aria-label="4"></a><span class="bu">print</span>(<span class="st">"type            :"</span>, <span class="bu">type</span>(X).<span class="va">__name__</span>)</span>
-<span id="cb3-5"><a aria-label="5"></a><span class="bu">print</span>(<span class="st">"shape           :"</span>, X.shape)</span>
-<span id="cb3-6"><a aria-label="6"></a><span class="bu">print</span>(<span class="st">"stored values   :"</span>, X.nnz)</span>
-<span id="cb3-7"><a aria-label="7"></a><span class="bu">print</span>(<span class="ss">f"density         : </span><span class="sc">{</span><span class="dv">100</span> <span class="op">*</span> X<span class="sc">.</span>nnz <span class="op">/</span> (X.shape[<span class="dv">0</span>] <span class="op">*</span> X.shape[<span class="dv">1</span>])<span class="sc">:.2f}</span><span class="ss">%"</span>)</span>
-<span id="cb3-8"><a aria-label="8"></a><span class="bu">print</span>(<span class="ss">f"sparse memory   : </span><span class="sc">{</span>X<span class="sc">.</span>data<span class="sc">.</span>nbytes <span class="op">/</span> <span class="fl">1e6</span><span class="sc">:.1f}</span><span class="ss"> MB"</span>)</span>
-<span id="cb3-9"><a aria-label="9"></a><span class="bu">print</span>(<span class="ss">f"dense would be  : </span><span class="sc">{</span>X<span class="sc">.</span>shape[<span class="dv">0</span>] <span class="op">*</span> X<span class="sc">.</span>shape[<span class="dv">1</span>] <span class="op">*</span> <span class="dv">4</span> <span class="op">/</span> <span class="fl">1e6</span><span class="sc">:.1f}</span><span class="ss"> MB"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="8c1a6e28" class="cell" data-execution_count="7">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a aria-label="1"></a><span class="im">from</span> scipy <span class="im">import</span> sparse</span>
+<span id="cb8-2"><a aria-label="2"></a></span>
+<span id="cb8-3"><a aria-label="3"></a>X <span class="op">=</span> adata.X</span>
+<span id="cb8-4"><a aria-label="4"></a><span class="bu">print</span>(<span class="st">"type            :"</span>, <span class="bu">type</span>(X).<span class="va">__name__</span>)</span>
+<span id="cb8-5"><a aria-label="5"></a><span class="bu">print</span>(<span class="st">"shape           :"</span>, X.shape)</span>
+<span id="cb8-6"><a aria-label="6"></a><span class="bu">print</span>(<span class="st">"stored values   :"</span>, X.nnz)</span>
+<span id="cb8-7"><a aria-label="7"></a><span class="bu">print</span>(<span class="ss">f"density         : </span><span class="sc">{</span><span class="dv">100</span> <span class="op">*</span> X<span class="sc">.</span>nnz <span class="op">/</span> (X.shape[<span class="dv">0</span>] <span class="op">*</span> X.shape[<span class="dv">1</span>])<span class="sc">:.2f}</span><span class="ss">%"</span>)</span>
+<span id="cb8-8"><a aria-label="8"></a><span class="bu">print</span>(<span class="ss">f"sparse memory   : </span><span class="sc">{</span>X<span class="sc">.</span>data<span class="sc">.</span>nbytes <span class="op">/</span> <span class="fl">1e6</span><span class="sc">:.1f}</span><span class="ss"> MB"</span>)</span>
+<span id="cb8-9"><a aria-label="9"></a><span class="bu">print</span>(<span class="ss">f"dense would be  : </span><span class="sc">{</span>X<span class="sc">.</span>shape[<span class="dv">0</span>] <span class="op">*</span> X<span class="sc">.</span>shape[<span class="dv">1</span>] <span class="op">*</span> <span class="dv">4</span> <span class="op">/</span> <span class="fl">1e6</span><span class="sc">:.1f}</span><span class="ss"> MB"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>type            : csr_matrix
 shape           : (2700, 32738)
@@ -669,7 +937,7 @@ dense would be  : 353.6 MB</code></pre>
 </div>
 </div>
 </section>
-<section id="why-so-many-zeros" class="slide level2">
+<section id="why-so-many-zeros" class="slide level2 extends">
 <h2>Why so many zeros</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -705,13 +973,13 @@ dense would be  : 353.6 MB</code></pre>
 </div>
 <div class="callout-content">
 <p>Subsetting an <code>AnnData</code> returns a <strong>view</strong>, not a copy — cheap, but read-only in practice:</p>
-<div id="a88a404f" class="cell" data-execution_count="5">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a aria-label="1"></a>view <span class="op">=</span> adata[:<span class="dv">1000</span>, adata.var_names.<span class="bu">str</span>.startswith(<span class="st">"MT-"</span>)]</span>
-<span id="cb5-2"><a aria-label="2"></a><span class="bu">print</span>(<span class="st">"is a view :"</span>, view.is_view)</span>
-<span id="cb5-3"><a aria-label="3"></a><span class="bu">print</span>(<span class="st">"shape     :"</span>, view.shape)</span>
-<span id="cb5-4"><a aria-label="4"></a></span>
-<span id="cb5-5"><a aria-label="5"></a>real <span class="op">=</span> view.copy()</span>
-<span id="cb5-6"><a aria-label="6"></a><span class="bu">print</span>(<span class="st">"after .copy() -&gt;"</span>, real.is_view)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="908372ec" class="cell" data-execution_count="8">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a aria-label="1"></a>view <span class="op">=</span> adata[:<span class="dv">1000</span>, adata.var_names.<span class="bu">str</span>.startswith(<span class="st">"MT-"</span>)]</span>
+<span id="cb10-2"><a aria-label="2"></a><span class="bu">print</span>(<span class="st">"is a view :"</span>, view.is_view)</span>
+<span id="cb10-3"><a aria-label="3"></a><span class="bu">print</span>(<span class="st">"shape     :"</span>, view.shape)</span>
+<span id="cb10-4"><a aria-label="4"></a></span>
+<span id="cb10-5"><a aria-label="5"></a>real <span class="op">=</span> view.copy()</span>
+<span id="cb10-6"><a aria-label="6"></a><span class="bu">print</span>(<span class="st">"after .copy() -&gt;"</span>, real.is_view)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>is a view : True
 shape     : (1000, 13)
@@ -720,6 +988,61 @@ after .copy() -&gt; False</code></pre>
 </div>
 <p>Note that one expression sliced <strong>both</strong> axes and carried <code>.obs</code> and <code>.var</code> along with them.</p>
 <p>Writing to a view triggers an implicit copy and a warning. The habit worth forming: <strong>end every filtering step with <code>.copy()</code></strong>, as we do below. It costs memory once and saves confusion repeatedly.</p>
+<p>Indexing follows <code>pandas</code>: <strong>integers</strong> behave like <code>.iloc</code> (position), <strong>strings</strong> like <code>.loc</code> (name).</p>
+</div>
+</div>
+</div>
+</section>
+<section id="three-ecosystems-one-api-style" class="slide level2">
+<h2>Three ecosystems, one API style</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Where the tools come from</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>Bioconductor</strong> and <strong>Seurat</strong> (R) — mature, well documented, but can struggle beyond ~500 000 cells</li>
+<li><strong>scverse</strong> (Python) — <code>anndata</code>, <code>scanpy</code>, and domain packages built on them (<code>squidpy</code> for spatial, <code>scirpy</code> for immune receptors); chosen for scalability and for interoperability with the Python data and ML stack</li>
+</ul>
+<p><code>scanpy</code> groups its functions by step, and every call takes the <code>AnnData</code> as its first argument:</p>
+<table class="caption-top">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>module</th>
+<th>for</th>
+<th>example</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>sc.pp</code></td>
+<td>preprocessing</td>
+<td><code>sc.pp.normalize_total</code></td>
+</tr>
+<tr class="even">
+<td><code>sc.tl</code></td>
+<td>tools that compute something new</td>
+<td><code>sc.tl.umap</code>, <code>sc.tl.leiden</code></td>
+</tr>
+<tr class="odd">
+<td><code>sc.pl</code></td>
+<td>plotting</td>
+<td><code>sc.pl.umap</code></td>
+</tr>
+<tr class="even">
+<td><code>sc.datasets</code></td>
+<td>example data</td>
+<td><code>sc.datasets.pbmc3k</code></td>
+</tr>
+</tbody>
+</table>
+<p>Automated end-to-end pipelines exist (e.g.&nbsp;scFlow), but every step depends on the previous one and on the biology, and the book’s position is that they cannot replace the decisions.</p>
 </div>
 </div>
 </div>
@@ -733,17 +1056,17 @@ after .copy() -&gt; False</code></pre>
 </div>
 <div class="callout-content">
 <p>The on-disk format is HDF5 with a documented layout — <code>.X</code>, <code>.obs</code>, <code>.var</code> and every other slot round-trip exactly.</p>
-<div id="23110ee4" class="cell" data-execution_count="6">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a aria-label="1"></a><span class="im">import</span> tempfile, os</span>
-<span id="cb7-2"><a aria-label="2"></a><span class="im">import</span> anndata <span class="im">as</span> ad</span>
-<span id="cb7-3"><a aria-label="3"></a></span>
-<span id="cb7-4"><a aria-label="4"></a>path <span class="op">=</span> os.path.join(tempfile.mkdtemp(), <span class="st">"pbmc.h5ad"</span>)</span>
-<span id="cb7-5"><a aria-label="5"></a>adata.write(path)</span>
-<span id="cb7-6"><a aria-label="6"></a><span class="bu">print</span>(<span class="ss">f"written: </span><span class="sc">{</span>os<span class="sc">.</span>path<span class="sc">.</span>getsize(path) <span class="op">/</span> <span class="fl">1e6</span><span class="sc">:.1f}</span><span class="ss"> MB"</span>)</span>
-<span id="cb7-7"><a aria-label="7"></a></span>
-<span id="cb7-8"><a aria-label="8"></a>back <span class="op">=</span> ad.read_h5ad(path, backed<span class="op">=</span><span class="st">"r"</span>)</span>
-<span id="cb7-9"><a aria-label="9"></a><span class="bu">print</span>(<span class="st">"backed mode:"</span>, back.isbacked, <span class="st">"| X:"</span>, <span class="bu">type</span>(back.X).<span class="va">__name__</span>)</span>
-<span id="cb7-10"><a aria-label="10"></a>back.<span class="bu">file</span>.close()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="b3fc7253" class="cell" data-execution_count="9">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a aria-label="1"></a><span class="im">import</span> tempfile, os</span>
+<span id="cb12-2"><a aria-label="2"></a><span class="im">import</span> anndata <span class="im">as</span> ad</span>
+<span id="cb12-3"><a aria-label="3"></a></span>
+<span id="cb12-4"><a aria-label="4"></a>path <span class="op">=</span> os.path.join(tempfile.mkdtemp(), <span class="st">"pbmc.h5ad"</span>)</span>
+<span id="cb12-5"><a aria-label="5"></a>adata.write(path)</span>
+<span id="cb12-6"><a aria-label="6"></a><span class="bu">print</span>(<span class="ss">f"written: </span><span class="sc">{</span>os<span class="sc">.</span>path<span class="sc">.</span>getsize(path) <span class="op">/</span> <span class="fl">1e6</span><span class="sc">:.1f}</span><span class="ss"> MB"</span>)</span>
+<span id="cb12-7"><a aria-label="7"></a></span>
+<span id="cb12-8"><a aria-label="8"></a>back <span class="op">=</span> ad.read_h5ad(path, backed<span class="op">=</span><span class="st">"r"</span>)</span>
+<span id="cb12-9"><a aria-label="9"></a><span class="bu">print</span>(<span class="st">"backed mode:"</span>, back.isbacked, <span class="st">"| X:"</span>, <span class="bu">type</span>(back.X).<span class="va">__name__</span>)</span>
+<span id="cb12-10"><a aria-label="10"></a>back.<span class="bu">file</span>.close()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>written: 21.5 MB
 backed mode: True | X: _CSRDataset</code></pre>
@@ -755,7 +1078,7 @@ backed mode: True | X: _CSRDataset</code></pre>
 </div>
 <!-- =========================================================================
      SOURCE: sc-best-practices, Preprocessing / "Quality Control"
-       https://www.sc-best-practices.org/preprocessing_visualization/quality_control.html
+       https://www.sc-best-practices.org/preprocessing-visualization/quality-control/
        Motivation | Filtering low quality cells (MAD) | Ambient RNA (SoupX, R:
        described only) | Doublet detection (scDblFinder is R; we use scrublet)
      ========================================================================= -->
@@ -779,30 +1102,31 @@ backed mode: True | X: _CSRDataset</code></pre>
 <div class="callout-content">
 <p>Before QC there is an earlier question the pipeline already answered: of the ~750 000 possible barcodes, which caught a <strong>cell</strong> and which caught only ambient soup?</p>
 <p>Rank barcodes by total counts, plot on log-log, and a real experiment shows a <strong>knee</strong>: a plateau of true cells, a sharp drop, then a long tail of empty droplets.</p>
-<div id="ca7870de" class="cell" data-execution_count="7">
+<div id="c6f69286" class="cell" data-execution_count="10">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a aria-label="1"></a>raw <span class="op">=</span> sc.datasets.pbmc3k()</span>
-<span id="cb9-2"><a aria-label="2"></a>counts <span class="op">=</span> np.asarray(raw.X.<span class="bu">sum</span>(<span class="dv">1</span>)).ravel()</span>
-<span id="cb9-3"><a aria-label="3"></a>order <span class="op">=</span> np.sort(counts)[::<span class="op">-</span><span class="dv">1</span>]</span>
-<span id="cb9-4"><a aria-label="4"></a></span>
-<span id="cb9-5"><a aria-label="5"></a>f, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">5</span>, <span class="fl">3.2</span>))</span>
-<span id="cb9-6"><a aria-label="6"></a>ax.loglog(np.arange(<span class="dv">1</span>, <span class="bu">len</span>(order) <span class="op">+</span> <span class="dv">1</span>), order)</span>
-<span id="cb9-7"><a aria-label="7"></a>ax.set_xlabel(<span class="st">"barcode rank"</span>)</span>
-<span id="cb9-8"><a aria-label="8"></a>ax.set_ylabel(<span class="st">"total UMI counts"</span>)</span>
-<span id="cb9-9"><a aria-label="9"></a>ax.set_title(<span class="st">"barcode rank plot"</span>)</span>
-<span id="cb9-10"><a aria-label="10"></a>plt.tight_layout()</span>
-<span id="cb9-11"><a aria-label="11"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a aria-label="1"></a>raw <span class="op">=</span> sc.datasets.pbmc3k()</span>
+<span id="cb14-2"><a aria-label="2"></a>counts <span class="op">=</span> np.asarray(raw.X.<span class="bu">sum</span>(<span class="dv">1</span>)).ravel()</span>
+<span id="cb14-3"><a aria-label="3"></a>order <span class="op">=</span> np.sort(counts)[::<span class="op">-</span><span class="dv">1</span>]</span>
+<span id="cb14-4"><a aria-label="4"></a></span>
+<span id="cb14-5"><a aria-label="5"></a>f, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">5</span>, <span class="fl">3.2</span>))</span>
+<span id="cb14-6"><a aria-label="6"></a>ax.loglog(np.arange(<span class="dv">1</span>, <span class="bu">len</span>(order) <span class="op">+</span> <span class="dv">1</span>), order)</span>
+<span id="cb14-7"><a aria-label="7"></a>ax.set_xlabel(<span class="st">"barcode rank"</span>)</span>
+<span id="cb14-8"><a aria-label="8"></a>ax.set_ylabel(<span class="st">"total UMI counts"</span>)</span>
+<span id="cb14-9"><a aria-label="9"></a>ax.set_title(<span class="st">"barcode rank plot"</span>)</span>
+<span id="cb14-10"><a aria-label="10"></a>plt.tight_layout()</span>
+<span id="cb14-11"><a aria-label="11"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div>
 <figure>
-<p><img data-src="bio3_files/figure-revealjs/cell-7-output-1.png" width="525" height="327"></p>
+<p><img data-src="bio3_files/figure-revealjs/cell-10-output-1.png" width="525" height="327"></p>
 </figure>
 </div>
 </div>
 </div>
 <p>This dataset is already <em>filtered</em> — the empty droplets were removed upstream — which is why the tail falls off a cliff instead of running on for another <span class="math inline">\(10^5\)</span> barcodes.</p>
+<p>The book is frank about the knee: not every curve has one, knees are hard to find automatically, and total UMIs alone is a weak signal. Modern callers instead fit a <strong>statistical model</strong> to several features (UMIs, genes detected, mitochondrial fraction) and score each barcode by its probability of being a real, intact cell.</p>
 </div>
 </div>
 </div>
@@ -846,18 +1170,20 @@ backed mode: True | X: _CSRDataset</code></pre>
 <p><strong><code>calculate_qc_metrics</code></strong></p>
 </div>
 <div class="callout-content">
-<div id="8897ffa0" class="cell" data-execution_count="8">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a aria-label="1"></a>adata.var[<span class="st">"mt"</span>] <span class="op">=</span> adata.var_names.<span class="bu">str</span>.startswith(<span class="st">"MT-"</span>)</span>
-<span id="cb10-2"><a aria-label="2"></a>adata.var[<span class="st">"ribo"</span>] <span class="op">=</span> adata.var_names.<span class="bu">str</span>.startswith((<span class="st">"RPS"</span>, <span class="st">"RPL"</span>))</span>
-<span id="cb10-3"><a aria-label="3"></a></span>
-<span id="cb10-4"><a aria-label="4"></a>sc.pp.calculate_qc_metrics(</span>
-<span id="cb10-5"><a aria-label="5"></a>    adata, qc_vars<span class="op">=</span>[<span class="st">"mt"</span>, <span class="st">"ribo"</span>], inplace<span class="op">=</span><span class="va">True</span>, log1p<span class="op">=</span><span class="va">True</span>, percent_top<span class="op">=</span>[<span class="dv">20</span>]</span>
-<span id="cb10-6"><a aria-label="6"></a>)</span>
-<span id="cb10-7"><a aria-label="7"></a></span>
-<span id="cb10-8"><a aria-label="8"></a>adata.obs[</span>
-<span id="cb10-9"><a aria-label="9"></a>    [<span class="st">"n_genes_by_counts"</span>, <span class="st">"total_counts"</span>, <span class="st">"pct_counts_mt"</span>, <span class="st">"pct_counts_ribo"</span>]</span>
-<span id="cb10-10"><a aria-label="10"></a>].describe().<span class="bu">round</span>(<span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display" data-execution_count="7">
+<div id="7d12cd15" class="cell" data-execution_count="11">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a aria-label="1"></a>adata.var_names_make_unique()      <span class="co"># duplicated gene symbols break later steps</span></span>
+<span id="cb15-2"><a aria-label="2"></a>adata.var[<span class="st">"mt"</span>] <span class="op">=</span> adata.var_names.<span class="bu">str</span>.startswith(<span class="st">"MT-"</span>)</span>
+<span id="cb15-3"><a aria-label="3"></a>adata.var[<span class="st">"ribo"</span>] <span class="op">=</span> adata.var_names.<span class="bu">str</span>.startswith((<span class="st">"RPS"</span>, <span class="st">"RPL"</span>))</span>
+<span id="cb15-4"><a aria-label="4"></a>adata.var[<span class="st">"hb"</span>] <span class="op">=</span> adata.var_names.<span class="bu">str</span>.contains(<span class="vs">r"</span><span class="dv">^</span><span class="vs">HB</span><span class="pp">[ABDEGMQZ]</span><span class="dv">\d</span><span class="op">*</span><span class="ex">(</span><span class="fu">?!</span><span class="dv">\w</span><span class="ex">)</span><span class="vs">"</span>)</span>
+<span id="cb15-5"><a aria-label="5"></a></span>
+<span id="cb15-6"><a aria-label="6"></a>sc.pp.calculate_qc_metrics(</span>
+<span id="cb15-7"><a aria-label="7"></a>    adata, qc_vars<span class="op">=</span>[<span class="st">"mt"</span>, <span class="st">"ribo"</span>, <span class="st">"hb"</span>], inplace<span class="op">=</span><span class="va">True</span>, log1p<span class="op">=</span><span class="va">True</span>, percent_top<span class="op">=</span>[<span class="dv">20</span>]</span>
+<span id="cb15-8"><a aria-label="8"></a>)</span>
+<span id="cb15-9"><a aria-label="9"></a></span>
+<span id="cb15-10"><a aria-label="10"></a>adata.obs[</span>
+<span id="cb15-11"><a aria-label="11"></a>    [<span class="st">"n_genes_by_counts"</span>, <span class="st">"total_counts"</span>, <span class="st">"pct_counts_mt"</span>, <span class="st">"pct_counts_ribo"</span>, <span class="st">"pct_counts_hb"</span>]</span>
+<span id="cb15-12"><a aria-label="12"></a>].describe().<span class="bu">round</span>(<span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="168">
 <div>
 <style scoped="">
     .dataframe tbody tr th:only-of-type {
@@ -881,11 +1207,13 @@ backed mode: True | X: _CSRDataset</code></pre>
 <th data-quarto-table-cell-role="th">total_counts</th>
 <th data-quarto-table-cell-role="th">pct_counts_mt</th>
 <th data-quarto-table-cell-role="th">pct_counts_ribo</th>
+<th data-quarto-table-cell-role="th">pct_counts_hb</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">count</th>
+<td>2700.00</td>
 <td>2700.00</td>
 <td>2700.00</td>
 <td>2700.00</td>
@@ -897,6 +1225,7 @@ backed mode: True | X: _CSRDataset</code></pre>
 <td>2366.90</td>
 <td>2.22</td>
 <td>34.95</td>
+<td>0.00</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">std</th>
@@ -904,6 +1233,7 @@ backed mode: True | X: _CSRDataset</code></pre>
 <td>1094.26</td>
 <td>1.17</td>
 <td>10.22</td>
+<td>0.03</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">min</th>
@@ -911,6 +1241,7 @@ backed mode: True | X: _CSRDataset</code></pre>
 <td>548.00</td>
 <td>0.00</td>
 <td>1.06</td>
+<td>0.00</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">25%</th>
@@ -918,6 +1249,7 @@ backed mode: True | X: _CSRDataset</code></pre>
 <td>1757.75</td>
 <td>1.54</td>
 <td>26.33</td>
+<td>0.00</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">50%</th>
@@ -925,6 +1257,7 @@ backed mode: True | X: _CSRDataset</code></pre>
 <td>2197.00</td>
 <td>2.03</td>
 <td>36.77</td>
+<td>0.00</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">75%</th>
@@ -932,6 +1265,7 @@ backed mode: True | X: _CSRDataset</code></pre>
 <td>2763.00</td>
 <td>2.64</td>
 <td>43.35</td>
+<td>0.00</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">max</th>
@@ -939,6 +1273,7 @@ backed mode: True | X: _CSRDataset</code></pre>
 <td>15844.00</td>
 <td>22.57</td>
 <td>59.44</td>
+<td>1.36</td>
 </tr>
 </tbody>
 </table>
@@ -949,7 +1284,8 @@ backed mode: True | X: _CSRDataset</code></pre>
 <ul>
 <li><code>n_genes_by_counts</code> — genes with a positive count in this cell</li>
 <li><code>total_counts</code> — library size</li>
-<li><code>pct_counts_mt</code> — proportion of counts that are mitochondrial</li>
+<li><code>pct_counts_mt</code> — proportion of counts that are mitochondrial (<code>MT-</code> in human, <code>mt-</code> in mouse — a prefix match depends on the annotation the data ships with)</li>
+<li><code>pct_counts_ribo</code>, <code>pct_counts_hb</code> — <strong>diagnostics, not filters</strong>: high haemoglobin points at red-blood-cell contamination; ribosomal content tracks cell state and can explain later clusters</li>
 </ul>
 </div>
 </div>
@@ -957,26 +1293,26 @@ backed mode: True | X: _CSRDataset</code></pre>
 </section>
 <section id="looking-at-the-distributions" class="slide level2 scrollable">
 <h2>Looking at the distributions</h2>
-<div id="207c6aa4" class="cell" data-execution_count="9">
+<div id="e2d2ac56" class="cell" data-execution_count="12">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a aria-label="1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
-<span id="cb11-2"><a aria-label="2"></a><span class="im">import</span> seaborn <span class="im">as</span> sns</span>
-<span id="cb11-3"><a aria-label="3"></a></span>
-<span id="cb11-4"><a aria-label="4"></a>f, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">11</span>, <span class="dv">3</span>))</span>
-<span id="cb11-5"><a aria-label="5"></a>sns.histplot(adata.obs[<span class="st">"total_counts"</span>], bins<span class="op">=</span><span class="dv">100</span>, ax<span class="op">=</span>axs[<span class="dv">0</span>])</span>
-<span id="cb11-6"><a aria-label="6"></a>axs[<span class="dv">0</span>].set_title(<span class="st">"count depth"</span>)</span>
-<span id="cb11-7"><a aria-label="7"></a>sns.histplot(adata.obs[<span class="st">"n_genes_by_counts"</span>], bins<span class="op">=</span><span class="dv">100</span>, ax<span class="op">=</span>axs[<span class="dv">1</span>])</span>
-<span id="cb11-8"><a aria-label="8"></a>axs[<span class="dv">1</span>].set_title(<span class="st">"genes detected"</span>)</span>
-<span id="cb11-9"><a aria-label="9"></a>sns.histplot(adata.obs[<span class="st">"pct_counts_mt"</span>], bins<span class="op">=</span><span class="dv">100</span>, ax<span class="op">=</span>axs[<span class="dv">2</span>])</span>
-<span id="cb11-10"><a aria-label="10"></a>axs[<span class="dv">2</span>].set_title(<span class="st">"% mitochondrial"</span>)</span>
-<span id="cb11-11"><a aria-label="11"></a>plt.tight_layout()</span>
-<span id="cb11-12"><a aria-label="12"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a aria-label="1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb16-2"><a aria-label="2"></a><span class="im">import</span> seaborn <span class="im">as</span> sns</span>
+<span id="cb16-3"><a aria-label="3"></a></span>
+<span id="cb16-4"><a aria-label="4"></a>f, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">11</span>, <span class="dv">3</span>))</span>
+<span id="cb16-5"><a aria-label="5"></a>sns.histplot(adata.obs[<span class="st">"total_counts"</span>], bins<span class="op">=</span><span class="dv">100</span>, ax<span class="op">=</span>axs[<span class="dv">0</span>])</span>
+<span id="cb16-6"><a aria-label="6"></a>axs[<span class="dv">0</span>].set_title(<span class="st">"count depth"</span>)</span>
+<span id="cb16-7"><a aria-label="7"></a>sns.histplot(adata.obs[<span class="st">"n_genes_by_counts"</span>], bins<span class="op">=</span><span class="dv">100</span>, ax<span class="op">=</span>axs[<span class="dv">1</span>])</span>
+<span id="cb16-8"><a aria-label="8"></a>axs[<span class="dv">1</span>].set_title(<span class="st">"genes detected"</span>)</span>
+<span id="cb16-9"><a aria-label="9"></a>sns.histplot(adata.obs[<span class="st">"pct_counts_mt"</span>], bins<span class="op">=</span><span class="dv">100</span>, ax<span class="op">=</span>axs[<span class="dv">2</span>])</span>
+<span id="cb16-10"><a aria-label="10"></a>axs[<span class="dv">2</span>].set_title(<span class="st">"% mitochondrial"</span>)</span>
+<span id="cb16-11"><a aria-label="11"></a>plt.tight_layout()</span>
+<span id="cb16-12"><a aria-label="12"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div>
 <figure>
-<p><img data-src="bio3_files/figure-revealjs/cell-9-output-1.png" width="1185" height="305"></p>
+<p><img data-src="bio3_files/figure-revealjs/cell-12-output-1.png" width="1185" height="305"></p>
 </figure>
 </div>
 </div>
@@ -985,18 +1321,18 @@ backed mode: True | X: _CSRDataset</code></pre>
 </section>
 <section id="the-joint-view" class="slide level2 scrollable">
 <h2>The joint view</h2>
-<div id="a0bc6d3e" class="cell" data-execution_count="10">
+<div id="d78dc11d" class="cell" data-execution_count="13">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a aria-label="1"></a>sc.pl.scatter(</span>
-<span id="cb12-2"><a aria-label="2"></a>    adata, x<span class="op">=</span><span class="st">"total_counts"</span>, y<span class="op">=</span><span class="st">"n_genes_by_counts"</span>, color<span class="op">=</span><span class="st">"pct_counts_mt"</span>, show<span class="op">=</span><span class="va">False</span></span>
-<span id="cb12-3"><a aria-label="3"></a>)</span>
-<span id="cb12-4"><a aria-label="4"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a aria-label="1"></a>sc.pl.scatter(</span>
+<span id="cb17-2"><a aria-label="2"></a>    adata, x<span class="op">=</span><span class="st">"total_counts"</span>, y<span class="op">=</span><span class="st">"n_genes_by_counts"</span>, color<span class="op">=</span><span class="st">"pct_counts_mt"</span>, show<span class="op">=</span><span class="va">False</span></span>
+<span id="cb17-3"><a aria-label="3"></a>)</span>
+<span id="cb17-4"><a aria-label="4"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div>
 <figure>
-<p><img data-src="bio3_files/figure-revealjs/cell-10-output-1.png" width="589" height="438"></p>
+<p><img data-src="bio3_files/figure-revealjs/cell-13-output-1.png" width="589" height="438"></p>
 </figure>
 </div>
 </div>
@@ -1014,16 +1350,21 @@ backed mode: True | X: _CSRDataset</code></pre>
 <p>Rather than eyeballing cut-offs, mark a cell an outlier if a covariate sits more than <span class="math inline">\(n\)</span> <strong>MADs</strong> from the median:</p>
 <p><span class="math display">\[\text{MAD} = \operatorname{median}\big(|X_i - \operatorname{median}(X)|\big)\]</span></p>
 <p>MAD is used instead of the standard deviation because it is <strong>robust</strong>: a handful of extreme cells do not inflate it, whereas they would inflate <span class="math inline">\(\sigma\)</span> and hide themselves.</p>
-<div id="8c6e2c5c" class="cell" data-execution_count="11">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a aria-label="1"></a><span class="im">from</span> scipy.stats <span class="im">import</span> median_abs_deviation</span>
-<span id="cb13-2"><a aria-label="2"></a></span>
-<span id="cb13-3"><a aria-label="3"></a></span>
-<span id="cb13-4"><a aria-label="4"></a><span class="kw">def</span> is_outlier(adata, metric: <span class="bu">str</span>, nmads: <span class="bu">int</span>):</span>
-<span id="cb13-5"><a aria-label="5"></a>    M <span class="op">=</span> adata.obs[metric]</span>
-<span id="cb13-6"><a aria-label="6"></a>    <span class="cf">return</span> (M <span class="op">&lt;</span> np.median(M) <span class="op">-</span> nmads <span class="op">*</span> median_abs_deviation(M)) <span class="op">|</span> (</span>
-<span id="cb13-7"><a aria-label="7"></a>        np.median(M) <span class="op">+</span> nmads <span class="op">*</span> median_abs_deviation(M) <span class="op">&lt;</span> M</span>
-<span id="cb13-8"><a aria-label="8"></a>    )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="1f989d02" class="cell" data-execution_count="14">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a aria-label="1"></a><span class="im">from</span> scipy.stats <span class="im">import</span> median_abs_deviation</span>
+<span id="cb18-2"><a aria-label="2"></a></span>
+<span id="cb18-3"><a aria-label="3"></a></span>
+<span id="cb18-4"><a aria-label="4"></a><span class="kw">def</span> mad_thresholds(values, nmads):</span>
+<span id="cb18-5"><a aria-label="5"></a>    med, mad <span class="op">=</span> np.median(values), median_abs_deviation(values)</span>
+<span id="cb18-6"><a aria-label="6"></a>    <span class="cf">return</span> med <span class="op">-</span> nmads <span class="op">*</span> mad, med <span class="op">+</span> nmads <span class="op">*</span> mad</span>
+<span id="cb18-7"><a aria-label="7"></a></span>
+<span id="cb18-8"><a aria-label="8"></a></span>
+<span id="cb18-9"><a aria-label="9"></a><span class="kw">def</span> is_outlier(adata, metric: <span class="bu">str</span>, nmads: <span class="bu">float</span>, side: <span class="bu">str</span> <span class="op">=</span> <span class="st">"both"</span>):</span>
+<span id="cb18-10"><a aria-label="10"></a>    values <span class="op">=</span> adata.obs[metric]</span>
+<span id="cb18-11"><a aria-label="11"></a>    lower, upper <span class="op">=</span> mad_thresholds(values, nmads)</span>
+<span id="cb18-12"><a aria-label="12"></a>    <span class="cf">return</span> values <span class="op">&gt;</span> upper <span class="cf">if</span> side <span class="op">==</span> <span class="st">"upper"</span> <span class="cf">else</span> (values <span class="op">&lt;</span> lower) <span class="op">|</span> (values <span class="op">&gt;</span> upper)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
+<p><strong>Low <em>and</em> high</strong> count depth or gene number deserve a look; only a <strong>high</strong> mitochondrial fraction marks damage — hence the <code>side</code> argument.</p>
 </div>
 </div>
 </div>
@@ -1036,29 +1377,63 @@ backed mode: True | X: _CSRDataset</code></pre>
 <p><strong>Applying it</strong></p>
 </div>
 <div class="callout-content">
-<div id="8204d23a" class="cell" data-execution_count="12">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a aria-label="1"></a>adata.obs[<span class="st">"outlier"</span>] <span class="op">=</span> (</span>
-<span id="cb14-2"><a aria-label="2"></a>    is_outlier(adata, <span class="st">"log1p_total_counts"</span>, <span class="dv">5</span>)</span>
-<span id="cb14-3"><a aria-label="3"></a>    <span class="op">|</span> is_outlier(adata, <span class="st">"log1p_n_genes_by_counts"</span>, <span class="dv">5</span>)</span>
-<span id="cb14-4"><a aria-label="4"></a>    <span class="op">|</span> is_outlier(adata, <span class="st">"pct_counts_in_top_20_genes"</span>, <span class="dv">5</span>)</span>
-<span id="cb14-5"><a aria-label="5"></a>)</span>
-<span id="cb14-6"><a aria-label="6"></a>adata.obs[<span class="st">"mt_outlier"</span>] <span class="op">=</span> is_outlier(adata, <span class="st">"pct_counts_mt"</span>, <span class="dv">3</span>) <span class="op">|</span> (</span>
-<span id="cb14-7"><a aria-label="7"></a>    adata.obs[<span class="st">"pct_counts_mt"</span>] <span class="op">&gt;</span> <span class="dv">8</span></span>
-<span id="cb14-8"><a aria-label="8"></a>)</span>
-<span id="cb14-9"><a aria-label="9"></a></span>
-<span id="cb14-10"><a aria-label="10"></a><span class="bu">print</span>(<span class="st">"count/gene outliers :"</span>, <span class="bu">int</span>(adata.obs.outlier.<span class="bu">sum</span>()))</span>
-<span id="cb14-11"><a aria-label="11"></a><span class="bu">print</span>(<span class="st">"mitochondrial       :"</span>, <span class="bu">int</span>(adata.obs.mt_outlier.<span class="bu">sum</span>()))</span>
-<span id="cb14-12"><a aria-label="12"></a><span class="bu">print</span>(<span class="st">"total cells         :"</span>, adata.n_obs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="2fe571f7" class="cell" data-execution_count="15">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a aria-label="1"></a><span class="im">from</span> scipy.special <span class="im">import</span> logit</span>
+<span id="cb19-2"><a aria-label="2"></a></span>
+<span id="cb19-3"><a aria-label="3"></a><span class="co"># a bounded, skewed fraction is logit-transformed before MADs; +1/+2 keeps zeros finite</span></span>
+<span id="cb19-4"><a aria-label="4"></a>mt_fraction <span class="op">=</span> (adata.obs[<span class="st">"total_counts_mt"</span>] <span class="op">+</span> <span class="dv">1</span>) <span class="op">/</span> (adata.obs[<span class="st">"total_counts"</span>] <span class="op">+</span> <span class="dv">2</span>)</span>
+<span id="cb19-5"><a aria-label="5"></a>adata.obs[<span class="st">"logit_mt_fraction"</span>] <span class="op">=</span> logit(mt_fraction)</span>
+<span id="cb19-6"><a aria-label="6"></a></span>
+<span id="cb19-7"><a aria-label="7"></a>qc_filters <span class="op">=</span> {</span>
+<span id="cb19-8"><a aria-label="8"></a>    <span class="st">"log1p_total_counts"</span>: (<span class="dv">5</span>, <span class="st">"both"</span>),</span>
+<span id="cb19-9"><a aria-label="9"></a>    <span class="st">"log1p_n_genes_by_counts"</span>: (<span class="dv">5</span>, <span class="st">"both"</span>),</span>
+<span id="cb19-10"><a aria-label="10"></a>    <span class="st">"pct_counts_in_top_20_genes"</span>: (<span class="dv">5</span>, <span class="st">"both"</span>),</span>
+<span id="cb19-11"><a aria-label="11"></a>    <span class="st">"logit_mt_fraction"</span>: (<span class="dv">3</span>, <span class="st">"upper"</span>),</span>
+<span id="cb19-12"><a aria-label="12"></a>}</span>
+<span id="cb19-13"><a aria-label="13"></a>flags <span class="op">=</span> {m: is_outlier(adata, m, n, side) <span class="cf">for</span> m, (n, side) <span class="kw">in</span> qc_filters.items()}</span>
+<span id="cb19-14"><a aria-label="14"></a></span>
+<span id="cb19-15"><a aria-label="15"></a>adata.obs[<span class="st">"outlier"</span>] <span class="op">=</span> (flags[<span class="st">"log1p_total_counts"</span>] <span class="op">|</span> flags[<span class="st">"log1p_n_genes_by_counts"</span>]</span>
+<span id="cb19-16"><a aria-label="16"></a>                        <span class="op">|</span> flags[<span class="st">"pct_counts_in_top_20_genes"</span>])</span>
+<span id="cb19-17"><a aria-label="17"></a>adata.obs[<span class="st">"mt_outlier"</span>] <span class="op">=</span> flags[<span class="st">"logit_mt_fraction"</span>] <span class="op">&amp;</span> (adata.obs[<span class="st">"pct_counts_mt"</span>] <span class="op">&gt;</span> <span class="dv">8</span>)</span>
+<span id="cb19-18"><a aria-label="18"></a></span>
+<span id="cb19-19"><a aria-label="19"></a><span class="bu">print</span>(<span class="st">"count/gene outliers :"</span>, <span class="bu">int</span>(adata.obs.outlier.<span class="bu">sum</span>()))</span>
+<span id="cb19-20"><a aria-label="20"></a><span class="bu">print</span>(<span class="st">"mitochondrial       :"</span>, <span class="bu">int</span>(adata.obs.mt_outlier.<span class="bu">sum</span>()))</span>
+<span id="cb19-21"><a aria-label="21"></a><span class="bu">print</span>(<span class="st">"total cells         :"</span>, adata.n_obs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>count/gene outliers : 101
-mitochondrial       : 212
+mitochondrial       : 8
 total cells         : 2700</code></pre>
 </div>
 </div>
-<p>Note the <strong>asymmetry</strong>: 5 MADs on depth-like covariates, but only 3 on the mitochondrial fraction <em>plus</em> a hard 8% ceiling. The mitochondrial signal is the one we trust most as evidence of damage.</p>
+<p>Note the <strong>asymmetry</strong>: 5 MADs, both sides, on depth-like covariates; on the mitochondrial fraction a cell must exceed <strong>both</strong> 3 MADs (upper side only) <strong>and</strong> a fixed 8%. The 8% follows Germain <em>et al.</em> (2020) and is not universal — mitochondrial content differs between tissues.</p>
 </div>
 </div>
 </div>
+</section>
+<section id="draw-the-thresholds-before-you-filter" class="slide level2 scrollable">
+<h2>Draw the thresholds before you filter</h2>
+<div id="65887973" class="cell" data-execution_count="16">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a aria-label="1"></a>f, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">4</span>, figsize<span class="op">=</span>(<span class="dv">13</span>, <span class="fl">2.8</span>))</span>
+<span id="cb21-2"><a aria-label="2"></a><span class="cf">for</span> ax, (metric, (nmads, side)) <span class="kw">in</span> <span class="bu">zip</span>(axs, qc_filters.items()):</span>
+<span id="cb21-3"><a aria-label="3"></a>    sns.histplot(adata.obs[metric], bins<span class="op">=</span><span class="dv">100</span>, ax<span class="op">=</span>ax)</span>
+<span id="cb21-4"><a aria-label="4"></a>    lower, upper <span class="op">=</span> mad_thresholds(adata.obs[metric], nmads)</span>
+<span id="cb21-5"><a aria-label="5"></a>    <span class="cf">for</span> t <span class="kw">in</span> ([upper] <span class="cf">if</span> side <span class="op">==</span> <span class="st">"upper"</span> <span class="cf">else</span> [lower, upper]):</span>
+<span id="cb21-6"><a aria-label="6"></a>        ax.axvline(t, color<span class="op">=</span><span class="st">"red"</span>)</span>
+<span id="cb21-7"><a aria-label="7"></a>    ax.set_title(metric, fontsize<span class="op">=</span><span class="dv">7</span>)<span class="op">;</span> ax.set_xlabel(<span class="st">""</span>)</span>
+<span id="cb21-8"><a aria-label="8"></a>axs[<span class="op">-</span><span class="dv">1</span>].axvline(logit(<span class="fl">0.08</span>), color<span class="op">=</span><span class="st">"red"</span>, ls<span class="op">=</span><span class="st">"--"</span>)</span>
+<span id="cb21-9"><a aria-label="9"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure>
+<p><img data-src="bio3_files/figure-revealjs/cell-16-output-1.png" width="1405" height="283"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>The book’s advice: automatic thresholds do not work for every dataset, so <strong>look at them on the distributions</strong> first. In the book’s bone-marrow sample they only clip the tails, and the mitochondrial MAD line sits below 8% — so the fixed dashed cutoff is what actually decides. Check which line binds here. Be permissive: it is easier to remove more cells after annotation than to recover a rare population you filtered away.</p>
 </section>
 <section id="ambient-rna" class="slide level2">
 <h2>Ambient RNA</h2>
@@ -1085,6 +1460,7 @@ total cells         : 2700</code></pre>
 <div class="callout-content">
 <p>The correction estimates the soup profile from <strong>empty droplets</strong> — barcodes that caught no cell, but did catch the ambient mix — and subtracts a fraction of it from every real cell.</p>
 <p>The standard tool (<strong>SoupX</strong>) is R-only, so we do not run it here. Its idea matters more than its API: <em>droplet-based data has a background, and the background is measurable.</em></p>
+<p>Unlike cell filtering, the book treats this step as <strong>optional</strong>: it applies only to droplet protocols, and whether it is worth doing depends on how contaminated the sample is and how sensitive the downstream analysis is. SoupX also works better given a rough clustering — an early example of a preprocessing step that needs a later one.</p>
 </div>
 </div>
 </div>
@@ -1120,17 +1496,17 @@ total cells         : 2700</code></pre>
 </div>
 <div class="callout-content">
 <p>The trick: you cannot label real doublets, but you <em>can</em> make them. Add pairs of observed cells together to synthesise artificial doublets, embed everything, and score each real cell by how many of its neighbours are artificial.</p>
-<div id="ba4b8f2d" class="cell" data-execution_count="13">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a aria-label="1"></a>sc.pp.scrublet(adata, random_state<span class="op">=</span><span class="dv">0</span>)</span>
-<span id="cb16-2"><a aria-label="2"></a></span>
-<span id="cb16-3"><a aria-label="3"></a><span class="bu">print</span>(<span class="st">"flagged doublets :"</span>, <span class="bu">int</span>(adata.obs.predicted_doublet.<span class="bu">sum</span>()))</span>
-<span id="cb16-4"><a aria-label="4"></a><span class="bu">print</span>(<span class="ss">f"rate             : </span><span class="sc">{</span><span class="dv">100</span> <span class="op">*</span> adata<span class="sc">.</span>obs<span class="sc">.</span>predicted_doublet<span class="sc">.</span>mean()<span class="sc">:.1f}</span><span class="ss">%"</span>)</span>
-<span id="cb16-5"><a aria-label="5"></a><span class="bu">print</span>(</span>
-<span id="cb16-6"><a aria-label="6"></a>    <span class="st">"score range      :"</span>,</span>
-<span id="cb16-7"><a aria-label="7"></a>    <span class="bu">round</span>(adata.obs.doublet_score.<span class="bu">min</span>(), <span class="dv">3</span>),</span>
-<span id="cb16-8"><a aria-label="8"></a>    <span class="st">"-"</span>,</span>
-<span id="cb16-9"><a aria-label="9"></a>    <span class="bu">round</span>(adata.obs.doublet_score.<span class="bu">max</span>(), <span class="dv">3</span>),</span>
-<span id="cb16-10"><a aria-label="10"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="88e4541f" class="cell" data-execution_count="17">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a aria-label="1"></a>sc.pp.scrublet(adata, random_state<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb22-2"><a aria-label="2"></a></span>
+<span id="cb22-3"><a aria-label="3"></a><span class="bu">print</span>(<span class="st">"flagged doublets :"</span>, <span class="bu">int</span>(adata.obs.predicted_doublet.<span class="bu">sum</span>()))</span>
+<span id="cb22-4"><a aria-label="4"></a><span class="bu">print</span>(<span class="ss">f"rate             : </span><span class="sc">{</span><span class="dv">100</span> <span class="op">*</span> adata<span class="sc">.</span>obs<span class="sc">.</span>predicted_doublet<span class="sc">.</span>mean()<span class="sc">:.1f}</span><span class="ss">%"</span>)</span>
+<span id="cb22-5"><a aria-label="5"></a><span class="bu">print</span>(</span>
+<span id="cb22-6"><a aria-label="6"></a>    <span class="st">"score range      :"</span>,</span>
+<span id="cb22-7"><a aria-label="7"></a>    <span class="bu">round</span>(adata.obs.doublet_score.<span class="bu">min</span>(), <span class="dv">3</span>),</span>
+<span id="cb22-8"><a aria-label="8"></a>    <span class="st">"-"</span>,</span>
+<span id="cb22-9"><a aria-label="9"></a>    <span class="bu">round</span>(adata.obs.doublet_score.<span class="bu">max</span>(), <span class="dv">3</span>),</span>
+<span id="cb22-10"><a aria-label="10"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>flagged doublets : 32
 rate             : 1.2%
@@ -1155,6 +1531,20 @@ score range      : 0.007 - 0.506</code></pre>
 </div>
 </div>
 </div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Three practical points from the book</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>run doublet detection <strong>per sample</strong> — doublets only form between cells captured together</li>
+<li><strong>plate-based</strong> protocols (Smart-seq2) sort one cell per well, so doublets are much rarer and ambient-RNA correction does not apply; filtering low-quality cells still does</li>
+<li>whether to detect doublets before or after ambient correction is <strong>unsettled</strong>; the book runs it after. Its tool, <code>scDblFinder</code> (R), <em>averages</em> two cells’ profiles to simulate a doublet; Scrublet, used here, <em>sums</em> them — the same idea</li>
+</ul>
+</div>
+</div>
+</div>
 </section>
 <section id="applying-the-filters" class="slide level2 scrollable">
 <h2>Applying the filters</h2>
@@ -1164,17 +1554,17 @@ score range      : 0.007 - 0.506</code></pre>
 <p><strong>Cells, then genes</strong></p>
 </div>
 <div class="callout-content">
-<div id="f9a02122" class="cell" data-execution_count="14">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a aria-label="1"></a>n_before <span class="op">=</span> adata.n_obs</span>
-<span id="cb18-2"><a aria-label="2"></a>adata <span class="op">=</span> adata[(<span class="op">~</span>adata.obs.outlier) <span class="op">&amp;</span> (<span class="op">~</span>adata.obs.mt_outlier)].copy()</span>
-<span id="cb18-3"><a aria-label="3"></a><span class="bu">print</span>(<span class="ss">f"cells: </span><span class="sc">{</span>n_before<span class="sc">}</span><span class="ss"> -&gt; </span><span class="sc">{</span>adata<span class="sc">.</span>n_obs<span class="sc">}</span><span class="ss">  (</span><span class="sc">{</span>n_before <span class="op">-</span> adata<span class="sc">.</span>n_obs<span class="sc">}</span><span class="ss"> removed)"</span>)</span>
-<span id="cb18-4"><a aria-label="4"></a></span>
-<span id="cb18-5"><a aria-label="5"></a>n_genes_before <span class="op">=</span> adata.n_vars</span>
-<span id="cb18-6"><a aria-label="6"></a>sc.pp.filter_genes(adata, min_cells<span class="op">=</span><span class="dv">20</span>)</span>
-<span id="cb18-7"><a aria-label="7"></a><span class="bu">print</span>(<span class="ss">f"genes: </span><span class="sc">{</span>n_genes_before<span class="sc">}</span><span class="ss"> -&gt; </span><span class="sc">{</span>adata<span class="sc">.</span>n_vars<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="b9c8af93" class="cell" data-execution_count="18">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a aria-label="1"></a>n_before <span class="op">=</span> adata.n_obs</span>
+<span id="cb24-2"><a aria-label="2"></a>adata <span class="op">=</span> adata[(<span class="op">~</span>adata.obs.outlier) <span class="op">&amp;</span> (<span class="op">~</span>adata.obs.mt_outlier)].copy()</span>
+<span id="cb24-3"><a aria-label="3"></a><span class="bu">print</span>(<span class="ss">f"cells: </span><span class="sc">{</span>n_before<span class="sc">}</span><span class="ss"> -&gt; </span><span class="sc">{</span>adata<span class="sc">.</span>n_obs<span class="sc">}</span><span class="ss">  (</span><span class="sc">{</span>n_before <span class="op">-</span> adata<span class="sc">.</span>n_obs<span class="sc">}</span><span class="ss"> removed)"</span>)</span>
+<span id="cb24-4"><a aria-label="4"></a></span>
+<span id="cb24-5"><a aria-label="5"></a>n_genes_before <span class="op">=</span> adata.n_vars</span>
+<span id="cb24-6"><a aria-label="6"></a>sc.pp.filter_genes(adata, min_cells<span class="op">=</span><span class="dv">20</span>)</span>
+<span id="cb24-7"><a aria-label="7"></a><span class="bu">print</span>(<span class="ss">f"genes: </span><span class="sc">{</span>n_genes_before<span class="sc">}</span><span class="ss"> -&gt; </span><span class="sc">{</span>adata<span class="sc">.</span>n_vars<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>cells: 2700 -&gt; 2419  (281 removed)
-genes: 32738 -&gt; 9483</code></pre>
+<pre><code>cells: 2700 -&gt; 2596  (104 removed)
+genes: 32738 -&gt; 9605</code></pre>
 </div>
 </div>
 <p>Genes detected in fewer than 20 cells are dropped: at that level you cannot distinguish real low-level expression from ambient contamination or noise, and they add dimensions without adding signal.</p>
@@ -1183,7 +1573,7 @@ genes: 32738 -&gt; 9483</code></pre>
 </div>
 <!-- =========================================================================
      SOURCE: sc-best-practices, Preprocessing / "Normalization"
-       https://www.sc-best-practices.org/preprocessing_visualization/normalization.html
+       https://www.sc-best-practices.org/preprocessing-visualization/normalization/
        Motivation (Gamma-Poisson) | Shifted logarithm | Analytic Pearson
        residuals.  scran pooling is R-only -- named in prose, no code.
      ========================================================================= -->
@@ -1219,7 +1609,7 @@ genes: 32738 -&gt; 9483</code></pre>
 </div>
 </div>
 </section>
-<section id="the-meanvariance-relationship" class="slide level2 scrollable">
+<section id="the-meanvariance-relationship" class="slide level2 scrollable extends">
 <h2>The mean–variance relationship</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1227,28 +1617,28 @@ genes: 32738 -&gt; 9483</code></pre>
 <p><strong>Seeing the problem before fixing it</strong></p>
 </div>
 <div class="callout-content">
-<div id="7427ca82" class="cell" data-execution_count="15">
+<div id="95aec807" class="cell" data-execution_count="19">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a aria-label="1"></a>cnt <span class="op">=</span> adata.X  <span class="co"># still raw counts -- we have not normalized yet</span></span>
-<span id="cb20-2"><a aria-label="2"></a>mean <span class="op">=</span> np.asarray(cnt.mean(<span class="dv">0</span>)).ravel()</span>
-<span id="cb20-3"><a aria-label="3"></a>var <span class="op">=</span> np.asarray(cnt.power(<span class="dv">2</span>).mean(<span class="dv">0</span>)).ravel() <span class="op">-</span> mean<span class="op">**</span><span class="dv">2</span></span>
-<span id="cb20-4"><a aria-label="4"></a>keep <span class="op">=</span> mean <span class="op">&gt;</span> <span class="dv">0</span></span>
-<span id="cb20-5"><a aria-label="5"></a></span>
-<span id="cb20-6"><a aria-label="6"></a>f, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">5</span>, <span class="fl">3.4</span>))</span>
-<span id="cb20-7"><a aria-label="7"></a>ax.loglog(mean[keep], var[keep], <span class="st">"."</span>, ms<span class="op">=</span><span class="dv">2</span>, alpha<span class="op">=</span><span class="fl">0.3</span>)</span>
-<span id="cb20-8"><a aria-label="8"></a>lo, hi <span class="op">=</span> mean[keep].<span class="bu">min</span>(), mean[keep].<span class="bu">max</span>()</span>
-<span id="cb20-9"><a aria-label="9"></a>ax.loglog([lo, hi], [lo, hi], <span class="st">"r-"</span>, lw<span class="op">=</span><span class="dv">1</span>, label<span class="op">=</span><span class="st">"Poisson: Var = mean"</span>)</span>
-<span id="cb20-10"><a aria-label="10"></a>ax.set_xlabel(<span class="st">"gene mean"</span>)</span>
-<span id="cb20-11"><a aria-label="11"></a>ax.set_ylabel(<span class="st">"gene variance"</span>)</span>
-<span id="cb20-12"><a aria-label="12"></a>ax.legend()</span>
-<span id="cb20-13"><a aria-label="13"></a>plt.tight_layout()</span>
-<span id="cb20-14"><a aria-label="14"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a aria-label="1"></a>cnt <span class="op">=</span> adata.X  <span class="co"># still raw counts -- we have not normalized yet</span></span>
+<span id="cb26-2"><a aria-label="2"></a>mean <span class="op">=</span> np.asarray(cnt.mean(<span class="dv">0</span>)).ravel()</span>
+<span id="cb26-3"><a aria-label="3"></a>var <span class="op">=</span> np.asarray(cnt.power(<span class="dv">2</span>).mean(<span class="dv">0</span>)).ravel() <span class="op">-</span> mean<span class="op">**</span><span class="dv">2</span></span>
+<span id="cb26-4"><a aria-label="4"></a>keep <span class="op">=</span> mean <span class="op">&gt;</span> <span class="dv">0</span></span>
+<span id="cb26-5"><a aria-label="5"></a></span>
+<span id="cb26-6"><a aria-label="6"></a>f, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">5</span>, <span class="fl">3.4</span>))</span>
+<span id="cb26-7"><a aria-label="7"></a>ax.loglog(mean[keep], var[keep], <span class="st">"."</span>, ms<span class="op">=</span><span class="dv">2</span>, alpha<span class="op">=</span><span class="fl">0.3</span>)</span>
+<span id="cb26-8"><a aria-label="8"></a>lo, hi <span class="op">=</span> mean[keep].<span class="bu">min</span>(), mean[keep].<span class="bu">max</span>()</span>
+<span id="cb26-9"><a aria-label="9"></a>ax.loglog([lo, hi], [lo, hi], <span class="st">"r-"</span>, lw<span class="op">=</span><span class="dv">1</span>, label<span class="op">=</span><span class="st">"Poisson: Var = mean"</span>)</span>
+<span id="cb26-10"><a aria-label="10"></a>ax.set_xlabel(<span class="st">"gene mean"</span>)</span>
+<span id="cb26-11"><a aria-label="11"></a>ax.set_ylabel(<span class="st">"gene variance"</span>)</span>
+<span id="cb26-12"><a aria-label="12"></a>ax.legend()</span>
+<span id="cb26-13"><a aria-label="13"></a>plt.tight_layout()</span>
+<span id="cb26-14"><a aria-label="14"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div>
 <figure>
-<p><img data-src="bio3_files/figure-revealjs/cell-15-output-1.png" width="525" height="349"></p>
+<p><img data-src="bio3_files/figure-revealjs/cell-19-output-1.png" width="525" height="349"></p>
 </figure>
 </div>
 </div>
@@ -1270,7 +1660,8 @@ genes: 32738 -&gt; 9483</code></pre>
 <p>with <span class="math inline">\(y\)</span> the raw count, <span class="math inline">\(s\)</span> a per-cell <strong>size factor</strong>, and <span class="math inline">\(y_0\)</span> a pseudo-count (usually 1, so that zeros stay zero).</p>
 <p>The size factor is just the cell’s depth relative to a target:</p>
 <p><span class="math display">\[s_c = \frac{\sum_g y_{gc}}{L}\]</span></p>
-<p><code>scanpy</code> uses the <strong>median count depth</strong> as <span class="math inline">\(L\)</span>; other conventions use <span class="math inline">\(L = 10^4\)</span> or <span class="math inline">\(10^6\)</span> (the familiar <em>counts per million</em>).</p>
+<p><code>scanpy</code> uses the <strong>median count depth</strong> as <span class="math inline">\(L\)</span> (<code>target_sum=None</code>); other conventions use <span class="math inline">\(L = 10^4\)</span> or <span class="math inline">\(10^6\)</span> (the familiar <em>counts per million</em>).</p>
+<p>These may look like arbitrary constants. They are not: with <span class="math inline">\(L = 10^6\)</span> and <span class="math inline">\(y_0 = 1\)</span>, the transform behaves as if the data were far <strong>more overdispersed</strong> than single-cell counts usually are. <span class="math inline">\(L\)</span> and <span class="math inline">\(y_0\)</span> together are a modelling choice.</p>
 </div>
 </div>
 </div>
@@ -1283,18 +1674,18 @@ genes: 32738 -&gt; 9483</code></pre>
 <p><strong>In two lines</strong></p>
 </div>
 <div class="callout-content">
-<div id="dd6ec9ca" class="cell" data-execution_count="16">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a aria-label="1"></a>adata.layers[<span class="st">"counts"</span>] <span class="op">=</span> adata.X.copy()      <span class="co"># keep the raw counts!</span></span>
-<span id="cb21-2"><a aria-label="2"></a></span>
-<span id="cb21-3"><a aria-label="3"></a>sc.pp.normalize_total(adata)</span>
-<span id="cb21-4"><a aria-label="4"></a>sc.pp.log1p(adata)</span>
-<span id="cb21-5"><a aria-label="5"></a>adata.layers[<span class="st">"log1p_norm"</span>] <span class="op">=</span> adata.X.copy()</span>
-<span id="cb21-6"><a aria-label="6"></a></span>
-<span id="cb21-7"><a aria-label="7"></a><span class="bu">print</span>(adata)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="5440572b" class="cell" data-execution_count="20">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a aria-label="1"></a>adata.layers[<span class="st">"counts"</span>] <span class="op">=</span> adata.X.copy()      <span class="co"># keep the raw counts!</span></span>
+<span id="cb27-2"><a aria-label="2"></a></span>
+<span id="cb27-3"><a aria-label="3"></a>sc.pp.normalize_total(adata)</span>
+<span id="cb27-4"><a aria-label="4"></a>sc.pp.log1p(adata)</span>
+<span id="cb27-5"><a aria-label="5"></a>adata.layers[<span class="st">"log1p_norm"</span>] <span class="op">=</span> adata.X.copy()</span>
+<span id="cb27-6"><a aria-label="6"></a></span>
+<span id="cb27-7"><a aria-label="7"></a><span class="bu">print</span>(adata)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>AnnData object with n_obs × n_vars = 2419 × 9483
-    obs: 'n_genes_by_counts', 'log1p_n_genes_by_counts', 'total_counts', 'log1p_total_counts', 'pct_counts_in_top_20_genes', 'total_counts_mt', 'log1p_total_counts_mt', 'pct_counts_mt', 'total_counts_ribo', 'log1p_total_counts_ribo', 'pct_counts_ribo', 'outlier', 'mt_outlier', 'doublet_score', 'predicted_doublet'
-    var: 'gene_ids', 'mt', 'ribo', 'n_cells_by_counts', 'mean_counts', 'log1p_mean_counts', 'pct_dropout_by_counts', 'total_counts', 'log1p_total_counts', 'n_cells'
+<pre><code>AnnData object with n_obs × n_vars = 2596 × 9605
+    obs: 'n_genes_by_counts', 'log1p_n_genes_by_counts', 'total_counts', 'log1p_total_counts', 'pct_counts_in_top_20_genes', 'total_counts_mt', 'log1p_total_counts_mt', 'pct_counts_mt', 'total_counts_ribo', 'log1p_total_counts_ribo', 'pct_counts_ribo', 'total_counts_hb', 'log1p_total_counts_hb', 'pct_counts_hb', 'logit_mt_fraction', 'outlier', 'mt_outlier', 'doublet_score', 'predicted_doublet'
+    var: 'gene_ids', 'mt', 'ribo', 'hb', 'n_cells_by_counts', 'mean_counts', 'log1p_mean_counts', 'pct_dropout_by_counts', 'total_counts', 'log1p_total_counts', 'n_cells'
     uns: 'scrublet', 'log1p'
     layers: None (.X), 'counts', 'log1p_norm'</code></pre>
 </div>
@@ -1306,21 +1697,21 @@ genes: 32738 -&gt; 9483</code></pre>
 </section>
 <section id="before-and-after" class="slide level2 scrollable">
 <h2>Before and after</h2>
-<div id="7a25a146" class="cell" data-execution_count="17">
+<div id="186f1a62" class="cell" data-execution_count="21">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a aria-label="1"></a>f, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="fl">3.2</span>))</span>
-<span id="cb23-2"><a aria-label="2"></a>sns.histplot(adata.layers[<span class="st">"counts"</span>].<span class="bu">sum</span>(<span class="dv">1</span>), bins<span class="op">=</span><span class="dv">100</span>, ax<span class="op">=</span>axs[<span class="dv">0</span>])</span>
-<span id="cb23-3"><a aria-label="3"></a>axs[<span class="dv">0</span>].set_title(<span class="st">"raw count depth per cell"</span>)</span>
-<span id="cb23-4"><a aria-label="4"></a>sns.histplot(adata.layers[<span class="st">"log1p_norm"</span>].<span class="bu">sum</span>(<span class="dv">1</span>), bins<span class="op">=</span><span class="dv">100</span>, ax<span class="op">=</span>axs[<span class="dv">1</span>])</span>
-<span id="cb23-5"><a aria-label="5"></a>axs[<span class="dv">1</span>].set_title(<span class="st">"after shifted logarithm"</span>)</span>
-<span id="cb23-6"><a aria-label="6"></a>plt.tight_layout()</span>
-<span id="cb23-7"><a aria-label="7"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a aria-label="1"></a>f, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="fl">3.2</span>))</span>
+<span id="cb29-2"><a aria-label="2"></a>sns.histplot(adata.layers[<span class="st">"counts"</span>].<span class="bu">sum</span>(<span class="dv">1</span>), bins<span class="op">=</span><span class="dv">100</span>, ax<span class="op">=</span>axs[<span class="dv">0</span>])</span>
+<span id="cb29-3"><a aria-label="3"></a>axs[<span class="dv">0</span>].set_title(<span class="st">"raw count depth per cell"</span>)</span>
+<span id="cb29-4"><a aria-label="4"></a>sns.histplot(adata.layers[<span class="st">"log1p_norm"</span>].<span class="bu">sum</span>(<span class="dv">1</span>), bins<span class="op">=</span><span class="dv">100</span>, ax<span class="op">=</span>axs[<span class="dv">1</span>])</span>
+<span id="cb29-5"><a aria-label="5"></a>axs[<span class="dv">1</span>].set_title(<span class="st">"after shifted logarithm"</span>)</span>
+<span id="cb29-6"><a aria-label="6"></a>plt.tight_layout()</span>
+<span id="cb29-7"><a aria-label="7"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div>
 <figure>
-<p><img data-src="bio3_files/figure-revealjs/cell-17-output-1.png" width="1075" height="327"></p>
+<p><img data-src="bio3_files/figure-revealjs/cell-21-output-1.png" width="1075" height="327"></p>
 </figure>
 </div>
 </div>
@@ -1338,17 +1729,17 @@ genes: 32738 -&gt; 9483</code></pre>
 <p>Instead of rescaling and log-transforming, fit a model of what counts you would expect <em>from sequencing depth alone</em>, and keep the residual:</p>
 <p><span class="math display">\[z_{gc} = \frac{y_{gc} - \hat\mu_{gc}}{\sqrt{\hat\mu_{gc} + \hat\mu_{gc}^2/\theta}}\]</span></p>
 <p>where <span class="math inline">\(\hat\mu_{gc}\)</span> is the count expected under a depth-only null model. What remains is, by construction, the part depth does <em>not</em> explain.</p>
-<div id="66013d26" class="cell" data-execution_count="18">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a aria-label="1"></a>pearson <span class="op">=</span> sc.experimental.pp.normalize_pearson_residuals(</span>
-<span id="cb24-2"><a aria-label="2"></a>    adata, layer<span class="op">=</span><span class="st">"counts"</span>, inplace<span class="op">=</span><span class="va">False</span></span>
-<span id="cb24-3"><a aria-label="3"></a>)</span>
-<span id="cb24-4"><a aria-label="4"></a>adata.layers[<span class="st">"pearson"</span>] <span class="op">=</span> pearson[<span class="st">"X"</span>]</span>
-<span id="cb24-5"><a aria-label="5"></a><span class="bu">print</span>(<span class="st">"Pearson residual layer:"</span>, adata.layers[<span class="st">"pearson"</span>].shape)</span>
-<span id="cb24-6"><a aria-label="6"></a><span class="bu">print</span>(<span class="st">"  range:"</span>, <span class="bu">round</span>(<span class="bu">float</span>(adata.layers[<span class="st">"pearson"</span>].<span class="bu">min</span>()), <span class="dv">2</span>),</span>
-<span id="cb24-7"><a aria-label="7"></a>      <span class="st">"to"</span>, <span class="bu">round</span>(<span class="bu">float</span>(adata.layers[<span class="st">"pearson"</span>].<span class="bu">max</span>()), <span class="dv">2</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="19ca1d57" class="cell" data-execution_count="22">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a aria-label="1"></a>pearson <span class="op">=</span> sc.experimental.pp.normalize_pearson_residuals(</span>
+<span id="cb30-2"><a aria-label="2"></a>    adata, layer<span class="op">=</span><span class="st">"counts"</span>, inplace<span class="op">=</span><span class="va">False</span></span>
+<span id="cb30-3"><a aria-label="3"></a>)</span>
+<span id="cb30-4"><a aria-label="4"></a>adata.layers[<span class="st">"pearson"</span>] <span class="op">=</span> pearson[<span class="st">"X"</span>]</span>
+<span id="cb30-5"><a aria-label="5"></a><span class="bu">print</span>(<span class="st">"Pearson residual layer:"</span>, adata.layers[<span class="st">"pearson"</span>].shape)</span>
+<span id="cb30-6"><a aria-label="6"></a><span class="bu">print</span>(<span class="st">"  range:"</span>, <span class="bu">round</span>(<span class="bu">float</span>(adata.layers[<span class="st">"pearson"</span>].<span class="bu">min</span>()), <span class="dv">2</span>),</span>
+<span id="cb30-7"><a aria-label="7"></a>      <span class="st">"to"</span>, <span class="bu">round</span>(<span class="bu">float</span>(adata.layers[<span class="st">"pearson"</span>].<span class="bu">max</span>()), <span class="dv">2</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Pearson residual layer: (2419, 9483)
-  range: -6.58 to 49.18</code></pre>
+<pre><code>Pearson residual layer: (2596, 9605)
+  range: -6.59 to 50.95</code></pre>
 </div>
 </div>
 <p>No pseudo-count, no log, and <strong>negative values are meaningful</strong> — less than depth predicts.</p>
@@ -1395,13 +1786,14 @@ genes: 32738 -&gt; 9483</code></pre>
 </tr>
 </tbody>
 </table>
-<p>The book’s own advice is to compute <strong>several</strong> and keep them as separate <code>layers</code>, then choose per downstream task. This is cheap — a layer is just another matrix — and it makes the choice visible rather than buried.</p>
+<p><strong>How scran works:</strong> sum cells into overlapping <em>pools</em>, estimate a size factor per pool by regression over genes (pools are far less sparse than single cells), then <strong>deconvolve</strong> the pool factors back into one factor per cell. Same shifted logarithm afterwards; only <span class="math inline">\(s\)</span> changes.</p>
+<p>The book’s own advice is to compute <strong>several</strong> and keep them as separate <code>layers</code>, then choose per downstream task. This is cheap — a layer is just another matrix — and it makes the choice visible rather than buried. A 2023 benchmark of <strong>22</strong> transformations (Ahlmann-Eltze &amp; Huber) found the simple shifted logarithm, followed by PCA, holds up remarkably well; but no benchmark yet measures the effect of normalization on <em>every</em> downstream task.</p>
 </div>
 </div>
 </div>
 <!-- =========================================================================
      SOURCE: sc-best-practices, Preprocessing / "Feature selection"
-       https://www.sc-best-practices.org/preprocessing_visualization/feature_selection.html
+       https://www.sc-best-practices.org/preprocessing-visualization/feature-selection/
        Deviance-based selection (scry) is R-only -- described, not run.
      ========================================================================= -->
 </section></section>
@@ -1443,14 +1835,14 @@ genes: 32738 -&gt; 9483</code></pre>
 </div>
 <div class="callout-content">
 <p>A gene with high mean expression will have high variance simply because of the mean–variance relationship. So we select genes whose variance is high <strong>given</strong> their mean — binning by expression level and taking the most dispersed within each bin.</p>
-<div id="eb48cb0c" class="cell" data-execution_count="19">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a aria-label="1"></a>sc.pp.highly_variable_genes(adata, n_top_genes<span class="op">=</span><span class="dv">2000</span>)</span>
-<span id="cb26-2"><a aria-label="2"></a><span class="bu">print</span>(<span class="st">"selected:"</span>, <span class="bu">int</span>(adata.var.highly_variable.<span class="bu">sum</span>()), <span class="st">"of"</span>, adata.n_vars)</span>
-<span id="cb26-3"><a aria-label="3"></a>adata.var.loc[adata.var.highly_variable, [<span class="st">"means"</span>, <span class="st">"dispersions_norm"</span>]].head()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="9dade23d" class="cell" data-execution_count="23">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a aria-label="1"></a>sc.pp.highly_variable_genes(adata, n_top_genes<span class="op">=</span><span class="dv">2000</span>)</span>
+<span id="cb32-2"><a aria-label="2"></a><span class="bu">print</span>(<span class="st">"selected:"</span>, <span class="bu">int</span>(adata.var.highly_variable.<span class="bu">sum</span>()), <span class="st">"of"</span>, adata.n_vars)</span>
+<span id="cb32-3"><a aria-label="3"></a>adata.var.loc[adata.var.highly_variable, [<span class="st">"means"</span>, <span class="st">"dispersions_norm"</span>]].head()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>selected: 2000 of 9483</code></pre>
+<pre><code>selected: 2000 of 9605</code></pre>
 </div>
-<div class="cell-output cell-output-display" data-execution_count="18">
+<div class="cell-output cell-output-display" data-execution_count="180">
 <div>
 <style scoped="">
     .dataframe tbody tr th:only-of-type {
@@ -1482,28 +1874,28 @@ genes: 32738 -&gt; 9483</code></pre>
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">ISG15</th>
-<td>0.716154</td>
-<td>0.991774</td>
+<td>0.705348</td>
+<td>0.820465</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">TNFRSF4</th>
-<td>0.071765</td>
-<td>0.339945</td>
+<td>0.068963</td>
+<td>0.291708</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">CPSF3L</th>
-<td>0.103844</td>
-<td>4.261950</td>
+<td>0.099882</td>
+<td>4.178588</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">MRPL20</th>
-<td>0.277746</td>
-<td>0.672410</td>
+<td>0.269468</td>
+<td>0.550658</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">C1orf86</th>
-<td>0.198141</td>
-<td>1.408984</td>
+<td>0.196418</td>
+<td>1.315959</td>
 </tr>
 </tbody>
 </table>
@@ -1517,23 +1909,23 @@ genes: 32738 -&gt; 9483</code></pre>
 </section>
 <section id="highly-variable-genes-1" class="slide level2 scrollable">
 <h2>Highly variable genes</h2>
-<div id="8e816e48" class="cell" data-execution_count="20">
+<div id="2bea61eb" class="cell" data-execution_count="24">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a aria-label="1"></a>sc.pl.highly_variable_genes(adata, show<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb28-2"><a aria-label="2"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a aria-label="1"></a>sc.pl.highly_variable_genes(adata, show<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb34-2"><a aria-label="2"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div>
 <figure>
-<p><img data-src="bio3_files/figure-revealjs/cell-20-output-1.png" width="941" height="426"></p>
+<p><img data-src="bio3_files/figure-revealjs/cell-24-output-1.png" width="941" height="426"></p>
 </figure>
 </div>
 </div>
 </div>
 <p>Black points are selected. Note they span the whole expression range — that is the mean-correction working. A naive “top variance” rule would have selected only the right-hand side.</p>
 </section>
-<section id="does-the-choice-matter" class="slide level2 scrollable">
+<section id="does-the-choice-matter" class="slide level2 scrollable extends">
 <h2>Does the choice matter?</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1541,22 +1933,22 @@ genes: 32738 -&gt; 9483</code></pre>
 <p><strong>Comparing two selections</strong></p>
 </div>
 <div class="callout-content">
-<div id="3662c51a" class="cell" data-execution_count="21">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a aria-label="1"></a>hvg_seurat <span class="op">=</span> adata.var.highly_variable.copy()</span>
-<span id="cb29-2"><a aria-label="2"></a></span>
-<span id="cb29-3"><a aria-label="3"></a>sc.pp.highly_variable_genes(adata, n_top_genes<span class="op">=</span><span class="dv">2000</span>, flavor<span class="op">=</span><span class="st">"cell_ranger"</span>)</span>
-<span id="cb29-4"><a aria-label="4"></a>hvg_cellranger <span class="op">=</span> adata.var.highly_variable.copy()</span>
-<span id="cb29-5"><a aria-label="5"></a></span>
-<span id="cb29-6"><a aria-label="6"></a>overlap <span class="op">=</span> (hvg_seurat <span class="op">&amp;</span> hvg_cellranger).<span class="bu">sum</span>()</span>
-<span id="cb29-7"><a aria-label="7"></a><span class="bu">print</span>(<span class="ss">f"seurat flavour     : </span><span class="sc">{</span>hvg_seurat<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb29-8"><a aria-label="8"></a><span class="bu">print</span>(<span class="ss">f"cell_ranger flavour: </span><span class="sc">{</span>hvg_cellranger<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb29-9"><a aria-label="9"></a><span class="bu">print</span>(<span class="ss">f"overlap            : </span><span class="sc">{</span>overlap<span class="sc">}</span><span class="ss">  (</span><span class="sc">{</span><span class="dv">100</span> <span class="op">*</span> overlap <span class="op">/</span> <span class="dv">2000</span><span class="sc">:.0f}</span><span class="ss">%)"</span>)</span>
-<span id="cb29-10"><a aria-label="10"></a></span>
-<span id="cb29-11"><a aria-label="11"></a>adata.var[<span class="st">"highly_variable"</span>] <span class="op">=</span> hvg_seurat  <span class="co"># restore</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="0bdf78e4" class="cell" data-execution_count="25">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a aria-label="1"></a>hvg_seurat <span class="op">=</span> adata.var.highly_variable.copy()</span>
+<span id="cb35-2"><a aria-label="2"></a></span>
+<span id="cb35-3"><a aria-label="3"></a>sc.pp.highly_variable_genes(adata, n_top_genes<span class="op">=</span><span class="dv">2000</span>, flavor<span class="op">=</span><span class="st">"cell_ranger"</span>)</span>
+<span id="cb35-4"><a aria-label="4"></a>hvg_cellranger <span class="op">=</span> adata.var.highly_variable.copy()</span>
+<span id="cb35-5"><a aria-label="5"></a></span>
+<span id="cb35-6"><a aria-label="6"></a>overlap <span class="op">=</span> (hvg_seurat <span class="op">&amp;</span> hvg_cellranger).<span class="bu">sum</span>()</span>
+<span id="cb35-7"><a aria-label="7"></a><span class="bu">print</span>(<span class="ss">f"seurat flavour     : </span><span class="sc">{</span>hvg_seurat<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb35-8"><a aria-label="8"></a><span class="bu">print</span>(<span class="ss">f"cell_ranger flavour: </span><span class="sc">{</span>hvg_cellranger<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb35-9"><a aria-label="9"></a><span class="bu">print</span>(<span class="ss">f"overlap            : </span><span class="sc">{</span>overlap<span class="sc">}</span><span class="ss">  (</span><span class="sc">{</span><span class="dv">100</span> <span class="op">*</span> overlap <span class="op">/</span> <span class="dv">2000</span><span class="sc">:.0f}</span><span class="ss">%)"</span>)</span>
+<span id="cb35-10"><a aria-label="10"></a></span>
+<span id="cb35-11"><a aria-label="11"></a>adata.var[<span class="st">"highly_variable"</span>] <span class="op">=</span> hvg_seurat  <span class="co"># restore</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>seurat flavour     : 2000
 cell_ranger flavour: 2000
-overlap            : 1296  (65%)</code></pre>
+overlap            : 1278  (64%)</code></pre>
 </div>
 </div>
 <p>Two reasonable methods, same dataset, same <span class="math inline">\(k\)</span> — and they disagree on a substantial share of the list. That disagreement propagates into the PCA, the graph, and the clusters.</p>
@@ -1578,14 +1970,53 @@ overlap            : 1296  (65%)</code></pre>
 <p>Deviance is twice the gap in log likelihood between two models of a gene’s counts: one where every cell draws the gene at the same rate, and one that reproduces the counts exactly.</p>
 </blockquote>
 <p>A gene switched on in one population and off elsewhere fits the constant-rate model badly, and so scores high. A gene expressed uniformly scores low.</p>
-<p>Its advantage: it works on <strong>raw counts</strong>, so it does not inherit whatever distortions your normalization introduced. The reference implementation is R-only; <code>scanpy</code>’s Pearson-residual HVG selection is the closest Python equivalent.</p>
+<p>Its advantage: it works on <strong>raw counts</strong>, so it does not inherit whatever distortions your normalization introduced — in particular the arbitrary pseudo-count of <code>log1p</code>, which changes how variable a gene <em>looks</em>. This is the book’s <strong>recommended</strong> method; its implementation (<code>scry</code>) is R-only, so we write the closed form ourselves.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="deviance-in-closed-form" class="slide level2 scrollable">
+<h2>Deviance, in closed form</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Binomial deviance per gene, straight from the sparse counts</strong></p>
+</div>
+<div class="callout-content">
+<p>With <span class="math inline">\(n_c\)</span> the total count of cell <span class="math inline">\(c\)</span> and <span class="math inline">\(\pi_g = \sum_c y_{gc} / \sum_c n_c\)</span> the gene’s overall share:</p>
+<p><span class="math display">\[D_g = 2 \sum_c \left[ y_{gc} \log\frac{y_{gc}}{n_c \pi_g} + (n_c - y_{gc}) \log\frac{n_c - y_{gc}}{n_c (1 - \pi_g)} \right]\]</span></p>
+<p>Cells where <span class="math inline">\(y_{gc} = 0\)</span> contribute <span class="math inline">\(-n_c \log(1 - \pi_g)\)</span> each, so only the non-zero entries need individual work:</p>
+<div id="4cbe5135" class="cell" data-execution_count="26">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a aria-label="1"></a>C <span class="op">=</span> adata.layers[<span class="st">"counts"</span>].tocoo().astype(np.float64)</span>
+<span id="cb37-2"><a aria-label="2"></a>n_c <span class="op">=</span> np.asarray(adata.layers[<span class="st">"counts"</span>].<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">1</span>)).ravel()</span>
+<span id="cb37-3"><a aria-label="3"></a>pi_g <span class="op">=</span> np.asarray(adata.layers[<span class="st">"counts"</span>].<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">0</span>)).ravel() <span class="op">/</span> n_c.<span class="bu">sum</span>()</span>
+<span id="cb37-4"><a aria-label="4"></a></span>
+<span id="cb37-5"><a aria-label="5"></a>y, ni, pj <span class="op">=</span> C.data, n_c[C.row], pi_g[C.col]</span>
+<span id="cb37-6"><a aria-label="6"></a>nonzero <span class="op">=</span> y <span class="op">*</span> np.log(y <span class="op">/</span> (ni <span class="op">*</span> pj)) <span class="op">+</span> (ni <span class="op">-</span> y) <span class="op">*</span> np.log((ni <span class="op">-</span> y) <span class="op">/</span> (ni <span class="op">*</span> (<span class="dv">1</span> <span class="op">-</span> pj)))</span>
+<span id="cb37-7"><a aria-label="7"></a>deviance <span class="op">=</span> np.bincount(C.col, nonzero, minlength<span class="op">=</span>adata.n_vars)</span>
+<span id="cb37-8"><a aria-label="8"></a>zero_n <span class="op">=</span> n_c.<span class="bu">sum</span>() <span class="op">-</span> np.bincount(C.col, ni, minlength<span class="op">=</span>adata.n_vars)   <span class="co"># depth of zero cells</span></span>
+<span id="cb37-9"><a aria-label="9"></a>deviance <span class="op">=</span> <span class="dv">2</span> <span class="op">*</span> (deviance <span class="op">-</span> np.log1p(<span class="op">-</span>pi_g) <span class="op">*</span> zero_n)</span>
+<span id="cb37-10"><a aria-label="10"></a></span>
+<span id="cb37-11"><a aria-label="11"></a>adata.var[<span class="st">"binomial_deviance"</span>] <span class="op">=</span> deviance</span>
+<span id="cb37-12"><a aria-label="12"></a>top_dev <span class="op">=</span> adata.var[<span class="st">"binomial_deviance"</span>].rank(ascending<span class="op">=</span><span class="va">False</span>) <span class="op">&lt;=</span> <span class="dv">2000</span></span>
+<span id="cb37-13"><a aria-label="13"></a>overlap <span class="op">=</span> (top_dev <span class="op">&amp;</span> adata.var.highly_variable).<span class="bu">sum</span>()</span>
+<span id="cb37-14"><a aria-label="14"></a><span class="bu">print</span>(<span class="ss">f"top-2000 deviance vs top-2000 HVG (seurat): </span><span class="sc">{</span>overlap<span class="sc">}</span><span class="ss"> shared (</span><span class="sc">{</span>overlap <span class="op">/</span> <span class="dv">20</span><span class="sc">:.0f}</span><span class="ss">%)"</span>)</span>
+<span id="cb37-15"><a aria-label="15"></a><span class="bu">print</span>(<span class="ss">f"median mean count, deviance picks : </span><span class="sc">{</span>adata<span class="sc">.</span>var<span class="sc">.</span>loc[top_dev, <span class="st">'means'</span>]<span class="sc">.</span>median()<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
+<span id="cb37-16"><a aria-label="16"></a><span class="bu">print</span>(<span class="ss">f"median mean count, HVG picks      : </span><span class="sc">{</span>adata<span class="sc">.</span>var<span class="sc">.</span>loc[adata.var.highly_variable, <span class="st">'means'</span>]<span class="sc">.</span>median()<span class="sc">:.3f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>top-2000 deviance vs top-2000 HVG (seurat): 998 shared (50%)
+median mean count, deviance picks : 0.140
+median mean count, HVG picks      : 0.057</code></pre>
+</div>
+</div>
+<p>Deviance favours <strong>more highly expressed</strong> genes — the book observes the same. With several batches, <code>scry</code> fits the null model <em>within</em> each batch, so batch differences do not make a gene look deviant.</p>
 </div>
 </div>
 </div>
 <!-- source: cell-cycle scoring -- sc-best-practices treats this in the
      annotation chapter; placed here because it is a preprocessing decision -->
 </section>
-<section id="unwanted-variation-the-cell-cycle" class="slide level2 scrollable">
+<section id="unwanted-variation-the-cell-cycle" class="slide level2 scrollable extends">
 <h2>Unwanted variation: the cell cycle</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1594,19 +2025,19 @@ overlap            : 1296  (65%)</code></pre>
 </div>
 <div class="callout-content">
 <p>Proliferating cells differ enormously in expression simply because of <strong>where they are in the cell cycle</strong>. If you are studying cell <em>type</em>, that variation is a nuisance that can dominate the clustering.</p>
-<div id="c89c8ced" class="cell" data-execution_count="22">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a aria-label="1"></a>s_genes <span class="op">=</span> [g <span class="cf">for</span> g <span class="kw">in</span> [<span class="st">"MCM5"</span>, <span class="st">"PCNA"</span>, <span class="st">"TYMS"</span>, <span class="st">"MCM2"</span>, <span class="st">"RRM2"</span>, <span class="st">"UNG"</span>, <span class="st">"GINS2"</span>]</span>
-<span id="cb31-2"><a aria-label="2"></a>           <span class="cf">if</span> g <span class="kw">in</span> adata.var_names]</span>
-<span id="cb31-3"><a aria-label="3"></a>g2m_genes <span class="op">=</span> [g <span class="cf">for</span> g <span class="kw">in</span> [<span class="st">"HMGB2"</span>, <span class="st">"CDK1"</span>, <span class="st">"TOP2A"</span>, <span class="st">"MKI67"</span>, <span class="st">"CCNB2"</span>, <span class="st">"BUB1"</span>]</span>
-<span id="cb31-4"><a aria-label="4"></a>             <span class="cf">if</span> g <span class="kw">in</span> adata.var_names]</span>
-<span id="cb31-5"><a aria-label="5"></a></span>
-<span id="cb31-6"><a aria-label="6"></a>sc.tl.score_genes_cell_cycle(adata, s_genes<span class="op">=</span>s_genes, g2m_genes<span class="op">=</span>g2m_genes)</span>
-<span id="cb31-7"><a aria-label="7"></a><span class="bu">print</span>(adata.obs[<span class="st">"phase"</span>].value_counts())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="2f7f486a" class="cell" data-execution_count="27">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a aria-label="1"></a>s_genes <span class="op">=</span> [g <span class="cf">for</span> g <span class="kw">in</span> [<span class="st">"MCM5"</span>, <span class="st">"PCNA"</span>, <span class="st">"TYMS"</span>, <span class="st">"MCM2"</span>, <span class="st">"RRM2"</span>, <span class="st">"UNG"</span>, <span class="st">"GINS2"</span>]</span>
+<span id="cb39-2"><a aria-label="2"></a>           <span class="cf">if</span> g <span class="kw">in</span> adata.var_names]</span>
+<span id="cb39-3"><a aria-label="3"></a>g2m_genes <span class="op">=</span> [g <span class="cf">for</span> g <span class="kw">in</span> [<span class="st">"HMGB2"</span>, <span class="st">"CDK1"</span>, <span class="st">"TOP2A"</span>, <span class="st">"MKI67"</span>, <span class="st">"CCNB2"</span>, <span class="st">"BUB1"</span>]</span>
+<span id="cb39-4"><a aria-label="4"></a>             <span class="cf">if</span> g <span class="kw">in</span> adata.var_names]</span>
+<span id="cb39-5"><a aria-label="5"></a></span>
+<span id="cb39-6"><a aria-label="6"></a>sc.tl.score_genes_cell_cycle(adata, s_genes<span class="op">=</span>s_genes, g2m_genes<span class="op">=</span>g2m_genes)</span>
+<span id="cb39-7"><a aria-label="7"></a><span class="bu">print</span>(adata.obs[<span class="st">"phase"</span>].value_counts())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>phase
-S      1640
-G2M     729
-G1       50
+S      1736
+G2M     789
+G1       71
 Name: count, dtype: int64</code></pre>
 </div>
 </div>
@@ -1626,7 +2057,7 @@ Name: count, dtype: int64</code></pre>
 </div>
 <!-- =========================================================================
      SOURCE: sc-best-practices, Preprocessing / "Dimensionality Reduction"
-       https://www.sc-best-practices.org/preprocessing_visualization/dimensionality_reduction.html
+       https://www.sc-best-practices.org/preprocessing-visualization/dimensionality-reduction/
        PCA | t-SNE | UMAP | Inspecting quality control metrics
      ========================================================================= -->
 </section></section>
@@ -1652,7 +2083,34 @@ Name: count, dtype: int64</code></pre>
 <li><strong>Noise accumulates.</strong> Each extra noisy dimension adds variance without adding signal.</li>
 <li><strong>You cannot look at it.</strong> And looking at it is how cell types get identified.</li>
 </ul>
-<p>The standard route: <strong>PCA</strong> to ~50 dimensions to denoise, then a <strong>neighbour graph</strong>, then a 2-D embedding purely for display.</p>
+<p>The standard route: <strong>PCA</strong> to ~50 dimensions to denoise, then a <strong>neighbour graph</strong>, then a 2-D embedding purely for display. This is Bellman’s <strong>curse of dimensionality</strong> (1957): more dimensions carry more information in theory and more noise and redundancy in practice.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="log-first-and-do-not-scale" class="slide level2">
+<h2>Log first, and do not scale</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Why the input is the shifted logarithm</strong></p>
+</div>
+<div class="callout-content">
+<ol type="1">
+<li>raw expression is <strong>right-skewed</strong> — many zeros, a few huge values; the log keeps a handful of highly expressed genes from dominating every distance</li>
+<li>biological effects are often <strong>multiplicative</strong>; the log turns them into the additive differences PCA, t-SNE and UMAP look for</li>
+<li>variance grows with the mean; the log <strong>stabilises</strong> it</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>A deliberate choice: no z-scoring before PCA</strong></p>
+</div>
+<div class="callout-content">
+<p>Many tutorials scale every gene to mean 0, variance 1 before PCA. The book <strong>does not</strong>. Scaling makes every gene count equally, so a lowly expressed, noisy gene contributes as much variance as a strongly expressed one; leaving it out keeps expression magnitude as a signal of how informative a gene is. Feature selection has already restricted PCA to genes that vary meaningfully, and <code>sc.pp.pca</code> centres the data itself.</p>
 </div>
 </div>
 </div>
@@ -1665,17 +2123,17 @@ Name: count, dtype: int64</code></pre>
 <p><strong>Linear, and used as a denoiser</strong></p>
 </div>
 <div class="callout-content">
-<div id="e3f5b033" class="cell" data-execution_count="23">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a aria-label="1"></a>sc.pp.pca(adata, n_comps<span class="op">=</span><span class="dv">50</span>, mask_var<span class="op">=</span><span class="st">"highly_variable"</span>)</span>
-<span id="cb33-2"><a aria-label="2"></a><span class="bu">print</span>(<span class="st">"X_pca:"</span>, adata.obsm[<span class="st">"X_pca"</span>].shape)</span>
-<span id="cb33-3"><a aria-label="3"></a><span class="bu">print</span>(</span>
-<span id="cb33-4"><a aria-label="4"></a>    <span class="st">"variance explained by first 10 PCs:"</span>,</span>
-<span id="cb33-5"><a aria-label="5"></a>    <span class="bu">round</span>(<span class="dv">100</span> <span class="op">*</span> adata.uns[<span class="st">"pca"</span>][<span class="st">"variance_ratio"</span>][:<span class="dv">10</span>].<span class="bu">sum</span>(), <span class="dv">1</span>),</span>
-<span id="cb33-6"><a aria-label="6"></a>    <span class="st">"%"</span>,</span>
-<span id="cb33-7"><a aria-label="7"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="add4b5ba" class="cell" data-execution_count="28">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a aria-label="1"></a>sc.pp.pca(adata, n_comps<span class="op">=</span><span class="dv">50</span>, mask_var<span class="op">=</span><span class="st">"highly_variable"</span>)</span>
+<span id="cb41-2"><a aria-label="2"></a><span class="bu">print</span>(<span class="st">"X_pca:"</span>, adata.obsm[<span class="st">"X_pca"</span>].shape)</span>
+<span id="cb41-3"><a aria-label="3"></a><span class="bu">print</span>(</span>
+<span id="cb41-4"><a aria-label="4"></a>    <span class="st">"variance explained by first 10 PCs:"</span>,</span>
+<span id="cb41-5"><a aria-label="5"></a>    <span class="bu">round</span>(<span class="dv">100</span> <span class="op">*</span> adata.uns[<span class="st">"pca"</span>][<span class="st">"variance_ratio"</span>][:<span class="dv">10</span>].<span class="bu">sum</span>(), <span class="dv">1</span>),</span>
+<span id="cb41-6"><a aria-label="6"></a>    <span class="st">"%"</span>,</span>
+<span id="cb41-7"><a aria-label="7"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>X_pca: (2419, 50)
-variance explained by first 10 PCs: 25.6 %</code></pre>
+<pre><code>X_pca: (2596, 50)
+variance explained by first 10 PCs: 25.7 %</code></pre>
 </div>
 </div>
 <p>The first components capture the dominant axes of variation — which, in a healthy dataset, are the major cell-type distinctions.</p>
@@ -1683,18 +2141,18 @@ variance explained by first 10 PCs: 25.6 %</code></pre>
 </div>
 </div>
 </section>
-<section id="how-many-components" class="slide level2 scrollable">
+<section id="how-many-components" class="slide level2 scrollable extends">
 <h2>How many components?</h2>
-<div id="afd01a5b" class="cell" data-execution_count="24">
+<div id="3877b03a" class="cell" data-execution_count="29">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a aria-label="1"></a>sc.pl.pca_variance_ratio(adata, n_pcs<span class="op">=</span><span class="dv">50</span>, log<span class="op">=</span><span class="va">True</span>, show<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb35-2"><a aria-label="2"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a aria-label="1"></a>sc.pl.pca_variance_ratio(adata, n_pcs<span class="op">=</span><span class="dv">50</span>, log<span class="op">=</span><span class="va">True</span>, show<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb43-2"><a aria-label="2"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div>
 <figure>
-<p><img data-src="bio3_files/figure-revealjs/cell-24-output-1.png" width="496" height="442"></p>
+<p><img data-src="bio3_files/figure-revealjs/cell-29-output-1.png" width="496" height="442"></p>
 </figure>
 </div>
 </div>
@@ -1709,12 +2167,12 @@ variance explained by first 10 PCs: 25.6 %</code></pre>
 <p><strong>Everything downstream runs on this</strong></p>
 </div>
 <div class="callout-content">
-<div id="126ece0f" class="cell" data-execution_count="25">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a aria-label="1"></a>sc.pp.neighbors(adata, n_neighbors<span class="op">=</span><span class="dv">15</span>, n_pcs<span class="op">=</span><span class="dv">30</span>)</span>
-<span id="cb36-2"><a aria-label="2"></a><span class="bu">print</span>(<span class="st">"graph:"</span>, adata.obsp[<span class="st">"connectivities"</span>].shape,</span>
-<span id="cb36-3"><a aria-label="3"></a>      <span class="st">"| stored edges:"</span>, adata.obsp[<span class="st">"connectivities"</span>].nnz)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="df8a98bb" class="cell" data-execution_count="30">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a aria-label="1"></a>sc.pp.neighbors(adata, n_neighbors<span class="op">=</span><span class="dv">15</span>, n_pcs<span class="op">=</span><span class="dv">30</span>)</span>
+<span id="cb44-2"><a aria-label="2"></a><span class="bu">print</span>(<span class="st">"graph:"</span>, adata.obsp[<span class="st">"connectivities"</span>].shape,</span>
+<span id="cb44-3"><a aria-label="3"></a>      <span class="st">"| stored edges:"</span>, adata.obsp[<span class="st">"connectivities"</span>].nnz)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>graph: (2419, 2419) | stored edges: 53698</code></pre>
+<pre><code>graph: (2596, 2596) | stored edges: 57918</code></pre>
 </div>
 </div>
 <p>Each cell is connected to its <span class="math inline">\(k\)</span> nearest neighbours in PCA space. <strong>Both the clustering and the UMAP in the next lecture are functions of this graph</strong>, not of the original matrix — so <span class="math inline">\(k\)</span> and <code>n_pcs</code> matter more than they look.</p>
@@ -1732,24 +2190,24 @@ variance explained by first 10 PCs: 25.6 %</code></pre>
 <div class="callout-content">
 <p>Both take the high-dimensional neighbourhood structure and find a 2-D arrangement preserving it as well as possible.</p>
 <ul>
-<li><strong>t-SNE</strong> — preserves <em>local</em> structure well; global distances between clusters are not meaningful; slower.</li>
-<li><strong>UMAP</strong> — faster, claims to preserve more global structure, now the default in practice.</li>
+<li><strong>t-SNE</strong> — turns high-dimensional distances into Gaussian neighbour probabilities, then finds a 2-D layout whose Student-<span class="math inline">\(t\)</span> probabilities match them, by gradient descent. Emphasises <strong>local</strong> structure; best initialised from PCA.</li>
+<li><strong>UMAP</strong> — builds a neighbour graph and optimises a 2-D graph to be as similar as possible. Also emphasises local structure, and <strong>which clusters end up next to each other depends on the initialisation</strong>.</li>
 </ul>
-<p>Neither is a projection in the PCA sense. <strong>You cannot invert them, and you cannot read distances off them.</strong></p>
+<p>An independent benchmark of 10 methods (Xiang <em>et al.</em> 2021) ranked t-SNE best overall and UMAP the most stable. Neither is a projection in the PCA sense. <strong>You cannot invert them, and you cannot read distances off them.</strong></p>
 </div>
 </div>
 </div>
 </section>
 <section id="umap" class="slide level2 scrollable">
 <h2>UMAP</h2>
-<div id="303c87db" class="cell" data-execution_count="26">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a aria-label="1"></a>sc.tl.umap(adata)</span>
-<span id="cb38-2"><a aria-label="2"></a>sc.pl.umap(adata, color<span class="op">=</span>[<span class="st">"total_counts"</span>, <span class="st">"pct_counts_mt"</span>], show<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb38-3"><a aria-label="3"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="e89856ff" class="cell" data-execution_count="31">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a aria-label="1"></a>sc.tl.umap(adata)</span>
+<span id="cb46-2"><a aria-label="2"></a>sc.pl.umap(adata, color<span class="op">=</span>[<span class="st">"total_counts"</span>, <span class="st">"pct_counts_mt"</span>], show<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb46-3"><a aria-label="3"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div>
 <figure>
-<p><img data-src="bio3_files/figure-revealjs/cell-26-output-1.png" width="1059" height="389"></p>
+<p><img data-src="bio3_files/figure-revealjs/cell-31-output-1.png" width="1041" height="385"></p>
 </figure>
 </div>
 </div>
@@ -1757,36 +2215,108 @@ variance explained by first 10 PCs: 25.6 %</code></pre>
 </section>
 <section id="t-sne-for-comparison" class="slide level2 scrollable">
 <h2>t-SNE, for comparison</h2>
-<div id="8b94586b" class="cell" data-execution_count="27">
+<div id="3c4121b0" class="cell" data-execution_count="32">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a aria-label="1"></a><span class="im">import</span> time</span>
-<span id="cb39-2"><a aria-label="2"></a></span>
-<span id="cb39-3"><a aria-label="3"></a>t0 <span class="op">=</span> time.time()</span>
-<span id="cb39-4"><a aria-label="4"></a>sc.tl.tsne(adata, n_pcs<span class="op">=</span><span class="dv">30</span>)</span>
-<span id="cb39-5"><a aria-label="5"></a>t_tsne <span class="op">=</span> time.time() <span class="op">-</span> t0</span>
-<span id="cb39-6"><a aria-label="6"></a><span class="bu">print</span>(<span class="ss">f"t-SNE took </span><span class="sc">{</span>t_tsne<span class="sc">:.1f}</span><span class="ss">s"</span>)</span>
-<span id="cb39-7"><a aria-label="7"></a></span>
-<span id="cb39-8"><a aria-label="8"></a>f, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">4</span>))</span>
-<span id="cb39-9"><a aria-label="9"></a>sc.pl.umap(adata, color<span class="op">=</span><span class="st">"total_counts"</span>, ax<span class="op">=</span>axs[<span class="dv">0</span>], show<span class="op">=</span><span class="va">False</span>, title<span class="op">=</span><span class="st">"UMAP"</span>)</span>
-<span id="cb39-10"><a aria-label="10"></a>sc.pl.tsne(adata, color<span class="op">=</span><span class="st">"total_counts"</span>, ax<span class="op">=</span>axs[<span class="dv">1</span>], show<span class="op">=</span><span class="va">False</span>, title<span class="op">=</span><span class="st">"t-SNE"</span>)</span>
-<span id="cb39-11"><a aria-label="11"></a>plt.tight_layout()</span>
-<span id="cb39-12"><a aria-label="12"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a aria-label="1"></a><span class="im">import</span> time</span>
+<span id="cb47-2"><a aria-label="2"></a></span>
+<span id="cb47-3"><a aria-label="3"></a>t0 <span class="op">=</span> time.time()</span>
+<span id="cb47-4"><a aria-label="4"></a>sc.tl.tsne(adata, n_pcs<span class="op">=</span><span class="dv">30</span>)</span>
+<span id="cb47-5"><a aria-label="5"></a>t_tsne <span class="op">=</span> time.time() <span class="op">-</span> t0</span>
+<span id="cb47-6"><a aria-label="6"></a><span class="bu">print</span>(<span class="ss">f"t-SNE took </span><span class="sc">{</span>t_tsne<span class="sc">:.1f}</span><span class="ss">s"</span>)</span>
+<span id="cb47-7"><a aria-label="7"></a></span>
+<span id="cb47-8"><a aria-label="8"></a>f, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">4</span>))</span>
+<span id="cb47-9"><a aria-label="9"></a>sc.pl.umap(adata, color<span class="op">=</span><span class="st">"total_counts"</span>, ax<span class="op">=</span>axs[<span class="dv">0</span>], show<span class="op">=</span><span class="va">False</span>, title<span class="op">=</span><span class="st">"UMAP"</span>)</span>
+<span id="cb47-10"><a aria-label="10"></a>sc.pl.tsne(adata, color<span class="op">=</span><span class="st">"total_counts"</span>, ax<span class="op">=</span>axs[<span class="dv">1</span>], show<span class="op">=</span><span class="va">False</span>, title<span class="op">=</span><span class="st">"t-SNE"</span>)</span>
+<span id="cb47-11"><a aria-label="11"></a>plt.tight_layout()</span>
+<span id="cb47-12"><a aria-label="12"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>t-SNE took 4.2s</code></pre>
+<pre><code>t-SNE took 4.0s</code></pre>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure>
-<p><img data-src="bio3_files/figure-revealjs/cell-27-output-2.png" width="1070" height="415"></p>
+<p><img data-src="bio3_files/figure-revealjs/cell-32-output-2.png" width="1070" height="415"></p>
 </figure>
 </div>
 </div>
 </div>
 <p>Same graph, same data, two embeddings. The <strong>groups</strong> agree; their <strong>positions and spacing</strong> do not. That is the clearest possible argument for not reading geometry off either.</p>
 </section>
-<section id="reading-a-umap-honestly" class="slide level2">
+<section id="initialisation-decides-the-layout" class="slide level2 scrollable">
+<h2>Initialisation decides the layout</h2>
+<div id="b264b2c1" class="cell" data-execution_count="33">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb49"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a aria-label="1"></a>sc.tl.leiden(adata, resolution<span class="op">=</span><span class="fl">0.5</span>, key_added<span class="op">=</span><span class="st">"leiden_coarse"</span>,</span>
+<span id="cb49-2"><a aria-label="2"></a>             flavor<span class="op">=</span><span class="st">"igraph"</span>, n_iterations<span class="op">=</span><span class="dv">2</span>, directed<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb49-3"><a aria-label="3"></a>sc.tl.umap(adata, init_pos<span class="op">=</span><span class="st">"random"</span>, random_state<span class="op">=</span><span class="dv">1</span>, key_added<span class="op">=</span><span class="st">"X_umap_random"</span>)</span>
+<span id="cb49-4"><a aria-label="4"></a></span>
+<span id="cb49-5"><a aria-label="5"></a>f, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">4</span>))</span>
+<span id="cb49-6"><a aria-label="6"></a>sc.pl.umap(adata, color<span class="op">=</span><span class="st">"leiden_coarse"</span>, ax<span class="op">=</span>axs[<span class="dv">0</span>], show<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb49-7"><a aria-label="7"></a>           title<span class="op">=</span><span class="st">"UMAP, spectral initialisation (default)"</span>, legend_loc<span class="op">=</span><span class="st">"on data"</span>)</span>
+<span id="cb49-8"><a aria-label="8"></a>sc.pl.embedding(adata, basis<span class="op">=</span><span class="st">"X_umap_random"</span>, color<span class="op">=</span><span class="st">"leiden_coarse"</span>, ax<span class="op">=</span>axs[<span class="dv">1</span>], show<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb49-9"><a aria-label="9"></a>                title<span class="op">=</span><span class="st">"UMAP, random initialisation"</span>, legend_loc<span class="op">=</span><span class="st">"on data"</span>)</span>
+<span id="cb49-10"><a aria-label="10"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure>
+<p><img data-src="bio3_files/figure-revealjs/cell-33-output-1.png" width="1075" height="415"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Same graph, same coarse clusters. Which clusters <strong>sit next to each other</strong> changes with the starting point — so neighbouring clusters on a UMAP are <strong>no evidence</strong> that the populations are related.</p>
+</section>
+<section id="how-much-neighbourhood-survives" class="slide level2 scrollable">
+<h2>How much neighbourhood survives?</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The book’s measurement</strong></p>
+</div>
+<div class="callout-content">
+<p>For every cell, take its 15 nearest neighbours in the 50 PCs, and ask what fraction are still among its 15 nearest neighbours in each 2-D picture:</p>
+<div id="0e5b715d" class="cell" data-execution_count="34">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb50"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb50-1"><a aria-label="1"></a><span class="im">from</span> sklearn.neighbors <span class="im">import</span> NearestNeighbors</span>
+<span id="cb50-2"><a aria-label="2"></a></span>
+<span id="cb50-3"><a aria-label="3"></a></span>
+<span id="cb50-4"><a aria-label="4"></a><span class="kw">def</span> knn_sets(Z, k<span class="op">=</span><span class="dv">15</span>):</span>
+<span id="cb50-5"><a aria-label="5"></a>    idx <span class="op">=</span> NearestNeighbors(n_neighbors<span class="op">=</span>k <span class="op">+</span> <span class="dv">1</span>).fit(Z).kneighbors(Z, return_distance<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb50-6"><a aria-label="6"></a>    <span class="cf">return</span> idx[:, <span class="dv">1</span>:]                                         <span class="co"># drop the cell itself</span></span>
+<span id="cb50-7"><a aria-label="7"></a></span>
+<span id="cb50-8"><a aria-label="8"></a></span>
+<span id="cb50-9"><a aria-label="9"></a>ref <span class="op">=</span> knn_sets(adata.obsm[<span class="st">"X_pca"</span>][:, :<span class="dv">50</span>])</span>
+<span id="cb50-10"><a aria-label="10"></a><span class="cf">for</span> name, Z <span class="kw">in</span> [(<span class="st">"t-SNE"</span>, adata.obsm[<span class="st">"X_tsne"</span>]), (<span class="st">"UMAP"</span>, adata.obsm[<span class="st">"X_umap"</span>]),</span>
+<span id="cb50-11"><a aria-label="11"></a>                (<span class="st">"UMAP, random init"</span>, adata.obsm[<span class="st">"X_umap_random"</span>]),</span>
+<span id="cb50-12"><a aria-label="12"></a>                (<span class="st">"first two PCs"</span>, adata.obsm[<span class="st">"X_pca"</span>][:, :<span class="dv">2</span>])]:</span>
+<span id="cb50-13"><a aria-label="13"></a>    emb <span class="op">=</span> knn_sets(Z)</span>
+<span id="cb50-14"><a aria-label="14"></a>    kept <span class="op">=</span> np.mean([<span class="bu">len</span>(<span class="bu">set</span>(a) <span class="op">&amp;</span> <span class="bu">set</span>(b)) <span class="op">/</span> <span class="dv">15</span> <span class="cf">for</span> a, b <span class="kw">in</span> <span class="bu">zip</span>(ref, emb)])</span>
+<span id="cb50-15"><a aria-label="15"></a>    <span class="bu">print</span>(<span class="ss">f"  </span><span class="sc">{</span>name<span class="sc">:&lt;18}</span><span class="ss"> keeps </span><span class="sc">{</span>kept<span class="sc">:5.1%}</span><span class="ss"> of each cell's nearest neighbours"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  t-SNE              keeps 25.0% of each cell's nearest neighbours
+  UMAP               keeps 16.7% of each cell's nearest neighbours
+  UMAP, random init  keeps 16.8% of each cell's nearest neighbours
+  first two PCs      keeps  7.3% of each cell's nearest neighbours</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>No 2-D picture keeps the neighbourhoods</strong></p>
+</div>
+<div class="callout-content">
+<p>Here, about a quarter for t-SNE, a sixth for UMAP, and under a tenth for the first two PCs — the same ordering the book finds on its bone-marrow data (a quarter, a tenth, almost none). The random initialisation <strong>rearranges the clusters but barely changes the neighbourhoods</strong> — the local structure is all an embedding offers, and even that only in part. Anything an embedding <em>suggests</em> — a cluster splitting off, two populations close together — has to be checked in the high-dimensional data.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="reading-a-umap-honestly" class="slide level2 extends">
 <h2>Reading a UMAP honestly</h2>
 <div class="callout callout-warning no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1808,21 +2338,21 @@ variance explained by first 10 PCs: 25.6 %</code></pre>
 </section>
 <section id="checking-qc-on-the-embedding" class="slide level2 scrollable">
 <h2>Checking QC on the embedding</h2>
-<div id="d7ee4efd" class="cell" data-execution_count="28">
+<div id="d9d0cdf8" class="cell" data-execution_count="35">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a aria-label="1"></a>sc.pl.umap(</span>
-<span id="cb41-2"><a aria-label="2"></a>    adata,</span>
-<span id="cb41-3"><a aria-label="3"></a>    color<span class="op">=</span>[<span class="st">"n_genes_by_counts"</span>, <span class="st">"doublet_score"</span>, <span class="st">"pct_counts_ribo"</span>],</span>
-<span id="cb41-4"><a aria-label="4"></a>    ncols<span class="op">=</span><span class="dv">3</span>,</span>
-<span id="cb41-5"><a aria-label="5"></a>    show<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb41-6"><a aria-label="6"></a>)</span>
-<span id="cb41-7"><a aria-label="7"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb52"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb52-1"><a aria-label="1"></a>sc.pl.umap(</span>
+<span id="cb52-2"><a aria-label="2"></a>    adata,</span>
+<span id="cb52-3"><a aria-label="3"></a>    color<span class="op">=</span>[<span class="st">"n_genes_by_counts"</span>, <span class="st">"doublet_score"</span>, <span class="st">"pct_counts_ribo"</span>],</span>
+<span id="cb52-4"><a aria-label="4"></a>    ncols<span class="op">=</span><span class="dv">3</span>,</span>
+<span id="cb52-5"><a aria-label="5"></a>    show<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb52-6"><a aria-label="6"></a>)</span>
+<span id="cb52-7"><a aria-label="7"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div>
 <figure>
-<p><img data-src="bio3_files/figure-revealjs/cell-28-output-1.png" width="1569" height="385"></p>
+<p><img data-src="bio3_files/figure-revealjs/cell-35-output-1.png" width="1569" height="385"></p>
 </figure>
 </div>
 </div>
@@ -1831,7 +2361,7 @@ variance explained by first 10 PCs: 25.6 %</code></pre>
 <!-- =========================================================================
      SOURCE: not from the book -- added to connect to this course's Dask and
      scheduling lectures.  GPU material corresponds loosely to
-     https://www.sc-best-practices.org/introduction/rapids_singlecell.html
+     https://www.sc-best-practices.org/introduction/rapids-singlecell/
      ========================================================================= -->
 </section></section>
 <section>
@@ -1839,7 +2369,7 @@ variance explained by first 10 PCs: 25.6 %</code></pre>
 <h1>Scale and compute</h1>
 
 </section>
-<section id="when-2-700-cells-becomes-2-million" class="slide level2">
+<section id="when-2-700-cells-becomes-2-million" class="slide level2 beyond">
 <h2>When 2 700 cells becomes 2 million</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1883,7 +2413,7 @@ variance explained by first 10 PCs: 25.6 %</code></pre>
 </div>
 </div>
 </section>
-<section id="sparse-formats" class="slide level2 scrollable">
+<section id="sparse-formats" class="slide level2 scrollable beyond">
 <h2>Sparse formats</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1891,22 +2421,22 @@ variance explained by first 10 PCs: 25.6 %</code></pre>
 <p><strong>CSR, CSC, COO — and why the choice shows up in your runtime</strong></p>
 </div>
 <div class="callout-content">
-<div id="1866911c" class="cell" data-execution_count="29">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a aria-label="1"></a><span class="im">from</span> scipy <span class="im">import</span> sparse</span>
-<span id="cb42-2"><a aria-label="2"></a></span>
-<span id="cb42-3"><a aria-label="3"></a>raw_counts <span class="op">=</span> sc.datasets.pbmc3k().X</span>
-<span id="cb42-4"><a aria-label="4"></a>fmts <span class="op">=</span> {</span>
-<span id="cb42-5"><a aria-label="5"></a>    <span class="st">"CSR"</span>: raw_counts.tocsr(),</span>
-<span id="cb42-6"><a aria-label="6"></a>    <span class="st">"CSC"</span>: raw_counts.tocsc(),</span>
-<span id="cb42-7"><a aria-label="7"></a>    <span class="st">"COO"</span>: raw_counts.tocoo(),</span>
-<span id="cb42-8"><a aria-label="8"></a>}</span>
-<span id="cb42-9"><a aria-label="9"></a><span class="cf">for</span> name, M <span class="kw">in</span> fmts.items():</span>
-<span id="cb42-10"><a aria-label="10"></a>    nbytes <span class="op">=</span> <span class="bu">sum</span>(</span>
-<span id="cb42-11"><a aria-label="11"></a>        <span class="bu">getattr</span>(M, a).nbytes <span class="cf">for</span> a <span class="kw">in</span> (<span class="st">"data"</span>, <span class="st">"indices"</span>, <span class="st">"indptr"</span>, <span class="st">"row"</span>, <span class="st">"col"</span>)</span>
-<span id="cb42-12"><a aria-label="12"></a>        <span class="cf">if</span> <span class="bu">hasattr</span>(M, a)</span>
-<span id="cb42-13"><a aria-label="13"></a>    )</span>
-<span id="cb42-14"><a aria-label="14"></a>    <span class="bu">print</span>(<span class="ss">f"  </span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>nbytes <span class="op">/</span> <span class="fl">1e6</span><span class="sc">:6.2f}</span><span class="ss"> MB"</span>)</span>
-<span id="cb42-15"><a aria-label="15"></a><span class="bu">print</span>(<span class="ss">f"  dense: </span><span class="sc">{</span>raw_counts<span class="sc">.</span>shape[<span class="dv">0</span>] <span class="op">*</span> raw_counts<span class="sc">.</span>shape[<span class="dv">1</span>] <span class="op">*</span> <span class="dv">4</span> <span class="op">/</span> <span class="fl">1e6</span><span class="sc">:.1f}</span><span class="ss"> MB"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="8e157cf3" class="cell" data-execution_count="36">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb53"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb53-1"><a aria-label="1"></a><span class="im">from</span> scipy <span class="im">import</span> sparse</span>
+<span id="cb53-2"><a aria-label="2"></a></span>
+<span id="cb53-3"><a aria-label="3"></a>raw_counts <span class="op">=</span> sc.datasets.pbmc3k().X</span>
+<span id="cb53-4"><a aria-label="4"></a>fmts <span class="op">=</span> {</span>
+<span id="cb53-5"><a aria-label="5"></a>    <span class="st">"CSR"</span>: raw_counts.tocsr(),</span>
+<span id="cb53-6"><a aria-label="6"></a>    <span class="st">"CSC"</span>: raw_counts.tocsc(),</span>
+<span id="cb53-7"><a aria-label="7"></a>    <span class="st">"COO"</span>: raw_counts.tocoo(),</span>
+<span id="cb53-8"><a aria-label="8"></a>}</span>
+<span id="cb53-9"><a aria-label="9"></a><span class="cf">for</span> name, M <span class="kw">in</span> fmts.items():</span>
+<span id="cb53-10"><a aria-label="10"></a>    nbytes <span class="op">=</span> <span class="bu">sum</span>(</span>
+<span id="cb53-11"><a aria-label="11"></a>        <span class="bu">getattr</span>(M, a).nbytes <span class="cf">for</span> a <span class="kw">in</span> (<span class="st">"data"</span>, <span class="st">"indices"</span>, <span class="st">"indptr"</span>, <span class="st">"row"</span>, <span class="st">"col"</span>)</span>
+<span id="cb53-12"><a aria-label="12"></a>        <span class="cf">if</span> <span class="bu">hasattr</span>(M, a)</span>
+<span id="cb53-13"><a aria-label="13"></a>    )</span>
+<span id="cb53-14"><a aria-label="14"></a>    <span class="bu">print</span>(<span class="ss">f"  </span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>nbytes <span class="op">/</span> <span class="fl">1e6</span><span class="sc">:6.2f}</span><span class="ss"> MB"</span>)</span>
+<span id="cb53-15"><a aria-label="15"></a><span class="bu">print</span>(<span class="ss">f"  dense: </span><span class="sc">{</span>raw_counts<span class="sc">.</span>shape[<span class="dv">0</span>] <span class="op">*</span> raw_counts<span class="sc">.</span>shape[<span class="dv">1</span>] <span class="op">*</span> <span class="dv">4</span> <span class="op">/</span> <span class="fl">1e6</span><span class="sc">:.1f}</span><span class="ss"> MB"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>  CSR:  18.31 MB
   CSC:  18.43 MB
@@ -1924,7 +2454,7 @@ variance explained by first 10 PCs: 25.6 %</code></pre>
 </div>
 </div>
 </section>
-<section id="three-ways-to-go-bigger" class="slide level2">
+<section id="three-ways-to-go-bigger" class="slide level2 extends">
 <h2>Three ways to go bigger</h2>
 <div class="callout callout-note no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1934,12 +2464,27 @@ variance explained by first 10 PCs: 25.6 %</code></pre>
 <div class="callout-content">
 <p><strong>1. Backed mode</strong> — keep <code>.X</code> on disk in HDF5 and read slices on demand. Costs nothing to try; limited, because most <code>scanpy</code> functions want an in-memory array.</p>
 <p><strong>2. Out-of-core / chunked</strong> — back <code>.X</code> with a <strong>Dask</strong> array or a Zarr store and process in chunks. This is the same strategy as the Dask lectures, applied to a genomics matrix: the graph of operations is built first, then executed chunk-wise.</p>
-<p><strong>3. GPU</strong> — <code>rapids-singlecell</code> reimplements the scanpy API on cuDF/cuPy. PCA, neighbours, UMAP and Leiden on a GPU are commonly <strong>10–100×</strong> faster, which turns a coffee-break pipeline into an interactive one.</p>
+<p><strong>3. GPU</strong> — <code>rapids-singlecell</code> mirrors the scanpy API (<code>rsc.pp</code>, <code>rsc.tl</code>) on CuPy. The book’s GPU chapter reports <strong>10–20×</strong> end to end, and <strong>50–200×</strong> for single steps such as UMAP, t-SNE and Leiden.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>When a GPU pays off — the book’s rule of thumb</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>below ~50 000 cells</strong> — CPU is fine; moving data to the GPU can cost more than it saves</li>
+<li><strong>50 000 – 1 million</strong> — the sweet spot: one 24–80 GB GPU runs the whole pipeline interactively</li>
+<li><strong>beyond VRAM</strong> — <em>managed memory</em> pages data to and from host RAM, or <code>dask-cuda</code> processes a Zarr store chunk by chunk</li>
+</ul>
+<p>A dense float32 matrix of 1M cells × 30 000 genes is ~120 GB and never fits; <strong>keeping the matrix sparse</strong> is what makes GPU single-cell analysis possible at all. And expect approximate-neighbour backends to move a few cells between clusters — not a bug, a property of approximation.</p>
 </div>
 </div>
 </div>
 </section>
-<section id="where-the-time-actually-goes" class="slide level2">
+<section id="where-the-time-actually-goes" class="slide level2 extends">
 <h2>Where the time actually goes</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1959,7 +2504,7 @@ variance explained by first 10 PCs: 25.6 %</code></pre>
 </div>
 </div>
 </section>
-<section id="a-familiar-shape" class="slide level2">
+<section id="a-familiar-shape" class="slide level2 beyond">
 <h2>A familiar shape</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -2011,41 +2556,46 @@ variance explained by first 10 PCs: 25.6 %</code></pre>
 <td>—</td>
 </tr>
 <tr class="even">
-<td>outlier filtering</td>
-<td>MAD on 3 covariates</td>
-<td>dying and broken cells</td>
+<td>raw processing</td>
+<td>barcode correction, UMI collapsing</td>
+<td>errors in the tags themselves</td>
 </tr>
 <tr class="odd">
+<td>outlier filtering</td>
+<td>MAD on 3 covariates (+ logit mito fraction)</td>
+<td>dying and broken cells</td>
+</tr>
+<tr class="even">
 <td>doublets</td>
 <td><code>sc.pp.scrublet</code></td>
 <td>two cells, one barcode</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>gene filtering</td>
 <td><code>sc.pp.filter_genes</code></td>
 <td>noise-only genes</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>normalization</td>
 <td><code>normalize_total</code> + <code>log1p</code></td>
 <td>differing sequencing depth</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>feature selection</td>
-<td><code>sc.pp.highly_variable_genes</code></td>
+<td>binomial deviance or <code>sc.pp.highly_variable_genes</code></td>
 <td>uninformative dimensions</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>PCA</td>
 <td><code>sc.pp.pca</code></td>
 <td>noise, dimensionality</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>neighbour graph</td>
 <td><code>sc.pp.neighbors</code></td>
 <td>—</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>embedding</td>
 <td><code>sc.tl.umap</code></td>
 <td>human eyes</td>
@@ -2088,6 +2638,10 @@ variance explained by first 10 PCs: 25.6 %</code></pre>
 <li>Plot <code>pct_counts_ribo</code> on the UMAP. Ribosomal content often tracks cell state — can you see structure in it?</li>
 <li>Deliberately skip <code>sc.pp.log1p</code> and run PCA on the raw normalized counts. What happens to the variance ratio, and why?</li>
 <li>Using <code>adata.layers["counts"]</code>, verify that <code>sc.pp.normalize_total</code> really does make the row sums equal.</li>
+<li>Run PCA on the top-2 000 <em>deviance</em> genes instead of the HVGs. Does the neighbour graph change?</li>
+<li>In the UMI demo, raise the error rate from 10% to 40%. When does the simple union rule start merging distinct molecules, and why does a <em>directional</em> rule help?</li>
+<li>Repeat the neighbourhood-preservation measurement with <code>k = 5</code> and <code>k = 50</code>. Which embedding is best at which scale?</li>
+<li>Run <code>sc.pp.scale</code> before PCA and compare the variance ratio and the UMAP. What changed, and which genes gained influence?</li>
 </ol>
 </div>
 </div>

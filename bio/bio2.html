@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en"><head>
-<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2" crossorigin="anonymous"></script><script src="../site_libs/clipboard/clipboard.min.js"></script>
 <script src="../site_libs/quarto-html/tabby.min.js"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
@@ -194,6 +194,9 @@
       margin-right: 0; 
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/requirejs@2.3.6/require.min.js" integrity="sha384-c9c+LnTbwQ3aujuU7ULEPVvgLs+Fn6fJUvIGTsuu1ZcCf11fiEubah0ttpca4ntM sha384-6V1/AdqZRWk1KAlWbKBlGhN7VG4iE/yAZcO6NZPMF8od0vukrvr0tg4qY6NSrItx" crossorigin="anonymous"></script>
+  
+  <script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
 </head>
 <body class="quarto-light">
   <div class="reveal">
@@ -237,6 +240,16 @@ MSDE
 <p>Smith-Waterman gives the <strong>provably optimal</strong> local alignment in <span class="math inline">\(O(mn)\)</span>. We measured ~5 ns per matrix cell.</p>
 <p>A single query against GenBank’s <span class="math inline">\(\sim 10^{12}\)</span> bases is <span class="math inline">\(\sim 10^{15}\)</span> cells — <strong>over a month of compute</strong>, for one search.</p>
 <p>This lecture is about the two things the field does instead: <strong>skip most of the matrix</strong>, and <strong>replace alignment with classification</strong>.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Reading these slides</strong></p>
+</div>
+<div class="callout-content">
+<p>Unbadged slides follow the book. <span class="badge-beyond">beyond the book</span> marks material readIAB does not contain; <span class="badge-extends">extends the book</span> marks a book topic taken further than the book takes it.</p>
 </div>
 </div>
 </div>
@@ -291,10 +304,79 @@ MSDE
 </div>
 </div>
 </div>
+</section>
+<section id="try-it-before-we-build-it" class="slide level2">
+<h2>Try it before we build it</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The book’s opening exercise</strong></p>
+</div>
+<div class="callout-content">
+<p>Paste this protein into NCBI’s <strong>Protein BLAST</strong> web form (<a href="https://blast.ncbi.nlm.nih.gov" class="uri">https://blast.ncbi.nlm.nih.gov</a>) and see what comes back:</p>
+<pre><code>&gt;mystery-sequence1
+MFVFLVLLPLVSSQCVNLTTRTQLPPAYTNSFTRGVYYPDKVFRSSVLHSTQDLFLPFFS
+NVTWFHAIHVSGTNGTKRFDNPVLPFNDGVYFASTEKSNIIRGWIFGTTLDSKTQSLLIV
+...   (the full 1 273 residues are in the book)</code></pre>
+<p>You will have an answer in seconds, from a database of hundreds of millions of sequences. This lecture is about how that is possible, and how much to believe it.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Similarity, as the book defines it</strong></p>
+</div>
+<div class="callout-content">
+<p><span class="math display">\[\text{similarity} = 1 - \text{Hamming distance of the aligned sequences}\]</span></p>
+<p>the fraction of aligned positions that agree. Similarity is <strong>continuous</strong>; homology is <strong>binary</strong>. “80% homologous” is a category error — what is meant is “80% similar, and therefore hypothesised to be homologous”.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="the-books-setting-16s-and-taxonomy" class="slide level2 scrollable">
+<h2>The book’s setting: 16S and taxonomy</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>What the reference database looks like</strong></p>
+</div>
+<div class="callout-content">
+<p>The book searches <strong>16S rRNA</strong> sequences — a gene every bacterium carries, used to identify them — against a reference collection (Greengenes, via <code>qiime-default-reference</code>) in which every sequence carries a taxonomy string:</p>
+<pre><code>k__Bacteria; p__Firmicutes; c__Bacilli; o__Lactobacillales; f__Lactobacillaceae; g__Lactobacillus; s__</code></pre>
+<p>Kingdom, phylum, class, order, family, genus, species — an empty <code>g__</code> means the genus is unknown.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The search, end to end</strong></p>
+</div>
+<div class="callout-content">
+<ol type="1">
+<li>align the query against <strong>every</strong> reference sequence</li>
+<li>keep the <span class="math inline">\(n\)</span> best-scoring hits (the book uses <span class="math inline">\(n = 5\)</span>)</li>
+<li>read their taxonomies and assign the query the <strong>most specific level on which the hits agree</strong></li>
+</ol>
+<p>Step 3 is a <em>consensus</em> rule — the same idea as a <span class="math inline">\(k\)</span>-nearest-neighbour vote, with “back off to a coarser rank” as the tie-breaker.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-warning no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>A detail worth noticing <span class="badge-extends">extends the book</span></strong></p>
+</div>
+<div class="callout-content">
+<p>The book makes its queries by <strong>cutting 200-base slices out of the reference sequences</strong>, then searches a random subsample of the same collection. Some queries therefore have their own source sequence in the database — an easier test than a genuinely unknown organism. The book is honest that this is a teaching shortcut; the second half of this lecture shows how much such shortcuts flatter a result.</p>
+</div>
+</div>
+</div>
 <!-- source: readIAB ch.4, "Defining the problem" -- the homology vocabulary
      is used throughout the chapter and assumed known -->
 </section>
-<section id="homolog-ortholog-paralog" class="slide level2">
+<section id="homolog-ortholog-paralog" class="slide level2 extends">
 <h2>Homolog, ortholog, paralog</h2>
 <div class="callout callout-note no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -322,7 +404,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="similar-is-not-homologous" class="slide level2">
+<section id="similar-is-not-homologous" class="slide level2 extends">
 <h2>Similar is not homologous</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -338,7 +420,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="the-database-has-its-own-problems" class="slide level2">
+<section id="the-database-has-its-own-problems" class="slide level2 beyond">
 <h2>The database has its own problems</h2>
 <div class="callout callout-warning no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -357,7 +439,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="the-cost" class="slide level2 scrollable">
+<section id="the-cost" class="slide level2 scrollable extends">
 <h2>The cost</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -365,27 +447,27 @@ MSDE
 <p><strong>Exhaustive search, measured</strong></p>
 </div>
 <div class="callout-content">
-<div id="30b3aa1a" class="cell" data-execution_count="3">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a aria-label="1"></a><span class="im">import</span> timeit</span>
-<span id="cb1-2"><a aria-label="2"></a></span>
-<span id="cb1-3"><a aria-label="3"></a>aligner <span class="op">=</span> PairwiseAligner(mode<span class="op">=</span><span class="st">"local"</span>, match_score<span class="op">=</span><span class="dv">2</span>, mismatch_score<span class="op">=-</span><span class="dv">3</span>,</span>
-<span id="cb1-4"><a aria-label="4"></a>                          open_gap_score<span class="op">=-</span><span class="dv">5</span>, extend_gap_score<span class="op">=-</span><span class="dv">2</span>)</span>
-<span id="cb1-5"><a aria-label="5"></a></span>
-<span id="cb1-6"><a aria-label="6"></a>query <span class="op">=</span> random_seq(<span class="dv">300</span>)</span>
-<span id="cb1-7"><a aria-label="7"></a>database <span class="op">=</span> [random_seq(<span class="dv">300</span>) <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">200</span>)]</span>
-<span id="cb1-8"><a aria-label="8"></a></span>
-<span id="cb1-9"><a aria-label="9"></a>t <span class="op">=</span> <span class="bu">min</span>(timeit.repeat(</span>
-<span id="cb1-10"><a aria-label="10"></a>    <span class="kw">lambda</span>: [aligner.align(query, s).score <span class="cf">for</span> s <span class="kw">in</span> database],</span>
-<span id="cb1-11"><a aria-label="11"></a>    number<span class="op">=</span><span class="dv">2</span>, repeat<span class="op">=</span><span class="dv">3</span>)) <span class="op">/</span> <span class="dv">2</span></span>
-<span id="cb1-12"><a aria-label="12"></a></span>
-<span id="cb1-13"><a aria-label="13"></a>per_seq <span class="op">=</span> t <span class="op">/</span> <span class="bu">len</span>(database)</span>
-<span id="cb1-14"><a aria-label="14"></a><span class="bu">print</span>(<span class="ss">f"  200 sequences      : </span><span class="sc">{</span>t <span class="op">*</span> <span class="dv">1000</span><span class="sc">:.1f}</span><span class="ss"> ms"</span>)</span>
-<span id="cb1-15"><a aria-label="15"></a><span class="bu">print</span>(<span class="ss">f"  per comparison     : </span><span class="sc">{</span>per_seq <span class="op">*</span> <span class="fl">1e6</span><span class="sc">:.1f}</span><span class="ss"> us"</span>)</span>
-<span id="cb1-16"><a aria-label="16"></a><span class="bu">print</span>(<span class="ss">f"  extrapolated to 10^8 sequences: </span><span class="sc">{</span>per_seq <span class="op">*</span> <span class="fl">1e8</span> <span class="op">/</span> <span class="dv">3600</span><span class="sc">:.1f}</span><span class="ss"> hours"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="7794c4ac" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a aria-label="1"></a><span class="im">import</span> timeit</span>
+<span id="cb3-2"><a aria-label="2"></a></span>
+<span id="cb3-3"><a aria-label="3"></a>aligner <span class="op">=</span> PairwiseAligner(mode<span class="op">=</span><span class="st">"local"</span>, match_score<span class="op">=</span><span class="dv">2</span>, mismatch_score<span class="op">=-</span><span class="dv">3</span>,</span>
+<span id="cb3-4"><a aria-label="4"></a>                          open_gap_score<span class="op">=-</span><span class="dv">5</span>, extend_gap_score<span class="op">=-</span><span class="dv">2</span>)</span>
+<span id="cb3-5"><a aria-label="5"></a></span>
+<span id="cb3-6"><a aria-label="6"></a>query <span class="op">=</span> random_seq(<span class="dv">300</span>)</span>
+<span id="cb3-7"><a aria-label="7"></a>database <span class="op">=</span> [random_seq(<span class="dv">300</span>) <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">200</span>)]</span>
+<span id="cb3-8"><a aria-label="8"></a></span>
+<span id="cb3-9"><a aria-label="9"></a>t <span class="op">=</span> <span class="bu">min</span>(timeit.repeat(</span>
+<span id="cb3-10"><a aria-label="10"></a>    <span class="kw">lambda</span>: [aligner.align(query, s).score <span class="cf">for</span> s <span class="kw">in</span> database],</span>
+<span id="cb3-11"><a aria-label="11"></a>    number<span class="op">=</span><span class="dv">2</span>, repeat<span class="op">=</span><span class="dv">3</span>)) <span class="op">/</span> <span class="dv">2</span></span>
+<span id="cb3-12"><a aria-label="12"></a></span>
+<span id="cb3-13"><a aria-label="13"></a>per_seq <span class="op">=</span> t <span class="op">/</span> <span class="bu">len</span>(database)</span>
+<span id="cb3-14"><a aria-label="14"></a><span class="bu">print</span>(<span class="ss">f"  200 sequences      : </span><span class="sc">{</span>t <span class="op">*</span> <span class="dv">1000</span><span class="sc">:.1f}</span><span class="ss"> ms"</span>)</span>
+<span id="cb3-15"><a aria-label="15"></a><span class="bu">print</span>(<span class="ss">f"  per comparison     : </span><span class="sc">{</span>per_seq <span class="op">*</span> <span class="fl">1e6</span><span class="sc">:.1f}</span><span class="ss"> us"</span>)</span>
+<span id="cb3-16"><a aria-label="16"></a><span class="bu">print</span>(<span class="ss">f"  extrapolated to 10^8 sequences: </span><span class="sc">{</span>per_seq <span class="op">*</span> <span class="fl">1e8</span> <span class="op">/</span> <span class="dv">3600</span><span class="sc">:.1f}</span><span class="ss"> hours"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>  200 sequences      : 210.6 ms
-  per comparison     : 1053.0 us
-  extrapolated to 10^8 sequences: 29.2 hours</code></pre>
+<pre><code>  200 sequences      : 217.5 ms
+  per comparison     : 1087.3 us
+  extrapolated to 10^8 sequences: 30.2 hours</code></pre>
 </div>
 </div>
 <p>And that is with a <strong>C implementation</strong> on short sequences. The real database is larger and the real sequences are longer.</p>
@@ -393,7 +475,72 @@ MSDE
 </div>
 </div>
 </section>
-<section id="the-shape-of-the-solution" class="slide level2">
+<section id="how-the-cost-grows" class="slide level2 scrollable">
+<h2>How the cost grows</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The book’s measurement: runtime against the number of queries</strong></p>
+</div>
+<div class="callout-content">
+<div id="6b9edfd8" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a aria-label="1"></a>rng_q <span class="op">=</span> np.random.default_rng(<span class="dv">7</span>)</span>
+<span id="cb5-2"><a aria-label="2"></a>ref_db <span class="op">=</span> [<span class="st">""</span>.join(rng_q.choice(<span class="bu">list</span>(<span class="st">"ACGT"</span>), <span class="dv">300</span>)) <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">100</span>)]</span>
+<span id="cb5-3"><a aria-label="3"></a>query_pool <span class="op">=</span> [<span class="st">""</span>.join(rng_q.choice(<span class="bu">list</span>(<span class="st">"ACGT"</span>), <span class="dv">200</span>)) <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">16</span>)]</span>
+<span id="cb5-4"><a aria-label="4"></a></span>
+<span id="cb5-5"><a aria-label="5"></a>n_queries, runtimes <span class="op">=</span> [<span class="dv">1</span>, <span class="dv">4</span>, <span class="dv">8</span>, <span class="dv">12</span>, <span class="dv">16</span>], []</span>
+<span id="cb5-6"><a aria-label="6"></a><span class="cf">for</span> nq <span class="kw">in</span> n_queries:</span>
+<span id="cb5-7"><a aria-label="7"></a>    runtimes.append(<span class="bu">min</span>(timeit.repeat(</span>
+<span id="cb5-8"><a aria-label="8"></a>        <span class="kw">lambda</span>: [aligner.align(q, r).score <span class="cf">for</span> q <span class="kw">in</span> query_pool[:nq] <span class="cf">for</span> r <span class="kw">in</span> ref_db],</span>
+<span id="cb5-9"><a aria-label="9"></a>        number<span class="op">=</span><span class="dv">1</span>, repeat<span class="op">=</span><span class="dv">2</span>)))</span>
+<span id="cb5-10"><a aria-label="10"></a></span>
+<span id="cb5-11"><a aria-label="11"></a>f, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">5</span>, <span class="dv">3</span>))</span>
+<span id="cb5-12"><a aria-label="12"></a>ax.plot(n_queries, runtimes, <span class="st">"o-"</span>)</span>
+<span id="cb5-13"><a aria-label="13"></a>ax.set_xlabel(<span class="st">"number of query sequences"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"runtime (s)"</span>)</span>
+<span id="cb5-14"><a aria-label="14"></a>ax.set_xlim(<span class="dv">0</span>)<span class="op">;</span> ax.set_ylim(<span class="dv">0</span>)<span class="op">;</span> plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure>
+<p><img data-src="bio2_files/figure-revealjs/cell-4-output-1.png" width="543" height="324"></p>
+</figure>
+</div>
+</div>
+</div>
+<p><strong>Linear</strong> in the number of queries, with a fixed database: every query costs one alignment per reference. 5 queries × 10 references is 50 alignments; 10 × 100 is 1 000.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="four-ways-to-make-it-faster" class="slide level2">
+<h2>Four ways to make it faster</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The book’s list</strong></p>
+</div>
+<div class="callout-content">
+<ol type="1">
+<li><strong>perform fewer alignments</strong> — fewer queries (the user will object), a smaller database (it may lose the answer), or <em>skip the alignments that are unlikely to score well</em></li>
+<li><strong>a faster implementation</strong> — until it cannot be made faster</li>
+<li><strong>a faster computer</strong></li>
+<li><strong>parallel processors</strong></li>
+</ol>
+<p>Options 2–4 all divide the runtime by some factor <span class="math inline">\(f\)</span>: <span class="math inline">\(\text{new runtime} \approx \text{runtime} / f\)</span>. Only option 1 changes <em>how much work there is</em>, and its third variant — a cheap test that predicts which alignments are worth doing — is what the rest of this half is about.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-warning no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>And the problem is not going away</strong></p>
+</div>
+<div class="callout-content">
+<p>The book shows two log-scale plots: the cost of sequencing falling, and the size of sequence databases growing. Many people think <strong>DNA sequencing is getting cheaper faster than computers are</strong>. More queries, against larger databases, on hardware that improves more slowly than both. Waiting for faster machines is not a strategy.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="the-shape-of-the-solution" class="slide level2 extends">
 <h2>The shape of the solution</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -409,7 +556,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="k-mer-similarity" class="slide level2 scrollable">
+<section id="k-mer-similarity" class="slide level2 scrollable extends">
 <h2><span class="math inline">\(k\)</span>-mer similarity</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -419,30 +566,30 @@ MSDE
 <div class="callout-content">
 <p><span class="math display">\[J(A, B) = \frac{|A \cap B|}{|A \cup B|}\]</span></p>
 <p>where <span class="math inline">\(A\)</span> and <span class="math inline">\(B\)</span> are the sets of <span class="math inline">\(k\)</span>-mers in each sequence. No alignment, no matrix — two set operations.</p>
-<div id="9b7674cc" class="cell" data-execution_count="4">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a aria-label="1"></a><span class="kw">def</span> kmers(s, k<span class="op">=</span><span class="dv">5</span>):</span>
-<span id="cb3-2"><a aria-label="2"></a>    <span class="cf">return</span> {s[i : i <span class="op">+</span> k] <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(s) <span class="op">-</span> k <span class="op">+</span> <span class="dv">1</span>)}</span>
-<span id="cb3-3"><a aria-label="3"></a></span>
-<span id="cb3-4"><a aria-label="4"></a></span>
-<span id="cb3-5"><a aria-label="5"></a><span class="kw">def</span> jaccard(a, b):</span>
-<span id="cb3-6"><a aria-label="6"></a>    <span class="cf">return</span> <span class="bu">len</span>(a <span class="op">&amp;</span> b) <span class="op">/</span> <span class="bu">len</span>(a <span class="op">|</span> b) <span class="cf">if</span> (a <span class="op">|</span> b) <span class="cf">else</span> <span class="fl">0.0</span></span>
-<span id="cb3-7"><a aria-label="7"></a></span>
-<span id="cb3-8"><a aria-label="8"></a></span>
-<span id="cb3-9"><a aria-label="9"></a>base <span class="op">=</span> random_seq(<span class="dv">300</span>)</span>
-<span id="cb3-10"><a aria-label="10"></a>candidates <span class="op">=</span> [(<span class="st">"diverged 2%"</span>, mutate(base, <span class="fl">0.02</span>)),</span>
-<span id="cb3-11"><a aria-label="11"></a>              (<span class="st">"diverged 5%"</span>, mutate(base, <span class="fl">0.05</span>)),</span>
-<span id="cb3-12"><a aria-label="12"></a>              (<span class="st">"diverged 10%"</span>, mutate(base, <span class="fl">0.10</span>)),</span>
-<span id="cb3-13"><a aria-label="13"></a>              (<span class="st">"diverged 20%"</span>, mutate(base, <span class="fl">0.20</span>)),</span>
-<span id="cb3-14"><a aria-label="14"></a>              (<span class="st">"diverged 35%"</span>, mutate(base, <span class="fl">0.35</span>))] <span class="op">+</span> <span class="op">\</span></span>
-<span id="cb3-15"><a aria-label="15"></a>             [(<span class="st">"unrelated"</span>, random_seq(<span class="dv">300</span>)) <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">4</span>)]</span>
-<span id="cb3-16"><a aria-label="16"></a></span>
-<span id="cb3-17"><a aria-label="17"></a>qk <span class="op">=</span> kmers(base)</span>
-<span id="cb3-18"><a aria-label="18"></a><span class="bu">print</span>(<span class="st">"  relationship    jaccard   SW score"</span>)</span>
-<span id="cb3-19"><a aria-label="19"></a>rows <span class="op">=</span> []</span>
-<span id="cb3-20"><a aria-label="20"></a><span class="cf">for</span> label, s <span class="kw">in</span> candidates:</span>
-<span id="cb3-21"><a aria-label="21"></a>    j, sw <span class="op">=</span> jaccard(qk, kmers(s)), aligner.align(base, s).score</span>
-<span id="cb3-22"><a aria-label="22"></a>    rows.append((label, j, sw))</span>
-<span id="cb3-23"><a aria-label="23"></a>    <span class="bu">print</span>(<span class="ss">f"  </span><span class="sc">{</span>label<span class="sc">:&lt;14}</span><span class="ss"> </span><span class="sc">{</span>j<span class="sc">:7.3f}</span><span class="ss">   </span><span class="sc">{</span>sw<span class="sc">:8.0f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="4ea722f6" class="cell" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a aria-label="1"></a><span class="kw">def</span> kmers(s, k<span class="op">=</span><span class="dv">5</span>):</span>
+<span id="cb6-2"><a aria-label="2"></a>    <span class="cf">return</span> {s[i : i <span class="op">+</span> k] <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(s) <span class="op">-</span> k <span class="op">+</span> <span class="dv">1</span>)}</span>
+<span id="cb6-3"><a aria-label="3"></a></span>
+<span id="cb6-4"><a aria-label="4"></a></span>
+<span id="cb6-5"><a aria-label="5"></a><span class="kw">def</span> jaccard(a, b):</span>
+<span id="cb6-6"><a aria-label="6"></a>    <span class="cf">return</span> <span class="bu">len</span>(a <span class="op">&amp;</span> b) <span class="op">/</span> <span class="bu">len</span>(a <span class="op">|</span> b) <span class="cf">if</span> (a <span class="op">|</span> b) <span class="cf">else</span> <span class="fl">0.0</span></span>
+<span id="cb6-7"><a aria-label="7"></a></span>
+<span id="cb6-8"><a aria-label="8"></a></span>
+<span id="cb6-9"><a aria-label="9"></a>base <span class="op">=</span> random_seq(<span class="dv">300</span>)</span>
+<span id="cb6-10"><a aria-label="10"></a>candidates <span class="op">=</span> [(<span class="st">"diverged 2%"</span>, mutate(base, <span class="fl">0.02</span>)),</span>
+<span id="cb6-11"><a aria-label="11"></a>              (<span class="st">"diverged 5%"</span>, mutate(base, <span class="fl">0.05</span>)),</span>
+<span id="cb6-12"><a aria-label="12"></a>              (<span class="st">"diverged 10%"</span>, mutate(base, <span class="fl">0.10</span>)),</span>
+<span id="cb6-13"><a aria-label="13"></a>              (<span class="st">"diverged 20%"</span>, mutate(base, <span class="fl">0.20</span>)),</span>
+<span id="cb6-14"><a aria-label="14"></a>              (<span class="st">"diverged 35%"</span>, mutate(base, <span class="fl">0.35</span>))] <span class="op">+</span> <span class="op">\</span></span>
+<span id="cb6-15"><a aria-label="15"></a>             [(<span class="st">"unrelated"</span>, random_seq(<span class="dv">300</span>)) <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">4</span>)]</span>
+<span id="cb6-16"><a aria-label="16"></a></span>
+<span id="cb6-17"><a aria-label="17"></a>qk <span class="op">=</span> kmers(base)</span>
+<span id="cb6-18"><a aria-label="18"></a><span class="bu">print</span>(<span class="st">"  relationship    jaccard   SW score"</span>)</span>
+<span id="cb6-19"><a aria-label="19"></a>rows <span class="op">=</span> []</span>
+<span id="cb6-20"><a aria-label="20"></a><span class="cf">for</span> label, s <span class="kw">in</span> candidates:</span>
+<span id="cb6-21"><a aria-label="21"></a>    j, sw <span class="op">=</span> jaccard(qk, kmers(s)), aligner.align(base, s).score</span>
+<span id="cb6-22"><a aria-label="22"></a>    rows.append((label, j, sw))</span>
+<span id="cb6-23"><a aria-label="23"></a>    <span class="bu">print</span>(<span class="ss">f"  </span><span class="sc">{</span>label<span class="sc">:&lt;14}</span><span class="ss"> </span><span class="sc">{</span>j<span class="sc">:7.3f}</span><span class="ss">   </span><span class="sc">{</span>sw<span class="sc">:8.0f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>  relationship    jaccard   SW score
   diverged 2%      0.911        585
@@ -460,32 +607,32 @@ MSDE
 </div>
 </div>
 </section>
-<section id="k-mer-similarity-1" class="slide level2 scrollable">
+<section id="k-mer-similarity-1" class="slide level2 scrollable extends">
 <h2><span class="math inline">\(k\)</span>-mer similarity</h2>
-<div id="d638e652" class="cell" data-execution_count="5">
+<div id="ae1a6bd1" class="cell" data-execution_count="6">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a aria-label="1"></a>f, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">5</span>, <span class="fl">3.6</span>))</span>
-<span id="cb5-2"><a aria-label="2"></a>js <span class="op">=</span> [r[<span class="dv">1</span>] <span class="cf">for</span> r <span class="kw">in</span> rows]<span class="op">;</span> sws <span class="op">=</span> [r[<span class="dv">2</span>] <span class="cf">for</span> r <span class="kw">in</span> rows]</span>
-<span id="cb5-3"><a aria-label="3"></a>homolog <span class="op">=</span> [<span class="st">"unrelated"</span> <span class="kw">not</span> <span class="kw">in</span> r[<span class="dv">0</span>] <span class="cf">for</span> r <span class="kw">in</span> rows]</span>
-<span id="cb5-4"><a aria-label="4"></a>ax.scatter([j <span class="cf">for</span> j, h <span class="kw">in</span> <span class="bu">zip</span>(js, homolog) <span class="cf">if</span> h],</span>
-<span id="cb5-5"><a aria-label="5"></a>           [s <span class="cf">for</span> s, h <span class="kw">in</span> <span class="bu">zip</span>(sws, homolog) <span class="cf">if</span> h], label<span class="op">=</span><span class="st">"homologs"</span>, s<span class="op">=</span><span class="dv">40</span>)</span>
-<span id="cb5-6"><a aria-label="6"></a>ax.scatter([j <span class="cf">for</span> j, h <span class="kw">in</span> <span class="bu">zip</span>(js, homolog) <span class="cf">if</span> <span class="kw">not</span> h],</span>
-<span id="cb5-7"><a aria-label="7"></a>           [s <span class="cf">for</span> s, h <span class="kw">in</span> <span class="bu">zip</span>(sws, homolog) <span class="cf">if</span> <span class="kw">not</span> h], label<span class="op">=</span><span class="st">"unrelated"</span>, s<span class="op">=</span><span class="dv">40</span>, marker<span class="op">=</span><span class="st">"x"</span>)</span>
-<span id="cb5-8"><a aria-label="8"></a>ax.set_xlabel(<span class="st">"Jaccard index of 5-mer sets"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"Smith-Waterman score"</span>)</span>
-<span id="cb5-9"><a aria-label="9"></a>ax.legend()<span class="op">;</span> plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a aria-label="1"></a>f, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">5</span>, <span class="fl">3.6</span>))</span>
+<span id="cb8-2"><a aria-label="2"></a>js <span class="op">=</span> [r[<span class="dv">1</span>] <span class="cf">for</span> r <span class="kw">in</span> rows]<span class="op">;</span> sws <span class="op">=</span> [r[<span class="dv">2</span>] <span class="cf">for</span> r <span class="kw">in</span> rows]</span>
+<span id="cb8-3"><a aria-label="3"></a>homolog <span class="op">=</span> [<span class="st">"unrelated"</span> <span class="kw">not</span> <span class="kw">in</span> r[<span class="dv">0</span>] <span class="cf">for</span> r <span class="kw">in</span> rows]</span>
+<span id="cb8-4"><a aria-label="4"></a>ax.scatter([j <span class="cf">for</span> j, h <span class="kw">in</span> <span class="bu">zip</span>(js, homolog) <span class="cf">if</span> h],</span>
+<span id="cb8-5"><a aria-label="5"></a>           [s <span class="cf">for</span> s, h <span class="kw">in</span> <span class="bu">zip</span>(sws, homolog) <span class="cf">if</span> h], label<span class="op">=</span><span class="st">"homologs"</span>, s<span class="op">=</span><span class="dv">40</span>)</span>
+<span id="cb8-6"><a aria-label="6"></a>ax.scatter([j <span class="cf">for</span> j, h <span class="kw">in</span> <span class="bu">zip</span>(js, homolog) <span class="cf">if</span> <span class="kw">not</span> h],</span>
+<span id="cb8-7"><a aria-label="7"></a>           [s <span class="cf">for</span> s, h <span class="kw">in</span> <span class="bu">zip</span>(sws, homolog) <span class="cf">if</span> <span class="kw">not</span> h], label<span class="op">=</span><span class="st">"unrelated"</span>, s<span class="op">=</span><span class="dv">40</span>, marker<span class="op">=</span><span class="st">"x"</span>)</span>
+<span id="cb8-8"><a aria-label="8"></a>ax.set_xlabel(<span class="st">"Jaccard index of 5-mer sets"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"Smith-Waterman score"</span>)</span>
+<span id="cb8-9"><a aria-label="9"></a>ax.legend()<span class="op">;</span> plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div>
 <figure>
-<p><img data-src="bio2_files/figure-revealjs/cell-5-output-1.png" width="543" height="390"></p>
+<p><img data-src="bio2_files/figure-revealjs/cell-6-output-1.png" width="543" height="390"></p>
 </figure>
 </div>
 </div>
 </div>
 <p>The cheap statistic <strong>ranks the same way</strong> as the expensive one. Homologs sit above Jaccard ~0.2; unrelated sequences cluster near 0.15. A threshold there discards most of a database for essentially no cost.</p>
 </section>
-<section id="what-the-heuristic-gives-up" class="slide level2">
+<section id="what-the-heuristic-gives-up" class="slide level2 extends">
 <h2>What the heuristic gives up</h2>
 <div class="callout callout-warning no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -503,10 +650,106 @@ MSDE
 </div>
 </div>
 </div>
+<!-- source: readIAB ch.4, "Heuristic algorithms" -- random reference selection
+     (the straw man), GC content, k-mer content, pre-computed k-mers. The book
+     runs this on Greengenes 16S; the synthetic genera here stand in for it. -->
+</section>
+<section id="judging-a-heuristic" class="slide level2 scrollable">
+<h2>Judging a heuristic</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The book’s two questions, made into an experiment</strong></p>
+</div>
+<div class="callout-content">
+<p>A heuristic chooses which references to align against; anything it skips can never be the answer. So measure:</p>
+<ol type="1">
+<li><strong>how often is the answer still right?</strong></li>
+<li><strong>how much faster is it?</strong></li>
+</ol>
+<p>And compare against a <strong>straw man</strong> — a heuristic so naive that anything worth using must beat it. The book’s straw man aligns against a <em>random</em> 10% of the database.</p>
+</div>
+</div>
+</div>
+<div id="8c734b97" class="cell" data-execution_count="7">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a aria-label="1"></a>rng_h <span class="op">=</span> np.random.default_rng(<span class="dv">11</span>)</span>
+<span id="cb9-2"><a aria-label="2"></a></span>
+<span id="cb9-3"><a aria-label="3"></a></span>
+<span id="cb9-4"><a aria-label="4"></a><span class="kw">def</span> mutate_h(s, rate):</span>
+<span id="cb9-5"><a aria-label="5"></a>    <span class="cf">return</span> <span class="st">""</span>.join(rng_h.choice(<span class="bu">list</span>(<span class="st">"ACGT"</span>)) <span class="cf">if</span> rng_h.random() <span class="op">&lt;</span> rate <span class="cf">else</span> c <span class="cf">for</span> c <span class="kw">in</span> s)</span>
+<span id="cb9-6"><a aria-label="6"></a></span>
+<span id="cb9-7"><a aria-label="7"></a></span>
+<span id="cb9-8"><a aria-label="8"></a><span class="co"># 40 genera x 5 reference sequences; one new query per genus, cut as a slice</span></span>
+<span id="cb9-9"><a aria-label="9"></a>ancestors <span class="op">=</span> {<span class="ss">f"g</span><span class="sc">{</span>i<span class="sc">}</span><span class="ss">"</span>: <span class="st">""</span>.join(rng_h.choice(<span class="bu">list</span>(<span class="st">"ACGT"</span>), <span class="dv">300</span>)) <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">40</span>)}</span>
+<span id="cb9-10"><a aria-label="10"></a>refs <span class="op">=</span> [(g, mutate_h(a, <span class="fl">0.10</span>)) <span class="cf">for</span> g, a <span class="kw">in</span> ancestors.items() <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">5</span>)]</span>
+<span id="cb9-11"><a aria-label="11"></a>queries_h <span class="op">=</span> [(g, mutate_h(a, <span class="fl">0.10</span>)[<span class="dv">75</span>:<span class="dv">225</span>]) <span class="cf">for</span> g, a <span class="kw">in</span> ancestors.items()]</span>
+<span id="cb9-12"><a aria-label="12"></a></span>
+<span id="cb9-13"><a aria-label="13"></a>ref_kmers <span class="op">=</span> [kmers(s, <span class="dv">8</span>) <span class="cf">for</span> _, s <span class="kw">in</span> refs]                      <span class="co"># pre-computed once</span></span>
+<span id="cb9-14"><a aria-label="14"></a>ref_gc <span class="op">=</span> np.array([(s.count(<span class="st">"G"</span>) <span class="op">+</span> s.count(<span class="st">"C"</span>)) <span class="op">/</span> <span class="bu">len</span>(s) <span class="cf">for</span> _, s <span class="kw">in</span> refs])</span>
+<span id="cb9-15"><a aria-label="15"></a>keep <span class="op">=</span> <span class="bu">len</span>(refs) <span class="op">//</span> <span class="dv">10</span>                                           <span class="co"># align against 10%</span></span>
+<span id="cb9-16"><a aria-label="16"></a></span>
+<span id="cb9-17"><a aria-label="17"></a></span>
+<span id="cb9-18"><a aria-label="18"></a><span class="kw">def</span> pick_random(q):</span>
+<span id="cb9-19"><a aria-label="19"></a>    <span class="cf">return</span> rng_h.choice(<span class="bu">len</span>(refs), keep, replace<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb9-20"><a aria-label="20"></a></span>
+<span id="cb9-21"><a aria-label="21"></a></span>
+<span id="cb9-22"><a aria-label="22"></a><span class="kw">def</span> pick_gc(q):</span>
+<span id="cb9-23"><a aria-label="23"></a>    gc <span class="op">=</span> (q.count(<span class="st">"G"</span>) <span class="op">+</span> q.count(<span class="st">"C"</span>)) <span class="op">/</span> <span class="bu">len</span>(q)</span>
+<span id="cb9-24"><a aria-label="24"></a>    <span class="cf">return</span> np.argsort(np.<span class="bu">abs</span>(ref_gc <span class="op">-</span> gc))[:keep]</span>
+<span id="cb9-25"><a aria-label="25"></a></span>
+<span id="cb9-26"><a aria-label="26"></a></span>
+<span id="cb9-27"><a aria-label="27"></a><span class="kw">def</span> pick_kmer(q):</span>
+<span id="cb9-28"><a aria-label="28"></a>    qk_ <span class="op">=</span> kmers(q, <span class="dv">8</span>)</span>
+<span id="cb9-29"><a aria-label="29"></a>    <span class="cf">return</span> np.argsort([<span class="op">-</span><span class="bu">len</span>(qk_ <span class="op">&amp;</span> rk) <span class="cf">for</span> rk <span class="kw">in</span> ref_kmers])[:keep]</span>
+<span id="cb9-30"><a aria-label="30"></a></span>
+<span id="cb9-31"><a aria-label="31"></a></span>
+<span id="cb9-32"><a aria-label="32"></a><span class="kw">def</span> search(pick):</span>
+<span id="cb9-33"><a aria-label="33"></a>    correct <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb9-34"><a aria-label="34"></a>    <span class="cf">for</span> g, q <span class="kw">in</span> queries_h:</span>
+<span id="cb9-35"><a aria-label="35"></a>        idx <span class="op">=</span> <span class="bu">range</span>(<span class="bu">len</span>(refs)) <span class="cf">if</span> pick <span class="kw">is</span> <span class="va">None</span> <span class="cf">else</span> pick(q)</span>
+<span id="cb9-36"><a aria-label="36"></a>        best <span class="op">=</span> <span class="bu">max</span>(idx, key<span class="op">=</span><span class="kw">lambda</span> i: aligner.align(q, refs[i][<span class="dv">1</span>]).score)</span>
+<span id="cb9-37"><a aria-label="37"></a>        correct <span class="op">+=</span> refs[best][<span class="dv">0</span>] <span class="op">==</span> g</span>
+<span id="cb9-38"><a aria-label="38"></a>    <span class="cf">return</span> correct <span class="op">/</span> <span class="bu">len</span>(queries_h)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="judging-a-heuristic-1" class="slide level2 scrollable">
+<h2>Judging a heuristic</h2>
+<div id="06cef264" class="cell" data-execution_count="8">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a aria-label="1"></a><span class="im">import</span> time</span>
+<span id="cb10-2"><a aria-label="2"></a></span>
+<span id="cb10-3"><a aria-label="3"></a><span class="bu">print</span>(<span class="ss">f"  </span><span class="sc">{</span><span class="st">'method'</span><span class="sc">:&lt;22}{</span><span class="st">'correct'</span><span class="sc">:&gt;9}{</span><span class="st">'runtime'</span><span class="sc">:&gt;10}</span><span class="ss">"</span>)</span>
+<span id="cb10-4"><a aria-label="4"></a><span class="cf">for</span> name, pick <span class="kw">in</span> [(<span class="st">"full search"</span>, <span class="va">None</span>), (<span class="st">"random 10% (straw man)"</span>, pick_random),</span>
+<span id="cb10-5"><a aria-label="5"></a>                   (<span class="st">"closest GC 10%"</span>, pick_gc), (<span class="st">"most shared 8-mers 10%"</span>, pick_kmer)]:</span>
+<span id="cb10-6"><a aria-label="6"></a>    t0 <span class="op">=</span> time.perf_counter()</span>
+<span id="cb10-7"><a aria-label="7"></a>    acc <span class="op">=</span> search(pick)</span>
+<span id="cb10-8"><a aria-label="8"></a>    <span class="bu">print</span>(<span class="ss">f"  </span><span class="sc">{</span>name<span class="sc">:&lt;22}{</span>acc<span class="sc">:&gt;9.0%}{</span>time<span class="sc">.</span>perf_counter() <span class="op">-</span> t0<span class="sc">:&gt;9.2f}</span><span class="ss">s"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  method                  correct   runtime
+  full search                100%     4.39s
+  random 10% (straw man)      55%     0.44s
+  closest GC 10%              55%     0.44s
+  most shared 8-mers 10%     100%     0.49s</code></pre>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Reading the table</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>the <strong>random</strong> straw man is ten times faster, and right only when one of the query’s own five relatives happens to be in the 10% sample — about <span class="math inline">\(1 - 0.9^5 \approx 40\%\)</span> of the time in expectation, 55% in this run of forty queries. The book reports the same pattern: about half as many correct genus calls as the full search</li>
+<li><strong>GC content</strong> is cheap but nearly useless here: random sequences all sit near 50% GC, so it barely ranks anything. In real 16S data it helps more, but not much</li>
+<li><strong>shared <span class="math inline">\(k\)</span>-mers</strong> keep the speed <em>and</em> the accuracy — because the <span class="math inline">\(k\)</span>-mer sets are <strong>computed once, before any query arrives</strong></li>
+</ul>
+<p>The book’s verdict on the last one: <em>“very similar to how BLAST works.”</em> The rest of this half takes that idea apart.</p>
+</div>
+</div>
+</div>
 <!-- source: readIAB ch.4, "Reducing the runtime for database searches"
      https://readiab.org/database-searching.html -->
 </section>
-<section id="an-inverted-index" class="slide level2 scrollable">
+<section id="an-inverted-index" class="slide level2 scrollable extends">
 <h2>An inverted index</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -515,20 +758,20 @@ MSDE
 </div>
 <div class="callout-content">
 <p>Jaccard still compares the query against <em>every</em> reference. The real saving comes from <strong>inverting</strong> the problem: build a map from <span class="math inline">\(k\)</span>-mer to the sequences containing it, once, offline.</p>
-<div id="5c23fca7" class="cell" data-execution_count="6">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a aria-label="1"></a><span class="im">from</span> collections <span class="im">import</span> defaultdict</span>
-<span id="cb6-2"><a aria-label="2"></a></span>
-<span id="cb6-3"><a aria-label="3"></a>db_seqs <span class="op">=</span> {<span class="ss">f"ref_</span><span class="sc">{</span>i<span class="sc">}</span><span class="ss">"</span>: random_seq(<span class="dv">300</span>) <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">200</span>)}</span>
-<span id="cb6-4"><a aria-label="4"></a>db_seqs[<span class="st">"ref_homolog"</span>] <span class="op">=</span> mutate(base, <span class="fl">0.08</span>)</span>
-<span id="cb6-5"><a aria-label="5"></a></span>
-<span id="cb6-6"><a aria-label="6"></a>index <span class="op">=</span> defaultdict(<span class="bu">set</span>)</span>
-<span id="cb6-7"><a aria-label="7"></a><span class="cf">for</span> name, seq <span class="kw">in</span> db_seqs.items():</span>
-<span id="cb6-8"><a aria-label="8"></a>    <span class="cf">for</span> km <span class="kw">in</span> kmers(seq):</span>
-<span id="cb6-9"><a aria-label="9"></a>        index[km].add(name)</span>
-<span id="cb6-10"><a aria-label="10"></a></span>
-<span id="cb6-11"><a aria-label="11"></a><span class="bu">print</span>(<span class="ss">f"  database     : </span><span class="sc">{</span><span class="bu">len</span>(db_seqs)<span class="sc">}</span><span class="ss"> sequences"</span>)</span>
-<span id="cb6-12"><a aria-label="12"></a><span class="bu">print</span>(<span class="ss">f"  index entries: </span><span class="sc">{</span><span class="bu">len</span>(index)<span class="sc">}</span><span class="ss"> distinct 5-mers"</span>)</span>
-<span id="cb6-13"><a aria-label="13"></a><span class="bu">print</span>(<span class="ss">f"  avg postings : </span><span class="sc">{</span>np<span class="sc">.</span>mean([<span class="bu">len</span>(v) <span class="cf">for</span> v <span class="kw">in</span> index.values()])<span class="sc">:.1f}</span><span class="ss"> sequences per k-mer"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="d62bd58c" class="cell" data-execution_count="9">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a aria-label="1"></a><span class="im">from</span> collections <span class="im">import</span> defaultdict</span>
+<span id="cb12-2"><a aria-label="2"></a></span>
+<span id="cb12-3"><a aria-label="3"></a>db_seqs <span class="op">=</span> {<span class="ss">f"ref_</span><span class="sc">{</span>i<span class="sc">}</span><span class="ss">"</span>: random_seq(<span class="dv">300</span>) <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">200</span>)}</span>
+<span id="cb12-4"><a aria-label="4"></a>db_seqs[<span class="st">"ref_homolog"</span>] <span class="op">=</span> mutate(base, <span class="fl">0.08</span>)</span>
+<span id="cb12-5"><a aria-label="5"></a></span>
+<span id="cb12-6"><a aria-label="6"></a>index <span class="op">=</span> defaultdict(<span class="bu">set</span>)</span>
+<span id="cb12-7"><a aria-label="7"></a><span class="cf">for</span> name, seq <span class="kw">in</span> db_seqs.items():</span>
+<span id="cb12-8"><a aria-label="8"></a>    <span class="cf">for</span> km <span class="kw">in</span> kmers(seq):</span>
+<span id="cb12-9"><a aria-label="9"></a>        index[km].add(name)</span>
+<span id="cb12-10"><a aria-label="10"></a></span>
+<span id="cb12-11"><a aria-label="11"></a><span class="bu">print</span>(<span class="ss">f"  database     : </span><span class="sc">{</span><span class="bu">len</span>(db_seqs)<span class="sc">}</span><span class="ss"> sequences"</span>)</span>
+<span id="cb12-12"><a aria-label="12"></a><span class="bu">print</span>(<span class="ss">f"  index entries: </span><span class="sc">{</span><span class="bu">len</span>(index)<span class="sc">}</span><span class="ss"> distinct 5-mers"</span>)</span>
+<span id="cb12-13"><a aria-label="13"></a><span class="bu">print</span>(<span class="ss">f"  avg postings : </span><span class="sc">{</span>np<span class="sc">.</span>mean([<span class="bu">len</span>(v) <span class="cf">for</span> v <span class="kw">in</span> index.values()])<span class="sc">:.1f}</span><span class="ss"> sequences per k-mer"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>  database     : 201 sequences
   index entries: 1024 distinct 5-mers
@@ -539,7 +782,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="an-inverted-index-1" class="slide level2 scrollable">
+<section id="an-inverted-index-1" class="slide level2 scrollable extends">
 <h2>An inverted index</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -547,34 +790,40 @@ MSDE
 <p><strong>Querying it</strong></p>
 </div>
 <div class="callout-content">
-<div id="28b38d75" class="cell" data-execution_count="7">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a aria-label="1"></a><span class="kw">def</span> candidates(query, index, min_shared<span class="op">=</span><span class="dv">20</span>):</span>
-<span id="cb8-2"><a aria-label="2"></a>    hits <span class="op">=</span> defaultdict(<span class="bu">int</span>)</span>
-<span id="cb8-3"><a aria-label="3"></a>    <span class="cf">for</span> km <span class="kw">in</span> kmers(query):</span>
-<span id="cb8-4"><a aria-label="4"></a>        <span class="cf">for</span> name <span class="kw">in</span> index.get(km, ()):</span>
-<span id="cb8-5"><a aria-label="5"></a>            hits[name] <span class="op">+=</span> <span class="dv">1</span></span>
-<span id="cb8-6"><a aria-label="6"></a>    <span class="cf">return</span> {n: c <span class="cf">for</span> n, c <span class="kw">in</span> hits.items() <span class="cf">if</span> c <span class="op">&gt;=</span> min_shared}</span>
-<span id="cb8-7"><a aria-label="7"></a></span>
-<span id="cb8-8"><a aria-label="8"></a></span>
-<span id="cb8-9"><a aria-label="9"></a>found <span class="op">=</span> candidates(base, index)</span>
-<span id="cb8-10"><a aria-label="10"></a><span class="bu">print</span>(<span class="ss">f"  candidates surviving the filter: </span><span class="sc">{</span><span class="bu">len</span>(found)<span class="sc">}</span><span class="ss"> of </span><span class="sc">{</span><span class="bu">len</span>(db_seqs)<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb8-11"><a aria-label="11"></a><span class="cf">for</span> name, shared <span class="kw">in</span> <span class="bu">sorted</span>(found.items(), key<span class="op">=</span><span class="kw">lambda</span> kv: <span class="op">-</span>kv[<span class="dv">1</span>])[:<span class="dv">5</span>]:</span>
-<span id="cb8-12"><a aria-label="12"></a>    <span class="bu">print</span>(<span class="ss">f"    </span><span class="sc">{</span>name<span class="sc">:&lt;14}</span><span class="ss"> shares </span><span class="sc">{</span>shared<span class="sc">:&gt;3}</span><span class="ss"> k-mers"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="b5b81e09" class="cell" data-execution_count="10">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a aria-label="1"></a><span class="kw">def</span> candidates(query, index, min_shared<span class="op">=</span><span class="dv">150</span>):</span>
+<span id="cb14-2"><a aria-label="2"></a>    hits <span class="op">=</span> defaultdict(<span class="bu">int</span>)</span>
+<span id="cb14-3"><a aria-label="3"></a>    <span class="cf">for</span> km <span class="kw">in</span> kmers(query):</span>
+<span id="cb14-4"><a aria-label="4"></a>        <span class="cf">for</span> name <span class="kw">in</span> index.get(km, ()):</span>
+<span id="cb14-5"><a aria-label="5"></a>            hits[name] <span class="op">+=</span> <span class="dv">1</span></span>
+<span id="cb14-6"><a aria-label="6"></a>    <span class="cf">return</span> {n: c <span class="cf">for</span> n, c <span class="kw">in</span> hits.items() <span class="cf">if</span> c <span class="op">&gt;=</span> min_shared}</span>
+<span id="cb14-7"><a aria-label="7"></a></span>
+<span id="cb14-8"><a aria-label="8"></a></span>
+<span id="cb14-9"><a aria-label="9"></a>shared <span class="op">=</span> candidates(base, index, min_shared<span class="op">=</span><span class="dv">0</span>)                 <span class="co"># every hit, no threshold</span></span>
+<span id="cb14-10"><a aria-label="10"></a><span class="bu">print</span>(<span class="st">"  shared 5-mers, top 5 of"</span>, <span class="bu">len</span>(shared), <span class="st">"sequences hit:"</span>)</span>
+<span id="cb14-11"><a aria-label="11"></a><span class="cf">for</span> name, n <span class="kw">in</span> <span class="bu">sorted</span>(shared.items(), key<span class="op">=</span><span class="kw">lambda</span> kv: <span class="op">-</span>kv[<span class="dv">1</span>])[:<span class="dv">5</span>]:</span>
+<span id="cb14-12"><a aria-label="12"></a>    <span class="bu">print</span>(<span class="ss">f"    </span><span class="sc">{</span>name<span class="sc">:&lt;14}</span><span class="ss"> </span><span class="sc">{</span>n<span class="sc">:&gt;3}</span><span class="ss">"</span>)</span>
+<span id="cb14-13"><a aria-label="13"></a></span>
+<span id="cb14-14"><a aria-label="14"></a>found <span class="op">=</span> candidates(base, index)</span>
+<span id="cb14-15"><a aria-label="15"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">  candidates surviving min_shared=150: </span><span class="sc">{</span><span class="bu">len</span>(found)<span class="sc">}</span><span class="ss"> of </span><span class="sc">{</span><span class="bu">len</span>(db_seqs)<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>  candidates surviving the filter: 201 of 201
-    ref_homolog    shares 217 k-mers
-    ref_183        shares  93 k-mers
-    ref_46         shares  89 k-mers
-    ref_136        shares  89 k-mers
-    ref_164        shares  87 k-mers</code></pre>
+<pre><code>  shared 5-mers, top 5 of 201 sequences hit:
+    ref_homolog    217
+    ref_183         93
+    ref_136         89
+    ref_46          89
+    ref_178         87
+
+  candidates surviving min_shared=150: 1 of 201</code></pre>
 </div>
 </div>
-<p>The filter reduced the alignment workload by orders of magnitude, and the true homolog is at the top. <strong>This is the data structure inside every fast aligner</strong> — BLAST, DIAMOND, minimap2, kraken.</p>
+<p>With no threshold, <strong>every</strong> sequence is hit: a random 300-base sequence has ~296 5-mers out of only <span class="math inline">\(4^5 = 1024\)</span> possible, so unrelated sequences share ~90 by chance. The threshold has to sit <strong>above the chance level</strong> — here between ~95 and the homolog’s ~220 — and then the filter leaves one alignment to do instead of 201.</p>
+<p><strong>This is the data structure inside every fast aligner</strong> — BLAST, DIAMOND, minimap2, kraken.</p>
 </div>
 </div>
 </div>
 </section>
-<section id="cost-of-the-index" class="slide level2">
+<section id="cost-of-the-index" class="slide level2 beyond">
 <h2>Cost of the index</h2>
 <div class="callout callout-note no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -615,7 +864,7 @@ MSDE
 </div>
 <!-- source: readIAB ch.4, "Heuristic algorithms" -->
 </section>
-<section id="how-blast-actually-works" class="slide level2">
+<section id="how-blast-actually-works" class="slide level2 extends">
 <h2>How BLAST actually works</h2>
 <div class="callout callout-note no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -634,7 +883,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="word-size-is-the-main-dial" class="slide level2">
+<section id="word-size-is-the-main-dial" class="slide level2 beyond">
 <h2>Word size is the main dial</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -671,7 +920,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="spaced-seeds" class="slide level2">
+<section id="spaced-seeds" class="slide level2 beyond">
 <h2>Spaced seeds</h2>
 <div class="callout callout-note no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -686,7 +935,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="the-blast-family" class="slide level2">
+<section id="the-blast-family" class="slide level2 beyond">
 <h2>The BLAST family</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -748,7 +997,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="bit-scores" class="slide level2">
+<section id="bit-scores" class="slide level2 beyond">
 <h2>Bit scores</h2>
 <div class="callout callout-note no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -767,7 +1016,7 @@ MSDE
 <!-- source: background beyond readIAB -- Roberts et al. 2004 minimizers;
      included because every modern aligner uses them -->
 </section>
-<section id="minimizers" class="slide level2 scrollable">
+<section id="minimizers" class="slide level2 scrollable beyond">
 <h2>Minimizers</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -791,12 +1040,116 @@ MSDE
 </div>
 </div>
 </div>
+<!-- source: readIAB ch.4, "False positives, false negatives, p-values, and alpha"
+     and "Interpreting alignment scores in context" -- the permutation test -->
+</section>
+<section id="what-would-a-non-homolog-score" class="slide level2">
+<h2>What would a non-homolog score?</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The book’s question</strong></p>
+</div>
+<div class="callout-content">
+<p>An alignment is a hypothesis of homology. So ask: <em>what fraction of the time would I get a score at least this good if the sequences were <strong>not</strong> homologous?</em> That fraction is a <strong>p-value</strong>.</p>
+<p>We have no supply of guaranteed non-homologs — but we can <strong>make</strong> them. Shuffle the query: same length, same composition, order destroyed. Any homology is gone; everything that inflates scores by chance (length, base composition) is kept.</p>
+<p>It is the same move as shuffling a deck of cards: the cards are unchanged, only their order is lost.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="a-permutation-test" class="slide level2 scrollable">
+<h2>A permutation test</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Align against 99 shuffles, and count</strong></p>
+</div>
+<div class="callout-content">
+<div id="26e98f48" class="cell" data-execution_count="11">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a aria-label="1"></a>rng_p <span class="op">=</span> np.random.default_rng(<span class="dv">3</span>)</span>
+<span id="cb16-2"><a aria-label="2"></a></span>
+<span id="cb16-3"><a aria-label="3"></a></span>
+<span id="cb16-4"><a aria-label="4"></a><span class="kw">def</span> shuffled(s):</span>
+<span id="cb16-5"><a aria-label="5"></a>    <span class="cf">return</span> <span class="st">""</span>.join(rng_p.permutation(<span class="bu">list</span>(s)))</span>
+<span id="cb16-6"><a aria-label="6"></a></span>
+<span id="cb16-7"><a aria-label="7"></a></span>
+<span id="cb16-8"><a aria-label="8"></a><span class="kw">def</span> permutation_p(query, subject, n<span class="op">=</span><span class="dv">99</span>):</span>
+<span id="cb16-9"><a aria-label="9"></a>    actual <span class="op">=</span> aligner.align(query, subject).score</span>
+<span id="cb16-10"><a aria-label="10"></a>    null <span class="op">=</span> np.array([aligner.align(shuffled(query), subject).score <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(n)])</span>
+<span id="cb16-11"><a aria-label="11"></a>    <span class="cf">return</span> actual, null, (np.<span class="bu">sum</span>(null <span class="op">&gt;=</span> actual) <span class="op">+</span> <span class="dv">1</span>) <span class="op">/</span> (n <span class="op">+</span> <span class="dv">1</span>)</span>
+<span id="cb16-12"><a aria-label="12"></a></span>
+<span id="cb16-13"><a aria-label="13"></a></span>
+<span id="cb16-14"><a aria-label="14"></a>q_p <span class="op">=</span> <span class="st">""</span>.join(rng_p.choice(<span class="bu">list</span>(<span class="st">"ACGT"</span>), <span class="dv">150</span>))</span>
+<span id="cb16-15"><a aria-label="15"></a><span class="cf">for</span> label, subj <span class="kw">in</span> [(<span class="st">"identical"</span>, q_p),</span>
+<span id="cb16-16"><a aria-label="16"></a>                    (<span class="st">"unrelated"</span>, <span class="st">""</span>.join(rng_p.choice(<span class="bu">list</span>(<span class="st">"ACGT"</span>), <span class="dv">150</span>)))]:</span>
+<span id="cb16-17"><a aria-label="17"></a>    actual, null, p <span class="op">=</span> permutation_p(q_p, subj)</span>
+<span id="cb16-18"><a aria-label="18"></a>    <span class="bu">print</span>(<span class="ss">f"  </span><span class="sc">{</span>label<span class="sc">:&lt;10}</span><span class="ss"> score </span><span class="sc">{</span>actual<span class="sc">:5.0f}</span><span class="ss">   null max </span><span class="sc">{</span>null<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:4.0f}</span><span class="ss">   p = </span><span class="sc">{</span>p<span class="sc">:.2f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  identical  score   300   null max   22   p = 0.01
+  unrelated  score    15   null max   22   p = 0.50</code></pre>
+</div>
+</div>
+<p><span class="math display">\[p = \frac{\#\{\text{shuffled scores} \ge \text{actual}\} + 1}{n + 1}\]</span></p>
+<p>The <span class="math inline">\(+1\)</span> counts the actual alignment as one of the possibilities. So with 99 shuffles the smallest attainable p-value is <span class="math inline">\(1/100\)</span>, and a result at that floor is reported as <strong><span class="math inline">\(p &lt; 0.01\)</span></strong>, not <span class="math inline">\(p = 0.01\)</span> — we have only learned that no shuffle beat it. More shuffles buy more precision.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="choose-alpha-first" class="slide level2">
+<h2>Choose <span class="math inline">\(\alpha\)</span> first</h2>
+<div class="callout callout-warning no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Two ways to be wrong, and a dial between them</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>false positive</strong> (type 1) — calling non-homologs homologous</li>
+<li><strong>false negative</strong> (type 2) — missing real homologs</li>
+</ul>
+<p><span class="math inline">\(\alpha\)</span> is the p-value below which we call a result significant. <strong>Set it before computing the p-value</strong>, so the result cannot influence the threshold. The book’s image: <span class="math inline">\(\alpha\)</span> is a <strong>dial</strong>. Turn it up and false positives rise while false negatives fall; turn it down and the reverse.</p>
+<p>There is no universally right setting. <em>When would you rather have false positives? When false negatives?</em> That depends on what the result will be used for — a screening step that a second method will check, or a final annotation that will be copied into a database.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="between-the-extremes" class="slide level2 scrollable">
+<h2>Between the extremes</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Homologs that have diverged</strong></p>
+</div>
+<div class="callout-content">
+<p>The interesting cases lie between <em>identical</em> and <em>unrelated</em>. Mutate a copy of the query until only a given fraction of positions is identical:</p>
+<div id="ce79846e" class="cell" data-execution_count="12">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a aria-label="1"></a><span class="kw">def</span> with_identity(s, pid):</span>
+<span id="cb18-2"><a aria-label="2"></a>    <span class="cf">return</span> <span class="st">""</span>.join(c <span class="cf">if</span> rng_p.random() <span class="op">&lt;</span> pid <span class="cf">else</span> rng_p.choice([b <span class="cf">for</span> b <span class="kw">in</span> <span class="st">"ACGT"</span> <span class="cf">if</span> b <span class="op">!=</span> c])</span>
+<span id="cb18-3"><a aria-label="3"></a>                   <span class="cf">for</span> c <span class="kw">in</span> s)</span>
+<span id="cb18-4"><a aria-label="4"></a></span>
+<span id="cb18-5"><a aria-label="5"></a></span>
+<span id="cb18-6"><a aria-label="6"></a><span class="cf">for</span> pid <span class="kw">in</span> (<span class="fl">0.95</span>, <span class="fl">0.75</span>, <span class="fl">0.50</span>, <span class="fl">0.25</span>):</span>
+<span id="cb18-7"><a aria-label="7"></a>    _, _, p <span class="op">=</span> permutation_p(q_p, with_identity(q_p, pid))</span>
+<span id="cb18-8"><a aria-label="8"></a>    <span class="bu">print</span>(<span class="ss">f"  </span><span class="sc">{</span>pid<span class="sc">:.0%}</span><span class="ss"> identical:  p = </span><span class="sc">{</span>p<span class="sc">:.2f}</span><span class="ss">   -&gt;  </span><span class="sc">{</span><span class="st">'homologous'</span> <span class="cf">if</span> p <span class="op">&lt;</span> <span class="fl">0.05</span> <span class="cf">else</span> <span class="st">'not significant'</span><span class="sc">}</span><span class="ss"> at alpha = 0.05"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  95% identical:  p = 0.01   -&gt;  homologous at alpha = 0.05
+  75% identical:  p = 0.01   -&gt;  homologous at alpha = 0.05
+  50% identical:  p = 0.78   -&gt;  not significant at alpha = 0.05
+  25% identical:  p = 0.50   -&gt;  not significant at alpha = 0.05</code></pre>
+</div>
+</div>
+<p>At 25% identity a DNA sequence is no closer to the query than a random one (one base in four agrees by chance), and the test correctly cannot tell.</p>
+<p><strong>The 50% row is the instructive one.</strong> Those sequences <em>are</em> homologous, yet the test misses them — because the scoring scheme (+2 match, <span class="math inline">\(-3\)</span> mismatch) is tuned for close matches. At 50% identity the expected score per aligned position is <span class="math inline">\(0.5 \cdot 2 - 0.5 \cdot 3 &lt; 0\)</span>, so no local alignment can grow. <strong>The limit of detection belongs to the method as much as to the data.</strong></p>
+</div>
+</div>
+</div>
 <!-- source: readIAB ch.4, "Determining the statistical significance of a
      pairwise alignment" -- Metrics of alignment quality; false positives,
      false negatives, p-values and alpha -->
 </section>
-<section id="statistical-significance" class="slide level2">
-<h2>Statistical significance</h2>
+<section id="from-permutations-to-e-values" class="slide level2 extends">
+<h2>From permutations to E-values</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
@@ -804,6 +1157,7 @@ MSDE
 </div>
 <div class="callout-content">
 <p>A score of 60 is impressive against a 100-sequence database and meaningless against <span class="math inline">\(10^{9}\)</span> — with enough sequences, high scores arise by chance.</p>
+<p>Ninety-nine shuffles per hit is affordable for one alignment and absurd for a search returning thousands. BLAST therefore replaces the empirical null with an <strong>analytic</strong> one (Karlin–Altschul theory), fitted once per scoring scheme.</p>
 <p>The <strong>E-value</strong> is the expected number of alignments scoring at least <span class="math inline">\(S\)</span> by chance in a database of this size:</p>
 <p><span class="math display">\[E = K \, m \, n \, e^{-\lambda S}\]</span></p>
 <p>with <span class="math inline">\(m\)</span> the query length, <span class="math inline">\(n\)</span> the database size, and <span class="math inline">\(K, \lambda\)</span> fitted constants.</p>
@@ -875,46 +1229,39 @@ MSDE
 </div>
 </div>
 </section>
-<section id="the-threshold-trade-off" class="slide level2 scrollable">
+<section id="the-threshold-trade-off" class="slide level2 scrollable extends">
 <h2>The threshold trade-off</h2>
-<div id="cddb9b86" class="cell" data-execution_count="8">
+<div id="95193f2e" class="cell" data-execution_count="13">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a aria-label="1"></a>homologs <span class="op">=</span> [mutate(base, r) <span class="cf">for</span> r <span class="kw">in</span> np.linspace(<span class="fl">0.02</span>, <span class="fl">0.40</span>, <span class="dv">40</span>)]</span>
-<span id="cb10-2"><a aria-label="2"></a>unrelated <span class="op">=</span> [random_seq(<span class="dv">300</span>) <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">40</span>)]</span>
-<span id="cb10-3"><a aria-label="3"></a>jh <span class="op">=</span> np.array([jaccard(qk, kmers(s)) <span class="cf">for</span> s <span class="kw">in</span> homologs])</span>
-<span id="cb10-4"><a aria-label="4"></a>ju <span class="op">=</span> np.array([jaccard(qk, kmers(s)) <span class="cf">for</span> s <span class="kw">in</span> unrelated])</span>
-<span id="cb10-5"><a aria-label="5"></a></span>
-<span id="cb10-6"><a aria-label="6"></a>thresholds <span class="op">=</span> np.linspace(<span class="fl">0.05</span>, <span class="fl">0.6</span>, <span class="dv">60</span>)</span>
-<span id="cb10-7"><a aria-label="7"></a>sens <span class="op">=</span> [(jh <span class="op">&gt;=</span> t).mean() <span class="cf">for</span> t <span class="kw">in</span> thresholds]</span>
-<span id="cb10-8"><a aria-label="8"></a>spec <span class="op">=</span> [(ju <span class="op">&lt;</span> t).mean() <span class="cf">for</span> t <span class="kw">in</span> thresholds]</span>
-<span id="cb10-9"><a aria-label="9"></a></span>
-<span id="cb10-10"><a aria-label="10"></a>f, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">5.5</span>, <span class="fl">3.4</span>))</span>
-<span id="cb10-11"><a aria-label="11"></a>ax.plot(thresholds, sens, label<span class="op">=</span><span class="st">"sensitivity"</span>)</span>
-<span id="cb10-12"><a aria-label="12"></a>ax.plot(thresholds, spec, label<span class="op">=</span><span class="st">"specificity"</span>)</span>
-<span id="cb10-13"><a aria-label="13"></a>ax.set_xlabel(<span class="st">"Jaccard threshold"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"rate"</span>)</span>
-<span id="cb10-14"><a aria-label="14"></a>ax.legend()<span class="op">;</span> plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a aria-label="1"></a>homologs <span class="op">=</span> [mutate(base, r) <span class="cf">for</span> r <span class="kw">in</span> np.linspace(<span class="fl">0.02</span>, <span class="fl">0.40</span>, <span class="dv">40</span>)]</span>
+<span id="cb20-2"><a aria-label="2"></a>unrelated <span class="op">=</span> [random_seq(<span class="dv">300</span>) <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">40</span>)]</span>
+<span id="cb20-3"><a aria-label="3"></a>jh <span class="op">=</span> np.array([jaccard(qk, kmers(s)) <span class="cf">for</span> s <span class="kw">in</span> homologs])</span>
+<span id="cb20-4"><a aria-label="4"></a>ju <span class="op">=</span> np.array([jaccard(qk, kmers(s)) <span class="cf">for</span> s <span class="kw">in</span> unrelated])</span>
+<span id="cb20-5"><a aria-label="5"></a></span>
+<span id="cb20-6"><a aria-label="6"></a>thresholds <span class="op">=</span> np.linspace(<span class="fl">0.05</span>, <span class="fl">0.6</span>, <span class="dv">60</span>)</span>
+<span id="cb20-7"><a aria-label="7"></a>sens <span class="op">=</span> [(jh <span class="op">&gt;=</span> t).mean() <span class="cf">for</span> t <span class="kw">in</span> thresholds]</span>
+<span id="cb20-8"><a aria-label="8"></a>spec <span class="op">=</span> [(ju <span class="op">&lt;</span> t).mean() <span class="cf">for</span> t <span class="kw">in</span> thresholds]</span>
+<span id="cb20-9"><a aria-label="9"></a></span>
+<span id="cb20-10"><a aria-label="10"></a>f, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">5.5</span>, <span class="fl">3.4</span>))</span>
+<span id="cb20-11"><a aria-label="11"></a>ax.plot(thresholds, sens, label<span class="op">=</span><span class="st">"sensitivity"</span>)</span>
+<span id="cb20-12"><a aria-label="12"></a>ax.plot(thresholds, spec, label<span class="op">=</span><span class="st">"specificity"</span>)</span>
+<span id="cb20-13"><a aria-label="13"></a>ax.set_xlabel(<span class="st">"Jaccard threshold"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"rate"</span>)</span>
+<span id="cb20-14"><a aria-label="14"></a>ax.legend()<span class="op">;</span> plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div>
 <figure>
-<p><img data-src="bio2_files/figure-revealjs/cell-8-output-1.png" width="599" height="368"></p>
+<p><img data-src="bio2_files/figure-revealjs/cell-13-output-1.png" width="599" height="368"></p>
 </figure>
 </div>
 </div>
 </div>
 <p>The crossing point is where the two errors balance. <strong>Where you sit on this curve is a decision about consequences, not about statistics</strong> — and it is the decision that every E-value cut-off encodes.</p>
-<!-- ==========================================================================
-     SOURCE: readIAB ch.5 "Machine learning in bioinformatics"
-             https://readiab.org/machine-learning.html
-             sections: "The feature table", "Supervised classification",
-                       "Naive Bayes classifiers", "Training data, test data,
-                       and cross-validation"
-     ========================================================================== -->
 <!-- source: readIAB ch.4, "Exploring the limit of detection of sequence
      homology searches" -->
 </section>
-<section id="the-limit-of-detection" class="slide level2 scrollable">
+<section id="the-limit-of-detection" class="slide level2 scrollable extends">
 <h2>The limit of detection</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -922,67 +1269,69 @@ MSDE
 <p><strong>Where does homology become invisible?</strong></p>
 </div>
 <div class="callout-content">
-<div id="455c1753" class="cell" data-execution_count="9">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a aria-label="1"></a>divergences <span class="op">=</span> np.arange(<span class="fl">0.05</span>, <span class="fl">0.75</span>, <span class="fl">0.05</span>)</span>
-<span id="cb11-2"><a aria-label="2"></a>results <span class="op">=</span> []</span>
-<span id="cb11-3"><a aria-label="3"></a><span class="cf">for</span> d <span class="kw">in</span> divergences:</span>
-<span id="cb11-4"><a aria-label="4"></a>    scores <span class="op">=</span> [aligner.align(base, mutate(base, d)).score <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">5</span>)]</span>
-<span id="cb11-5"><a aria-label="5"></a>    results.append(np.mean(scores))</span>
-<span id="cb11-6"><a aria-label="6"></a></span>
-<span id="cb11-7"><a aria-label="7"></a>null <span class="op">=</span> [aligner.align(base, random_seq(<span class="dv">300</span>)).score <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">20</span>)]</span>
-<span id="cb11-8"><a aria-label="8"></a>null_mean, null_sd <span class="op">=</span> np.mean(null), np.std(null)</span>
-<span id="cb11-9"><a aria-label="9"></a></span>
-<span id="cb11-10"><a aria-label="10"></a><span class="bu">print</span>(<span class="ss">f"  unrelated baseline: </span><span class="sc">{</span>null_mean<span class="sc">:.0f}</span><span class="ss"> +/- </span><span class="sc">{</span>null_sd<span class="sc">:.0f}</span><span class="ss">"</span>)</span>
-<span id="cb11-11"><a aria-label="11"></a><span class="cf">for</span> d, sc <span class="kw">in</span> <span class="bu">zip</span>(divergences, results):</span>
-<span id="cb11-12"><a aria-label="12"></a>    z <span class="op">=</span> (sc <span class="op">-</span> null_mean) <span class="op">/</span> null_sd</span>
-<span id="cb11-13"><a aria-label="13"></a>    flag <span class="op">=</span> <span class="st">"detectable"</span> <span class="cf">if</span> z <span class="op">&gt;</span> <span class="dv">3</span> <span class="cf">else</span> <span class="st">"INDISTINGUISHABLE"</span></span>
-<span id="cb11-14"><a aria-label="14"></a>    <span class="bu">print</span>(<span class="ss">f"  divergence </span><span class="sc">{</span>d<span class="sc">:.0%}</span><span class="ss">: score </span><span class="sc">{</span>sc<span class="sc">:6.0f}</span><span class="ss">  z=</span><span class="sc">{</span>z<span class="sc">:6.1f}</span><span class="ss">  </span><span class="sc">{</span>flag<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="409b0cfa" class="cell" data-execution_count="14">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a aria-label="1"></a>divergences <span class="op">=</span> np.arange(<span class="fl">0.05</span>, <span class="fl">0.75</span>, <span class="fl">0.05</span>)</span>
+<span id="cb21-2"><a aria-label="2"></a>results <span class="op">=</span> []</span>
+<span id="cb21-3"><a aria-label="3"></a><span class="cf">for</span> d <span class="kw">in</span> divergences:</span>
+<span id="cb21-4"><a aria-label="4"></a>    scores <span class="op">=</span> [aligner.align(base, mutate(base, d)).score <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">5</span>)]</span>
+<span id="cb21-5"><a aria-label="5"></a>    results.append(np.mean(scores))</span>
+<span id="cb21-6"><a aria-label="6"></a></span>
+<span id="cb21-7"><a aria-label="7"></a>null <span class="op">=</span> [aligner.align(base, random_seq(<span class="dv">300</span>)).score <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">20</span>)]</span>
+<span id="cb21-8"><a aria-label="8"></a>null_mean, null_sd <span class="op">=</span> np.mean(null), np.std(null)</span>
+<span id="cb21-9"><a aria-label="9"></a></span>
+<span id="cb21-10"><a aria-label="10"></a><span class="bu">print</span>(<span class="ss">f"  unrelated baseline: </span><span class="sc">{</span>null_mean<span class="sc">:.0f}</span><span class="ss"> +/- </span><span class="sc">{</span>null_sd<span class="sc">:.0f}</span><span class="ss">"</span>)</span>
+<span id="cb21-11"><a aria-label="11"></a><span class="cf">for</span> d, sc <span class="kw">in</span> <span class="bu">zip</span>(divergences, results):</span>
+<span id="cb21-12"><a aria-label="12"></a>    z <span class="op">=</span> (sc <span class="op">-</span> null_mean) <span class="op">/</span> null_sd</span>
+<span id="cb21-13"><a aria-label="13"></a>    flag <span class="op">=</span> <span class="st">"detectable"</span> <span class="cf">if</span> z <span class="op">&gt;</span> <span class="dv">3</span> <span class="cf">else</span> <span class="st">"INDISTINGUISHABLE"</span></span>
+<span id="cb21-14"><a aria-label="14"></a>    <span class="bu">print</span>(<span class="ss">f"  mutation rate </span><span class="sc">{</span>d<span class="sc">:.0%}</span><span class="ss"> (~</span><span class="sc">{</span><span class="dv">1</span> <span class="op">-</span> <span class="fl">0.75</span> <span class="op">*</span> d<span class="sc">:.0%}</span><span class="ss"> identical): "</span></span>
+<span id="cb21-15"><a aria-label="15"></a>          <span class="ss">f"score </span><span class="sc">{</span>sc<span class="sc">:6.0f}</span><span class="ss">  z=</span><span class="sc">{</span>z<span class="sc">:6.1f}</span><span class="ss">  </span><span class="sc">{</span>flag<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>  unrelated baseline: 19 +/- 3
-  divergence 5%: score    532  z= 163.0  detectable
-  divergence 10%: score    488  z= 149.1  detectable
-  divergence 15%: score    431  z= 131.0  detectable
-  divergence 20%: score    366  z= 110.3  detectable
-  divergence 25%: score    353  z= 106.2  detectable
-  divergence 30%: score    256  z=  75.2  detectable
-  divergence 35%: score    198  z=  56.8  detectable
-  divergence 40%: score    161  z=  45.3  detectable
-  divergence 45%: score    101  z=  26.0  detectable
-  divergence 50%: score     80  z=  19.5  detectable
-  divergence 55%: score     38  z=   5.9  detectable
-  divergence 60%: score     43  z=   7.6  detectable
-  divergence 65%: score     21  z=   0.6  INDISTINGUISHABLE
-  divergence 70%: score     20  z=   0.3  INDISTINGUISHABLE</code></pre>
+  mutation rate 5% (~96% identical): score    532  z= 163.0  detectable
+  mutation rate 10% (~92% identical): score    488  z= 149.1  detectable
+  mutation rate 15% (~89% identical): score    431  z= 131.0  detectable
+  mutation rate 20% (~85% identical): score    366  z= 110.3  detectable
+  mutation rate 25% (~81% identical): score    353  z= 106.2  detectable
+  mutation rate 30% (~77% identical): score    256  z=  75.2  detectable
+  mutation rate 35% (~74% identical): score    198  z=  56.8  detectable
+  mutation rate 40% (~70% identical): score    161  z=  45.3  detectable
+  mutation rate 45% (~66% identical): score    101  z=  26.0  detectable
+  mutation rate 50% (~62% identical): score     80  z=  19.5  detectable
+  mutation rate 55% (~59% identical): score     38  z=   5.9  detectable
+  mutation rate 60% (~55% identical): score     43  z=   7.6  detectable
+  mutation rate 65% (~51% identical): score     21  z=   0.6  INDISTINGUISHABLE
+  mutation rate 70% (~48% identical): score     20  z=   0.3  INDISTINGUISHABLE</code></pre>
 </div>
 </div>
 </div>
 </div>
 </div>
 </section>
-<section id="the-limit-of-detection-1" class="slide level2 scrollable">
+<section id="the-limit-of-detection-1" class="slide level2 scrollable extends">
 <h2>The limit of detection</h2>
-<div id="53020d99" class="cell" data-execution_count="10">
+<div id="3e23e62a" class="cell" data-execution_count="15">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a aria-label="1"></a>f, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">5.5</span>, <span class="fl">3.4</span>))</span>
-<span id="cb13-2"><a aria-label="2"></a>ax.plot(divergences <span class="op">*</span> <span class="dv">100</span>, results, <span class="st">"o-"</span>, label<span class="op">=</span><span class="st">"homolog score"</span>)</span>
-<span id="cb13-3"><a aria-label="3"></a>ax.axhline(null_mean, color<span class="op">=</span><span class="st">"grey"</span>, ls<span class="op">=</span><span class="st">"--"</span>, label<span class="op">=</span><span class="st">"unrelated mean"</span>)</span>
-<span id="cb13-4"><a aria-label="4"></a>ax.fill_between([<span class="dv">5</span>, <span class="dv">70</span>], null_mean <span class="op">-</span> <span class="dv">3</span> <span class="op">*</span> null_sd, null_mean <span class="op">+</span> <span class="dv">3</span> <span class="op">*</span> null_sd,</span>
-<span id="cb13-5"><a aria-label="5"></a>                color<span class="op">=</span><span class="st">"grey"</span>, alpha<span class="op">=</span><span class="fl">0.2</span>, label<span class="op">=</span><span class="st">"noise band (3 sd)"</span>)</span>
-<span id="cb13-6"><a aria-label="6"></a>ax.set_xlabel(<span class="st">"</span><span class="sc">% d</span><span class="st">ivergence"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"Smith-Waterman score"</span>)</span>
-<span id="cb13-7"><a aria-label="7"></a>ax.legend()<span class="op">;</span> plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a aria-label="1"></a>f, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">5.5</span>, <span class="fl">3.4</span>))</span>
+<span id="cb23-2"><a aria-label="2"></a>ax.plot(divergences <span class="op">*</span> <span class="dv">100</span>, results, <span class="st">"o-"</span>, label<span class="op">=</span><span class="st">"homolog score"</span>)</span>
+<span id="cb23-3"><a aria-label="3"></a>ax.axhline(null_mean, color<span class="op">=</span><span class="st">"grey"</span>, ls<span class="op">=</span><span class="st">"--"</span>, label<span class="op">=</span><span class="st">"unrelated mean"</span>)</span>
+<span id="cb23-4"><a aria-label="4"></a>ax.fill_between([<span class="dv">5</span>, <span class="dv">70</span>], null_mean <span class="op">-</span> <span class="dv">3</span> <span class="op">*</span> null_sd, null_mean <span class="op">+</span> <span class="dv">3</span> <span class="op">*</span> null_sd,</span>
+<span id="cb23-5"><a aria-label="5"></a>                color<span class="op">=</span><span class="st">"grey"</span>, alpha<span class="op">=</span><span class="fl">0.2</span>, label<span class="op">=</span><span class="st">"noise band (3 sd)"</span>)</span>
+<span id="cb23-6"><a aria-label="6"></a>ax.set_xlabel(<span class="st">"mutation rate (%)"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"Smith-Waterman score"</span>)</span>
+<span id="cb23-7"><a aria-label="7"></a>ax.legend()<span class="op">;</span> plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div>
 <figure>
-<p><img data-src="bio2_files/figure-revealjs/cell-10-output-1.png" width="598" height="368"></p>
+<p><img data-src="bio2_files/figure-revealjs/cell-15-output-1.png" width="598" height="368"></p>
 </figure>
 </div>
 </div>
 </div>
-<p>Beyond a certain divergence the signal enters the noise band and <strong>no threshold can separate homolog from chance</strong>. This is not a limitation of the heuristic — it is a limitation of the data. The <em>twilight zone</em> for proteins sits around 20–35% identity, and detecting homology below it needs profile methods (PSI-BLAST, HMMER), not better alignment.</p>
+<p><code>mutate</code> redraws a position with probability <em>rate</em>, and a quarter of redraws land on the same base — so a mutation rate of 60% still leaves ~55% of positions identical. Beyond a certain point the signal enters the noise band and <strong>no threshold can separate homolog from chance</strong>.</p>
+<p>The book runs this same sweep with the permutation p-value from a few slides back, and asks the question worth asking of any simulation: <em>what shortcuts were taken to keep it fast, and what would a more robust version change?</em> (more trials per point, more shuffles per p-value, more than one query sequence). This is not a limitation of the heuristic — it is a limitation of the data. The <em>twilight zone</em> for proteins sits around 20–35% identity, and detecting homology below it needs profile methods (PSI-BLAST, HMMER), not better alignment.</p>
 </section>
-<section id="profiles-beat-pairs" class="slide level2">
+<section id="profiles-beat-pairs" class="slide level2 beyond">
 <h2>Profiles beat pairs</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -997,7 +1346,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="two-ways-to-build-a-profile" class="slide level2 scrollable">
+<section id="two-ways-to-build-a-profile" class="slide level2 scrollable beyond">
 <h2>Two ways to build a profile</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1021,13 +1370,20 @@ MSDE
 </div>
 </div>
 </div>
+<!-- ==========================================================================
+     SOURCE: readIAB ch.5 "Machine learning in bioinformatics"
+             https://readiab.org/machine-learning.html
+             sections: "The feature table", "Supervised classification",
+                       "Naive Bayes classifiers", "Training data, test data,
+                       and cross-validation"
+     ========================================================================== -->
 </section></section>
 <section>
 <section id="machine-learning" class="title-slide slide level1 center">
 <h1>Machine learning</h1>
 
 </section>
-<section id="from-alignment-to-classification" class="slide level2">
+<section id="from-alignment-to-classification" class="slide level2 extends">
 <h2>From alignment to classification</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1086,7 +1442,119 @@ MSDE
 </div>
 </div>
 </section>
-<section id="where-the-modelling-happened" class="slide level2">
+<section id="the-books-first-feature-table-iris" class="slide level2 scrollable">
+<h2>The book’s first feature table: Iris</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Fisher’s 1936 dataset, as scikit-learn ships it</strong></p>
+</div>
+<div class="callout-content">
+<div id="584d1e0c" class="cell" data-execution_count="16">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a aria-label="1"></a><span class="im">from</span> sklearn.datasets <span class="im">import</span> load_iris</span>
+<span id="cb24-2"><a aria-label="2"></a></span>
+<span id="cb24-3"><a aria-label="3"></a>iris <span class="op">=</span> load_iris(as_frame<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb24-4"><a aria-label="4"></a>features <span class="op">=</span> iris.data                                   <span class="co"># samples x features</span></span>
+<span id="cb24-5"><a aria-label="5"></a>labels_iris <span class="op">=</span> iris.target.<span class="bu">map</span>(<span class="bu">dict</span>(<span class="bu">enumerate</span>(iris.target_names)))</span>
+<span id="cb24-6"><a aria-label="6"></a><span class="bu">print</span>(<span class="st">"feature table:"</span>, features.shape, <span class="st">"  label vector:"</span>, labels_iris.shape)</span>
+<span id="cb24-7"><a aria-label="7"></a>features.assign(species<span class="op">=</span>labels_iris).sample(<span class="dv">5</span>, random_state<span class="op">=</span><span class="dv">0</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>feature table: (150, 4)   label vector: (150,)</code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="15">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+
+<table class="dataframe caption-top" data-border="1">
+<thead>
+<tr class="header" style="text-align: right;">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">sepal length (cm)</th>
+<th data-quarto-table-cell-role="th">sepal width (cm)</th>
+<th data-quarto-table-cell-role="th">petal length (cm)</th>
+<th data-quarto-table-cell-role="th">petal width (cm)</th>
+<th data-quarto-table-cell-role="th">species</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">114</th>
+<td>5.8</td>
+<td>2.8</td>
+<td>5.1</td>
+<td>2.4</td>
+<td>virginica</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">62</th>
+<td>6.0</td>
+<td>2.2</td>
+<td>4.0</td>
+<td>1.0</td>
+<td>versicolor</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">33</th>
+<td>5.5</td>
+<td>4.2</td>
+<td>1.4</td>
+<td>0.2</td>
+<td>setosa</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">107</th>
+<td>7.3</td>
+<td>2.9</td>
+<td>6.3</td>
+<td>1.8</td>
+<td>virginica</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">7</th>
+<td>5.0</td>
+<td>3.4</td>
+<td>1.5</td>
+<td>0.2</td>
+<td>setosa</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<p>Rows are <strong>samples</strong> (one iris specimen each), identified by a sample id; columns are <strong>features</strong>, identified by a feature id. The species labels are a separate vector, keyed by the <em>same</em> sample ids.</p>
+<ul>
+<li>feature table alone → <strong>unsupervised</strong> learning: which samples resemble each other?</li>
+<li>feature table + labels → <strong>supervised</strong> learning: predict the label of a new sample</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-warning no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The book’s warning, up front</strong></p>
+</div>
+<div class="callout-content">
+<p>Machine learning methods are easily misused — intentionally or not — to produce misleading results. The book’s advice is to continue from its chapter to scikit-learn’s <em>Common pitfalls and recommended practices</em>. The leakage section later in this lecture is one of those pitfalls, worked through.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="where-the-modelling-happened" class="slide level2 beyond">
 <h2>Where the modelling happened</h2>
 <div class="callout callout-warning no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1108,27 +1576,27 @@ MSDE
 <p><strong>Sequence to vector</strong></p>
 </div>
 <div class="callout-content">
-<div id="46931340" class="cell" data-execution_count="11">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a aria-label="1"></a><span class="im">from</span> sklearn.feature_extraction.text <span class="im">import</span> CountVectorizer</span>
-<span id="cb14-2"><a aria-label="2"></a></span>
-<span id="cb14-3"><a aria-label="3"></a>genera <span class="op">=</span> {}</span>
-<span id="cb14-4"><a aria-label="4"></a><span class="cf">for</span> name, seed <span class="kw">in</span> [(<span class="st">"Genus_A"</span>, <span class="dv">1</span>), (<span class="st">"Genus_B"</span>, <span class="dv">2</span>), (<span class="st">"Genus_C"</span>, <span class="dv">3</span>)]:</span>
-<span id="cb14-5"><a aria-label="5"></a>    genera[name] <span class="op">=</span> <span class="st">""</span>.join(</span>
-<span id="cb14-6"><a aria-label="6"></a>        np.random.default_rng(seed).choice(<span class="bu">list</span>(<span class="st">"ACGT"</span>), <span class="dv">400</span>)</span>
-<span id="cb14-7"><a aria-label="7"></a>    )</span>
-<span id="cb14-8"><a aria-label="8"></a></span>
-<span id="cb14-9"><a aria-label="9"></a>sequences, labels, sources <span class="op">=</span> [], [], []</span>
-<span id="cb14-10"><a aria-label="10"></a><span class="cf">for</span> name, ref <span class="kw">in</span> genera.items():</span>
-<span id="cb14-11"><a aria-label="11"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">40</span>):</span>
-<span id="cb14-12"><a aria-label="12"></a>        sequences.append(mutate(ref, <span class="fl">0.08</span>))</span>
-<span id="cb14-13"><a aria-label="13"></a>        labels.append(name)</span>
-<span id="cb14-14"><a aria-label="14"></a>        sources.append(name)</span>
-<span id="cb14-15"><a aria-label="15"></a></span>
-<span id="cb14-16"><a aria-label="16"></a>vec <span class="op">=</span> CountVectorizer(analyzer<span class="op">=</span><span class="st">"char"</span>, ngram_range<span class="op">=</span>(<span class="dv">5</span>, <span class="dv">5</span>))</span>
-<span id="cb14-17"><a aria-label="17"></a>X <span class="op">=</span> vec.fit_transform(sequences)</span>
-<span id="cb14-18"><a aria-label="18"></a><span class="bu">print</span>(<span class="st">"  sequences      :"</span>, <span class="bu">len</span>(sequences))</span>
-<span id="cb14-19"><a aria-label="19"></a><span class="bu">print</span>(<span class="st">"  feature matrix :"</span>, X.shape, <span class="ss">f"(</span><span class="sc">{</span><span class="dv">4</span><span class="op">**</span><span class="dv">5</span><span class="sc">}</span><span class="ss"> possible 5-mers)"</span>)</span>
-<span id="cb14-20"><a aria-label="20"></a><span class="bu">print</span>(<span class="st">"  sparsity       :"</span>, <span class="ss">f"</span><span class="sc">{</span><span class="dv">100</span> <span class="op">*</span> X<span class="sc">.</span>nnz <span class="op">/</span> (X.shape[<span class="dv">0</span>] <span class="op">*</span> X.shape[<span class="dv">1</span>])<span class="sc">:.1f}</span><span class="ss">% non-zero"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="3ba82395" class="cell" data-execution_count="17">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a aria-label="1"></a><span class="im">from</span> sklearn.feature_extraction.text <span class="im">import</span> CountVectorizer</span>
+<span id="cb26-2"><a aria-label="2"></a></span>
+<span id="cb26-3"><a aria-label="3"></a>genera <span class="op">=</span> {}</span>
+<span id="cb26-4"><a aria-label="4"></a><span class="cf">for</span> name, seed <span class="kw">in</span> [(<span class="st">"Genus_A"</span>, <span class="dv">1</span>), (<span class="st">"Genus_B"</span>, <span class="dv">2</span>), (<span class="st">"Genus_C"</span>, <span class="dv">3</span>)]:</span>
+<span id="cb26-5"><a aria-label="5"></a>    genera[name] <span class="op">=</span> <span class="st">""</span>.join(</span>
+<span id="cb26-6"><a aria-label="6"></a>        np.random.default_rng(seed).choice(<span class="bu">list</span>(<span class="st">"ACGT"</span>), <span class="dv">400</span>)</span>
+<span id="cb26-7"><a aria-label="7"></a>    )</span>
+<span id="cb26-8"><a aria-label="8"></a></span>
+<span id="cb26-9"><a aria-label="9"></a>sequences, labels, sources <span class="op">=</span> [], [], []</span>
+<span id="cb26-10"><a aria-label="10"></a><span class="cf">for</span> name, ref <span class="kw">in</span> genera.items():</span>
+<span id="cb26-11"><a aria-label="11"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">40</span>):</span>
+<span id="cb26-12"><a aria-label="12"></a>        sequences.append(mutate(ref, <span class="fl">0.08</span>))</span>
+<span id="cb26-13"><a aria-label="13"></a>        labels.append(name)</span>
+<span id="cb26-14"><a aria-label="14"></a>        sources.append(name)</span>
+<span id="cb26-15"><a aria-label="15"></a></span>
+<span id="cb26-16"><a aria-label="16"></a>vec <span class="op">=</span> CountVectorizer(analyzer<span class="op">=</span><span class="st">"char"</span>, ngram_range<span class="op">=</span>(<span class="dv">5</span>, <span class="dv">5</span>))</span>
+<span id="cb26-17"><a aria-label="17"></a>X <span class="op">=</span> vec.fit_transform(sequences)</span>
+<span id="cb26-18"><a aria-label="18"></a><span class="bu">print</span>(<span class="st">"  sequences      :"</span>, <span class="bu">len</span>(sequences))</span>
+<span id="cb26-19"><a aria-label="19"></a><span class="bu">print</span>(<span class="st">"  feature matrix :"</span>, X.shape, <span class="ss">f"(</span><span class="sc">{</span><span class="dv">4</span><span class="op">**</span><span class="dv">5</span><span class="sc">}</span><span class="ss"> possible 5-mers)"</span>)</span>
+<span id="cb26-20"><a aria-label="20"></a><span class="bu">print</span>(<span class="st">"  sparsity       :"</span>, <span class="ss">f"</span><span class="sc">{</span><span class="dv">100</span> <span class="op">*</span> X<span class="sc">.</span>nnz <span class="op">/</span> (X.shape[<span class="dv">0</span>] <span class="op">*</span> X.shape[<span class="dv">1</span>])<span class="sc">:.1f}</span><span class="ss">% non-zero"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>  sequences      : 120
   feature matrix : (120, 1024) (1024 possible 5-mers)
@@ -1209,20 +1677,20 @@ MSDE
 <div class="callout-content">
 <p>Almost every ordination starts from <strong>distances between all pairs of samples</strong>. We already have the statistic — the Jaccard index from the search half of this lecture. Subtract it from one:</p>
 <p><span class="math display">\[\text{Jaccard distance}_{(A,B)} = 1 - \frac{\lvert A \cap B \rvert}{\lvert A \cup B \rvert}\]</span></p>
-<div id="638b70ea" class="cell" data-execution_count="12">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a aria-label="1"></a><span class="im">from</span> skbio.diversity <span class="im">import</span> beta_diversity</span>
-<span id="cb16-2"><a aria-label="2"></a></span>
-<span id="cb16-3"><a aria-label="3"></a>presence <span class="op">=</span> (X.toarray() <span class="op">&gt;</span> <span class="dv">0</span>).astype(<span class="bu">int</span>)</span>
-<span id="cb16-4"><a aria-label="4"></a>ids <span class="op">=</span> [<span class="ss">f"</span><span class="sc">{</span>lab[<span class="op">-</span><span class="dv">1</span>]<span class="sc">}{</span>i<span class="sc">:03d}</span><span class="ss">"</span> <span class="cf">for</span> i, lab <span class="kw">in</span> <span class="bu">enumerate</span>(labels)]</span>
-<span id="cb16-5"><a aria-label="5"></a></span>
-<span id="cb16-6"><a aria-label="6"></a>dm <span class="op">=</span> beta_diversity(<span class="st">"jaccard"</span>, presence, ids<span class="op">=</span>ids)</span>
-<span id="cb16-7"><a aria-label="7"></a>D <span class="op">=</span> dm.data</span>
-<span id="cb16-8"><a aria-label="8"></a></span>
-<span id="cb16-9"><a aria-label="9"></a><span class="bu">print</span>(<span class="st">"  feature table   :"</span>, presence.shape, <span class="st">"(sequences x 5-mers, presence/absence)"</span>)</span>
-<span id="cb16-10"><a aria-label="10"></a><span class="bu">print</span>(<span class="st">"  distance matrix :"</span>, D.shape)</span>
-<span id="cb16-11"><a aria-label="11"></a><span class="bu">print</span>(<span class="st">"  diagonal zero   :"</span>, np.allclose(np.diag(D), <span class="dv">0</span>))</span>
-<span id="cb16-12"><a aria-label="12"></a><span class="bu">print</span>(<span class="st">"  symmetric       :"</span>, np.allclose(D, D.T))</span>
-<span id="cb16-13"><a aria-label="13"></a><span class="bu">print</span>(<span class="ss">f"  range           : </span><span class="sc">{</span>D[D <span class="op">&gt;</span> <span class="dv">0</span>]<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:.3f}</span><span class="ss"> to </span><span class="sc">{</span>D<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.3f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="bf95b7e3" class="cell" data-execution_count="18">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a aria-label="1"></a><span class="im">from</span> skbio.diversity <span class="im">import</span> beta_diversity</span>
+<span id="cb28-2"><a aria-label="2"></a></span>
+<span id="cb28-3"><a aria-label="3"></a>presence <span class="op">=</span> (X.toarray() <span class="op">&gt;</span> <span class="dv">0</span>).astype(<span class="bu">int</span>)</span>
+<span id="cb28-4"><a aria-label="4"></a>ids <span class="op">=</span> [<span class="ss">f"</span><span class="sc">{</span>lab[<span class="op">-</span><span class="dv">1</span>]<span class="sc">}{</span>i<span class="sc">:03d}</span><span class="ss">"</span> <span class="cf">for</span> i, lab <span class="kw">in</span> <span class="bu">enumerate</span>(labels)]</span>
+<span id="cb28-5"><a aria-label="5"></a></span>
+<span id="cb28-6"><a aria-label="6"></a>dm <span class="op">=</span> beta_diversity(<span class="st">"jaccard"</span>, presence, ids<span class="op">=</span>ids)</span>
+<span id="cb28-7"><a aria-label="7"></a>D <span class="op">=</span> dm.data</span>
+<span id="cb28-8"><a aria-label="8"></a></span>
+<span id="cb28-9"><a aria-label="9"></a><span class="bu">print</span>(<span class="st">"  feature table   :"</span>, presence.shape, <span class="st">"(sequences x 5-mers, presence/absence)"</span>)</span>
+<span id="cb28-10"><a aria-label="10"></a><span class="bu">print</span>(<span class="st">"  distance matrix :"</span>, D.shape)</span>
+<span id="cb28-11"><a aria-label="11"></a><span class="bu">print</span>(<span class="st">"  diagonal zero   :"</span>, np.allclose(np.diag(D), <span class="dv">0</span>))</span>
+<span id="cb28-12"><a aria-label="12"></a><span class="bu">print</span>(<span class="st">"  symmetric       :"</span>, np.allclose(D, D.T))</span>
+<span id="cb28-13"><a aria-label="13"></a><span class="bu">print</span>(<span class="ss">f"  range           : </span><span class="sc">{</span>D[D <span class="op">&gt;</span> <span class="dv">0</span>]<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:.3f}</span><span class="ss"> to </span><span class="sc">{</span>D<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.3f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>  feature table   : (120, 1024) (sequences x 5-mers, presence/absence)
   distance matrix : (120, 120)
@@ -1238,20 +1706,20 @@ MSDE
 </section>
 <section id="the-distance-matrix" class="slide level2 scrollable">
 <h2>The distance matrix</h2>
-<div id="0af89ee8" class="cell" data-execution_count="13">
+<div id="d5b6355b" class="cell" data-execution_count="19">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a aria-label="1"></a>order <span class="op">=</span> np.argsort(labels, kind<span class="op">=</span><span class="st">"stable"</span>)</span>
-<span id="cb18-2"><a aria-label="2"></a>f, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">4.6</span>, <span class="fl">3.8</span>))</span>
-<span id="cb18-3"><a aria-label="3"></a>im <span class="op">=</span> ax.imshow(D[np.ix_(order, order)], cmap<span class="op">=</span><span class="st">"viridis"</span>)</span>
-<span id="cb18-4"><a aria-label="4"></a>ax.set_xlabel(<span class="st">"sequence"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"sequence"</span>)</span>
-<span id="cb18-5"><a aria-label="5"></a>plt.colorbar(im, label<span class="op">=</span><span class="st">"Jaccard distance"</span>)</span>
-<span id="cb18-6"><a aria-label="6"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a aria-label="1"></a>order <span class="op">=</span> np.argsort(labels, kind<span class="op">=</span><span class="st">"stable"</span>)</span>
+<span id="cb30-2"><a aria-label="2"></a>f, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">4.6</span>, <span class="fl">3.8</span>))</span>
+<span id="cb30-3"><a aria-label="3"></a>im <span class="op">=</span> ax.imshow(D[np.ix_(order, order)], cmap<span class="op">=</span><span class="st">"viridis"</span>)</span>
+<span id="cb30-4"><a aria-label="4"></a>ax.set_xlabel(<span class="st">"sequence"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"sequence"</span>)</span>
+<span id="cb30-5"><a aria-label="5"></a>plt.colorbar(im, label<span class="op">=</span><span class="st">"Jaccard distance"</span>)</span>
+<span id="cb30-6"><a aria-label="6"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div>
 <figure>
-<p><img data-src="bio2_files/figure-revealjs/cell-13-output-1.png" width="495" height="408"></p>
+<p><img data-src="bio2_files/figure-revealjs/cell-19-output-1.png" width="495" height="408"></p>
 </figure>
 </div>
 </div>
@@ -1282,15 +1750,15 @@ MSDE
 <div class="callout-content">
 <p>Pick the two most distant samples as the endpoints of an axis, then project every other sample onto it by the law of cosines:</p>
 <p><span class="math display">\[p_i = \frac{D_{AB}^2 + d(A,i)^2 - d(B,i)^2}{2 D_{AB}}\]</span></p>
-<div id="d525029b" class="cell" data-execution_count="14">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a aria-label="1"></a>a, b <span class="op">=</span> np.unravel_index(np.argmax(D), D.shape)</span>
-<span id="cb19-2"><a aria-label="2"></a>Dab <span class="op">=</span> D[a, b]</span>
-<span id="cb19-3"><a aria-label="3"></a>pos <span class="op">=</span> (Dab<span class="op">**</span><span class="dv">2</span> <span class="op">+</span> D[a] <span class="op">**</span> <span class="dv">2</span> <span class="op">-</span> D[b] <span class="op">**</span> <span class="dv">2</span>) <span class="op">/</span> (<span class="dv">2</span> <span class="op">*</span> Dab)</span>
-<span id="cb19-4"><a aria-label="4"></a></span>
-<span id="cb19-5"><a aria-label="5"></a><span class="bu">print</span>(<span class="ss">f"  endpoints    : </span><span class="sc">{</span>ids[a]<span class="sc">}</span><span class="ss"> and </span><span class="sc">{</span>ids[b]<span class="sc">}</span><span class="ss">, distance </span><span class="sc">{</span>Dab<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
-<span id="cb19-6"><a aria-label="6"></a><span class="cf">for</span> g <span class="kw">in</span> <span class="bu">sorted</span>(<span class="bu">set</span>(labels)):</span>
-<span id="cb19-7"><a aria-label="7"></a>    m <span class="op">=</span> np.array(labels) <span class="op">==</span> g</span>
-<span id="cb19-8"><a aria-label="8"></a>    <span class="bu">print</span>(<span class="ss">f"  </span><span class="sc">{</span>g<span class="sc">}</span><span class="ss">: axis 1 mean </span><span class="sc">{</span>pos[m]<span class="sc">.</span>mean()<span class="sc">:7.3f}</span><span class="ss">   sd </span><span class="sc">{</span>pos[m]<span class="sc">.</span>std()<span class="sc">:.3f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="d8cf1cb4" class="cell" data-execution_count="20">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a aria-label="1"></a>a, b <span class="op">=</span> np.unravel_index(np.argmax(D), D.shape)</span>
+<span id="cb31-2"><a aria-label="2"></a>Dab <span class="op">=</span> D[a, b]</span>
+<span id="cb31-3"><a aria-label="3"></a>pos <span class="op">=</span> (Dab<span class="op">**</span><span class="dv">2</span> <span class="op">+</span> D[a] <span class="op">**</span> <span class="dv">2</span> <span class="op">-</span> D[b] <span class="op">**</span> <span class="dv">2</span>) <span class="op">/</span> (<span class="dv">2</span> <span class="op">*</span> Dab)</span>
+<span id="cb31-4"><a aria-label="4"></a></span>
+<span id="cb31-5"><a aria-label="5"></a><span class="bu">print</span>(<span class="ss">f"  endpoints    : </span><span class="sc">{</span>ids[a]<span class="sc">}</span><span class="ss"> and </span><span class="sc">{</span>ids[b]<span class="sc">}</span><span class="ss">, distance </span><span class="sc">{</span>Dab<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
+<span id="cb31-6"><a aria-label="6"></a><span class="cf">for</span> g <span class="kw">in</span> <span class="bu">sorted</span>(<span class="bu">set</span>(labels)):</span>
+<span id="cb31-7"><a aria-label="7"></a>    m <span class="op">=</span> np.array(labels) <span class="op">==</span> g</span>
+<span id="cb31-8"><a aria-label="8"></a>    <span class="bu">print</span>(<span class="ss">f"  </span><span class="sc">{</span>g<span class="sc">}</span><span class="ss">: axis 1 mean </span><span class="sc">{</span>pos[m]<span class="sc">.</span>mean()<span class="sc">:7.3f}</span><span class="ss">   sd </span><span class="sc">{</span>pos[m]<span class="sc">.</span>std()<span class="sc">:.3f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>  endpoints    : A017 and C085, distance 0.863
   Genus_A: axis 1 mean   0.173   sd 0.037
@@ -1302,13 +1770,77 @@ MSDE
 </div>
 </div>
 </div>
+</section>
+<section id="the-second-axis" class="slide level2 scrollable">
+<h2>The second axis</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The book’s rule: long, and uncorrelated with axis 1</strong></p>
+</div>
+<div class="callout-content">
+<p>Every pair of samples defines a candidate axis. A good second axis spans a <strong>large distance</strong> but is <strong>uncorrelated</strong> with the first — a correlated axis repeats what we already know. “Uncorrelated” is subjective, so the book makes it a score (we add a floor of 0.05 on <span class="math inline">\(|\rho|\)</span>, so that a correlation of almost exactly zero cannot win by dividing by it — the rule then picks the longest of the essentially uncorrelated axes):</p>
+<p><span class="math display">\[\text{score}(A) = \frac{\max \text{distance along } A}{\lvert \rho_{\text{Spearman}}(A, \text{axis 1}) \rvert}\]</span></p>
+<div id="8c32a055" class="cell" data-execution_count="21">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a aria-label="1"></a><span class="im">from</span> scipy.stats <span class="im">import</span> rankdata</span>
+<span id="cb33-2"><a aria-label="2"></a></span>
+<span id="cb33-3"><a aria-label="3"></a>i_idx, j_idx <span class="op">=</span> np.triu_indices(<span class="bu">len</span>(D), k<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb33-4"><a aria-label="4"></a>ok <span class="op">=</span> D[i_idx, j_idx] <span class="op">&gt;</span> <span class="dv">0</span></span>
+<span id="cb33-5"><a aria-label="5"></a>i_idx, j_idx <span class="op">=</span> i_idx[ok], j_idx[ok]</span>
+<span id="cb33-6"><a aria-label="6"></a>dij <span class="op">=</span> D[i_idx, j_idx][:, <span class="va">None</span>]</span>
+<span id="cb33-7"><a aria-label="7"></a>axes <span class="op">=</span> (dij<span class="op">**</span><span class="dv">2</span> <span class="op">+</span> D[i_idx] <span class="op">**</span> <span class="dv">2</span> <span class="op">-</span> D[j_idx] <span class="op">**</span> <span class="dv">2</span>) <span class="op">/</span> (<span class="dv">2</span> <span class="op">*</span> dij)   <span class="co"># one row per candidate axis</span></span>
+<span id="cb33-8"><a aria-label="8"></a></span>
+<span id="cb33-9"><a aria-label="9"></a>r_axes <span class="op">=</span> rankdata(axes, axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb33-10"><a aria-label="10"></a>r_axes <span class="op">=</span> (r_axes <span class="op">-</span> r_axes.mean(<span class="dv">1</span>, keepdims<span class="op">=</span><span class="va">True</span>)) <span class="op">/</span> r_axes.std(<span class="dv">1</span>, keepdims<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb33-11"><a aria-label="11"></a>r_pos <span class="op">=</span> (rankdata(pos) <span class="op">-</span> rankdata(pos).mean()) <span class="op">/</span> rankdata(pos).std()</span>
+<span id="cb33-12"><a aria-label="12"></a>rho <span class="op">=</span> (r_axes <span class="op">*</span> r_pos).mean(<span class="dv">1</span>)                                 <span class="co"># Spearman, all axes at once</span></span>
+<span id="cb33-13"><a aria-label="13"></a>score <span class="op">=</span> dij.ravel() <span class="op">/</span> np.maximum(np.<span class="bu">abs</span>(rho), <span class="fl">0.05</span>)            <span class="co"># floor: no division by ~0</span></span>
+<span id="cb33-14"><a aria-label="14"></a>second <span class="op">=</span> axes[np.argmax(score)]</span>
+<span id="cb33-15"><a aria-label="15"></a><span class="bu">print</span>(<span class="ss">f"  candidate axes: </span><span class="sc">{</span><span class="bu">len</span>(axes)<span class="sc">:,}</span><span class="ss">   chosen: |rho| = </span><span class="sc">{</span><span class="bu">abs</span>(rho[np.argmax(score)])<span class="sc">:.3f}</span><span class="ss">, "</span></span>
+<span id="cb33-16"><a aria-label="16"></a>      <span class="ss">f"length </span><span class="sc">{</span>dij<span class="sc">.</span>ravel()[np.argmax(score)]<span class="sc">:.3f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  candidate axes: 7,140   chosen: |rho| = 0.007, length 0.612</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="the-second-axis-1" class="slide level2 scrollable">
+<h2>The second axis</h2>
+<div id="14a5deb4" class="cell" data-execution_count="22">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a aria-label="1"></a>longest, shortest <span class="op">=</span> axes[np.argmax(dij)], axes[np.argmin(dij)]</span>
+<span id="cb35-2"><a aria-label="2"></a>f, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">11</span>, <span class="fl">3.2</span>))</span>
+<span id="cb35-3"><a aria-label="3"></a>jit <span class="op">=</span> np.random.default_rng(<span class="dv">0</span>).uniform(<span class="op">-</span><span class="fl">0.3</span>, <span class="fl">0.3</span>, <span class="bu">len</span>(labels))</span>
+<span id="cb35-4"><a aria-label="4"></a><span class="cf">for</span> g <span class="kw">in</span> <span class="bu">sorted</span>(<span class="bu">set</span>(labels)):</span>
+<span id="cb35-5"><a aria-label="5"></a>    m <span class="op">=</span> np.array(labels) <span class="op">==</span> g</span>
+<span id="cb35-6"><a aria-label="6"></a>    axs[<span class="dv">0</span>].scatter(longest[m], jit[m], s<span class="op">=</span><span class="dv">10</span>, label<span class="op">=</span>g)</span>
+<span id="cb35-7"><a aria-label="7"></a>    axs[<span class="dv">1</span>].scatter(shortest[m], jit[m], s<span class="op">=</span><span class="dv">10</span>)</span>
+<span id="cb35-8"><a aria-label="8"></a>    axs[<span class="dv">2</span>].scatter(pos[m], second[m], s<span class="op">=</span><span class="dv">12</span>)</span>
+<span id="cb35-9"><a aria-label="9"></a>axs[<span class="dv">0</span>].set_title(<span class="st">"axis from the LARGEST distance"</span>)<span class="op">;</span> axs[<span class="dv">1</span>].set_title(<span class="st">"axis from the SMALLEST distance"</span>)</span>
+<span id="cb35-10"><a aria-label="10"></a>axs[<span class="dv">2</span>].set_title(<span class="st">"polar ordination: axis 1 vs chosen axis 2"</span>)</span>
+<span id="cb35-11"><a aria-label="11"></a><span class="cf">for</span> ax <span class="kw">in</span> axs[:<span class="dv">2</span>]:</span>
+<span id="cb35-12"><a aria-label="12"></a>    ax.set_yticks([])</span>
+<span id="cb35-13"><a aria-label="13"></a>axs[<span class="dv">0</span>].legend(fontsize<span class="op">=</span><span class="dv">6</span>)<span class="op">;</span> plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure>
+<p><img data-src="bio2_files/figure-revealjs/cell-22-output-1.png" width="1205" height="347"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>The book’s <strong>axis-order</strong> lesson, made visible: the axis built from the largest distance separates the genera; the one from the smallest distance mixes them. And with a second, uncorrelated axis, all three genera come apart — with no labels used anywhere in the computation.</p>
 <div class="callout callout-warning no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
-<p><strong>Why nobody uses it</strong></p>
+<p><strong>Why it is still a teaching device <span class="badge-extends">extends the book</span></strong></p>
 </div>
 <div class="callout-content">
-<p>The first axis is principled. <strong>Every axis after it is not</strong>: you must choose new endpoints, and nothing guarantees the result is uncorrelated with what you already have. Polar ordination is a teaching device, not a method — PCoA replaces it precisely by choosing all the axes at once and making them orthogonal by construction.</p>
+<p>The score is a reasonable heuristic, not an optimum, and it was invented for the purpose. PCoA replaces it by choosing <strong>all</strong> axes at once, orthogonal by construction and ranked by variance explained — which is why the book recommends PCoA in practice.</p>
 </div>
 </div>
 </div>
@@ -1322,17 +1854,17 @@ MSDE
 </div>
 <div class="callout-content">
 <p>PCoA (classical multidimensional scaling) eigendecomposes the centred distance matrix, giving axes that are <strong>orthogonal</strong> and <strong>ordered by the variance they explain</strong>.</p>
-<div id="101dd1e2" class="cell" data-execution_count="15">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a aria-label="1"></a><span class="im">from</span> skbio.stats.ordination <span class="im">import</span> pcoa</span>
-<span id="cb21-2"><a aria-label="2"></a></span>
-<span id="cb21-3"><a aria-label="3"></a>ord_res <span class="op">=</span> pcoa(dm)</span>
-<span id="cb21-4"><a aria-label="4"></a>coords <span class="op">=</span> ord_res.samples.values</span>
-<span id="cb21-5"><a aria-label="5"></a>pe <span class="op">=</span> ord_res.proportion_explained.values</span>
-<span id="cb21-6"><a aria-label="6"></a></span>
-<span id="cb21-7"><a aria-label="7"></a><span class="bu">print</span>(<span class="st">"  coordinates :"</span>, coords.shape)</span>
-<span id="cb21-8"><a aria-label="8"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">4</span>):</span>
-<span id="cb21-9"><a aria-label="9"></a>    <span class="bu">print</span>(<span class="ss">f"  axis </span><span class="sc">{</span>i <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>pe[i]<span class="sc">:6.1%}</span><span class="ss"> of variation"</span>)</span>
-<span id="cb21-10"><a aria-label="10"></a><span class="bu">print</span>(<span class="ss">f"  first two   : </span><span class="sc">{</span>pe[:<span class="dv">2</span>]<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:.1%}</span><span class="ss"> of variation"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="ba3e1db3" class="cell" data-execution_count="23">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a aria-label="1"></a><span class="im">from</span> skbio.stats.ordination <span class="im">import</span> pcoa</span>
+<span id="cb36-2"><a aria-label="2"></a></span>
+<span id="cb36-3"><a aria-label="3"></a>ord_res <span class="op">=</span> pcoa(dm)</span>
+<span id="cb36-4"><a aria-label="4"></a>coords <span class="op">=</span> ord_res.samples.values</span>
+<span id="cb36-5"><a aria-label="5"></a>pe <span class="op">=</span> ord_res.proportion_explained.values</span>
+<span id="cb36-6"><a aria-label="6"></a></span>
+<span id="cb36-7"><a aria-label="7"></a><span class="bu">print</span>(<span class="st">"  coordinates :"</span>, coords.shape)</span>
+<span id="cb36-8"><a aria-label="8"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">4</span>):</span>
+<span id="cb36-9"><a aria-label="9"></a>    <span class="bu">print</span>(<span class="ss">f"  axis </span><span class="sc">{</span>i <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>pe[i]<span class="sc">:6.1%}</span><span class="ss"> of variation"</span>)</span>
+<span id="cb36-10"><a aria-label="10"></a><span class="bu">print</span>(<span class="ss">f"  first two   : </span><span class="sc">{</span>pe[:<span class="dv">2</span>]<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:.1%}</span><span class="ss"> of variation"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>  coordinates : (120, 120)
   axis 1:  26.7% of variation
@@ -1349,20 +1881,20 @@ MSDE
 </section>
 <section id="principal-coordinates-analysis-1" class="slide level2 scrollable">
 <h2>Principal Coordinates Analysis</h2>
-<div id="c415e38a" class="cell" data-execution_count="16">
+<div id="6872aff6" class="cell" data-execution_count="24">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a aria-label="1"></a>f, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">5.2</span>, <span class="fl">3.6</span>))</span>
-<span id="cb23-2"><a aria-label="2"></a><span class="cf">for</span> g <span class="kw">in</span> <span class="bu">sorted</span>(<span class="bu">set</span>(labels)):</span>
-<span id="cb23-3"><a aria-label="3"></a>    m <span class="op">=</span> np.array(labels) <span class="op">==</span> g</span>
-<span id="cb23-4"><a aria-label="4"></a>    ax.scatter(coords[m, <span class="dv">0</span>], coords[m, <span class="dv">1</span>], s<span class="op">=</span><span class="dv">22</span>, label<span class="op">=</span>g, alpha<span class="op">=</span><span class="fl">0.8</span>)</span>
-<span id="cb23-5"><a aria-label="5"></a>ax.set_xlabel(<span class="ss">f"PC1 (</span><span class="sc">{</span>pe[<span class="dv">0</span>]<span class="sc">:.1%}</span><span class="ss">)"</span>)<span class="op">;</span> ax.set_ylabel(<span class="ss">f"PC2 (</span><span class="sc">{</span>pe[<span class="dv">1</span>]<span class="sc">:.1%}</span><span class="ss">)"</span>)</span>
-<span id="cb23-6"><a aria-label="6"></a>ax.legend(fontsize<span class="op">=</span><span class="dv">7</span>)<span class="op">;</span> plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a aria-label="1"></a>f, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">5.2</span>, <span class="fl">3.6</span>))</span>
+<span id="cb38-2"><a aria-label="2"></a><span class="cf">for</span> g <span class="kw">in</span> <span class="bu">sorted</span>(<span class="bu">set</span>(labels)):</span>
+<span id="cb38-3"><a aria-label="3"></a>    m <span class="op">=</span> np.array(labels) <span class="op">==</span> g</span>
+<span id="cb38-4"><a aria-label="4"></a>    ax.scatter(coords[m, <span class="dv">0</span>], coords[m, <span class="dv">1</span>], s<span class="op">=</span><span class="dv">22</span>, label<span class="op">=</span>g, alpha<span class="op">=</span><span class="fl">0.8</span>)</span>
+<span id="cb38-5"><a aria-label="5"></a>ax.set_xlabel(<span class="ss">f"PC1 (</span><span class="sc">{</span>pe[<span class="dv">0</span>]<span class="sc">:.1%}</span><span class="ss">)"</span>)<span class="op">;</span> ax.set_ylabel(<span class="ss">f"PC2 (</span><span class="sc">{</span>pe[<span class="dv">1</span>]<span class="sc">:.1%}</span><span class="ss">)"</span>)</span>
+<span id="cb38-6"><a aria-label="6"></a>ax.legend(fontsize<span class="op">=</span><span class="dv">7</span>)<span class="op">;</span> plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div>
 <figure>
-<p><img data-src="bio2_files/figure-revealjs/cell-16-output-1.png" width="565" height="390"></p>
+<p><img data-src="bio2_files/figure-revealjs/cell-24-output-1.png" width="565" height="390"></p>
 </figure>
 </div>
 </div>
@@ -1387,7 +1919,44 @@ MSDE
 </div>
 </div>
 </section>
-<section id="the-same-idea-twice" class="slide level2">
+<section id="exploration-is-not-confirmation" class="slide level2 scrollable">
+<h2>Exploration is not confirmation</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The book’s most important sentence about ordination</strong></p>
+</div>
+<div class="callout-content">
+<blockquote>
+<p>Exploratory analysis is a tool for hypothesis generation, and hypothesis generation and hypothesis testing cannot be performed on the same data.</p>
+</blockquote>
+<p>Colour a PCoA plot by one metadata column after another — species, then phylum, then site, then date — and with enough columns and few enough samples, <em>something</em> will appear to separate. That is a hypothesis, to be tested on <strong>new data</strong>, not a finding. A pattern found by looking and then “confirmed” by a test on the same samples has been tested against itself.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Two smaller things the book points out</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>Colouring the <em>same</em> ordination by a coarser label (phylum instead of species) often shows <em>tighter</em> grouping — coarser categories are easier to separate. Which label you colour by is a choice that shapes what you see.</li>
+<li>PCoA on a non-Euclidean distance such as Jaccard can produce <strong>negative eigenvalues</strong>. Compare their size with the largest positive one; if they are small, ignore them:</li>
+</ul>
+<div id="555bcc44" class="cell" data-execution_count="25">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a aria-label="1"></a>ev <span class="op">=</span> ord_res.eigvals.values</span>
+<span id="cb39-2"><a aria-label="2"></a><span class="bu">print</span>(<span class="ss">f"  largest eigenvalue </span><span class="sc">{</span>ev<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.4f}</span><span class="ss">   most negative </span><span class="sc">{</span>ev<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:.4f}</span><span class="ss">   "</span></span>
+<span id="cb39-3"><a aria-label="3"></a>      <span class="ss">f"ratio </span><span class="sc">{</span><span class="bu">abs</span>(ev.<span class="bu">min</span>()) <span class="op">/</span> ev<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.1%}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  largest eigenvalue 8.2380   most negative 0.0000   ratio 0.0%</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="the-same-idea-twice" class="slide level2 beyond">
 <h2>The same idea, twice</h2>
 <div class="callout callout-note no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1438,7 +2007,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="and-the-caveats-transfer" class="slide level2">
+<section id="and-the-caveats-transfer" class="slide level2 beyond">
 <h2>And the caveats transfer</h2>
 <div class="callout callout-warning no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1447,6 +2016,84 @@ MSDE
 </div>
 <div class="callout-content">
 <p>PCoA is <strong>linear and distance-preserving</strong>, so the three rules above are the honest ones. UMAP is neither, which is why its caveats in Bio 3 are <em>stronger</em>: it does not preserve between-cluster distance or density at all. A PCoA axis at least has a percentage attached to it. A UMAP axis has no units and no meaning.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="supervised-classification" class="slide level2">
+<h2>Supervised classification</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Defining the task, as the book does</strong></p>
+</div>
+<div class="callout-content">
+<p>Two or more <strong>pre-defined classes</strong>; assign each observation to one. A spam filter is the everyday example: every email is <em>spam</em> or <em>not spam</em>, and both kinds of mistake have a cost — a full inbox, or a missed message.</p>
+<p>Here the classes are microbial taxa, and the classifier replaces the alignment search from the first half: the same question (<em>which organism is this?</em>), answered by a model instead of a database scan.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Training data, test data, cross-validation</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>training data</strong> — labelled examples the model learns from; ideally <strong>balanced</strong> across classes</li>
+<li><strong>test data</strong> — labelled examples it never saw, used <em>only</em> to estimate performance on real-world data</li>
+<li><strong>never tune on the test set.</strong> Train, test, change the model, test again — and the test set has become training data, and its score no longer predicts anything</li>
+<li><strong><span class="math inline">\(k\)</span>-fold cross-validation</strong> splits the labelled data <span class="math inline">\(k\)</span> ways (usually 5 or 10), trains on <span class="math inline">\(k-1\)</span> parts and tests on the remaining one, <span class="math inline">\(k\)</span> times — so model development does not consume a dedicated test set</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="evaluating-a-binary-classifier" class="slide level2">
+<h2>Evaluating a binary classifier</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The book’s example: a test for Disease X</strong></p>
+</div>
+<div class="callout-content">
+<table class="caption-top">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th>has Disease X</th>
+<th>healthy</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>test positive</strong></td>
+<td>true positive (TP)</td>
+<td>false positive (FP) — type 1</td>
+</tr>
+<tr class="even">
+<td><strong>test negative</strong></td>
+<td>false negative (FN) — type 2</td>
+<td>true negative (TN)</td>
+</tr>
+</tbody>
+</table>
+<p><span class="math display">\[\text{accuracy} = \frac{TP + TN}{\text{all}} \qquad \text{precision} = \frac{TP}{TP + FP} \qquad \text{recall} = \frac{TP}{TP + FN}\]</span></p>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Why accuracy is not enough</strong></p>
+</div>
+<div class="callout-content">
+<p>Accuracy cannot say <em>which</em> mistakes a classifier makes. A cheap test with <strong>low precision but very high recall</strong> almost never misses the disease: a negative result means the patient is healthy, and a positive one means “run the expensive test”. Useless by accuracy, valuable as a screen. Precision and recall, reported as a pair, show which error a classifier tends to make — and which one your application can afford.</p>
 </div>
 </div>
 </div>
@@ -1468,16 +2115,90 @@ MSDE
 </div>
 </div>
 </section>
+<section id="naive-bayes-built-by-hand" class="slide level2 scrollable">
+<h2>Naive Bayes, built by hand</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The book’s k-mer probability table</strong></p>
+</div>
+<div class="callout-content">
+<p><span class="math inline">\(W\)</span> is every possible <span class="math inline">\(k\)</span>-mer (<span class="math inline">\(4^k\)</span> of them). Training counts <strong>how many sequences contain</strong> each <span class="math inline">\(k\)</span>-mer — presence, not counts — and adds <strong>pseudocounts</strong>, so that a <span class="math inline">\(k\)</span>-mer never seen in training does not zero out a whole product:</p>
+<p><span class="math display">\[P_i = \frac{n(w_i) + 0.5}{N + 1} \qquad\qquad P(w_i \mid \text{taxon}) = \frac{m(w_i, \text{taxon}) + P_i}{M_{\text{taxon}} + 1}\]</span></p>
+<p><span class="math inline">\(n(w_i)\)</span>: training sequences containing <span class="math inline">\(w_i\)</span>, out of <span class="math inline">\(N\)</span>. <span class="math inline">\(m\)</span>, <span class="math inline">\(M\)</span>: the same, within one taxon. The pseudocount in the second formula is scaled by how common the <span class="math inline">\(k\)</span>-mer is overall.</p>
+<div id="d44c689c" class="cell" data-execution_count="26">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a aria-label="1"></a><span class="im">from</span> itertools <span class="im">import</span> product</span>
+<span id="cb41-2"><a aria-label="2"></a></span>
+<span id="cb41-3"><a aria-label="3"></a>W <span class="op">=</span> [<span class="st">""</span>.join(p) <span class="cf">for</span> p <span class="kw">in</span> product(<span class="st">"ACGT"</span>, repeat<span class="op">=</span><span class="dv">5</span>)]</span>
+<span id="cb41-4"><a aria-label="4"></a>w_index <span class="op">=</span> {w: i <span class="cf">for</span> i, w <span class="kw">in</span> <span class="bu">enumerate</span>(W)}</span>
+<span id="cb41-5"><a aria-label="5"></a></span>
+<span id="cb41-6"><a aria-label="6"></a></span>
+<span id="cb41-7"><a aria-label="7"></a><span class="kw">def</span> presence_vector(s, k<span class="op">=</span><span class="dv">5</span>):</span>
+<span id="cb41-8"><a aria-label="8"></a>    v <span class="op">=</span> np.zeros(<span class="bu">len</span>(W), dtype<span class="op">=</span><span class="bu">bool</span>)</span>
+<span id="cb41-9"><a aria-label="9"></a>    v[[w_index[s[i:i <span class="op">+</span> k]] <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(s) <span class="op">-</span> k <span class="op">+</span> <span class="dv">1</span>)]] <span class="op">=</span> <span class="va">True</span></span>
+<span id="cb41-10"><a aria-label="10"></a>    <span class="cf">return</span> v</span>
+<span id="cb41-11"><a aria-label="11"></a></span>
+<span id="cb41-12"><a aria-label="12"></a></span>
+<span id="cb41-13"><a aria-label="13"></a>lab <span class="op">=</span> np.array(labels)</span>
+<span id="cb41-14"><a aria-label="14"></a>train <span class="op">=</span> np.array([i <span class="op">%</span> <span class="dv">40</span> <span class="op">&lt;</span> <span class="dv">30</span> <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(sequences))])  <span class="co"># 30 per genus train, 10 test</span></span>
+<span id="cb41-15"><a aria-label="15"></a>V <span class="op">=</span> np.array([presence_vector(s) <span class="cf">for</span> s <span class="kw">in</span> sequences])</span>
+<span id="cb41-16"><a aria-label="16"></a></span>
+<span id="cb41-17"><a aria-label="17"></a>N <span class="op">=</span> train.<span class="bu">sum</span>()</span>
+<span id="cb41-18"><a aria-label="18"></a>P_i <span class="op">=</span> (V[train].<span class="bu">sum</span>(<span class="dv">0</span>) <span class="op">+</span> <span class="fl">0.5</span>) <span class="op">/</span> (N <span class="op">+</span> <span class="dv">1</span>)</span>
+<span id="cb41-19"><a aria-label="19"></a>taxa <span class="op">=</span> <span class="bu">sorted</span>(<span class="bu">set</span>(lab))</span>
+<span id="cb41-20"><a aria-label="20"></a>log_table <span class="op">=</span> np.array([</span>
+<span id="cb41-21"><a aria-label="21"></a>    np.log((V[train <span class="op">&amp;</span> (lab <span class="op">==</span> t)].<span class="bu">sum</span>(<span class="dv">0</span>) <span class="op">+</span> P_i) <span class="op">/</span> ((train <span class="op">&amp;</span> (lab <span class="op">==</span> t)).<span class="bu">sum</span>() <span class="op">+</span> <span class="dv">1</span>))</span>
+<span id="cb41-22"><a aria-label="22"></a>    <span class="cf">for</span> t <span class="kw">in</span> taxa])                                     <span class="co"># taxa x 4^k</span></span>
+<span id="cb41-23"><a aria-label="23"></a><span class="bu">print</span>(<span class="st">"k-mer probability table:"</span>, log_table.shape)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>k-mer probability table: (3, 1024)</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="naive-bayes-built-by-hand-1" class="slide level2 scrollable">
+<h2>Naive Bayes, built by hand</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Classifying: sum log-probabilities over the query’s k-mers</strong></p>
+</div>
+<div class="callout-content">
+<p><span class="math display">\[P(\text{query} \mid \text{taxon}) = \prod_{w \in V} P(w \mid \text{taxon})\]</span></p>
+<div id="a582fc43" class="cell" data-execution_count="27">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a aria-label="1"></a><span class="im">from</span> sklearn.naive_bayes <span class="im">import</span> MultinomialNB</span>
+<span id="cb43-2"><a aria-label="2"></a></span>
+<span id="cb43-3"><a aria-label="3"></a></span>
+<span id="cb43-4"><a aria-label="4"></a><span class="kw">def</span> classify_V(v):</span>
+<span id="cb43-5"><a aria-label="5"></a>    <span class="cf">return</span> taxa[<span class="bu">int</span>(np.argmax(log_table[:, v].<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">1</span>)))]</span>
+<span id="cb43-6"><a aria-label="6"></a></span>
+<span id="cb43-7"><a aria-label="7"></a></span>
+<span id="cb43-8"><a aria-label="8"></a>ours <span class="op">=</span> np.array([classify_V(v) <span class="cf">for</span> v <span class="kw">in</span> V[<span class="op">~</span>train]])</span>
+<span id="cb43-9"><a aria-label="9"></a>sk <span class="op">=</span> MultinomialNB().fit(X[train], lab[train]).predict(X[<span class="op">~</span>train])</span>
+<span id="cb43-10"><a aria-label="10"></a><span class="bu">print</span>(<span class="ss">f"  hand-built NB accuracy : </span><span class="sc">{</span>(ours <span class="op">==</span> lab[<span class="op">~</span>train])<span class="sc">.</span>mean()<span class="sc">:.0%}</span><span class="ss">"</span>)</span>
+<span id="cb43-11"><a aria-label="11"></a><span class="bu">print</span>(<span class="ss">f"  agrees with sklearn    : </span><span class="sc">{</span>(ours <span class="op">==</span> sk)<span class="sc">.</span>mean()<span class="sc">:.0%}</span><span class="ss"> of test sequences"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  hand-built NB accuracy : 100%
+  agrees with sklearn    : 100% of test sequences</code></pre>
+</div>
+</div>
+<p>Working in <strong>log space</strong> is not optional: the product of hundreds of probabilities below one underflows to zero in floating point. Sums of logs do not.</p>
+</div>
+</div>
+</div>
+</section>
 <section id="training-and-evaluating" class="slide level2 scrollable">
 <h2>Training and evaluating</h2>
-<div id="ca53088e" class="cell" data-execution_count="17">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a aria-label="1"></a><span class="im">from</span> sklearn.naive_bayes <span class="im">import</span> MultinomialNB</span>
-<span id="cb24-2"><a aria-label="2"></a><span class="im">from</span> sklearn.model_selection <span class="im">import</span> cross_val_score, train_test_split</span>
-<span id="cb24-3"><a aria-label="3"></a></span>
-<span id="cb24-4"><a aria-label="4"></a>clf <span class="op">=</span> MultinomialNB()</span>
-<span id="cb24-5"><a aria-label="5"></a>scores <span class="op">=</span> cross_val_score(clf, X, labels, cv<span class="op">=</span><span class="dv">5</span>)</span>
-<span id="cb24-6"><a aria-label="6"></a><span class="bu">print</span>(<span class="st">"  5-fold CV accuracy:"</span>, scores.<span class="bu">round</span>(<span class="dv">3</span>))</span>
-<span id="cb24-7"><a aria-label="7"></a><span class="bu">print</span>(<span class="st">"  mean              :"</span>, <span class="bu">round</span>(scores.mean(), <span class="dv">3</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="cc02151d" class="cell" data-execution_count="28">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb45"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a aria-label="1"></a><span class="im">from</span> sklearn.naive_bayes <span class="im">import</span> MultinomialNB</span>
+<span id="cb45-2"><a aria-label="2"></a><span class="im">from</span> sklearn.model_selection <span class="im">import</span> cross_val_score, train_test_split</span>
+<span id="cb45-3"><a aria-label="3"></a></span>
+<span id="cb45-4"><a aria-label="4"></a>clf <span class="op">=</span> MultinomialNB()</span>
+<span id="cb45-5"><a aria-label="5"></a>scores <span class="op">=</span> cross_val_score(clf, X, labels, cv<span class="op">=</span><span class="dv">5</span>)</span>
+<span id="cb45-6"><a aria-label="6"></a><span class="bu">print</span>(<span class="st">"  5-fold CV accuracy:"</span>, scores.<span class="bu">round</span>(<span class="dv">3</span>))</span>
+<span id="cb45-7"><a aria-label="7"></a><span class="bu">print</span>(<span class="st">"  mean              :"</span>, <span class="bu">round</span>(scores.mean(), <span class="dv">3</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>  5-fold CV accuracy: [1. 1. 1. 1. 1.]
   mean              : 1.0</code></pre>
@@ -1495,7 +2216,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="the-leakage-trap" class="slide level2">
+<section id="the-leakage-trap" class="slide level2 beyond">
 <h2>The leakage trap</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1510,7 +2231,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="what-leakage-costs-you" class="slide level2 scrollable">
+<section id="what-leakage-costs-you" class="slide level2 scrollable beyond">
 <h2>What leakage costs you</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1519,26 +2240,26 @@ MSDE
 </div>
 <div class="callout-content">
 <p>Random CV told us 100%. Here is what the same classifier does when handed a genus that was <strong>not in its training set at all</strong> — the everyday situation in environmental sequencing, where most organisms are uncharacterised.</p>
-<div id="536c1709" class="cell" data-execution_count="18">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a aria-label="1"></a>novel_ref <span class="op">=</span> <span class="st">""</span>.join(np.random.default_rng(<span class="dv">999</span>).choice(<span class="bu">list</span>(<span class="st">"ACGT"</span>), <span class="dv">400</span>))</span>
-<span id="cb26-2"><a aria-label="2"></a>novel <span class="op">=</span> [mutate(novel_ref, <span class="fl">0.08</span>) <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">10</span>)]</span>
-<span id="cb26-3"><a aria-label="3"></a></span>
-<span id="cb26-4"><a aria-label="4"></a>clf_fitted <span class="op">=</span> MultinomialNB().fit(X, labels)</span>
-<span id="cb26-5"><a aria-label="5"></a>Xn <span class="op">=</span> vec.transform(novel)</span>
-<span id="cb26-6"><a aria-label="6"></a>pred <span class="op">=</span> clf_fitted.predict(Xn)</span>
-<span id="cb26-7"><a aria-label="7"></a>conf <span class="op">=</span> clf_fitted.predict_proba(Xn).<span class="bu">max</span>(axis<span class="op">=</span><span class="dv">1</span>)</span>
-<span id="cb26-8"><a aria-label="8"></a></span>
-<span id="cb26-9"><a aria-label="9"></a><span class="im">import</span> collections</span>
-<span id="cb26-10"><a aria-label="10"></a></span>
-<span id="cb26-11"><a aria-label="11"></a><span class="bu">print</span>(<span class="st">"  predicted labels :"</span>, <span class="bu">dict</span>(collections.Counter(pred)))</span>
-<span id="cb26-12"><a aria-label="12"></a><span class="bu">print</span>(<span class="ss">f"  mean confidence  : </span><span class="sc">{</span>conf<span class="sc">.</span>mean()<span class="sc">:.3f}</span><span class="ss">   (min </span><span class="sc">{</span>conf<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:.3f}</span><span class="ss">, max </span><span class="sc">{</span>conf<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.3f}</span><span class="ss">)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="1da0f0cb" class="cell" data-execution_count="29">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a aria-label="1"></a>novel_ref <span class="op">=</span> <span class="st">""</span>.join(np.random.default_rng(<span class="dv">999</span>).choice(<span class="bu">list</span>(<span class="st">"ACGT"</span>), <span class="dv">400</span>))</span>
+<span id="cb47-2"><a aria-label="2"></a>novel <span class="op">=</span> [mutate(novel_ref, <span class="fl">0.08</span>) <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">10</span>)]</span>
+<span id="cb47-3"><a aria-label="3"></a></span>
+<span id="cb47-4"><a aria-label="4"></a>clf_fitted <span class="op">=</span> MultinomialNB().fit(X, labels)</span>
+<span id="cb47-5"><a aria-label="5"></a>Xn <span class="op">=</span> vec.transform(novel)</span>
+<span id="cb47-6"><a aria-label="6"></a>pred <span class="op">=</span> clf_fitted.predict(Xn)</span>
+<span id="cb47-7"><a aria-label="7"></a>conf <span class="op">=</span> clf_fitted.predict_proba(Xn).<span class="bu">max</span>(axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb47-8"><a aria-label="8"></a></span>
+<span id="cb47-9"><a aria-label="9"></a><span class="im">import</span> collections</span>
+<span id="cb47-10"><a aria-label="10"></a></span>
+<span id="cb47-11"><a aria-label="11"></a><span class="bu">print</span>(<span class="st">"  predicted labels :"</span>, <span class="bu">dict</span>(collections.Counter(pred)))</span>
+<span id="cb47-12"><a aria-label="12"></a><span class="bu">print</span>(<span class="ss">f"  mean confidence  : </span><span class="sc">{</span>conf<span class="sc">.</span>mean()<span class="sc">:.3f}</span><span class="ss">   (min </span><span class="sc">{</span>conf<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:.3f}</span><span class="ss">, max </span><span class="sc">{</span>conf<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.3f}</span><span class="ss">)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>  predicted labels : {np.str_('Genus_C'): 10}
   mean confidence  : 0.985   (min 0.854, max 1.000)</code></pre>
 </div>
 </div>
-<p>Every one of these sequences came from an organism the classifier has never seen. It assigned them all to <code>Genus_C</code> — <strong>with a reported confidence of 1.000</strong>.</p>
-<p>The label is meaningless and the confidence is worse than meaningless: it is maximal. Depending on the random draw the predictions may land on one genus or scatter across several; what never happens is the classifier declining to answer.</p>
+<p>Every one of these sequences came from an organism the classifier has never seen. It assigned them all to <code>Genus_C</code> — <strong>with a mean reported confidence of 0.985</strong>, several of them at 1.000.</p>
+<p>The label is meaningless and the confidence is worse than meaningless: it is close to maximal. Depending on the random draw the predictions may land on one genus or scatter across several; what never happens is the classifier declining to answer.</p>
 </div>
 </div>
 </div>
@@ -1568,28 +2289,28 @@ MSDE
 <p><code>predict_proba</code> is not the confidence measure taxonomic classifiers actually report. Theirs is a <strong>bootstrap</strong>: resample the query’s own <span class="math inline">\(k\)</span>-mers with replacement, reclassify each subsample, and count how often you get the original answer back.</p>
 <p><span class="math display">\[\text{confidence} = \frac{\#\{\text{subsamples agreeing with the full query}\}}{\#\text{iterations}}\]</span></p>
 <p>It asks a sharper question than <code>predict_proba</code> does: <em>how much does this assignment depend on which parts of my sequence I happened to look at?</em></p>
-<div id="015190e4" class="cell" data-execution_count="19">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a aria-label="1"></a><span class="kw">def</span> bootstrap_confidence(clf, counts, n_iter<span class="op">=</span><span class="dv">100</span>, frac<span class="op">=</span><span class="fl">0.1</span>, seed<span class="op">=</span><span class="dv">0</span>):</span>
-<span id="cb28-2"><a aria-label="2"></a>    <span class="co">"""RDP-style confidence: resample the query's k-mers, reclassify, count agreement."""</span></span>
-<span id="cb28-3"><a aria-label="3"></a>    rng_b <span class="op">=</span> np.random.default_rng(seed)</span>
-<span id="cb28-4"><a aria-label="4"></a>    counts <span class="op">=</span> np.asarray(counts).ravel().astype(<span class="bu">int</span>)</span>
-<span id="cb28-5"><a aria-label="5"></a>    occurrences <span class="op">=</span> np.repeat(np.arange(counts.size), counts)</span>
-<span id="cb28-6"><a aria-label="6"></a>    base <span class="op">=</span> clf.predict(counts.reshape(<span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>))[<span class="dv">0</span>]</span>
-<span id="cb28-7"><a aria-label="7"></a>    size <span class="op">=</span> <span class="bu">max</span>(<span class="dv">1</span>, <span class="bu">int</span>(<span class="bu">len</span>(occurrences) <span class="op">*</span> frac))</span>
-<span id="cb28-8"><a aria-label="8"></a>    agree <span class="op">=</span> <span class="bu">sum</span>(</span>
-<span id="cb28-9"><a aria-label="9"></a>        clf.predict(</span>
-<span id="cb28-10"><a aria-label="10"></a>            np.bincount(rng_b.choice(occurrences, size, replace<span class="op">=</span><span class="va">True</span>),</span>
-<span id="cb28-11"><a aria-label="11"></a>                        minlength<span class="op">=</span>counts.size).reshape(<span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>)</span>
-<span id="cb28-12"><a aria-label="12"></a>        )[<span class="dv">0</span>] <span class="op">==</span> base</span>
-<span id="cb28-13"><a aria-label="13"></a>        <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(n_iter)</span>
-<span id="cb28-14"><a aria-label="14"></a>    )</span>
-<span id="cb28-15"><a aria-label="15"></a>    <span class="cf">return</span> base, agree <span class="op">/</span> n_iter</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="a314d285" class="cell" data-execution_count="30">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb49"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a aria-label="1"></a><span class="kw">def</span> bootstrap_confidence(clf, counts, n_iter<span class="op">=</span><span class="dv">100</span>, frac<span class="op">=</span><span class="fl">0.1</span>, seed<span class="op">=</span><span class="dv">0</span>):</span>
+<span id="cb49-2"><a aria-label="2"></a>    <span class="co">"""RDP-style confidence: resample the query's k-mers, reclassify, count agreement."""</span></span>
+<span id="cb49-3"><a aria-label="3"></a>    rng_b <span class="op">=</span> np.random.default_rng(seed)</span>
+<span id="cb49-4"><a aria-label="4"></a>    counts <span class="op">=</span> np.asarray(counts).ravel().astype(<span class="bu">int</span>)</span>
+<span id="cb49-5"><a aria-label="5"></a>    occurrences <span class="op">=</span> np.repeat(np.arange(counts.size), counts)</span>
+<span id="cb49-6"><a aria-label="6"></a>    base <span class="op">=</span> clf.predict(counts.reshape(<span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>))[<span class="dv">0</span>]</span>
+<span id="cb49-7"><a aria-label="7"></a>    size <span class="op">=</span> <span class="bu">max</span>(<span class="dv">1</span>, <span class="bu">int</span>(<span class="bu">len</span>(occurrences) <span class="op">*</span> frac))</span>
+<span id="cb49-8"><a aria-label="8"></a>    agree <span class="op">=</span> <span class="bu">sum</span>(</span>
+<span id="cb49-9"><a aria-label="9"></a>        clf.predict(</span>
+<span id="cb49-10"><a aria-label="10"></a>            np.bincount(rng_b.choice(occurrences, size, replace<span class="op">=</span><span class="va">True</span>),</span>
+<span id="cb49-11"><a aria-label="11"></a>                        minlength<span class="op">=</span>counts.size).reshape(<span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>)</span>
+<span id="cb49-12"><a aria-label="12"></a>        )[<span class="dv">0</span>] <span class="op">==</span> base</span>
+<span id="cb49-13"><a aria-label="13"></a>        <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(n_iter)</span>
+<span id="cb49-14"><a aria-label="14"></a>    )</span>
+<span id="cb49-15"><a aria-label="15"></a>    <span class="cf">return</span> base, agree <span class="op">/</span> n_iter</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
 </div>
 </section>
-<section id="does-it-catch-the-unknown" class="slide level2 scrollable">
+<section id="does-it-catch-the-unknown" class="slide level2 scrollable extends">
 <h2>Does it catch the unknown?</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1598,20 +2319,21 @@ MSDE
 </div>
 <div class="callout-content">
 <p>Apply it to a sequence from a <strong>known</strong> genus, then to the <strong>novel</strong> ones.</p>
-<div id="0eb4ffaf" class="cell" data-execution_count="20">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a aria-label="1"></a>known_idx <span class="op">=</span> <span class="dv">0</span></span>
-<span id="cb29-2"><a aria-label="2"></a>tax, conf <span class="op">=</span> bootstrap_confidence(clf_fitted, X[known_idx].toarray())</span>
-<span id="cb29-3"><a aria-label="3"></a><span class="bu">print</span>(<span class="ss">f"  known genus  : true </span><span class="sc">{</span>labels[known_idx]<span class="sc">}</span><span class="ss">, called </span><span class="sc">{</span>tax<span class="sc">}</span><span class="ss">, confidence </span><span class="sc">{</span>conf<span class="sc">:.2f}</span><span class="ss">"</span>)</span>
-<span id="cb29-4"><a aria-label="4"></a></span>
-<span id="cb29-5"><a aria-label="5"></a><span class="bu">print</span>(<span class="st">"  novel genus  :"</span>)</span>
-<span id="cb29-6"><a aria-label="6"></a>novel_conf <span class="op">=</span> []</span>
-<span id="cb29-7"><a aria-label="7"></a><span class="cf">for</span> r <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">5</span>):</span>
-<span id="cb29-8"><a aria-label="8"></a>    tax_n, conf_n <span class="op">=</span> bootstrap_confidence(clf_fitted, Xn[r].toarray(), seed<span class="op">=</span>r)</span>
-<span id="cb29-9"><a aria-label="9"></a>    novel_conf.append(conf_n)</span>
-<span id="cb29-10"><a aria-label="10"></a>    <span class="bu">print</span>(<span class="ss">f"    sequence </span><span class="sc">{</span>r<span class="sc">}</span><span class="ss">: called </span><span class="sc">{</span>tax_n<span class="sc">}</span><span class="ss">, confidence </span><span class="sc">{</span>conf_n<span class="sc">:.2f}</span><span class="ss">"</span>)</span>
-<span id="cb29-11"><a aria-label="11"></a><span class="bu">print</span>(<span class="ss">f"  mean confidence on novel organisms: </span><span class="sc">{</span>np<span class="sc">.</span>mean(novel_conf)<span class="sc">:.2f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="e1991805" class="cell" data-execution_count="31">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb50"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb50-1"><a aria-label="1"></a>known_idx <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb50-2"><a aria-label="2"></a>tax, conf <span class="op">=</span> bootstrap_confidence(clf_fitted, X[known_idx].toarray())</span>
+<span id="cb50-3"><a aria-label="3"></a><span class="bu">print</span>(<span class="ss">f"  known genus  : true </span><span class="sc">{</span>labels[known_idx]<span class="sc">}</span><span class="ss">, called </span><span class="sc">{</span>tax<span class="sc">}</span><span class="ss">, confidence </span><span class="sc">{</span>conf<span class="sc">:.2f}</span><span class="ss">"</span></span>
+<span id="cb50-4"><a aria-label="4"></a>      <span class="ss">f"   (predict_proba </span><span class="sc">{</span>clf_fitted<span class="sc">.</span>predict_proba(X[known_idx])<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.3f}</span><span class="ss">)"</span>)</span>
+<span id="cb50-5"><a aria-label="5"></a></span>
+<span id="cb50-6"><a aria-label="6"></a><span class="bu">print</span>(<span class="st">"  novel genus  :"</span>)</span>
+<span id="cb50-7"><a aria-label="7"></a>novel_conf <span class="op">=</span> []</span>
+<span id="cb50-8"><a aria-label="8"></a><span class="cf">for</span> r <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">5</span>):</span>
+<span id="cb50-9"><a aria-label="9"></a>    tax_n, conf_n <span class="op">=</span> bootstrap_confidence(clf_fitted, Xn[r].toarray(), seed<span class="op">=</span>r)</span>
+<span id="cb50-10"><a aria-label="10"></a>    novel_conf.append(conf_n)</span>
+<span id="cb50-11"><a aria-label="11"></a>    <span class="bu">print</span>(<span class="ss">f"    sequence </span><span class="sc">{</span>r<span class="sc">}</span><span class="ss">: called </span><span class="sc">{</span>tax_n<span class="sc">}</span><span class="ss">, confidence </span><span class="sc">{</span>conf_n<span class="sc">:.2f}</span><span class="ss">"</span>)</span>
+<span id="cb50-12"><a aria-label="12"></a><span class="bu">print</span>(<span class="ss">f"  mean confidence on novel organisms: </span><span class="sc">{</span>np<span class="sc">.</span>mean(novel_conf)<span class="sc">:.2f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>  known genus  : true Genus_A, called Genus_A, confidence 1.00
+<pre><code>  known genus  : true Genus_A, called Genus_A, confidence 1.00   (predict_proba 1.000)
   novel genus  :
     sequence 0: called Genus_C, confidence 0.51
     sequence 1: called Genus_C, confidence 0.65
@@ -1625,7 +2347,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="it-works-and-predict_proba-did-not" class="slide level2">
+<section id="it-works-and-predict_proba-did-not" class="slide level2 extends">
 <h2>It works — and <code>predict_proba</code> did not</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1646,21 +2368,21 @@ MSDE
 <tr class="odd">
 <td><code>predict_proba</code></td>
 <td>1.000</td>
-<td><strong>1.000</strong></td>
+<td><strong>0.985</strong> (mean of ten)</td>
 </tr>
 <tr class="even">
 <td>bootstrap</td>
 <td>1.00</td>
-<td><strong>0.59</strong></td>
+<td><strong>0.59</strong> (mean of five)</td>
 </tr>
 </tbody>
 </table>
-<p>At the <strong>0.80 threshold conventional in 16S work</strong>, every novel sequence is correctly rejected and backed off to a coarser rank. <code>predict_proba</code> rejects nothing, ever.</p>
+<p>At the <strong>0.80 threshold conventional in 16S work</strong>, all five novel sequences tested (0.51–0.66) are rejected and backed off to a coarser rank. <code>predict_proba</code> would accept every one of them.</p>
 </div>
 </div>
 </div>
 </section>
-<section id="why-the-bootstrap-sees-it" class="slide level2">
+<section id="why-the-bootstrap-sees-it" class="slide level2 extends">
 <h2>Why the bootstrap sees it</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1679,7 +2401,27 @@ MSDE
 </div>
 </div>
 </section>
-<section id="still-not-a-novelty-detector" class="slide level2">
+<section id="choosing-the-threshold-from-data" class="slide level2">
+<h2>Choosing the threshold from data</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>What the book does with the confidence scores</strong></p>
+</div>
+<div class="callout-content">
+<p>A confidence value only becomes useful once you know what <em>good</em> looks like. The book’s recipe uses the labelled test data:</p>
+<ol type="1">
+<li>classify every test sequence and record its bootstrap confidence</li>
+<li>split the confidences into <strong>correct</strong> and <strong>incorrect</strong> assignments and compare the two distributions (a pair of boxplots)</li>
+<li>pick the threshold below which a call is reported as <em>unclassified</em></li>
+</ol>
+<p>Then the two questions that make the trade-off concrete: <em>if you never wanted to reject a correct assignment, how often would you accept an incorrect one? If you never wanted to accept an incorrect one, how many correct ones would you throw away?</em></p>
+<p>Finish with a <strong>confusion matrix</strong> — true taxa on one axis, predicted on the other, in the same order — to see <em>which</em> taxa get confused, and check whether the mistakes are at least right at a coarser level (phylum).</p>
+</div>
+</div>
+</div>
+</section>
+<section id="still-not-a-novelty-detector" class="slide level2 beyond">
 <h2>Still not a novelty detector</h2>
 <div class="callout callout-warning no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1698,7 +2440,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="why-this-matters-here-especially" class="slide level2">
+<section id="why-this-matters-here-especially" class="slide level2 beyond">
 <h2>Why this matters here especially</h2>
 <div class="callout callout-warning no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1721,7 +2463,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="splitting-by-group" class="slide level2">
+<section id="splitting-by-group" class="slide level2 beyond">
 <h2>Splitting by group</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1762,7 +2504,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="expect-the-score-to-drop" class="slide level2">
+<section id="expect-the-score-to-drop" class="slide level2 beyond">
 <h2>Expect the score to drop</h2>
 <div class="callout callout-warning no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1776,7 +2518,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="accuracy-is-the-wrong-headline" class="slide level2">
+<section id="accuracy-is-the-wrong-headline" class="slide level2 extends">
 <h2>Accuracy is the wrong headline</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1796,7 +2538,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="what-a-classifier-should-output" class="slide level2">
+<section id="what-a-classifier-should-output" class="slide level2 beyond">
 <h2>What a classifier should output</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1814,24 +2556,24 @@ MSDE
 </div>
 </div>
 </section>
-<section id="choosing-k" class="slide level2 scrollable">
+<section id="choosing-k" class="slide level2 scrollable extends">
 <h2>Choosing <span class="math inline">\(k\)</span></h2>
-<div id="5549b5d5" class="cell" data-execution_count="21">
+<div id="99c337f8" class="cell" data-execution_count="32">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a aria-label="1"></a>rows <span class="op">=</span> []</span>
-<span id="cb31-2"><a aria-label="2"></a><span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">3</span>, <span class="dv">10</span>):</span>
-<span id="cb31-3"><a aria-label="3"></a>    v <span class="op">=</span> CountVectorizer(analyzer<span class="op">=</span><span class="st">"char"</span>, ngram_range<span class="op">=</span>(k, k))</span>
-<span id="cb31-4"><a aria-label="4"></a>    Xk <span class="op">=</span> v.fit_transform(sequences)</span>
-<span id="cb31-5"><a aria-label="5"></a>    rows.append((k, <span class="dv">4</span><span class="op">**</span>k, Xk.shape[<span class="dv">1</span>], <span class="dv">100</span> <span class="op">*</span> Xk.nnz <span class="op">/</span> (Xk.shape[<span class="dv">0</span>] <span class="op">*</span> Xk.shape[<span class="dv">1</span>])))</span>
-<span id="cb31-6"><a aria-label="6"></a>    <span class="bu">print</span>(<span class="ss">f"  k=</span><span class="sc">{</span>k<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span><span class="dv">4</span><span class="op">**</span>k<span class="sc">:&gt;7}</span><span class="ss"> possible, </span><span class="sc">{</span>Xk<span class="sc">.</span>shape[<span class="dv">1</span>]<span class="sc">:&gt;6}</span><span class="ss"> observed, "</span></span>
-<span id="cb31-7"><a aria-label="7"></a>          <span class="ss">f"</span><span class="sc">{</span>rows[<span class="op">-</span><span class="dv">1</span>][<span class="dv">3</span>]<span class="sc">:5.1f}</span><span class="ss">% of the matrix non-zero"</span>)</span>
-<span id="cb31-8"><a aria-label="8"></a></span>
-<span id="cb31-9"><a aria-label="9"></a>f, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">5</span>, <span class="dv">3</span>))</span>
-<span id="cb31-10"><a aria-label="10"></a>ax.semilogy([r[<span class="dv">0</span>] <span class="cf">for</span> r <span class="kw">in</span> rows], [r[<span class="dv">1</span>] <span class="cf">for</span> r <span class="kw">in</span> rows], <span class="st">"o-"</span>, label<span class="op">=</span><span class="st">"possible $4^k$"</span>)</span>
-<span id="cb31-11"><a aria-label="11"></a>ax.semilogy([r[<span class="dv">0</span>] <span class="cf">for</span> r <span class="kw">in</span> rows], [r[<span class="dv">2</span>] <span class="cf">for</span> r <span class="kw">in</span> rows], <span class="st">"s-"</span>, label<span class="op">=</span><span class="st">"actually observed"</span>)</span>
-<span id="cb31-12"><a aria-label="12"></a>ax.set_xlabel(<span class="st">"k"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"number of $k$-mers"</span>)</span>
-<span id="cb31-13"><a aria-label="13"></a>ax.legend()<span class="op">;</span> plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb52"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb52-1"><a aria-label="1"></a>rows <span class="op">=</span> []</span>
+<span id="cb52-2"><a aria-label="2"></a><span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">3</span>, <span class="dv">10</span>):</span>
+<span id="cb52-3"><a aria-label="3"></a>    v <span class="op">=</span> CountVectorizer(analyzer<span class="op">=</span><span class="st">"char"</span>, ngram_range<span class="op">=</span>(k, k))</span>
+<span id="cb52-4"><a aria-label="4"></a>    Xk <span class="op">=</span> v.fit_transform(sequences)</span>
+<span id="cb52-5"><a aria-label="5"></a>    rows.append((k, <span class="dv">4</span><span class="op">**</span>k, Xk.shape[<span class="dv">1</span>], <span class="dv">100</span> <span class="op">*</span> Xk.nnz <span class="op">/</span> (Xk.shape[<span class="dv">0</span>] <span class="op">*</span> Xk.shape[<span class="dv">1</span>])))</span>
+<span id="cb52-6"><a aria-label="6"></a>    <span class="bu">print</span>(<span class="ss">f"  k=</span><span class="sc">{</span>k<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span><span class="dv">4</span><span class="op">**</span>k<span class="sc">:&gt;7}</span><span class="ss"> possible, </span><span class="sc">{</span>Xk<span class="sc">.</span>shape[<span class="dv">1</span>]<span class="sc">:&gt;6}</span><span class="ss"> observed, "</span></span>
+<span id="cb52-7"><a aria-label="7"></a>          <span class="ss">f"</span><span class="sc">{</span>rows[<span class="op">-</span><span class="dv">1</span>][<span class="dv">3</span>]<span class="sc">:5.1f}</span><span class="ss">% of the matrix non-zero"</span>)</span>
+<span id="cb52-8"><a aria-label="8"></a></span>
+<span id="cb52-9"><a aria-label="9"></a>f, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">5</span>, <span class="dv">3</span>))</span>
+<span id="cb52-10"><a aria-label="10"></a>ax.semilogy([r[<span class="dv">0</span>] <span class="cf">for</span> r <span class="kw">in</span> rows], [r[<span class="dv">1</span>] <span class="cf">for</span> r <span class="kw">in</span> rows], <span class="st">"o-"</span>, label<span class="op">=</span><span class="st">"possible $4^k$"</span>)</span>
+<span id="cb52-11"><a aria-label="11"></a>ax.semilogy([r[<span class="dv">0</span>] <span class="cf">for</span> r <span class="kw">in</span> rows], [r[<span class="dv">2</span>] <span class="cf">for</span> r <span class="kw">in</span> rows], <span class="st">"s-"</span>, label<span class="op">=</span><span class="st">"actually observed"</span>)</span>
+<span id="cb52-12"><a aria-label="12"></a>ax.set_xlabel(<span class="st">"k"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"number of $k$-mers"</span>)</span>
+<span id="cb52-13"><a aria-label="13"></a>ax.legend()<span class="op">;</span> plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>  k=3:      64 possible,     64 observed,  99.8% of the matrix non-zero
@@ -1845,7 +2587,7 @@ MSDE
 <div class="cell-output cell-output-display">
 <div>
 <figure>
-<p><img data-src="bio2_files/figure-revealjs/cell-21-output-2.png" width="544" height="324"></p>
+<p><img data-src="bio2_files/figure-revealjs/cell-32-output-2.png" width="544" height="324"></p>
 </figure>
 </div>
 </div>
@@ -1858,6 +2600,28 @@ MSDE
 <div class="callout-content">
 <p>The two curves separate sharply. Below <span class="math inline">\(k \approx 5\)</span> every possible <span class="math inline">\(k\)</span>-mer is observed, so the features carry almost no positional information — all sequences look alike. Above <span class="math inline">\(k \approx 7\)</span> most <span class="math inline">\(k\)</span>-mers are seen <strong>once or never</strong>: the vector becomes mostly zeros, counts stop being estimates of anything, and the classifier is fitting noise.</p>
 <p>Useful values for 16S work are typically <strong>6–8</strong> — large enough to be specific, small enough that counts are still counts. The right value depends on sequence length and how closely related your classes are, and is worth tuning rather than assuming.</p>
+<p>The book itself uses <span class="math inline">\(k = 4\)</span>, chosen by experimenting on several Greengenes subsamples, and frames the same trade-off: longer <span class="math inline">\(k\)</span>-mers are more taxon-specific, but less likely to be shared by close relatives at all.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="variations-on-the-input" class="slide level2">
+<h2>Variations on the input</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Where the book leaves the reader</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>Continuous labels</strong> — an organism’s abundance rather than its species — turn classification into <strong>regression</strong>: same feature table, different algorithms.</li>
+<li><strong>Features can be discrete</strong> too — the sex of a subject, a species present or absent.</li>
+<li>scikit-learn ships other teaching datasets (diabetes, housing, handwritten digits) worth practising on.</li>
+</ul>
+<blockquote>
+<p>If you can wrangle your data into a feature table, potentially with corresponding sample labels, you will likely be able to apply machine learning techniques to that data.</p>
+</blockquote>
+<p>The book’s caveat follows straight after: knowing enough to <em>run</em> these methods is not knowing enough to run them <em>correctly</em>.</p>
 </div>
 </div>
 </div>
@@ -1900,6 +2664,14 @@ MSDE
 <td>exhaustive alignment is <span class="math inline">\(\sim10^{15}\)</span> cells — infeasible</td>
 </tr>
 <tr class="even">
+<td>runtime</td>
+<td>linear in queries <span class="math inline">\(\times\)</span> references; only <em>fewer alignments</em> changes the work</td>
+</tr>
+<tr class="odd">
+<td>judging a heuristic</td>
+<td>accuracy <strong>and</strong> speed, against a straw-man baseline</td>
+</tr>
+<tr class="even">
 <td><span class="math inline">\(k\)</span>-mer prefilter</td>
 <td>cheap Jaccard ranks like expensive SW</td>
 </tr>
@@ -1920,46 +2692,58 @@ MSDE
 <td><strong>distant homologs are lost</strong></td>
 </tr>
 <tr class="odd">
+<td>permutation test</td>
+<td>shuffle the query: an empirical null, <span class="math inline">\(p = (b+1)/(n+1)\)</span>, <span class="math inline">\(\alpha\)</span> fixed first</td>
+</tr>
+<tr class="even">
 <td>bit score vs E-value</td>
 <td>one describes the alignment, one the search space</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>profiles</td>
 <td>a family carries information a pair cannot</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>sensitivity/specificity</td>
 <td>a decision about consequences, not statistics</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>the feature table</td>
 <td><span class="math inline">\(n \times p\)</span> + labels — the only interface, and where the modelling happens</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>unsupervised first</td>
 <td>look before classifying; ordination is how you check the labels mean something</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>ordination</td>
 <td>PCoA = dimensionality reduction in ecology’s vocabulary; read the scree cliff</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>reading an ordination</td>
 <td>axis order matters, axes are not two findings, direction is arbitrary</td>
 </tr>
+<tr class="odd">
+<td>exploration</td>
+<td>generates hypotheses; testing them needs <strong>new</strong> data</td>
+</tr>
 <tr class="even">
+<td>precision / recall</td>
+<td>which error a classifier makes, not just how many</td>
+</tr>
+<tr class="odd">
 <td>Naive Bayes</td>
 <td>wrong assumption, useful ranking, very fast, over-confident</td>
 </tr>
-<tr class="odd">
-<td>bootstrap confidence</td>
-<td>resample the query’s <span class="math inline">\(k\)</span>-mers — 1.00 known vs <strong>0.59</strong> novel, where <code>predict_proba</code> said 1.000 both times</td>
-</tr>
 <tr class="even">
+<td>bootstrap confidence</td>
+<td>resample the query’s <span class="math inline">\(k\)</span>-mers — 1.00 known vs <strong>0.59</strong> novel, where <code>predict_proba</code> said ~0.99 both times</td>
+</tr>
+<tr class="odd">
 <td><strong>leakage</strong></td>
 <td>biological data is not i.i.d.; split at the level you want to generalise to</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>abstention</td>
 <td>a classifier that must answer will invent answers</td>
 </tr>
@@ -2006,6 +2790,15 @@ MSDE
 <li>Replace <code>MultinomialNB</code> with logistic regression and a random forest under grouped CV. Does the ranking of methods change?</li>
 <li>Add an abstention rule: report <code>Unassigned</code> below a bootstrap confidence of 0.8. Sweep the threshold and plot the fraction assigned against the accuracy of what was assigned.</li>
 <li>Wrap the classifier in <code>CalibratedClassifierCV</code> and compare predicted confidence against observed accuracy. How over-confident was <code>predict_proba</code>?</li>
+</ol>
+<p><strong>From the book</strong></p>
+<ol start="14" type="1">
+<li>Run the mystery sequence through NCBI Protein BLAST. What is it, and how confident are you?</li>
+<li>Re-run the heuristic benchmark judging correctness at a <em>coarser</em> level (group several genera into one “family”). Which heuristics improve most, and why?</li>
+<li>Raise the permutation count from 99 to 999. What is now the smallest reportable p-value, and how much longer does it take?</li>
+<li>Sweep identity from 100% to 25% with the permutation test, several trials per point. Where is the limit of detection, and what shortcuts did the simulation take?</li>
+<li>Change <code>k</code> in the hand-built Naive Bayes from 5 to 3 and 7. How do accuracy and the size of <span class="math inline">\(W\)</span> change?</li>
+<li>Compute the bootstrap confidence for every test sequence and draw boxplots for correct versus incorrect calls. Where would you put the threshold?</li>
 </ol>
 </div>
 </div>

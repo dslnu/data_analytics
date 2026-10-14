@@ -218,67 +218,7 @@ MSDE
 </div>
 
 </section>
-<section id="sequence-bioinformatics" class="slide level2">
-<h2>Sequence bioinformatics</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Source</strong></p>
-</div>
-<div class="callout-content">
-<p>This lecture follows <strong>An Introduction to Applied Bioinformatics</strong> (2nd ed.)</p>
-<blockquote>
-<p>J. Gregory Caporaso — <a href="https://readiab.org" class="uri">https://readiab.org</a> Licensed CC BY-NC-SA 4.0</p>
-</blockquote>
-<p>Chapters 1–3: <em>Introduction</em>, <em>Biological Information</em>, <em>Pairwise sequence alignment</em>.</p>
-<p>We use <strong>scikit-bio</strong> (the book’s library) and <strong>Biopython</strong> (the one you are more likely to meet) side by side.</p>
-</div>
-</div>
-</div>
-<div class="callout callout-note no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Why this belongs in a data-analytics course</strong></p>
-</div>
-<div class="callout-content">
-<p>Sequence alignment is a <strong>dynamic programming</strong> problem — the same technique as edit distance, and a close relative of the DAG scheduling from the Big Data lectures.</p>
-<p>It is also a case study in a recurring theme: an exact algorithm that is <em>provably optimal</em> and <em>too slow at scale</em>, which the field abandoned for heuristics.</p>
-</div>
-</div>
-</div>
-</section>
-<section id="roadmap" class="slide level2">
-<h2>Roadmap</h2>
-<div class="callout callout-important no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Four questions</strong></p>
-</div>
-<div class="callout-content">
-<ol type="1">
-<li><strong>What is biological information?</strong> — why DNA is a base-4 code and what that lets us compute</li>
-<li><strong>What is an alignment?</strong> — and why it is a <em>hypothesis</em>, not an answer</li>
-<li><strong>How do we compute one?</strong> — Needleman-Wunsch, Smith-Waterman, and the scoring choices they hide</li>
-<li><strong>What does it cost?</strong> — <span class="math inline">\(O(mn)\)</span>, measured, and why that forced the invention of BLAST</li>
-</ol>
-</div>
-</div>
-</div>
-<!-- ==========================================================================
-     SOURCE: readIAB ch.2 "Biological Information"
-             https://readiab.org/biological-information.html
-             sections: "Central Dogma of Molecular Biology", "Binary and decimal
-             numerical systems", "Encoding messages in bits", "Protein sequences
-             are encoded in a base 4 system", "Quantifying information",
-             "The genetic code"
-     ========================================================================== -->
-</section>
-<section>
-<section id="biological-information" class="title-slide slide level1 center">
-<h1>Biological information</h1>
-
-</section>
-<section id="the-central-dogma" class="slide level2">
+<section id="the-central-dogma" class="slide level2 scrollable">
 <h2>The central dogma</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -286,6 +226,7 @@ MSDE
 <p><strong>Information flow</strong></p>
 </div>
 <div class="callout-content">
+<p><img data-src="../img/bio/central-dogma.png" height="400"></p>
 <p><span class="math display">\[\text{DNA} \xrightarrow{\ \text{transcription}\ } \text{RNA} \xrightarrow{\ \text{translation}\ } \text{protein}\]</span></p>
 <ul>
 <li><strong>DNA</strong> — the archive. Four bases: adenine, cytosine, guanine, thymine.</li>
@@ -293,6 +234,43 @@ MSDE
 <li><strong>Protein</strong> — the machine. Twenty amino acids, folded into a shape that does something.</li>
 </ul>
 <p>Every step is a <strong>transformation of a string</strong>, which is why so much of bioinformatics is string algorithms.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="messages-in-bits" class="slide level2 scrollable">
+<h2>Messages in bits</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The book’s starting point: a code is an agreement</strong></p>
+</div>
+<div class="callout-content">
+<p>A single bit distinguishes two messages — a photosensor reporting <em>day</em> (0) or <em>dark</em> (1) is enough to switch a light. Add bits and the number of distinguishable messages grows exponentially:</p>
+<p><span class="math display">\[n_{\text{messages}} = n_{\text{symbols}}^{\,p}\]</span></p>
+<p>for a message <span class="math inline">\(p\)</span> symbols long. Two bits give <span class="math inline">\(2^2 = 4\)</span> messages; a byte gives <span class="math inline">\(2^8 = 256\)</span>.</p>
+<p>The bits mean nothing until sender and receiver agree on a <strong>code</strong>. ASCII is one such agreement — 7 bits per keyboard character:</p>
+<div id="e975b822" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a aria-label="1"></a><span class="bu">print</span>(<span class="st">"messages in one byte :"</span>, <span class="dv">2</span><span class="op">**</span><span class="dv">8</span>)</span>
+<span id="cb1-2"><a aria-label="2"></a><span class="cf">for</span> bits <span class="kw">in</span> [<span class="st">"1000001"</span>, <span class="st">"1000010"</span>, <span class="st">"1000011"</span>]:</span>
+<span id="cb1-3"><a aria-label="3"></a>    <span class="bu">print</span>(<span class="ss">f"  </span><span class="sc">{</span>bits<span class="sc">}</span><span class="ss"> -&gt; </span><span class="sc">{</span><span class="bu">int</span>(bits, <span class="dv">2</span>)<span class="sc">:&gt;3}</span><span class="ss"> -&gt; </span><span class="sc">{</span><span class="bu">chr</span>(<span class="bu">int</span>(bits, <span class="dv">2</span>))<span class="sc">!r}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>messages in one byte : 256
+  1000001 -&gt;  65 -&gt; 'A'
+  1000010 -&gt;  66 -&gt; 'B'
+  1000011 -&gt;  67 -&gt; 'C'</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Why a data course cares</strong></p>
+</div>
+<div class="callout-content">
+<p>Every file format in this course — CSV, Parquet, FASTA, <code>h5ad</code> — is such an agreement. The genetic code is the same idea, settled by evolution rather than by a standards committee.</p>
 </div>
 </div>
 </div>
@@ -307,11 +285,11 @@ MSDE
 <div class="callout-content">
 <p>A binary digit distinguishes 2 states and carries 1 bit. A DNA base distinguishes 4, so it carries</p>
 <p><span class="math display">\[\log_2 4 = 2 \text{ bits}\]</span></p>
-<div id="039818e1" class="cell" data-execution_count="3">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a aria-label="1"></a><span class="im">import</span> math</span>
-<span id="cb1-2"><a aria-label="2"></a></span>
-<span id="cb1-3"><a aria-label="3"></a><span class="cf">for</span> alphabet, size <span class="kw">in</span> [(<span class="st">"binary"</span>, <span class="dv">2</span>), (<span class="st">"DNA/RNA"</span>, <span class="dv">4</span>), (<span class="st">"protein"</span>, <span class="dv">20</span>)]:</span>
-<span id="cb1-4"><a aria-label="4"></a>    <span class="bu">print</span>(<span class="ss">f"  </span><span class="sc">{</span>alphabet<span class="sc">:9}</span><span class="ss"> </span><span class="sc">{</span>size<span class="sc">:&gt;2}</span><span class="ss"> symbols -&gt; </span><span class="sc">{</span>math<span class="sc">.</span>log2(size)<span class="sc">:.2f}</span><span class="ss"> bits per position"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="5424850b" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a aria-label="1"></a><span class="im">import</span> math</span>
+<span id="cb3-2"><a aria-label="2"></a></span>
+<span id="cb3-3"><a aria-label="3"></a><span class="cf">for</span> alphabet, size <span class="kw">in</span> [(<span class="st">"binary"</span>, <span class="dv">2</span>), (<span class="st">"DNA/RNA"</span>, <span class="dv">4</span>), (<span class="st">"protein"</span>, <span class="dv">20</span>)]:</span>
+<span id="cb3-4"><a aria-label="4"></a>    <span class="bu">print</span>(<span class="ss">f"  </span><span class="sc">{</span>alphabet<span class="sc">:9}</span><span class="ss"> </span><span class="sc">{</span>size<span class="sc">:&gt;2}</span><span class="ss"> symbols -&gt; </span><span class="sc">{</span>math<span class="sc">.</span>log2(size)<span class="sc">:.2f}</span><span class="ss"> bits per position"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>  binary     2 symbols -&gt; 1.00 bits per position
   DNA/RNA    4 symbols -&gt; 2.00 bits per position
@@ -323,8 +301,8 @@ MSDE
 </div>
 </div>
 </section>
-<section id="the-genetic-code" class="slide level2">
-<h2>The genetic code</h2>
+<section id="protein-is-encoded-in-base-4" class="slide level2">
+<h2>Protein is encoded in base 4</h2>
 <div class="callout callout-note no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
@@ -364,22 +342,46 @@ MSDE
 </div>
 </div>
 </section>
-<section id="the-genetic-code-1" class="slide level2 scrollable">
-<h2>The genetic code</h2>
+<section id="decoding-protein-messages" class="slide level2 scrollable">
+<h2>Decoding protein messages</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The book’s worked example</strong></p>
+</div>
+<div class="callout-content">
+<p>Read the RNA three bases at a time and look each codon up in the genetic code:</p>
+<div id="e0c299ee" class="cell" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a aria-label="1"></a><span class="im">from</span> Bio.Seq <span class="im">import</span> Seq</span>
+<span id="cb5-2"><a aria-label="2"></a></span>
+<span id="cb5-3"><a aria-label="3"></a>rna <span class="op">=</span> Seq(<span class="st">"AUGUAUGAGGGUACUAAUUAA"</span>)</span>
+<span id="cb5-4"><a aria-label="4"></a>codons <span class="op">=</span> [<span class="bu">str</span>(rna[i : i <span class="op">+</span> <span class="dv">3</span>]) <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">0</span>, <span class="bu">len</span>(rna), <span class="dv">3</span>)]</span>
+<span id="cb5-5"><a aria-label="5"></a><span class="bu">print</span>(<span class="st">"codons :"</span>, <span class="st">" "</span>.join(codons))</span>
+<span id="cb5-6"><a aria-label="6"></a><span class="bu">print</span>(<span class="st">"protein:"</span>, rna.translate())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>codons : AUG UAU GAG GGU ACU AAU UAA
+protein: MYEGTN*</code></pre>
+</div>
+</div>
+<p><code>M Y E G T N</code>, then <code>*</code> — <code>UAA</code> is a stop codon, and translation ends there. A stop codon is the code’s <em>end of message</em> marker.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="decoding-protein-messages-1" class="slide level2 scrollable extends">
+<h2>Decoding protein messages</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
 <p><strong>Translating in practice</strong></p>
 </div>
 <div class="callout-content">
-<div id="53c6699c" class="cell" data-execution_count="4">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a aria-label="1"></a><span class="im">from</span> Bio.Seq <span class="im">import</span> Seq</span>
-<span id="cb3-2"><a aria-label="2"></a></span>
-<span id="cb3-3"><a aria-label="3"></a>dna <span class="op">=</span> Seq(<span class="st">"ATGGCCATTGTAATGGGCCGCTGAAAGGGTGCCCGATAG"</span>)</span>
-<span id="cb3-4"><a aria-label="4"></a><span class="bu">print</span>(<span class="st">"DNA        :"</span>, dna)</span>
-<span id="cb3-5"><a aria-label="5"></a><span class="bu">print</span>(<span class="st">"transcribed:"</span>, dna.transcribe())</span>
-<span id="cb3-6"><a aria-label="6"></a><span class="bu">print</span>(<span class="st">"protein    :"</span>, dna.translate())</span>
-<span id="cb3-7"><a aria-label="7"></a><span class="bu">print</span>(<span class="st">"complement :"</span>, dna.reverse_complement())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="fda4fcc9" class="cell" data-execution_count="6">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a aria-label="1"></a>dna <span class="op">=</span> Seq(<span class="st">"ATGGCCATTGTAATGGGCCGCTGAAAGGGTGCCCGATAG"</span>)</span>
+<span id="cb7-2"><a aria-label="2"></a><span class="bu">print</span>(<span class="st">"DNA        :"</span>, dna)</span>
+<span id="cb7-3"><a aria-label="3"></a><span class="bu">print</span>(<span class="st">"transcribed:"</span>, dna.transcribe())</span>
+<span id="cb7-4"><a aria-label="4"></a><span class="bu">print</span>(<span class="st">"protein    :"</span>, dna.translate())</span>
+<span id="cb7-5"><a aria-label="5"></a><span class="bu">print</span>(<span class="st">"complement :"</span>, dna.reverse_complement())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>DNA        : ATGGCCATTGTAATGGGCCGCTGAAAGGGTGCCCGATAG
 transcribed: AUGGCCAUUGUAAUGGGCCGCUGAAAGGGUGCCCGAUAG
@@ -392,7 +394,56 @@ complement : CTATCGGGCACCCTTTCAGCGGCCCATTACAATGGCCAT</code></pre>
 </div>
 </div>
 </section>
-<section id="sequences-as-data" class="slide level2">
+<section id="the-genetic-code-is-a-molecule" class="slide level2">
+<h2>The genetic code is a molecule</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Who actually reads the code</strong></p>
+</div>
+<div class="callout-content">
+<p>The codon table is not stored anywhere as a table. It is implemented by <strong>transfer RNA</strong> (tRNA): each tRNA carries one amino acid and has an <strong>anticodon</strong> loop that base-pairs with the matching codon on the mRNA. The ribosome brings them together and joins the amino acids in order.</p>
+<p>A tRNA can be described at three levels:</p>
+<ul>
+<li><strong>primary structure</strong> — its sequence of bases</li>
+<li><strong>secondary structure</strong> — which bases pair with which, folding it into the cloverleaf</li>
+<li><strong>tertiary structure</strong> — the 3-D shape that pairing produces</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The data-analytic point in the book</strong></p>
+</div>
+<div class="callout-content">
+<p>Secondary and tertiary structure are usually <strong>predicted, not measured</strong> — and the predictions lean on sequence similarity to molecules whose structure <em>is</em> known. Comparing sequences is therefore the foundation even for questions that are not about sequence. That is the problem the rest of this lecture solves.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="limitations-of-the-analogy" class="slide level2">
+<h2>Limitations of the analogy</h2>
+<div class="callout callout-warning no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>A genome is not just a list of protein messages</strong></p>
+</div>
+<div class="callout-content">
+<p>The bits-and-codons picture is useful and incomplete:</p>
+<ul>
+<li>most of a genome does <strong>not</strong> encode protein; much of it regulates <em>when</em> and <em>how much</em> other genes are expressed</li>
+<li>the <strong>structure</strong> of DNA and RNA carries information too, affecting expression</li>
+<li><strong>alternative splicing</strong> lets one gene produce several different proteins</li>
+<li>real sequence data contains positions the instrument could not resolve — written <code>N</code> for “any base”</li>
+</ul>
+<p>A model that is good enough to compute with is not the same as a complete description. That distinction recurs in every lecture of this series.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="sequences-as-data" class="slide level2 beyond">
 <h2>Sequences as data</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -413,7 +464,7 @@ IIIIIIIIIIIIIIIIIIII9&lt;&lt;&lt;</code></pre>
 </div>
 </div>
 </section>
-<section id="sequences-as-data-1" class="slide level2 scrollable">
+<section id="sequences-as-data-1" class="slide level2 scrollable beyond">
 <h2>Sequences as data</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -421,16 +472,16 @@ IIIIIIIIIIIIIIIIIIII9&lt;&lt;&lt;</code></pre>
 <p><strong>Two libraries, same idea</strong></p>
 </div>
 <div class="callout-content">
-<div id="a1cb0e8b" class="cell" data-execution_count="5">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a aria-label="1"></a><span class="im">from</span> skbio <span class="im">import</span> DNA</span>
-<span id="cb7-2"><a aria-label="2"></a><span class="im">import</span> skbio</span>
-<span id="cb7-3"><a aria-label="3"></a></span>
-<span id="cb7-4"><a aria-label="4"></a>seq <span class="op">=</span> DNA(<span class="st">"ACCGGTGGAACCGGTAACACCCAC"</span>)</span>
-<span id="cb7-5"><a aria-label="5"></a><span class="bu">print</span>(<span class="st">"scikit-bio"</span>, skbio.__version__)</span>
-<span id="cb7-6"><a aria-label="6"></a><span class="bu">print</span>(<span class="st">"  sequence     :"</span>, <span class="bu">str</span>(seq))</span>
-<span id="cb7-7"><a aria-label="7"></a><span class="bu">print</span>(<span class="st">"  GC content   :"</span>, <span class="bu">round</span>(seq.gc_content(), <span class="dv">3</span>))</span>
-<span id="cb7-8"><a aria-label="8"></a><span class="bu">print</span>(<span class="st">"  reverse comp :"</span>, <span class="bu">str</span>(seq.reverse_complement()))</span>
-<span id="cb7-9"><a aria-label="9"></a><span class="bu">print</span>(<span class="st">"  frequencies  :"</span>, <span class="bu">dict</span>(seq.frequencies()))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="b13c48d8" class="cell" data-execution_count="7">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a aria-label="1"></a><span class="im">from</span> skbio <span class="im">import</span> DNA</span>
+<span id="cb11-2"><a aria-label="2"></a><span class="im">import</span> skbio</span>
+<span id="cb11-3"><a aria-label="3"></a></span>
+<span id="cb11-4"><a aria-label="4"></a>seq <span class="op">=</span> DNA(<span class="st">"ACCGGTGGAACCGGTAACACCCAC"</span>)</span>
+<span id="cb11-5"><a aria-label="5"></a><span class="bu">print</span>(<span class="st">"scikit-bio"</span>, skbio.__version__)</span>
+<span id="cb11-6"><a aria-label="6"></a><span class="bu">print</span>(<span class="st">"  sequence     :"</span>, <span class="bu">str</span>(seq))</span>
+<span id="cb11-7"><a aria-label="7"></a><span class="bu">print</span>(<span class="st">"  GC content   :"</span>, <span class="bu">round</span>(seq.gc_content(), <span class="dv">3</span>))</span>
+<span id="cb11-8"><a aria-label="8"></a><span class="bu">print</span>(<span class="st">"  reverse comp :"</span>, <span class="bu">str</span>(seq.reverse_complement()))</span>
+<span id="cb11-9"><a aria-label="9"></a><span class="bu">print</span>(<span class="st">"  frequencies  :"</span>, <span class="bu">dict</span>(seq.frequencies()))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>scikit-bio 0.7.4
   sequence     : ACCGGTGGAACCGGTAACACCCAC
@@ -444,7 +495,7 @@ IIIIIIIIIIIIIIIIIIII9&lt;&lt;&lt;</code></pre>
 </div>
 </div>
 </section>
-<section id="k-mers" class="slide level2">
+<section id="k-mers" class="slide level2 beyond">
 <h2><span class="math inline">\(k\)</span>-mers</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -453,11 +504,11 @@ IIIIIIIIIIIIIIIIIIII9&lt;&lt;&lt;</code></pre>
 </div>
 <div class="callout-content">
 <p>A <strong><span class="math inline">\(k\)</span>-mer</strong> is a substring of length <span class="math inline">\(k\)</span>. Sliding a window over a sequence of length <span class="math inline">\(n\)</span> yields <span class="math inline">\(n - k + 1\)</span> of them.</p>
-<div id="9dccf00f" class="cell" data-execution_count="6">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a aria-label="1"></a>s <span class="op">=</span> <span class="st">"ACCGGTGGAACC"</span></span>
-<span id="cb9-2"><a aria-label="2"></a><span class="cf">for</span> k <span class="kw">in</span> (<span class="dv">3</span>, <span class="dv">5</span>):</span>
-<span id="cb9-3"><a aria-label="3"></a>    kmers <span class="op">=</span> [s[i : i <span class="op">+</span> k] <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(s) <span class="op">-</span> k <span class="op">+</span> <span class="dv">1</span>)]</span>
-<span id="cb9-4"><a aria-label="4"></a>    <span class="bu">print</span>(<span class="ss">f"  k=</span><span class="sc">{</span>k<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span><span class="bu">len</span>(kmers)<span class="sc">}</span><span class="ss"> k-mers, </span><span class="sc">{</span><span class="bu">len</span>(<span class="bu">set</span>(kmers))<span class="sc">}</span><span class="ss"> distinct -&gt; </span><span class="sc">{</span>kmers[:<span class="dv">4</span>]<span class="sc">}</span><span class="ss"> ..."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="9bbdb234" class="cell" data-execution_count="8">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a aria-label="1"></a>s <span class="op">=</span> <span class="st">"ACCGGTGGAACC"</span></span>
+<span id="cb13-2"><a aria-label="2"></a><span class="cf">for</span> k <span class="kw">in</span> (<span class="dv">3</span>, <span class="dv">5</span>):</span>
+<span id="cb13-3"><a aria-label="3"></a>    kmers <span class="op">=</span> [s[i : i <span class="op">+</span> k] <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(s) <span class="op">-</span> k <span class="op">+</span> <span class="dv">1</span>)]</span>
+<span id="cb13-4"><a aria-label="4"></a>    <span class="bu">print</span>(<span class="ss">f"  k=</span><span class="sc">{</span>k<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span><span class="bu">len</span>(kmers)<span class="sc">}</span><span class="ss"> k-mers, </span><span class="sc">{</span><span class="bu">len</span>(<span class="bu">set</span>(kmers))<span class="sc">}</span><span class="ss"> distinct -&gt; </span><span class="sc">{</span>kmers[:<span class="dv">4</span>]<span class="sc">}</span><span class="ss"> ..."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>  k=3: 10 k-mers, 9 distinct -&gt; ['ACC', 'CCG', 'CGG', 'GGT'] ...
   k=5: 8 k-mers, 8 distinct -&gt; ['ACCGG', 'CCGGT', 'CGGTG', 'GGTGG'] ...</code></pre>
@@ -471,7 +522,7 @@ IIIIIIIIIIIIIIIIIIII9&lt;&lt;&lt;</code></pre>
      the Central Dogma section; made explicit here because it is a constant
      source of bugs in student code -->
 </section>
-<section id="reading-the-other-strand" class="slide level2 scrollable">
+<section id="reading-the-other-strand" class="slide level2 scrollable beyond">
 <h2>Reading the other strand</h2>
 <div class="callout callout-warning no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -480,13 +531,13 @@ IIIIIIIIIIIIIIIIIIII9&lt;&lt;&lt;</code></pre>
 </div>
 <div class="callout-content">
 <p>A sequencing read may come from either strand. The same physical locus therefore appears in your data in two different forms, and they do not look alike:</p>
-<div id="7b8e84ec" class="cell" data-execution_count="7">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a aria-label="1"></a><span class="im">from</span> skbio <span class="im">import</span> DNA</span>
-<span id="cb11-2"><a aria-label="2"></a></span>
-<span id="cb11-3"><a aria-label="3"></a>locus <span class="op">=</span> DNA(<span class="st">"ATGGCGTTAACGTAA"</span>)</span>
-<span id="cb11-4"><a aria-label="4"></a><span class="bu">print</span>(<span class="st">"  as read      :"</span>, <span class="bu">str</span>(locus))</span>
-<span id="cb11-5"><a aria-label="5"></a><span class="bu">print</span>(<span class="st">"  complement   :"</span>, <span class="bu">str</span>(locus.complement()))</span>
-<span id="cb11-6"><a aria-label="6"></a><span class="bu">print</span>(<span class="st">"  reverse comp :"</span>, <span class="bu">str</span>(locus.reverse_complement()))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="1fd0cad7" class="cell" data-execution_count="9">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a aria-label="1"></a><span class="im">from</span> skbio <span class="im">import</span> DNA</span>
+<span id="cb15-2"><a aria-label="2"></a></span>
+<span id="cb15-3"><a aria-label="3"></a>locus <span class="op">=</span> DNA(<span class="st">"ATGGCGTTAACGTAA"</span>)</span>
+<span id="cb15-4"><a aria-label="4"></a><span class="bu">print</span>(<span class="st">"  as read      :"</span>, <span class="bu">str</span>(locus))</span>
+<span id="cb15-5"><a aria-label="5"></a><span class="bu">print</span>(<span class="st">"  complement   :"</span>, <span class="bu">str</span>(locus.complement()))</span>
+<span id="cb15-6"><a aria-label="6"></a><span class="bu">print</span>(<span class="st">"  reverse comp :"</span>, <span class="bu">str</span>(locus.reverse_complement()))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>  as read      : ATGGCGTTAACGTAA
   complement   : TACCGCAATTGCATT
@@ -512,7 +563,7 @@ IIIIIIIIIIIIIIIIIIII9&lt;&lt;&lt;</code></pre>
 </div>
 </div>
 </section>
-<section id="the-alphabet-is-not-four-letters" class="slide level2 scrollable">
+<section id="the-alphabet-is-not-four-letters" class="slide level2 scrollable extends">
 <h2>The alphabet is not four letters</h2>
 <div class="callout callout-note no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -567,7 +618,7 @@ IIIIIIIIIIIIIIIIIIII9&lt;&lt;&lt;</code></pre>
              aligning a pair of sequences", "Why this simple procedure is too
              simplistic"
      ========================================================================== -->
-</section></section>
+</section>
 <section>
 <section id="what-is-an-alignment" class="title-slide slide level1 center">
 <h1>What is an alignment?</h1>
@@ -592,9 +643,77 @@ IIIIIIIIIIIIIIIIIIII9&lt;&lt;&lt;</code></pre>
 </div>
 </div>
 </div>
-<!-- source: readIAB ch.3, opening -- hemoglobin r1/r2/platypus Hamming example -->
+<!-- source: readIAB ch.3, opening -- hemoglobin r1/r2/q1/q2 Hamming example,
+     sequences and accessions exactly as in the book -->
 </section>
-<section id="why-not-just-compare-position-by-position" class="slide level2 scrollable">
+<section id="which-reference-is-the-query-closest-to" class="slide level2 scrollable">
+<h2>Which reference is the query closest to?</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The book’s opening example: four hemoglobins</strong></p>
+</div>
+<div class="callout-content">
+<div id="2d49f96b" class="cell" data-execution_count="10">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a aria-label="1"></a><span class="im">from</span> scipy.spatial.distance <span class="im">import</span> hamming</span>
+<span id="cb17-2"><a aria-label="2"></a></span>
+<span id="cb17-3"><a aria-label="3"></a><span class="co"># NCBI NP_000508.1 -- human hemoglobin subunit alpha</span></span>
+<span id="cb17-4"><a aria-label="4"></a>r1 <span class="op">=</span> <span class="st">"MVLSPADKTNVKAAWGKVGAHAGEYGAEALERMFLSFPTTKTYFPHFDLSHGSAQVKGHGKKVADALTNAVAHVDDMPNALSALSDLHAHKLRVDPVNFKLLSHCLLVTLAAHLPAEFTPAVHASLDKFLASVSTVLTSKYR"</span></span>
+<span id="cb17-5"><a aria-label="5"></a><span class="co"># NCBI NP_001004376.1 -- chicken hemoglobin subunit alpha</span></span>
+<span id="cb17-6"><a aria-label="6"></a>r2 <span class="op">=</span> <span class="st">"MVLSAADKNNVKGIFTKIAGHAEEYGAETLERMFTTYPPTKTYFPHFDLSHGSAQIKGHGKKVVAALIEAANHIDDIAGTLSKLSDLHAHKLRVDPVNFKLLGQCFLVVVAIHHPAALTPEVHASLDKFLCAVGTVLTAKYR"</span></span>
+<span id="cb17-7"><a aria-label="7"></a><span class="co"># GenBank QFF91579.1 -- sei whale hemoglobin subunit alpha</span></span>
+<span id="cb17-8"><a aria-label="8"></a>q1 <span class="op">=</span> <span class="st">"MVLFPADKSNVKATWAKIGNHGAEYGAEALERMFMNFPSTKTYFPHFDLGHDSAQVKGHGKKVADALTKAAGHMDNLLDALSDLSDLHAHKLRVDPVNFKLLSHCLLVTLALHLPAEFTPSVHASLDKFLASVSTVLTSKYR"</span></span>
+<span id="cb17-9"><a aria-label="9"></a><span class="co"># NCBI XP_028905054.1 -- platypus; one residue shorter, so "-" is appended</span></span>
+<span id="cb17-10"><a aria-label="10"></a>q2 <span class="op">=</span> <span class="st">"MLTDAEKKEVTALWGKAAGHGEEYGAEALERLFQAFPTTKTYFSHFDLSHGSAQIKAHGKKVADALSTAAGHFDDMDSALSALSDLHAHKLRVDPVNFKLLAHCILVVLARHCPGEFTPSAHAAMDKFLSKVATVLTSKYR-"</span></span>
+<span id="cb17-11"><a aria-label="11"></a></span>
+<span id="cb17-12"><a aria-label="12"></a><span class="cf">for</span> name, q <span class="kw">in</span> [(<span class="st">"whale   "</span>, q1), (<span class="st">"platypus"</span>, q2)]:</span>
+<span id="cb17-13"><a aria-label="13"></a>    <span class="bu">print</span>(<span class="ss">f"  </span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">: to human </span><span class="sc">{</span>hamming(<span class="bu">list</span>(q), <span class="bu">list</span>(r1))<span class="sc">:.3f}</span><span class="ss">   "</span></span>
+<span id="cb17-14"><a aria-label="14"></a>          <span class="ss">f"to chicken </span><span class="sc">{</span>hamming(<span class="bu">list</span>(q), <span class="bu">list</span>(r2))<span class="sc">:.3f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  whale   : to human 0.169   to chicken 0.317
+  platypus: to human 0.908   to chicken 0.923</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>One answer that makes sense, one that does not</strong></p>
+</div>
+<div class="callout-content">
+<p>The whale is closer to human (0.17) than to chicken (0.32) — mammals together, birds apart. Exactly what we would expect.</p>
+<p>The platypus is also a mammal, but its distances are <strong>0.91 and 0.92</strong>: by this measure it barely resembles either. The reason is a single <strong>deletion</strong> near the start of its sequence. Every residue after it is compared against the wrong partner.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="which-reference-is-the-query-closest-to-1" class="slide level2 scrollable">
+<h2>Which reference is the query closest to?</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>This is already a classifier</strong></p>
+</div>
+<div class="callout-content">
+<p>“Assign the query to the reference it is nearest to” is a <strong>1-nearest-neighbour classifier</strong>, and the distance function <em>is</em> the model. A wrong distance does not fail loudly; it returns a confident, wrong ranking.</p>
+<p>The book’s remedy is to align first. Human and chicken both start <code>MVL</code>, the platypus <code>ML</code> — so move the gap there:</p>
+<div id="7b2c6259" class="cell" data-execution_count="11">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a aria-label="1"></a>q2_aligned <span class="op">=</span> <span class="st">"M-"</span> <span class="op">+</span> q2[<span class="dv">1</span>:<span class="op">-</span><span class="dv">1</span>]       <span class="co"># the gap moved from the end to position 2</span></span>
+<span id="cb19-2"><a aria-label="2"></a><span class="bu">print</span>(<span class="ss">f"  aligned platypus: to human </span><span class="sc">{</span>hamming(<span class="bu">list</span>(q2_aligned), <span class="bu">list</span>(r1))<span class="sc">:.3f}</span><span class="ss">   "</span></span>
+<span id="cb19-3"><a aria-label="3"></a>      <span class="ss">f"to chicken </span><span class="sc">{</span>hamming(<span class="bu">list</span>(q2_aligned), <span class="bu">list</span>(r2))<span class="sc">:.3f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  aligned platypus: to human 0.275   to chicken 0.345</code></pre>
+</div>
+</div>
+<p>Mammal again, and plausibly so: further from human than the whale is, closer than the chicken. That one hand-placed gap <em>is</em> an alignment.</p>
+<p>Choosing a distance before trusting a nearest-neighbour answer is a lesson that returns in Bio 2 (search and classification) and Bio 3–4 (cells as points in gene space).</p>
+</div>
+</div>
+</div>
+</section>
+<section id="why-not-just-compare-position-by-position" class="slide level2 scrollable extends">
 <h2>Why not just compare position by position?</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -603,23 +722,23 @@ IIIIIIIIIIIIIIIIIIII9&lt;&lt;&lt;</code></pre>
 </div>
 <div class="callout-content">
 <p>The obvious similarity measure counts positions that differ:</p>
-<div id="9803f212" class="cell" data-execution_count="8">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a aria-label="1"></a><span class="kw">def</span> hamming(a, b):</span>
-<span id="cb13-2"><a aria-label="2"></a>    <span class="cf">if</span> <span class="bu">len</span>(a) <span class="op">!=</span> <span class="bu">len</span>(b):</span>
-<span id="cb13-3"><a aria-label="3"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">"Hamming distance needs equal lengths"</span>)</span>
-<span id="cb13-4"><a aria-label="4"></a>    <span class="cf">return</span> <span class="bu">sum</span>(x <span class="op">!=</span> y <span class="cf">for</span> x, y <span class="kw">in</span> <span class="bu">zip</span>(a, b))</span>
-<span id="cb13-5"><a aria-label="5"></a></span>
-<span id="cb13-6"><a aria-label="6"></a></span>
-<span id="cb13-7"><a aria-label="7"></a>ref <span class="op">=</span> <span class="st">"ACCGGTGGAACCGGTAACACCCAC"</span></span>
-<span id="cb13-8"><a aria-label="8"></a>sub <span class="op">=</span> ref[:<span class="dv">15</span>] <span class="op">+</span> <span class="st">"T"</span> <span class="op">+</span> ref[<span class="dv">16</span>:]          <span class="co"># one substitution, mid-sequence</span></span>
-<span id="cb13-9"><a aria-label="9"></a>ins <span class="op">=</span> ref[:<span class="dv">1</span>] <span class="op">+</span> <span class="st">"T"</span> <span class="op">+</span> ref[<span class="dv">1</span>:<span class="op">-</span><span class="dv">1</span>]          <span class="co"># one insertion near the start</span></span>
-<span id="cb13-10"><a aria-label="10"></a></span>
-<span id="cb13-11"><a aria-label="11"></a><span class="bu">print</span>(<span class="st">"reference        :"</span>, ref)</span>
-<span id="cb13-12"><a aria-label="12"></a><span class="bu">print</span>(<span class="st">"one substitution :"</span>, sub, <span class="st">"-&gt; Hamming"</span>, hamming(ref, sub))</span>
-<span id="cb13-13"><a aria-label="13"></a><span class="bu">print</span>(<span class="st">"one insertion    :"</span>, ins, <span class="st">"-&gt; Hamming"</span>, hamming(ref, ins))</span>
-<span id="cb13-14"><a aria-label="14"></a><span class="bu">print</span>()</span>
-<span id="cb13-15"><a aria-label="15"></a><span class="bu">print</span>(<span class="ss">f"the insertion differs at </span><span class="sc">{</span>hamming(ref, ins)<span class="sc">}</span><span class="ss"> of </span><span class="sc">{</span><span class="bu">len</span>(ref)<span class="sc">}</span><span class="ss"> positions "</span></span>
-<span id="cb13-16"><a aria-label="16"></a>      <span class="ss">f"(</span><span class="sc">{</span><span class="dv">100</span> <span class="op">*</span> hamming(ref, ins) <span class="op">/</span> <span class="bu">len</span>(ref)<span class="sc">:.0f}</span><span class="ss">%)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="683fd779" class="cell" data-execution_count="12">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a aria-label="1"></a><span class="kw">def</span> hamming(a, b):</span>
+<span id="cb21-2"><a aria-label="2"></a>    <span class="cf">if</span> <span class="bu">len</span>(a) <span class="op">!=</span> <span class="bu">len</span>(b):</span>
+<span id="cb21-3"><a aria-label="3"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">"Hamming distance needs equal lengths"</span>)</span>
+<span id="cb21-4"><a aria-label="4"></a>    <span class="cf">return</span> <span class="bu">sum</span>(x <span class="op">!=</span> y <span class="cf">for</span> x, y <span class="kw">in</span> <span class="bu">zip</span>(a, b))</span>
+<span id="cb21-5"><a aria-label="5"></a></span>
+<span id="cb21-6"><a aria-label="6"></a></span>
+<span id="cb21-7"><a aria-label="7"></a>ref <span class="op">=</span> <span class="st">"ACCGGTGGAACCGGTAACACCCAC"</span></span>
+<span id="cb21-8"><a aria-label="8"></a>sub <span class="op">=</span> ref[:<span class="dv">15</span>] <span class="op">+</span> <span class="st">"T"</span> <span class="op">+</span> ref[<span class="dv">16</span>:]          <span class="co"># one substitution, mid-sequence</span></span>
+<span id="cb21-9"><a aria-label="9"></a>ins <span class="op">=</span> ref[:<span class="dv">1</span>] <span class="op">+</span> <span class="st">"T"</span> <span class="op">+</span> ref[<span class="dv">1</span>:<span class="op">-</span><span class="dv">1</span>]          <span class="co"># one insertion near the start</span></span>
+<span id="cb21-10"><a aria-label="10"></a></span>
+<span id="cb21-11"><a aria-label="11"></a><span class="bu">print</span>(<span class="st">"reference        :"</span>, ref)</span>
+<span id="cb21-12"><a aria-label="12"></a><span class="bu">print</span>(<span class="st">"one substitution :"</span>, sub, <span class="st">"-&gt; Hamming"</span>, hamming(ref, sub))</span>
+<span id="cb21-13"><a aria-label="13"></a><span class="bu">print</span>(<span class="st">"one insertion    :"</span>, ins, <span class="st">"-&gt; Hamming"</span>, hamming(ref, ins))</span>
+<span id="cb21-14"><a aria-label="14"></a><span class="bu">print</span>()</span>
+<span id="cb21-15"><a aria-label="15"></a><span class="bu">print</span>(<span class="ss">f"the insertion differs at </span><span class="sc">{</span>hamming(ref, ins)<span class="sc">}</span><span class="ss"> of </span><span class="sc">{</span><span class="bu">len</span>(ref)<span class="sc">}</span><span class="ss"> positions "</span></span>
+<span id="cb21-16"><a aria-label="16"></a>      <span class="ss">f"(</span><span class="sc">{</span><span class="dv">100</span> <span class="op">*</span> hamming(ref, ins) <span class="op">/</span> <span class="bu">len</span>(ref)<span class="sc">:.0f}</span><span class="ss">%)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>reference        : ACCGGTGGAACCGGTAACACCCAC
 one substitution : ACCGGTGGAACCGGTTACACCCAC -&gt; Hamming 1
@@ -667,17 +786,17 @@ the insertion differs at 14 of 24 positions (58%)</code></pre>
 </div>
 <div class="callout-content">
 <p>Build a matrix with one sequence on each axis, mark cells where the characters match, and look for long diagonal runs — each run is a conserved stretch.</p>
-<div id="1d4714db" class="cell" data-execution_count="9">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a aria-label="1"></a>seq1, seq2 <span class="op">=</span> <span class="st">"ACCGGTGGAACCGGTAACACCCAC"</span>, <span class="st">"ACCGGTAACCGGTTAACACCCAC"</span></span>
-<span id="cb15-2"><a aria-label="2"></a></span>
-<span id="cb15-3"><a aria-label="3"></a>M <span class="op">=</span> np.array([[<span class="dv">1</span> <span class="cf">if</span> a <span class="op">==</span> b <span class="cf">else</span> <span class="dv">0</span> <span class="cf">for</span> b <span class="kw">in</span> seq2] <span class="cf">for</span> a <span class="kw">in</span> seq1])</span>
-<span id="cb15-4"><a aria-label="4"></a><span class="co"># length of the diagonal run ending at each cell</span></span>
-<span id="cb15-5"><a aria-label="5"></a>D <span class="op">=</span> M.copy()</span>
-<span id="cb15-6"><a aria-label="6"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, D.shape[<span class="dv">0</span>]):</span>
-<span id="cb15-7"><a aria-label="7"></a>    <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, D.shape[<span class="dv">1</span>]):</span>
-<span id="cb15-8"><a aria-label="8"></a>        <span class="cf">if</span> M[i, j]:</span>
-<span id="cb15-9"><a aria-label="9"></a>            D[i, j] <span class="op">=</span> D[i <span class="op">-</span> <span class="dv">1</span>, j <span class="op">-</span> <span class="dv">1</span>] <span class="op">+</span> <span class="dv">1</span></span>
-<span id="cb15-10"><a aria-label="10"></a><span class="bu">print</span>(<span class="st">"longest diagonal run:"</span>, D.<span class="bu">max</span>())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="439c073a" class="cell" data-execution_count="13">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a aria-label="1"></a>seq1, seq2 <span class="op">=</span> <span class="st">"ACCGGTGGAACCGGTAACACCCAC"</span>, <span class="st">"ACCGGTAACCGGTTAACACCCAC"</span></span>
+<span id="cb23-2"><a aria-label="2"></a></span>
+<span id="cb23-3"><a aria-label="3"></a>M <span class="op">=</span> np.array([[<span class="dv">1</span> <span class="cf">if</span> a <span class="op">==</span> b <span class="cf">else</span> <span class="dv">0</span> <span class="cf">for</span> b <span class="kw">in</span> seq2] <span class="cf">for</span> a <span class="kw">in</span> seq1])</span>
+<span id="cb23-4"><a aria-label="4"></a><span class="co"># length of the diagonal run ending at each cell</span></span>
+<span id="cb23-5"><a aria-label="5"></a>D <span class="op">=</span> M.copy()</span>
+<span id="cb23-6"><a aria-label="6"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, D.shape[<span class="dv">0</span>]):</span>
+<span id="cb23-7"><a aria-label="7"></a>    <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, D.shape[<span class="dv">1</span>]):</span>
+<span id="cb23-8"><a aria-label="8"></a>        <span class="cf">if</span> M[i, j]:</span>
+<span id="cb23-9"><a aria-label="9"></a>            D[i, j] <span class="op">=</span> D[i <span class="op">-</span> <span class="dv">1</span>, j <span class="op">-</span> <span class="dv">1</span>] <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb23-10"><a aria-label="10"></a><span class="bu">print</span>(<span class="st">"longest diagonal run:"</span>, D.<span class="bu">max</span>())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>longest diagonal run: 10</code></pre>
 </div>
@@ -688,21 +807,21 @@ the insertion differs at 14 of 24 positions (58%)</code></pre>
 </section>
 <section id="a-first-naive-algorithm-1" class="slide level2 scrollable">
 <h2>A first, naive algorithm</h2>
-<div id="d621c2da" class="cell" data-execution_count="10">
+<div id="27d90fdf" class="cell" data-execution_count="14">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a aria-label="1"></a>f, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">6</span>, <span class="dv">6</span>))</span>
-<span id="cb17-2"><a aria-label="2"></a>ax.imshow(D, cmap<span class="op">=</span><span class="st">"Greys"</span>, interpolation<span class="op">=</span><span class="st">"nearest"</span>)</span>
-<span id="cb17-3"><a aria-label="3"></a>ax.set_xticks(<span class="bu">range</span>(<span class="bu">len</span>(seq2)), <span class="bu">list</span>(seq2), fontsize<span class="op">=</span><span class="dv">6</span>)</span>
-<span id="cb17-4"><a aria-label="4"></a>ax.set_yticks(<span class="bu">range</span>(<span class="bu">len</span>(seq1)), <span class="bu">list</span>(seq1), fontsize<span class="op">=</span><span class="dv">6</span>)</span>
-<span id="cb17-5"><a aria-label="5"></a>ax.set_xlabel(<span class="st">"seq2"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"seq1"</span>)</span>
-<span id="cb17-6"><a aria-label="6"></a>ax.set_title(<span class="st">"diagonal run lengths"</span>)</span>
-<span id="cb17-7"><a aria-label="7"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a aria-label="1"></a>f, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">6</span>, <span class="dv">6</span>))</span>
+<span id="cb25-2"><a aria-label="2"></a>ax.imshow(D, cmap<span class="op">=</span><span class="st">"Greys"</span>, interpolation<span class="op">=</span><span class="st">"nearest"</span>)</span>
+<span id="cb25-3"><a aria-label="3"></a>ax.set_xticks(<span class="bu">range</span>(<span class="bu">len</span>(seq2)), <span class="bu">list</span>(seq2), fontsize<span class="op">=</span><span class="dv">6</span>)</span>
+<span id="cb25-4"><a aria-label="4"></a>ax.set_yticks(<span class="bu">range</span>(<span class="bu">len</span>(seq1)), <span class="bu">list</span>(seq1), fontsize<span class="op">=</span><span class="dv">6</span>)</span>
+<span id="cb25-5"><a aria-label="5"></a>ax.set_xlabel(<span class="st">"seq2"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"seq1"</span>)</span>
+<span id="cb25-6"><a aria-label="6"></a>ax.set_title(<span class="st">"diagonal run lengths"</span>)</span>
+<span id="cb25-7"><a aria-label="7"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div>
 <figure>
-<p><img data-src="bio1_files/figure-revealjs/cell-10-output-1.png" width="609" height="655"></p>
+<p><img data-src="bio1_files/figure-revealjs/cell-14-output-1.png" width="609" height="655"></p>
 </figure>
 </div>
 </div>
@@ -710,7 +829,7 @@ the insertion differs at 14 of 24 positions (58%)</code></pre>
 <p>The dark diagonal segments are the conserved blocks. You can read an alignment off them by eye — but nothing here <em>chooses</em> between competing diagonals, and that is the whole difficulty.</p>
 <!-- source: extends readIAB ch.3 "Step 3: Identify the longest diagonals" -->
 </section>
-<section id="what-the-matrix-shows-you" class="slide level2 scrollable">
+<section id="what-the-matrix-shows-you" class="slide level2 scrollable extends">
 <h2>What the matrix shows you</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -718,28 +837,28 @@ the insertion differs at 14 of 24 positions (58%)</code></pre>
 <p><strong>Dot plots reveal structure no score can</strong></p>
 </div>
 <div class="callout-content">
-<div id="7e0a522e" class="cell" data-execution_count="11">
+<div id="54d8d8e5" class="cell" data-execution_count="15">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a aria-label="1"></a><span class="kw">def</span> dotplot(ax, a, b, k<span class="op">=</span><span class="dv">3</span>, title<span class="op">=</span><span class="st">""</span>):</span>
-<span id="cb18-2"><a aria-label="2"></a>    A <span class="op">=</span> [a[i:i<span class="op">+</span>k] <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(a)<span class="op">-</span>k<span class="op">+</span><span class="dv">1</span>)]</span>
-<span id="cb18-3"><a aria-label="3"></a>    B <span class="op">=</span> [b[i:i<span class="op">+</span>k] <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(b)<span class="op">-</span>k<span class="op">+</span><span class="dv">1</span>)]</span>
-<span id="cb18-4"><a aria-label="4"></a>    M <span class="op">=</span> np.array([[<span class="dv">1</span> <span class="cf">if</span> x <span class="op">==</span> y <span class="cf">else</span> <span class="dv">0</span> <span class="cf">for</span> y <span class="kw">in</span> B] <span class="cf">for</span> x <span class="kw">in</span> A])</span>
-<span id="cb18-5"><a aria-label="5"></a>    ax.imshow(M, cmap<span class="op">=</span><span class="st">"Greys"</span>, interpolation<span class="op">=</span><span class="st">"nearest"</span>)</span>
-<span id="cb18-6"><a aria-label="6"></a>    ax.set_title(title, fontsize<span class="op">=</span><span class="dv">9</span>)<span class="op">;</span> ax.set_xticks([])<span class="op">;</span> ax.set_yticks([])</span>
-<span id="cb18-7"><a aria-label="7"></a></span>
-<span id="cb18-8"><a aria-label="8"></a>core <span class="op">=</span> <span class="st">""</span>.join(np.random.default_rng(<span class="dv">1</span>).choice(<span class="bu">list</span>(<span class="st">"ACGT"</span>), <span class="dv">60</span>))</span>
-<span id="cb18-9"><a aria-label="9"></a>f, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="fl">3.4</span>))</span>
-<span id="cb18-10"><a aria-label="10"></a>dotplot(axs[<span class="dv">0</span>], core, core, title<span class="op">=</span><span class="st">"identical"</span>)</span>
-<span id="cb18-11"><a aria-label="11"></a>dotplot(axs[<span class="dv">1</span>], core <span class="op">+</span> core, core, title<span class="op">=</span><span class="st">"tandem repeat"</span>)</span>
-<span id="cb18-12"><a aria-label="12"></a>rc <span class="op">=</span> core.translate(<span class="bu">str</span>.maketrans(<span class="st">"ACGT"</span>, <span class="st">"TGCA"</span>))[::<span class="op">-</span><span class="dv">1</span>]</span>
-<span id="cb18-13"><a aria-label="13"></a>dotplot(axs[<span class="dv">2</span>], core[:<span class="dv">30</span>] <span class="op">+</span> rc[:<span class="dv">30</span>], core, title<span class="op">=</span><span class="st">"inversion"</span>)</span>
-<span id="cb18-14"><a aria-label="14"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a aria-label="1"></a><span class="kw">def</span> dotplot(ax, a, b, k<span class="op">=</span><span class="dv">3</span>, title<span class="op">=</span><span class="st">""</span>):</span>
+<span id="cb26-2"><a aria-label="2"></a>    A <span class="op">=</span> [a[i:i<span class="op">+</span>k] <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(a)<span class="op">-</span>k<span class="op">+</span><span class="dv">1</span>)]</span>
+<span id="cb26-3"><a aria-label="3"></a>    B <span class="op">=</span> [b[i:i<span class="op">+</span>k] <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(b)<span class="op">-</span>k<span class="op">+</span><span class="dv">1</span>)]</span>
+<span id="cb26-4"><a aria-label="4"></a>    M <span class="op">=</span> np.array([[<span class="dv">1</span> <span class="cf">if</span> x <span class="op">==</span> y <span class="cf">else</span> <span class="dv">0</span> <span class="cf">for</span> y <span class="kw">in</span> B] <span class="cf">for</span> x <span class="kw">in</span> A])</span>
+<span id="cb26-5"><a aria-label="5"></a>    ax.imshow(M, cmap<span class="op">=</span><span class="st">"Greys"</span>, interpolation<span class="op">=</span><span class="st">"nearest"</span>)</span>
+<span id="cb26-6"><a aria-label="6"></a>    ax.set_title(title, fontsize<span class="op">=</span><span class="dv">9</span>)<span class="op">;</span> ax.set_xticks([])<span class="op">;</span> ax.set_yticks([])</span>
+<span id="cb26-7"><a aria-label="7"></a></span>
+<span id="cb26-8"><a aria-label="8"></a>core <span class="op">=</span> <span class="st">""</span>.join(np.random.default_rng(<span class="dv">1</span>).choice(<span class="bu">list</span>(<span class="st">"ACGT"</span>), <span class="dv">60</span>))</span>
+<span id="cb26-9"><a aria-label="9"></a>f, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="fl">3.4</span>))</span>
+<span id="cb26-10"><a aria-label="10"></a>dotplot(axs[<span class="dv">0</span>], core, core, title<span class="op">=</span><span class="st">"identical"</span>)</span>
+<span id="cb26-11"><a aria-label="11"></a>dotplot(axs[<span class="dv">1</span>], core <span class="op">+</span> core, core, title<span class="op">=</span><span class="st">"tandem repeat"</span>)</span>
+<span id="cb26-12"><a aria-label="12"></a>rc <span class="op">=</span> core.translate(<span class="bu">str</span>.maketrans(<span class="st">"ACGT"</span>, <span class="st">"TGCA"</span>))[::<span class="op">-</span><span class="dv">1</span>]</span>
+<span id="cb26-13"><a aria-label="13"></a>dotplot(axs[<span class="dv">2</span>], core[:<span class="dv">30</span>] <span class="op">+</span> rc[:<span class="dv">30</span>], core, title<span class="op">=</span><span class="st">"inversion"</span>)</span>
+<span id="cb26-14"><a aria-label="14"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div>
 <figure>
-<p><img data-src="bio1_files/figure-revealjs/cell-11-output-1.png" width="1037" height="369"></p>
+<p><img data-src="bio1_files/figure-revealjs/cell-15-output-1.png" width="1037" height="369"></p>
 </figure>
 </div>
 </div>
@@ -794,25 +913,26 @@ the insertion differs at 14 of 24 positions (58%)</code></pre>
 <p><span class="math display">\[S_{ij} = \frac{1}{\lambda}\log\frac{p_{ij}}{q_i q_j}\]</span></p>
 <p>a log-odds ratio of the observed joint frequency against what independence would predict. Positive means “more often than chance” — a conservative substitution.</p>
 <ul>
-<li><strong>PAM</strong> — built from closely related sequences, extrapolated by matrix powers</li>
-<li><strong>BLOSUM</strong> — built from blocks of aligned, more distant sequences. <strong>BLOSUM62</strong> is the default almost everywhere.</li>
+<li><strong>PAM</strong> — Margaret Dayhoff, 1970s: built from closely related sequences, extrapolated by matrix powers</li>
+<li><strong>BLOSUM</strong> — Steven and Jorja Henikoff, early 1990s: built from blocks of aligned, more distant sequences. <strong>BLOSUM62</strong> is the default almost everywhere; the book’s worked examples use <strong>BLOSUM50</strong>.</li>
 </ul>
+<p>Both are <strong>estimated from data</strong> — counted from alignments people trusted. A substitution matrix is a fitted model, and it inherits the biases of the alignments it was fitted to.</p>
 </div>
 </div>
 </div>
 </section>
 <section id="blosum62" class="slide level2 scrollable">
 <h2>BLOSUM62</h2>
-<div id="acff4f94" class="cell" data-execution_count="12">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a aria-label="1"></a><span class="im">from</span> Bio.Align <span class="im">import</span> substitution_matrices</span>
-<span id="cb19-2"><a aria-label="2"></a></span>
-<span id="cb19-3"><a aria-label="3"></a>blosum62 <span class="op">=</span> substitution_matrices.load(<span class="st">"BLOSUM62"</span>)</span>
-<span id="cb19-4"><a aria-label="4"></a>aas <span class="op">=</span> <span class="bu">list</span>(<span class="st">"AVLIFWDEKRQ"</span>)</span>
-<span id="cb19-5"><a aria-label="5"></a>sub <span class="op">=</span> pd.DataFrame(</span>
-<span id="cb19-6"><a aria-label="6"></a>    [[blosum62[a, b] <span class="cf">for</span> b <span class="kw">in</span> aas] <span class="cf">for</span> a <span class="kw">in</span> aas], index<span class="op">=</span>aas, columns<span class="op">=</span>aas</span>
-<span id="cb19-7"><a aria-label="7"></a>).astype(<span class="bu">int</span>)</span>
-<span id="cb19-8"><a aria-label="8"></a>sub</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display" data-execution_count="11">
+<div id="0b647aeb" class="cell" data-execution_count="16">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a aria-label="1"></a><span class="im">from</span> Bio.Align <span class="im">import</span> substitution_matrices</span>
+<span id="cb27-2"><a aria-label="2"></a></span>
+<span id="cb27-3"><a aria-label="3"></a>blosum62 <span class="op">=</span> substitution_matrices.load(<span class="st">"BLOSUM62"</span>)</span>
+<span id="cb27-4"><a aria-label="4"></a>aas <span class="op">=</span> <span class="bu">list</span>(<span class="st">"AVLIFWDEKRQ"</span>)</span>
+<span id="cb27-5"><a aria-label="5"></a>sub <span class="op">=</span> pd.DataFrame(</span>
+<span id="cb27-6"><a aria-label="6"></a>    [[blosum62[a, b] <span class="cf">for</span> b <span class="kw">in</span> aas] <span class="cf">for</span> a <span class="kw">in</span> aas], index<span class="op">=</span>aas, columns<span class="op">=</span>aas</span>
+<span id="cb27-7"><a aria-label="7"></a>).astype(<span class="bu">int</span>)</span>
+<span id="cb27-8"><a aria-label="8"></a>sub</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="141">
 <div>
 <style scoped="">
     .dataframe tbody tr th:only-of-type {
@@ -1010,29 +1130,29 @@ the insertion differs at 14 of 24 positions (58%)</code></pre>
 </section>
 <section id="blosum62-1" class="slide level2 scrollable">
 <h2>BLOSUM62</h2>
-<div id="4f049d8d" class="cell" data-execution_count="13">
+<div id="cc3aa9a9" class="cell" data-execution_count="17">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a aria-label="1"></a>f, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">5.5</span>, <span class="fl">4.5</span>))</span>
-<span id="cb20-2"><a aria-label="2"></a>im <span class="op">=</span> ax.imshow(sub.values, cmap<span class="op">=</span><span class="st">"RdBu_r"</span>, vmin<span class="op">=-</span><span class="dv">4</span>, vmax<span class="op">=</span><span class="dv">11</span>)</span>
-<span id="cb20-3"><a aria-label="3"></a>ax.set_xticks(<span class="bu">range</span>(<span class="bu">len</span>(aas)), aas)<span class="op">;</span> ax.set_yticks(<span class="bu">range</span>(<span class="bu">len</span>(aas)), aas)</span>
-<span id="cb20-4"><a aria-label="4"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(aas)):</span>
-<span id="cb20-5"><a aria-label="5"></a>    <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(aas)):</span>
-<span id="cb20-6"><a aria-label="6"></a>        ax.text(j, i, sub.values[i, j], ha<span class="op">=</span><span class="st">"center"</span>, va<span class="op">=</span><span class="st">"center"</span>, fontsize<span class="op">=</span><span class="dv">6</span>)</span>
-<span id="cb20-7"><a aria-label="7"></a>plt.colorbar(im, label<span class="op">=</span><span class="st">"BLOSUM62 score"</span>)</span>
-<span id="cb20-8"><a aria-label="8"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a aria-label="1"></a>f, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">5.5</span>, <span class="fl">4.5</span>))</span>
+<span id="cb28-2"><a aria-label="2"></a>im <span class="op">=</span> ax.imshow(sub.values, cmap<span class="op">=</span><span class="st">"RdBu_r"</span>, vmin<span class="op">=-</span><span class="dv">4</span>, vmax<span class="op">=</span><span class="dv">11</span>)</span>
+<span id="cb28-3"><a aria-label="3"></a>ax.set_xticks(<span class="bu">range</span>(<span class="bu">len</span>(aas)), aas)<span class="op">;</span> ax.set_yticks(<span class="bu">range</span>(<span class="bu">len</span>(aas)), aas)</span>
+<span id="cb28-4"><a aria-label="4"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(aas)):</span>
+<span id="cb28-5"><a aria-label="5"></a>    <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(aas)):</span>
+<span id="cb28-6"><a aria-label="6"></a>        ax.text(j, i, sub.values[i, j], ha<span class="op">=</span><span class="st">"center"</span>, va<span class="op">=</span><span class="st">"center"</span>, fontsize<span class="op">=</span><span class="dv">6</span>)</span>
+<span id="cb28-7"><a aria-label="7"></a>plt.colorbar(im, label<span class="op">=</span><span class="st">"BLOSUM62 score"</span>)</span>
+<span id="cb28-8"><a aria-label="8"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div>
 <figure>
-<p><img data-src="bio1_files/figure-revealjs/cell-13-output-1.png" width="586" height="491"></p>
+<p><img data-src="bio1_files/figure-revealjs/cell-17-output-1.png" width="586" height="491"></p>
 </figure>
 </div>
 </div>
 </div>
 <p>The hydrophobic block (<code>A V L I F W</code>) is blue-to-neutral among itself and red against the charged block (<code>D E K R</code>) — the matrix has learned chemistry from evolution, without being told any.</p>
 </section>
-<section id="choosing-a-matrix" class="slide level2 scrollable">
+<section id="choosing-a-matrix" class="slide level2 scrollable beyond">
 <h2>Choosing a matrix</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1130,55 +1250,145 @@ the insertion differs at 14 of 24 positions (58%)</code></pre>
 </div>
 </div>
 </section>
+<section id="filling-the-matrix-by-hand" class="slide level2 scrollable">
+<h2>Filling the matrix by hand</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The book’s protein example: <code>HEAGAWGHEE</code> vs <code>PAWHEAE</code>, BLOSUM50, gap <span class="math inline">\(d = -8\)</span></strong></p>
+</div>
+<div class="callout-content">
+<p>Row 0 and column 0 are just accumulated gaps: <span class="math inline">\(0, -8, -16, \dots\)</span> Every other cell takes the best of three moves. Try cells <span class="math inline">\((1,1)\)</span>, <span class="math inline">\((1,2)\)</span> and <span class="math inline">\((2,1)\)</span> on paper first, then check:</p>
+<div id="c9d654ba" class="cell" data-execution_count="18">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a aria-label="1"></a>blosum50 <span class="op">=</span> substitution_matrices.load(<span class="st">"BLOSUM50"</span>)</span>
+<span id="cb29-2"><a aria-label="2"></a></span>
+<span id="cb29-3"><a aria-label="3"></a></span>
+<span id="cb29-4"><a aria-label="4"></a><span class="kw">def</span> nw_tables(s1, s2, score, d<span class="op">=-</span><span class="dv">8</span>):</span>
+<span id="cb29-5"><a aria-label="5"></a>    <span class="co">"""F and T for global alignment with a linear gap penalty d."""</span></span>
+<span id="cb29-6"><a aria-label="6"></a>    F <span class="op">=</span> np.zeros((<span class="bu">len</span>(s1) <span class="op">+</span> <span class="dv">1</span>, <span class="bu">len</span>(s2) <span class="op">+</span> <span class="dv">1</span>), dtype<span class="op">=</span><span class="bu">int</span>)</span>
+<span id="cb29-7"><a aria-label="7"></a>    T <span class="op">=</span> np.full(F.shape, <span class="st">" "</span>, dtype<span class="op">=</span><span class="bu">object</span>)</span>
+<span id="cb29-8"><a aria-label="8"></a>    F[:, <span class="dv">0</span>] <span class="op">=</span> np.arange(<span class="bu">len</span>(s1) <span class="op">+</span> <span class="dv">1</span>) <span class="op">*</span> d</span>
+<span id="cb29-9"><a aria-label="9"></a>    F[<span class="dv">0</span>, :] <span class="op">=</span> np.arange(<span class="bu">len</span>(s2) <span class="op">+</span> <span class="dv">1</span>) <span class="op">*</span> d</span>
+<span id="cb29-10"><a aria-label="10"></a>    T[<span class="dv">1</span>:, <span class="dv">0</span>], T[<span class="dv">0</span>, <span class="dv">1</span>:], T[<span class="dv">0</span>, <span class="dv">0</span>] <span class="op">=</span> <span class="st">"↑"</span>, <span class="st">"←"</span>, <span class="st">"•"</span></span>
+<span id="cb29-11"><a aria-label="11"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, <span class="bu">len</span>(s1) <span class="op">+</span> <span class="dv">1</span>):</span>
+<span id="cb29-12"><a aria-label="12"></a>        <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, <span class="bu">len</span>(s2) <span class="op">+</span> <span class="dv">1</span>):</span>
+<span id="cb29-13"><a aria-label="13"></a>            moves <span class="op">=</span> {<span class="st">"↖"</span>: F[i <span class="op">-</span> <span class="dv">1</span>, j <span class="op">-</span> <span class="dv">1</span>] <span class="op">+</span> score[s1[i <span class="op">-</span> <span class="dv">1</span>], s2[j <span class="op">-</span> <span class="dv">1</span>]],</span>
+<span id="cb29-14"><a aria-label="14"></a>                     <span class="st">"↑"</span>: F[i <span class="op">-</span> <span class="dv">1</span>, j] <span class="op">+</span> d,</span>
+<span id="cb29-15"><a aria-label="15"></a>                     <span class="st">"←"</span>: F[i, j <span class="op">-</span> <span class="dv">1</span>] <span class="op">+</span> d}</span>
+<span id="cb29-16"><a aria-label="16"></a>            T[i, j] <span class="op">=</span> <span class="bu">max</span>(moves, key<span class="op">=</span>moves.get)</span>
+<span id="cb29-17"><a aria-label="17"></a>            F[i, j] <span class="op">=</span> moves[T[i, j]]</span>
+<span id="cb29-18"><a aria-label="18"></a>    <span class="cf">return</span> F, T</span>
+<span id="cb29-19"><a aria-label="19"></a></span>
+<span id="cb29-20"><a aria-label="20"></a></span>
+<span id="cb29-21"><a aria-label="21"></a>Fp, Tp <span class="op">=</span> nw_tables(<span class="st">"PAWHEAE"</span>, <span class="st">"HEAGAWGHEE"</span>, blosum50)</span>
+<span id="cb29-22"><a aria-label="22"></a>cols, rows <span class="op">=</span> [<span class="st">"-"</span>] <span class="op">+</span> <span class="bu">list</span>(<span class="st">"HEAGAWGHEE"</span>), [<span class="st">"-"</span>] <span class="op">+</span> <span class="bu">list</span>(<span class="st">"PAWHEAE"</span>)</span>
+<span id="cb29-23"><a aria-label="23"></a><span class="bu">print</span>(pd.DataFrame(Fp, index<span class="op">=</span>rows, columns<span class="op">=</span>cols).to_string())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>    -   H   E   A   G   A   W   G   H   E   E
+-   0  -8 -16 -24 -32 -40 -48 -56 -64 -72 -80
+P  -8  -2  -9 -17 -25 -33 -41 -49 -57 -65 -73
+A -16 -10  -3  -4 -12 -20 -28 -36 -44 -52 -60
+W -24 -18 -11  -6  -7 -15  -5 -13 -21 -29 -37
+H -32 -14 -18 -13  -8  -9 -13  -7  -3 -11 -19
+E -40 -22  -8 -16 -16  -9 -12 -15  -7   3  -5
+A -48 -30 -16  -3 -11 -11 -12 -12 -15  -5   2
+E -56 -38 -24 -11  -6 -12 -14 -15 -12  -9   1</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="filling-the-matrix-by-hand-1" class="slide level2 scrollable">
+<h2>Filling the matrix by hand</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The traceback matrix, as arrows</strong></p>
+</div>
+<div class="callout-content">
+<div id="30e39e74" class="cell" data-execution_count="19">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a aria-label="1"></a><span class="bu">print</span>(pd.DataFrame(Tp, index<span class="op">=</span>rows, columns<span class="op">=</span>cols).to_string())</span>
+<span id="cb31-2"><a aria-label="2"></a><span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">global alignment score:"</span>, Fp[<span class="op">-</span><span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   -  H  E  A  G  A  W  G  H  E  E
+-  •  ←  ←  ←  ←  ←  ←  ←  ←  ←  ←
+P  ↑  ↖  ↖  ↖  ←  ↖  ←  ←  ←  ↖  ↖
+A  ↑  ↖  ↖  ↖  ←  ↖  ←  ←  ←  ←  ←
+W  ↑  ↑  ↑  ↖  ↖  ↖  ↖  ←  ←  ←  ←
+H  ↑  ↖  ↖  ↖  ↖  ↖  ↑  ↖  ↖  ←  ←
+E  ↑  ↑  ↖  ←  ↖  ↖  ↖  ↑  ↖  ↖  ↖
+A  ↑  ↑  ↑  ↖  ←  ↖  ↖  ↖  ↑  ↑  ↖
+E  ↑  ↑  ↖  ↑  ↖  ↖  ↖  ↖  ↖  ↖  ↖
+
+global alignment score: 1</code></pre>
+</div>
+</div>
+<p>Follow the arrows back from the bottom-right corner: <code>↖</code> aligns two residues, <code>↑</code> and <code>←</code> insert a gap. The path <em>is</em> the alignment.</p>
+<p>Cell <span class="math inline">\((1,1)\)</span> is <span class="math inline">\(\max(0 + s(P,H),\ -8 - 8,\ -8 - 8) = s(P,H) = -2\)</span>. Nothing about the algorithm is harder than that cell — it is the same three-way choice, <span class="math inline">\(m \times n\)</span> times.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>From the book: re-run it with your own sequences</strong></p>
+</div>
+<div class="callout-content">
+<p>Change the two strings and re-run. The book’s suggestion is to keep doing this until you can predict the traceback before you print it.</p>
+</div>
+</div>
+</div>
+</section>
 <section id="implementing-it" class="slide level2 scrollable">
 <h2>Implementing it</h2>
-<div id="1507de4e" class="cell" data-execution_count="14">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a aria-label="1"></a><span class="kw">def</span> needleman_wunsch(s1, s2, match<span class="op">=</span><span class="dv">1</span>, mismatch<span class="op">=-</span><span class="dv">1</span>, gap<span class="op">=-</span><span class="dv">2</span>):</span>
-<span id="cb21-2"><a aria-label="2"></a>    n, m <span class="op">=</span> <span class="bu">len</span>(s1), <span class="bu">len</span>(s2)</span>
-<span id="cb21-3"><a aria-label="3"></a>    F <span class="op">=</span> np.zeros((n <span class="op">+</span> <span class="dv">1</span>, m <span class="op">+</span> <span class="dv">1</span>))</span>
-<span id="cb21-4"><a aria-label="4"></a>    T <span class="op">=</span> np.empty((n <span class="op">+</span> <span class="dv">1</span>, m <span class="op">+</span> <span class="dv">1</span>), dtype<span class="op">=</span><span class="bu">object</span>)</span>
-<span id="cb21-5"><a aria-label="5"></a></span>
-<span id="cb21-6"><a aria-label="6"></a>    F[<span class="dv">0</span>, :] <span class="op">=</span> np.arange(m <span class="op">+</span> <span class="dv">1</span>) <span class="op">*</span> gap</span>
-<span id="cb21-7"><a aria-label="7"></a>    F[:, <span class="dv">0</span>] <span class="op">=</span> np.arange(n <span class="op">+</span> <span class="dv">1</span>) <span class="op">*</span> gap</span>
-<span id="cb21-8"><a aria-label="8"></a>    T[<span class="dv">0</span>, <span class="dv">1</span>:] <span class="op">=</span> <span class="st">"left"</span></span>
-<span id="cb21-9"><a aria-label="9"></a>    T[<span class="dv">1</span>:, <span class="dv">0</span>] <span class="op">=</span> <span class="st">"up"</span></span>
-<span id="cb21-10"><a aria-label="10"></a></span>
-<span id="cb21-11"><a aria-label="11"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, n <span class="op">+</span> <span class="dv">1</span>):</span>
-<span id="cb21-12"><a aria-label="12"></a>        <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, m <span class="op">+</span> <span class="dv">1</span>):</span>
-<span id="cb21-13"><a aria-label="13"></a>            s <span class="op">=</span> match <span class="cf">if</span> s1[i <span class="op">-</span> <span class="dv">1</span>] <span class="op">==</span> s2[j <span class="op">-</span> <span class="dv">1</span>] <span class="cf">else</span> mismatch</span>
-<span id="cb21-14"><a aria-label="14"></a>            options <span class="op">=</span> {</span>
-<span id="cb21-15"><a aria-label="15"></a>                <span class="st">"diag"</span>: F[i <span class="op">-</span> <span class="dv">1</span>, j <span class="op">-</span> <span class="dv">1</span>] <span class="op">+</span> s,</span>
-<span id="cb21-16"><a aria-label="16"></a>                <span class="st">"up"</span>: F[i <span class="op">-</span> <span class="dv">1</span>, j] <span class="op">+</span> gap,</span>
-<span id="cb21-17"><a aria-label="17"></a>                <span class="st">"left"</span>: F[i, j <span class="op">-</span> <span class="dv">1</span>] <span class="op">+</span> gap,</span>
-<span id="cb21-18"><a aria-label="18"></a>            }</span>
-<span id="cb21-19"><a aria-label="19"></a>            T[i, j] <span class="op">=</span> <span class="bu">max</span>(options, key<span class="op">=</span>options.get)</span>
-<span id="cb21-20"><a aria-label="20"></a>            F[i, j] <span class="op">=</span> options[T[i, j]]</span>
-<span id="cb21-21"><a aria-label="21"></a>    <span class="cf">return</span> F, T</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="34dfed8e" class="cell" data-execution_count="20">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a aria-label="1"></a><span class="kw">def</span> needleman_wunsch(s1, s2, match<span class="op">=</span><span class="dv">1</span>, mismatch<span class="op">=-</span><span class="dv">1</span>, gap<span class="op">=-</span><span class="dv">2</span>):</span>
+<span id="cb33-2"><a aria-label="2"></a>    n, m <span class="op">=</span> <span class="bu">len</span>(s1), <span class="bu">len</span>(s2)</span>
+<span id="cb33-3"><a aria-label="3"></a>    F <span class="op">=</span> np.zeros((n <span class="op">+</span> <span class="dv">1</span>, m <span class="op">+</span> <span class="dv">1</span>))</span>
+<span id="cb33-4"><a aria-label="4"></a>    T <span class="op">=</span> np.empty((n <span class="op">+</span> <span class="dv">1</span>, m <span class="op">+</span> <span class="dv">1</span>), dtype<span class="op">=</span><span class="bu">object</span>)</span>
+<span id="cb33-5"><a aria-label="5"></a></span>
+<span id="cb33-6"><a aria-label="6"></a>    F[<span class="dv">0</span>, :] <span class="op">=</span> np.arange(m <span class="op">+</span> <span class="dv">1</span>) <span class="op">*</span> gap</span>
+<span id="cb33-7"><a aria-label="7"></a>    F[:, <span class="dv">0</span>] <span class="op">=</span> np.arange(n <span class="op">+</span> <span class="dv">1</span>) <span class="op">*</span> gap</span>
+<span id="cb33-8"><a aria-label="8"></a>    T[<span class="dv">0</span>, <span class="dv">1</span>:] <span class="op">=</span> <span class="st">"left"</span></span>
+<span id="cb33-9"><a aria-label="9"></a>    T[<span class="dv">1</span>:, <span class="dv">0</span>] <span class="op">=</span> <span class="st">"up"</span></span>
+<span id="cb33-10"><a aria-label="10"></a></span>
+<span id="cb33-11"><a aria-label="11"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, n <span class="op">+</span> <span class="dv">1</span>):</span>
+<span id="cb33-12"><a aria-label="12"></a>        <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, m <span class="op">+</span> <span class="dv">1</span>):</span>
+<span id="cb33-13"><a aria-label="13"></a>            s <span class="op">=</span> match <span class="cf">if</span> s1[i <span class="op">-</span> <span class="dv">1</span>] <span class="op">==</span> s2[j <span class="op">-</span> <span class="dv">1</span>] <span class="cf">else</span> mismatch</span>
+<span id="cb33-14"><a aria-label="14"></a>            options <span class="op">=</span> {</span>
+<span id="cb33-15"><a aria-label="15"></a>                <span class="st">"diag"</span>: F[i <span class="op">-</span> <span class="dv">1</span>, j <span class="op">-</span> <span class="dv">1</span>] <span class="op">+</span> s,</span>
+<span id="cb33-16"><a aria-label="16"></a>                <span class="st">"up"</span>: F[i <span class="op">-</span> <span class="dv">1</span>, j] <span class="op">+</span> gap,</span>
+<span id="cb33-17"><a aria-label="17"></a>                <span class="st">"left"</span>: F[i, j <span class="op">-</span> <span class="dv">1</span>] <span class="op">+</span> gap,</span>
+<span id="cb33-18"><a aria-label="18"></a>            }</span>
+<span id="cb33-19"><a aria-label="19"></a>            T[i, j] <span class="op">=</span> <span class="bu">max</span>(options, key<span class="op">=</span>options.get)</span>
+<span id="cb33-20"><a aria-label="20"></a>            F[i, j] <span class="op">=</span> options[T[i, j]]</span>
+<span id="cb33-21"><a aria-label="21"></a>    <span class="cf">return</span> F, T</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="traceback" class="slide level2 scrollable">
 <h2>Traceback</h2>
-<div id="8226b24f" class="cell" data-execution_count="15">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a aria-label="1"></a><span class="kw">def</span> traceback(s1, s2, T):</span>
-<span id="cb22-2"><a aria-label="2"></a>    i, j <span class="op">=</span> <span class="bu">len</span>(s1), <span class="bu">len</span>(s2)</span>
-<span id="cb22-3"><a aria-label="3"></a>    a1, a2 <span class="op">=</span> [], []</span>
-<span id="cb22-4"><a aria-label="4"></a>    <span class="cf">while</span> i <span class="op">&gt;</span> <span class="dv">0</span> <span class="kw">or</span> j <span class="op">&gt;</span> <span class="dv">0</span>:</span>
-<span id="cb22-5"><a aria-label="5"></a>        move <span class="op">=</span> T[i, j]</span>
-<span id="cb22-6"><a aria-label="6"></a>        <span class="cf">if</span> move <span class="op">==</span> <span class="st">"diag"</span>:</span>
-<span id="cb22-7"><a aria-label="7"></a>            a1.append(s1[i <span class="op">-</span> <span class="dv">1</span>])<span class="op">;</span> a2.append(s2[j <span class="op">-</span> <span class="dv">1</span>])<span class="op">;</span> i <span class="op">-=</span> <span class="dv">1</span><span class="op">;</span> j <span class="op">-=</span> <span class="dv">1</span></span>
-<span id="cb22-8"><a aria-label="8"></a>        <span class="cf">elif</span> move <span class="op">==</span> <span class="st">"up"</span>:</span>
-<span id="cb22-9"><a aria-label="9"></a>            a1.append(s1[i <span class="op">-</span> <span class="dv">1</span>])<span class="op">;</span> a2.append(<span class="st">"-"</span>)<span class="op">;</span> i <span class="op">-=</span> <span class="dv">1</span></span>
-<span id="cb22-10"><a aria-label="10"></a>        <span class="cf">else</span>:</span>
-<span id="cb22-11"><a aria-label="11"></a>            a1.append(<span class="st">"-"</span>)<span class="op">;</span> a2.append(s2[j <span class="op">-</span> <span class="dv">1</span>])<span class="op">;</span> j <span class="op">-=</span> <span class="dv">1</span></span>
-<span id="cb22-12"><a aria-label="12"></a>    <span class="cf">return</span> <span class="st">""</span>.join(<span class="bu">reversed</span>(a1)), <span class="st">""</span>.join(<span class="bu">reversed</span>(a2))</span>
-<span id="cb22-13"><a aria-label="13"></a></span>
-<span id="cb22-14"><a aria-label="14"></a></span>
-<span id="cb22-15"><a aria-label="15"></a>F, T <span class="op">=</span> needleman_wunsch(seq1, seq2)</span>
-<span id="cb22-16"><a aria-label="16"></a>a1, a2 <span class="op">=</span> traceback(seq1, seq2, T)</span>
-<span id="cb22-17"><a aria-label="17"></a><span class="bu">print</span>(<span class="st">"score:"</span>, F[<span class="op">-</span><span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>])</span>
-<span id="cb22-18"><a aria-label="18"></a><span class="bu">print</span>(a1)</span>
-<span id="cb22-19"><a aria-label="19"></a><span class="bu">print</span>(<span class="st">""</span>.join(<span class="st">"|"</span> <span class="cf">if</span> x <span class="op">==</span> y <span class="cf">else</span> <span class="st">" "</span> <span class="cf">for</span> x, y <span class="kw">in</span> <span class="bu">zip</span>(a1, a2)))</span>
-<span id="cb22-20"><a aria-label="20"></a><span class="bu">print</span>(a2)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="590d7724" class="cell" data-execution_count="21">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a aria-label="1"></a><span class="kw">def</span> traceback(s1, s2, T):</span>
+<span id="cb34-2"><a aria-label="2"></a>    i, j <span class="op">=</span> <span class="bu">len</span>(s1), <span class="bu">len</span>(s2)</span>
+<span id="cb34-3"><a aria-label="3"></a>    a1, a2 <span class="op">=</span> [], []</span>
+<span id="cb34-4"><a aria-label="4"></a>    <span class="cf">while</span> i <span class="op">&gt;</span> <span class="dv">0</span> <span class="kw">or</span> j <span class="op">&gt;</span> <span class="dv">0</span>:</span>
+<span id="cb34-5"><a aria-label="5"></a>        move <span class="op">=</span> T[i, j]</span>
+<span id="cb34-6"><a aria-label="6"></a>        <span class="cf">if</span> move <span class="op">==</span> <span class="st">"diag"</span>:</span>
+<span id="cb34-7"><a aria-label="7"></a>            a1.append(s1[i <span class="op">-</span> <span class="dv">1</span>])<span class="op">;</span> a2.append(s2[j <span class="op">-</span> <span class="dv">1</span>])<span class="op">;</span> i <span class="op">-=</span> <span class="dv">1</span><span class="op">;</span> j <span class="op">-=</span> <span class="dv">1</span></span>
+<span id="cb34-8"><a aria-label="8"></a>        <span class="cf">elif</span> move <span class="op">==</span> <span class="st">"up"</span>:</span>
+<span id="cb34-9"><a aria-label="9"></a>            a1.append(s1[i <span class="op">-</span> <span class="dv">1</span>])<span class="op">;</span> a2.append(<span class="st">"-"</span>)<span class="op">;</span> i <span class="op">-=</span> <span class="dv">1</span></span>
+<span id="cb34-10"><a aria-label="10"></a>        <span class="cf">else</span>:</span>
+<span id="cb34-11"><a aria-label="11"></a>            a1.append(<span class="st">"-"</span>)<span class="op">;</span> a2.append(s2[j <span class="op">-</span> <span class="dv">1</span>])<span class="op">;</span> j <span class="op">-=</span> <span class="dv">1</span></span>
+<span id="cb34-12"><a aria-label="12"></a>    <span class="cf">return</span> <span class="st">""</span>.join(<span class="bu">reversed</span>(a1)), <span class="st">""</span>.join(<span class="bu">reversed</span>(a2))</span>
+<span id="cb34-13"><a aria-label="13"></a></span>
+<span id="cb34-14"><a aria-label="14"></a></span>
+<span id="cb34-15"><a aria-label="15"></a>F, T <span class="op">=</span> needleman_wunsch(seq1, seq2)</span>
+<span id="cb34-16"><a aria-label="16"></a>a1, a2 <span class="op">=</span> traceback(seq1, seq2, T)</span>
+<span id="cb34-17"><a aria-label="17"></a><span class="bu">print</span>(<span class="st">"score:"</span>, F[<span class="op">-</span><span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>])</span>
+<span id="cb34-18"><a aria-label="18"></a><span class="bu">print</span>(a1)</span>
+<span id="cb34-19"><a aria-label="19"></a><span class="bu">print</span>(<span class="st">""</span>.join(<span class="st">"|"</span> <span class="cf">if</span> x <span class="op">==</span> y <span class="cf">else</span> <span class="st">" "</span> <span class="cf">for</span> x, y <span class="kw">in</span> <span class="bu">zip</span>(a1, a2)))</span>
+<span id="cb34-20"><a aria-label="20"></a><span class="bu">print</span>(a2)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>score: 16.0
 ACCGGTGGAACCGG-TAACACCCAC
@@ -1189,20 +1399,20 @@ ACCGGT--AACCGGTTAACACCCAC</code></pre>
 </section>
 <section id="the-filled-matrix" class="slide level2 scrollable">
 <h2>The filled matrix</h2>
-<div id="09773ca4" class="cell" data-execution_count="16">
+<div id="f8a02915" class="cell" data-execution_count="22">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a aria-label="1"></a>f, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">7</span>, <span class="dv">6</span>))</span>
-<span id="cb24-2"><a aria-label="2"></a>im <span class="op">=</span> ax.imshow(F, cmap<span class="op">=</span><span class="st">"viridis"</span>)</span>
-<span id="cb24-3"><a aria-label="3"></a>ax.set_xticks(<span class="bu">range</span>(<span class="bu">len</span>(seq2) <span class="op">+</span> <span class="dv">1</span>), [<span class="st">"-"</span>] <span class="op">+</span> <span class="bu">list</span>(seq2), fontsize<span class="op">=</span><span class="dv">5</span>)</span>
-<span id="cb24-4"><a aria-label="4"></a>ax.set_yticks(<span class="bu">range</span>(<span class="bu">len</span>(seq1) <span class="op">+</span> <span class="dv">1</span>), [<span class="st">"-"</span>] <span class="op">+</span> <span class="bu">list</span>(seq1), fontsize<span class="op">=</span><span class="dv">5</span>)</span>
-<span id="cb24-5"><a aria-label="5"></a>ax.set_title(<span class="st">"Needleman-Wunsch $F$ matrix"</span>)</span>
-<span id="cb24-6"><a aria-label="6"></a>plt.colorbar(im)<span class="op">;</span> plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a aria-label="1"></a>f, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">7</span>, <span class="dv">6</span>))</span>
+<span id="cb36-2"><a aria-label="2"></a>im <span class="op">=</span> ax.imshow(F, cmap<span class="op">=</span><span class="st">"viridis"</span>)</span>
+<span id="cb36-3"><a aria-label="3"></a>ax.set_xticks(<span class="bu">range</span>(<span class="bu">len</span>(seq2) <span class="op">+</span> <span class="dv">1</span>), [<span class="st">"-"</span>] <span class="op">+</span> <span class="bu">list</span>(seq2), fontsize<span class="op">=</span><span class="dv">5</span>)</span>
+<span id="cb36-4"><a aria-label="4"></a>ax.set_yticks(<span class="bu">range</span>(<span class="bu">len</span>(seq1) <span class="op">+</span> <span class="dv">1</span>), [<span class="st">"-"</span>] <span class="op">+</span> <span class="bu">list</span>(seq1), fontsize<span class="op">=</span><span class="dv">5</span>)</span>
+<span id="cb36-5"><a aria-label="5"></a>ax.set_title(<span class="st">"Needleman-Wunsch $F$ matrix"</span>)</span>
+<span id="cb36-6"><a aria-label="6"></a>plt.colorbar(im)<span class="op">;</span> plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div>
 <figure>
-<p><img data-src="bio1_files/figure-revealjs/cell-16-output-1.png" width="721" height="665"></p>
+<p><img data-src="bio1_files/figure-revealjs/cell-22-output-1.png" width="721" height="665"></p>
 </figure>
 </div>
 </div>
@@ -1211,21 +1421,21 @@ ACCGGT--AACCGGTTAACACCCAC</code></pre>
 </section>
 <section id="checking-against-the-libraries" class="slide level2 scrollable">
 <h2>Checking against the libraries</h2>
-<div id="b7d6f44a" class="cell" data-execution_count="17">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a aria-label="1"></a><span class="im">from</span> skbio.alignment <span class="im">import</span> global_pairwise_align_nucleotide</span>
-<span id="cb25-2"><a aria-label="2"></a><span class="im">from</span> Bio.Align <span class="im">import</span> PairwiseAligner</span>
-<span id="cb25-3"><a aria-label="3"></a></span>
-<span id="cb25-4"><a aria-label="4"></a>msa, sk_score, _ <span class="op">=</span> global_pairwise_align_nucleotide(</span>
-<span id="cb25-5"><a aria-label="5"></a>    DNA(seq1), DNA(seq2), gap_open_penalty<span class="op">=</span><span class="dv">2</span>, gap_extend_penalty<span class="op">=</span><span class="dv">2</span>,</span>
-<span id="cb25-6"><a aria-label="6"></a>    match_score<span class="op">=</span><span class="dv">1</span>, mismatch_score<span class="op">=-</span><span class="dv">1</span>,</span>
-<span id="cb25-7"><a aria-label="7"></a>)</span>
-<span id="cb25-8"><a aria-label="8"></a></span>
-<span id="cb25-9"><a aria-label="9"></a>bio <span class="op">=</span> PairwiseAligner(mode<span class="op">=</span><span class="st">"global"</span>, match_score<span class="op">=</span><span class="dv">1</span>, mismatch_score<span class="op">=-</span><span class="dv">1</span>,</span>
-<span id="cb25-10"><a aria-label="10"></a>                      open_gap_score<span class="op">=-</span><span class="dv">2</span>, extend_gap_score<span class="op">=-</span><span class="dv">2</span>)</span>
-<span id="cb25-11"><a aria-label="11"></a></span>
-<span id="cb25-12"><a aria-label="12"></a><span class="bu">print</span>(<span class="st">"ours          :"</span>, F[<span class="op">-</span><span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>])</span>
-<span id="cb25-13"><a aria-label="13"></a><span class="bu">print</span>(<span class="st">"scikit-bio    :"</span>, sk_score)</span>
-<span id="cb25-14"><a aria-label="14"></a><span class="bu">print</span>(<span class="st">"Biopython     :"</span>, bio.align(seq1, seq2).score)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="ad9a032d" class="cell" data-execution_count="23">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a aria-label="1"></a><span class="im">from</span> skbio.alignment <span class="im">import</span> global_pairwise_align_nucleotide</span>
+<span id="cb37-2"><a aria-label="2"></a><span class="im">from</span> Bio.Align <span class="im">import</span> PairwiseAligner</span>
+<span id="cb37-3"><a aria-label="3"></a></span>
+<span id="cb37-4"><a aria-label="4"></a>msa, sk_score, _ <span class="op">=</span> global_pairwise_align_nucleotide(</span>
+<span id="cb37-5"><a aria-label="5"></a>    DNA(seq1), DNA(seq2), gap_open_penalty<span class="op">=</span><span class="dv">2</span>, gap_extend_penalty<span class="op">=</span><span class="dv">2</span>,</span>
+<span id="cb37-6"><a aria-label="6"></a>    match_score<span class="op">=</span><span class="dv">1</span>, mismatch_score<span class="op">=-</span><span class="dv">1</span>,</span>
+<span id="cb37-7"><a aria-label="7"></a>)</span>
+<span id="cb37-8"><a aria-label="8"></a></span>
+<span id="cb37-9"><a aria-label="9"></a>bio <span class="op">=</span> PairwiseAligner(mode<span class="op">=</span><span class="st">"global"</span>, match_score<span class="op">=</span><span class="dv">1</span>, mismatch_score<span class="op">=-</span><span class="dv">1</span>,</span>
+<span id="cb37-10"><a aria-label="10"></a>                      open_gap_score<span class="op">=-</span><span class="dv">2</span>, extend_gap_score<span class="op">=-</span><span class="dv">2</span>)</span>
+<span id="cb37-11"><a aria-label="11"></a></span>
+<span id="cb37-12"><a aria-label="12"></a><span class="bu">print</span>(<span class="st">"ours          :"</span>, F[<span class="op">-</span><span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>])</span>
+<span id="cb37-13"><a aria-label="13"></a><span class="bu">print</span>(<span class="st">"scikit-bio    :"</span>, sk_score)</span>
+<span id="cb37-14"><a aria-label="14"></a><span class="bu">print</span>(<span class="st">"Biopython     :"</span>, bio.align(seq1, seq2).score)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>ours          : 16.0
 scikit-bio    : 16.0
@@ -1250,19 +1460,21 @@ Biopython     : 16.0</code></pre>
 <p><strong>When global is the wrong question</strong></p>
 </div>
 <div class="callout-content">
-<p>Global alignment forces the <strong>entire</strong> length of both sequences into correspondence. That is right when the sequences are the same kind of thing — two hemoglobin proteins.</p>
+<p>Global alignment forces the <strong>entire</strong> length of both sequences into correspondence. That is right when the sequences are the same kind of thing — two full-length proteins, one of which has a solved crystal structure you want to map position by position onto the other.</p>
 <p>It is wrong when you want to find a short conserved domain inside two otherwise unrelated proteins, or match a 100 bp read against a chromosome. Forcing the ends to align buries the real signal in gap penalties.</p>
+<p>The book’s framing of the main use case: concatenate a whole reference database into <strong>one long sequence</strong>, and a local alignment against it finds the region holding the best match. That is database search — and the next lecture.</p>
 </div>
 </div>
 </div>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
-<p><strong>Two changes, and that is all</strong></p>
+<p><strong>Three changes, and that is all</strong></p>
 </div>
 <div class="callout-content">
-<p><span class="math display">\[F_{ij} = \max \begin{cases} 0 &amp; \leftarrow \textbf{the only new term} \\ F_{i-1,j-1} + s(a_i,b_j) \\ F_{i-1,j} + d \\ F_{i,j-1} + d \end{cases}\]</span></p>
+<p><span class="math display">\[F_{ij} = \max \begin{cases} 0 &amp; \leftarrow \textbf{the new term} \\ F_{i-1,j-1} + s(a_i,b_j) \\ F_{i-1,j} + d \\ F_{i,j-1} + d \end{cases}\]</span></p>
 <ol type="1">
+<li><strong>Initialise row 0 and column 0 to zero</strong>, not to accumulated gap penalties — an alignment may start anywhere.</li>
 <li><strong>Clamp at zero</strong> — a prefix whose score has gone negative is abandoned rather than carried.</li>
 <li><strong>Start the traceback at the maximum cell</strong>, not the corner, and stop at the first zero.</li>
 </ol>
@@ -1272,31 +1484,31 @@ Biopython     : 16.0</code></pre>
 </section>
 <section id="implementing-it-1" class="slide level2 scrollable">
 <h2>Implementing it</h2>
-<div id="4e715743" class="cell" data-execution_count="18">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a aria-label="1"></a><span class="kw">def</span> smith_waterman(s1, s2, match<span class="op">=</span><span class="dv">2</span>, mismatch<span class="op">=-</span><span class="dv">3</span>, gap<span class="op">=-</span><span class="dv">2</span>):</span>
-<span id="cb27-2"><a aria-label="2"></a>    n, m <span class="op">=</span> <span class="bu">len</span>(s1), <span class="bu">len</span>(s2)</span>
-<span id="cb27-3"><a aria-label="3"></a>    F <span class="op">=</span> np.zeros((n <span class="op">+</span> <span class="dv">1</span>, m <span class="op">+</span> <span class="dv">1</span>))</span>
-<span id="cb27-4"><a aria-label="4"></a>    T <span class="op">=</span> np.empty((n <span class="op">+</span> <span class="dv">1</span>, m <span class="op">+</span> <span class="dv">1</span>), dtype<span class="op">=</span><span class="bu">object</span>)</span>
-<span id="cb27-5"><a aria-label="5"></a>    best, best_pos <span class="op">=</span> <span class="dv">0</span>, (<span class="dv">0</span>, <span class="dv">0</span>)</span>
-<span id="cb27-6"><a aria-label="6"></a></span>
-<span id="cb27-7"><a aria-label="7"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, n <span class="op">+</span> <span class="dv">1</span>):</span>
-<span id="cb27-8"><a aria-label="8"></a>        <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, m <span class="op">+</span> <span class="dv">1</span>):</span>
-<span id="cb27-9"><a aria-label="9"></a>            s <span class="op">=</span> match <span class="cf">if</span> s1[i <span class="op">-</span> <span class="dv">1</span>] <span class="op">==</span> s2[j <span class="op">-</span> <span class="dv">1</span>] <span class="cf">else</span> mismatch</span>
-<span id="cb27-10"><a aria-label="10"></a>            options <span class="op">=</span> {</span>
-<span id="cb27-11"><a aria-label="11"></a>                <span class="st">"diag"</span>: F[i <span class="op">-</span> <span class="dv">1</span>, j <span class="op">-</span> <span class="dv">1</span>] <span class="op">+</span> s,</span>
-<span id="cb27-12"><a aria-label="12"></a>                <span class="st">"up"</span>: F[i <span class="op">-</span> <span class="dv">1</span>, j] <span class="op">+</span> gap,</span>
-<span id="cb27-13"><a aria-label="13"></a>                <span class="st">"left"</span>: F[i, j <span class="op">-</span> <span class="dv">1</span>] <span class="op">+</span> gap,</span>
-<span id="cb27-14"><a aria-label="14"></a>                <span class="st">"stop"</span>: <span class="dv">0</span>,</span>
-<span id="cb27-15"><a aria-label="15"></a>            }</span>
-<span id="cb27-16"><a aria-label="16"></a>            T[i, j] <span class="op">=</span> <span class="bu">max</span>(options, key<span class="op">=</span>options.get)</span>
-<span id="cb27-17"><a aria-label="17"></a>            F[i, j] <span class="op">=</span> options[T[i, j]]</span>
-<span id="cb27-18"><a aria-label="18"></a>            <span class="cf">if</span> F[i, j] <span class="op">&gt;</span> best:</span>
-<span id="cb27-19"><a aria-label="19"></a>                best, best_pos <span class="op">=</span> F[i, j], (i, j)</span>
-<span id="cb27-20"><a aria-label="20"></a>    <span class="cf">return</span> F, T, best, best_pos</span>
-<span id="cb27-21"><a aria-label="21"></a></span>
-<span id="cb27-22"><a aria-label="22"></a></span>
-<span id="cb27-23"><a aria-label="23"></a>Fl, Tl, best, pos <span class="op">=</span> smith_waterman(seq1, seq2)</span>
-<span id="cb27-24"><a aria-label="24"></a><span class="bu">print</span>(<span class="st">"best local score:"</span>, best, <span class="st">"at"</span>, pos)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="4e63ae0a" class="cell" data-execution_count="24">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a aria-label="1"></a><span class="kw">def</span> smith_waterman(s1, s2, match<span class="op">=</span><span class="dv">2</span>, mismatch<span class="op">=-</span><span class="dv">3</span>, gap<span class="op">=-</span><span class="dv">2</span>):</span>
+<span id="cb39-2"><a aria-label="2"></a>    n, m <span class="op">=</span> <span class="bu">len</span>(s1), <span class="bu">len</span>(s2)</span>
+<span id="cb39-3"><a aria-label="3"></a>    F <span class="op">=</span> np.zeros((n <span class="op">+</span> <span class="dv">1</span>, m <span class="op">+</span> <span class="dv">1</span>))</span>
+<span id="cb39-4"><a aria-label="4"></a>    T <span class="op">=</span> np.empty((n <span class="op">+</span> <span class="dv">1</span>, m <span class="op">+</span> <span class="dv">1</span>), dtype<span class="op">=</span><span class="bu">object</span>)</span>
+<span id="cb39-5"><a aria-label="5"></a>    best, best_pos <span class="op">=</span> <span class="dv">0</span>, (<span class="dv">0</span>, <span class="dv">0</span>)</span>
+<span id="cb39-6"><a aria-label="6"></a></span>
+<span id="cb39-7"><a aria-label="7"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, n <span class="op">+</span> <span class="dv">1</span>):</span>
+<span id="cb39-8"><a aria-label="8"></a>        <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, m <span class="op">+</span> <span class="dv">1</span>):</span>
+<span id="cb39-9"><a aria-label="9"></a>            s <span class="op">=</span> match <span class="cf">if</span> s1[i <span class="op">-</span> <span class="dv">1</span>] <span class="op">==</span> s2[j <span class="op">-</span> <span class="dv">1</span>] <span class="cf">else</span> mismatch</span>
+<span id="cb39-10"><a aria-label="10"></a>            options <span class="op">=</span> {</span>
+<span id="cb39-11"><a aria-label="11"></a>                <span class="st">"diag"</span>: F[i <span class="op">-</span> <span class="dv">1</span>, j <span class="op">-</span> <span class="dv">1</span>] <span class="op">+</span> s,</span>
+<span id="cb39-12"><a aria-label="12"></a>                <span class="st">"up"</span>: F[i <span class="op">-</span> <span class="dv">1</span>, j] <span class="op">+</span> gap,</span>
+<span id="cb39-13"><a aria-label="13"></a>                <span class="st">"left"</span>: F[i, j <span class="op">-</span> <span class="dv">1</span>] <span class="op">+</span> gap,</span>
+<span id="cb39-14"><a aria-label="14"></a>                <span class="st">"stop"</span>: <span class="dv">0</span>,</span>
+<span id="cb39-15"><a aria-label="15"></a>            }</span>
+<span id="cb39-16"><a aria-label="16"></a>            T[i, j] <span class="op">=</span> <span class="bu">max</span>(options, key<span class="op">=</span>options.get)</span>
+<span id="cb39-17"><a aria-label="17"></a>            F[i, j] <span class="op">=</span> options[T[i, j]]</span>
+<span id="cb39-18"><a aria-label="18"></a>            <span class="cf">if</span> F[i, j] <span class="op">&gt;</span> best:</span>
+<span id="cb39-19"><a aria-label="19"></a>                best, best_pos <span class="op">=</span> F[i, j], (i, j)</span>
+<span id="cb39-20"><a aria-label="20"></a>    <span class="cf">return</span> F, T, best, best_pos</span>
+<span id="cb39-21"><a aria-label="21"></a></span>
+<span id="cb39-22"><a aria-label="22"></a></span>
+<span id="cb39-23"><a aria-label="23"></a>Fl, Tl, best, pos <span class="op">=</span> smith_waterman(seq1, seq2)</span>
+<span id="cb39-24"><a aria-label="24"></a><span class="bu">print</span>(<span class="st">"best local score:"</span>, best, <span class="st">"at"</span>, pos)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>best local score: 38.0 at (24, 23)</code></pre>
 </div>
@@ -1304,21 +1516,21 @@ Biopython     : 16.0</code></pre>
 </section>
 <section id="global-vs-local-side-by-side" class="slide level2 scrollable">
 <h2>Global vs local, side by side</h2>
-<div id="2c11da8b" class="cell" data-execution_count="19">
+<div id="7116c710" class="cell" data-execution_count="25">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a aria-label="1"></a>f, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">11</span>, <span class="fl">4.6</span>))</span>
-<span id="cb29-2"><a aria-label="2"></a><span class="cf">for</span> ax, M, title <span class="kw">in</span> [(axs[<span class="dv">0</span>], F, <span class="st">"Needleman-Wunsch (global)"</span>),</span>
-<span id="cb29-3"><a aria-label="3"></a>                     (axs[<span class="dv">1</span>], Fl, <span class="st">"Smith-Waterman (local)"</span>)]:</span>
-<span id="cb29-4"><a aria-label="4"></a>    im <span class="op">=</span> ax.imshow(M, cmap<span class="op">=</span><span class="st">"viridis"</span>)</span>
-<span id="cb29-5"><a aria-label="5"></a>    ax.set_title(title)</span>
-<span id="cb29-6"><a aria-label="6"></a>    plt.colorbar(im, ax<span class="op">=</span>ax, fraction<span class="op">=</span><span class="fl">0.046</span>)</span>
-<span id="cb29-7"><a aria-label="7"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a aria-label="1"></a>f, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">11</span>, <span class="fl">4.6</span>))</span>
+<span id="cb41-2"><a aria-label="2"></a><span class="cf">for</span> ax, M, title <span class="kw">in</span> [(axs[<span class="dv">0</span>], F, <span class="st">"Needleman-Wunsch (global)"</span>),</span>
+<span id="cb41-3"><a aria-label="3"></a>                     (axs[<span class="dv">1</span>], Fl, <span class="st">"Smith-Waterman (local)"</span>)]:</span>
+<span id="cb41-4"><a aria-label="4"></a>    im <span class="op">=</span> ax.imshow(M, cmap<span class="op">=</span><span class="st">"viridis"</span>)</span>
+<span id="cb41-5"><a aria-label="5"></a>    ax.set_title(title)</span>
+<span id="cb41-6"><a aria-label="6"></a>    plt.colorbar(im, ax<span class="op">=</span>ax, fraction<span class="op">=</span><span class="fl">0.046</span>)</span>
+<span id="cb41-7"><a aria-label="7"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div>
 <figure>
-<p><img data-src="bio1_files/figure-revealjs/cell-19-output-1.png" width="1144" height="501"></p>
+<p><img data-src="bio1_files/figure-revealjs/cell-25-output-1.png" width="1144" height="501"></p>
 </figure>
 </div>
 </div>
@@ -1328,7 +1540,7 @@ Biopython     : 16.0</code></pre>
      covers global and local; semi-global/overlap added because read mapping
      and assembly depend on them -->
 </section>
-<section id="four-modes-one-algorithm" class="slide level2 scrollable">
+<section id="four-modes-one-algorithm" class="slide level2 scrollable extends">
 <h2>Four modes, one algorithm</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1387,7 +1599,7 @@ Biopython     : 16.0</code></pre>
 <!-- source: not in readIAB -- added to connect to the DAG/parallelism material
      in the big-data lectures -->
 </section>
-<section id="where-the-parallelism-is" class="slide level2">
+<section id="where-the-parallelism-is" class="slide level2 beyond">
 <h2>Where the parallelism is</h2>
 <div class="callout callout-note no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1403,7 +1615,7 @@ Biopython     : 16.0</code></pre>
 </div>
 </div>
 </section>
-<section id="where-the-parallelism-is-1" class="slide level2">
+<section id="where-the-parallelism-is-1" class="slide level2 beyond">
 <h2>Where the parallelism is</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1411,7 +1623,18 @@ Biopython     : 16.0</code></pre>
 <p><strong>This is the same analysis as lecture 3</strong></p>
 </div>
 <div class="callout-content">
-<p>Work, span, and the ratio between them. The DP table is a DAG, the anti-diagonals are its levels, and the span is the critical path. Striped SIMD implementations (Farrar’s SSE Smith-Waterman, the SSW library) are exactly this idea applied at register width — which is most of the 669<span class="math inline">\(\times\)</span> gap we measured between Python and a C aligner.</p>
+<p>Work, span, and the ratio between them. The DP table is a DAG, the anti-diagonals are its levels, and the span is the critical path.</p>
+<p>Hardware aligners exploit this at register width, in two different ways: <strong>anti-diagonal</strong> vectorisation (Wozniak, 1997) computes cells of one anti-diagonal together, exactly as above; <strong>striped</strong> vectorisation (Farrar, 2007 — the basis of the SSW library the book uses) instead splits the <em>query</em> into interleaved segments and processes them in parallel, fixing up the few dependencies that cross segments afterwards.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-warning no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>And what parallelism cannot do</strong></p>
+</div>
+<div class="callout-content">
+<p>Parallelism divides the runtime by a constant. It does <strong>not</strong> change the <span class="math inline">\(O(mn)\)</span> shape — a point the book makes with a plot, which we reproduce at the end of this section.</p>
 </div>
 </div>
 </div>
@@ -1438,24 +1661,49 @@ Biopython     : 16.0</code></pre>
 <p><strong>Affine</strong> penalties separate the two costs:</p>
 <p><span class="math display">\[\text{gap cost} = g_{\text{open}} + (L - 1) \cdot g_{\text{extend}}\]</span></p>
 <p>with <span class="math inline">\(g_{\text{open}} \gg g_{\text{extend}}\)</span> — typically <span class="math inline">\(-11\)</span> and <span class="math inline">\(-1\)</span> for BLOSUM62 protein alignment.</p>
-<p>The result: alignments with <strong>few, longer</strong> gaps rather than many scattered ones, which matches how indels actually happen.</p>
+<p>The result: alignments with <strong>few, longer</strong> gaps rather than many scattered ones, which matches how indels actually happen — small indels arise mostly through <em>replication slippage</em>, one event at a time.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="affine-gaps-in-the-recurrence" class="slide level2 scrollable">
+<h2>Affine gaps in the recurrence</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The book’s version: let <span class="math inline">\(T\)</span> decide open versus extend</strong></p>
+</div>
+<div class="callout-content">
+<p>When a gap move is considered, look at the arrow already in the cell it comes from. If it is the <strong>same kind of gap</strong>, this is an extension; otherwise it is an opening:</p>
+<p><span class="math display">\[F_{ij} = \max \begin{cases} 0 \\ F_{i-1,j-1} + s(c_i, c_j) \\ F_{i-1,j} - \begin{cases} d^e &amp; \text{if } T_{i-1,j} = \uparrow \\ d^o &amp; \text{otherwise} \end{cases} \\ F_{i,j-1} - \begin{cases} d^e &amp; \text{if } T_{i,j-1} = \leftarrow \\ d^o &amp; \text{otherwise} \end{cases} \end{cases}\]</span></p>
+<p><strong>Quiz from the book:</strong> is this a Smith-Waterman or a Needleman-Wunsch scoring function? How can you tell?</p>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>And a subtlety the book leaves for later <span class="badge-extends">extends the book</span></strong></p>
+</div>
+<div class="callout-content">
+<p>Deciding open-versus-extend from <span class="math inline">\(T\)</span> is <strong>greedy</strong>: each cell remembers only its single best predecessor, so a slightly worse path that <em>would</em> have allowed a cheap extension is forgotten. Gotoh (1982) fixes it exactly by keeping <strong>three</strong> matrices — best score ending in a match, in a gap in <span class="math inline">\(s_1\)</span>, in a gap in <span class="math inline">\(s_2\)</span> — at the same <span class="math inline">\(O(mn)\)</span> cost. That is what Biopython and every production aligner implement, and it is the answer to exercise 2.</p>
 </div>
 </div>
 </div>
 </section>
 <section id="affine-in-practice" class="slide level2 scrollable">
 <h2>Affine in practice</h2>
-<div id="00429e48" class="cell" data-execution_count="20">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a aria-label="1"></a>p1 <span class="op">=</span> <span class="st">"HEAGAWGHEE"</span></span>
-<span id="cb30-2"><a aria-label="2"></a>p2 <span class="op">=</span> <span class="st">"PAWHEAE"</span></span>
-<span id="cb30-3"><a aria-label="3"></a></span>
-<span id="cb30-4"><a aria-label="4"></a><span class="cf">for</span> og, eg, label <span class="kw">in</span> [(<span class="op">-</span><span class="dv">2</span>, <span class="op">-</span><span class="dv">2</span>, <span class="st">"linear  (open=extend=-2)"</span>),</span>
-<span id="cb30-5"><a aria-label="5"></a>                      (<span class="op">-</span><span class="dv">11</span>, <span class="op">-</span><span class="dv">1</span>, <span class="st">"affine  (open=-11, extend=-1)"</span>)]:</span>
-<span id="cb30-6"><a aria-label="6"></a>    al <span class="op">=</span> PairwiseAligner(mode<span class="op">=</span><span class="st">"global"</span>, open_gap_score<span class="op">=</span>og, extend_gap_score<span class="op">=</span>eg)</span>
-<span id="cb30-7"><a aria-label="7"></a>    al.substitution_matrix <span class="op">=</span> blosum62</span>
-<span id="cb30-8"><a aria-label="8"></a>    r <span class="op">=</span> al.align(p1, p2)[<span class="dv">0</span>]</span>
-<span id="cb30-9"><a aria-label="9"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>label<span class="sc">}</span><span class="ss">   score=</span><span class="sc">{</span>r<span class="sc">.</span>score<span class="sc">:6.1f}</span><span class="ss">"</span>)</span>
-<span id="cb30-10"><a aria-label="10"></a>    <span class="bu">print</span>(<span class="st">"   "</span> <span class="op">+</span> <span class="bu">str</span>(r).replace(<span class="st">"</span><span class="ch">\n</span><span class="st">"</span>, <span class="st">"</span><span class="ch">\n</span><span class="st">   "</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="f2ed908d" class="cell" data-execution_count="26">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a aria-label="1"></a>p1 <span class="op">=</span> <span class="st">"HEAGAWGHEE"</span></span>
+<span id="cb42-2"><a aria-label="2"></a>p2 <span class="op">=</span> <span class="st">"PAWHEAE"</span></span>
+<span id="cb42-3"><a aria-label="3"></a></span>
+<span id="cb42-4"><a aria-label="4"></a><span class="cf">for</span> og, eg, label <span class="kw">in</span> [(<span class="op">-</span><span class="dv">2</span>, <span class="op">-</span><span class="dv">2</span>, <span class="st">"linear  (open=extend=-2)"</span>),</span>
+<span id="cb42-5"><a aria-label="5"></a>                      (<span class="op">-</span><span class="dv">11</span>, <span class="op">-</span><span class="dv">1</span>, <span class="st">"affine  (open=-11, extend=-1)"</span>)]:</span>
+<span id="cb42-6"><a aria-label="6"></a>    al <span class="op">=</span> PairwiseAligner(mode<span class="op">=</span><span class="st">"global"</span>, open_gap_score<span class="op">=</span>og, extend_gap_score<span class="op">=</span>eg)</span>
+<span id="cb42-7"><a aria-label="7"></a>    al.substitution_matrix <span class="op">=</span> blosum62</span>
+<span id="cb42-8"><a aria-label="8"></a>    r <span class="op">=</span> al.align(p1, p2)[<span class="dv">0</span>]</span>
+<span id="cb42-9"><a aria-label="9"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>label<span class="sc">}</span><span class="ss">   score=</span><span class="sc">{</span>r<span class="sc">.</span>score<span class="sc">:6.1f}</span><span class="ss">"</span>)</span>
+<span id="cb42-10"><a aria-label="10"></a>    <span class="bu">print</span>(<span class="st">"   "</span> <span class="op">+</span> <span class="bu">str</span>(r).replace(<span class="st">"</span><span class="ch">\n</span><span class="st">"</span>, <span class="st">"</span><span class="ch">\n</span><span class="st">   "</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>linear  (open=extend=-2)   score=  22.0
    target            0 HEAGAWGHE-E 10
@@ -1480,28 +1728,28 @@ affine  (open=-11, extend=-1)   score=   2.0
 </div>
 <div class="callout-content">
 <p>Both algorithms fill an <span class="math inline">\(m \times n\)</span> table, doing constant work per cell. Time and memory are both quadratic.</p>
-<div id="c7b60798" class="cell" data-execution_count="21">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a aria-label="1"></a><span class="im">import</span> timeit</span>
-<span id="cb32-2"><a aria-label="2"></a></span>
-<span id="cb32-3"><a aria-label="3"></a>rng <span class="op">=</span> np.random.default_rng(<span class="dv">0</span>)</span>
-<span id="cb32-4"><a aria-label="4"></a>aligner <span class="op">=</span> PairwiseAligner(mode<span class="op">=</span><span class="st">"global"</span>, match_score<span class="op">=</span><span class="dv">1</span>, mismatch_score<span class="op">=-</span><span class="dv">1</span>,</span>
-<span id="cb32-5"><a aria-label="5"></a>                          open_gap_score<span class="op">=-</span><span class="dv">2</span>, extend_gap_score<span class="op">=-</span><span class="fl">0.5</span>)</span>
-<span id="cb32-6"><a aria-label="6"></a></span>
-<span id="cb32-7"><a aria-label="7"></a><span class="bu">print</span>(<span class="st">"  n      time      cells       time/cell"</span>)</span>
-<span id="cb32-8"><a aria-label="8"></a>prev <span class="op">=</span> <span class="va">None</span></span>
-<span id="cb32-9"><a aria-label="9"></a><span class="cf">for</span> n <span class="kw">in</span> (<span class="dv">200</span>, <span class="dv">400</span>, <span class="dv">800</span>, <span class="dv">1600</span>):</span>
-<span id="cb32-10"><a aria-label="10"></a>    a <span class="op">=</span> <span class="st">""</span>.join(rng.choice(<span class="bu">list</span>(<span class="st">"ACGT"</span>), n))</span>
-<span id="cb32-11"><a aria-label="11"></a>    b <span class="op">=</span> <span class="st">""</span>.join(rng.choice(<span class="bu">list</span>(<span class="st">"ACGT"</span>), n))</span>
-<span id="cb32-12"><a aria-label="12"></a>    t <span class="op">=</span> <span class="bu">min</span>(timeit.repeat(<span class="kw">lambda</span>: aligner.align(a, b).score, number<span class="op">=</span><span class="dv">5</span>, repeat<span class="op">=</span><span class="dv">3</span>)) <span class="op">/</span> <span class="dv">5</span></span>
-<span id="cb32-13"><a aria-label="13"></a>    ratio <span class="op">=</span> <span class="ss">f"  (</span><span class="sc">{</span>t <span class="op">/</span> prev<span class="sc">:.1f}</span><span class="ss">x)"</span> <span class="cf">if</span> prev <span class="cf">else</span> <span class="st">""</span></span>
-<span id="cb32-14"><a aria-label="14"></a>    <span class="bu">print</span>(<span class="ss">f"  </span><span class="sc">{</span>n<span class="sc">:&lt;6}</span><span class="ss"> </span><span class="sc">{</span>t <span class="op">*</span> <span class="dv">1000</span><span class="sc">:7.2f}</span><span class="ss"> ms  </span><span class="sc">{</span>n <span class="op">*</span> n<span class="sc">:&gt;9,}</span><span class="ss">   </span><span class="sc">{</span>t <span class="op">/</span> n<span class="op">**</span><span class="dv">2</span> <span class="op">*</span> <span class="fl">1e9</span><span class="sc">:5.1f}</span><span class="ss"> ns</span><span class="sc">{</span>ratio<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb32-15"><a aria-label="15"></a>    prev <span class="op">=</span> t</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="5d4292f1" class="cell" data-execution_count="27">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a aria-label="1"></a><span class="im">import</span> timeit</span>
+<span id="cb44-2"><a aria-label="2"></a></span>
+<span id="cb44-3"><a aria-label="3"></a>rng <span class="op">=</span> np.random.default_rng(<span class="dv">0</span>)</span>
+<span id="cb44-4"><a aria-label="4"></a>aligner <span class="op">=</span> PairwiseAligner(mode<span class="op">=</span><span class="st">"global"</span>, match_score<span class="op">=</span><span class="dv">1</span>, mismatch_score<span class="op">=-</span><span class="dv">1</span>,</span>
+<span id="cb44-5"><a aria-label="5"></a>                          open_gap_score<span class="op">=-</span><span class="dv">2</span>, extend_gap_score<span class="op">=-</span><span class="fl">0.5</span>)</span>
+<span id="cb44-6"><a aria-label="6"></a></span>
+<span id="cb44-7"><a aria-label="7"></a><span class="bu">print</span>(<span class="st">"  n      time      cells       time/cell"</span>)</span>
+<span id="cb44-8"><a aria-label="8"></a>prev <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb44-9"><a aria-label="9"></a><span class="cf">for</span> n <span class="kw">in</span> (<span class="dv">200</span>, <span class="dv">400</span>, <span class="dv">800</span>, <span class="dv">1600</span>):</span>
+<span id="cb44-10"><a aria-label="10"></a>    a <span class="op">=</span> <span class="st">""</span>.join(rng.choice(<span class="bu">list</span>(<span class="st">"ACGT"</span>), n))</span>
+<span id="cb44-11"><a aria-label="11"></a>    b <span class="op">=</span> <span class="st">""</span>.join(rng.choice(<span class="bu">list</span>(<span class="st">"ACGT"</span>), n))</span>
+<span id="cb44-12"><a aria-label="12"></a>    t <span class="op">=</span> <span class="bu">min</span>(timeit.repeat(<span class="kw">lambda</span>: aligner.align(a, b).score, number<span class="op">=</span><span class="dv">5</span>, repeat<span class="op">=</span><span class="dv">3</span>)) <span class="op">/</span> <span class="dv">5</span></span>
+<span id="cb44-13"><a aria-label="13"></a>    ratio <span class="op">=</span> <span class="ss">f"  (</span><span class="sc">{</span>t <span class="op">/</span> prev<span class="sc">:.1f}</span><span class="ss">x)"</span> <span class="cf">if</span> prev <span class="cf">else</span> <span class="st">""</span></span>
+<span id="cb44-14"><a aria-label="14"></a>    <span class="bu">print</span>(<span class="ss">f"  </span><span class="sc">{</span>n<span class="sc">:&lt;6}</span><span class="ss"> </span><span class="sc">{</span>t <span class="op">*</span> <span class="dv">1000</span><span class="sc">:7.2f}</span><span class="ss"> ms  </span><span class="sc">{</span>n <span class="op">*</span> n<span class="sc">:&gt;9,}</span><span class="ss">   </span><span class="sc">{</span>t <span class="op">/</span> n<span class="op">**</span><span class="dv">2</span> <span class="op">*</span> <span class="fl">1e9</span><span class="sc">:5.1f}</span><span class="ss"> ns</span><span class="sc">{</span>ratio<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb44-15"><a aria-label="15"></a>    prev <span class="op">=</span> t</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>  n      time      cells       time/cell
-  200       0.33 ms     40,000     8.3 ns
-  400       2.04 ms    160,000    12.7 ns  (6.1x)
-  800       8.74 ms    640,000    13.6 ns  (4.3x)
-  1600     34.79 ms  2,560,000    13.6 ns  (4.0x)</code></pre>
+  200       0.41 ms     40,000    10.3 ns
+  400       2.00 ms    160,000    12.5 ns  (4.9x)
+  800       7.81 ms    640,000    12.2 ns  (3.9x)
+  1600     33.42 ms  2,560,000    13.1 ns  (4.3x)</code></pre>
 </div>
 </div>
 <p>Doubling the length <strong>quadruples</strong> the time, and the time per cell stays flat. That is the definition of <span class="math inline">\(O(n^2)\)</span>.</p>
@@ -1511,36 +1759,122 @@ affine  (open=-11, extend=-1)   score=   2.0
 </section>
 <section id="implementation-matters-too" class="slide level2 scrollable">
 <h2>Implementation matters too</h2>
-<div id="40ad2727" class="cell" data-execution_count="22">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a aria-label="1"></a><span class="im">from</span> skbio.alignment <span class="im">import</span> local_pairwise_align_nucleotide</span>
-<span id="cb34-2"><a aria-label="2"></a></span>
-<span id="cb34-3"><a aria-label="3"></a>s1 <span class="op">=</span> <span class="st">"GGTCTTCGCTAGGCTTTCATCGGGTTCGGCATCTACTCTGAGTTACTACG"</span></span>
-<span id="cb34-4"><a aria-label="4"></a>s2 <span class="op">=</span> <span class="st">"GGTCTTCAGGCTTTCATCGGGAACGGCATCTCTGAGTTACTACC"</span></span>
-<span id="cb34-5"><a aria-label="5"></a>d1, d2 <span class="op">=</span> DNA(s1), DNA(s2)</span>
-<span id="cb34-6"><a aria-label="6"></a></span>
-<span id="cb34-7"><a aria-label="7"></a>t_skbio <span class="op">=</span> <span class="bu">min</span>(timeit.repeat(</span>
-<span id="cb34-8"><a aria-label="8"></a>    <span class="kw">lambda</span>: local_pairwise_align_nucleotide(d1, d2, gap_open_penalty<span class="op">=</span><span class="dv">8</span>, gap_extend_penalty<span class="op">=</span><span class="dv">1</span>),</span>
-<span id="cb34-9"><a aria-label="9"></a>    number<span class="op">=</span><span class="dv">3</span>, repeat<span class="op">=</span><span class="dv">3</span>)) <span class="op">/</span> <span class="dv">3</span></span>
-<span id="cb34-10"><a aria-label="10"></a></span>
-<span id="cb34-11"><a aria-label="11"></a>al <span class="op">=</span> PairwiseAligner(mode<span class="op">=</span><span class="st">"local"</span>, match_score<span class="op">=</span><span class="dv">2</span>, mismatch_score<span class="op">=-</span><span class="dv">3</span>,</span>
-<span id="cb34-12"><a aria-label="12"></a>                     open_gap_score<span class="op">=-</span><span class="dv">8</span>, extend_gap_score<span class="op">=-</span><span class="dv">1</span>)</span>
-<span id="cb34-13"><a aria-label="13"></a>t_bio <span class="op">=</span> <span class="bu">min</span>(timeit.repeat(<span class="kw">lambda</span>: al.align(s1, s2).score, number<span class="op">=</span><span class="dv">300</span>, repeat<span class="op">=</span><span class="dv">3</span>)) <span class="op">/</span> <span class="dv">300</span></span>
-<span id="cb34-14"><a aria-label="14"></a></span>
-<span id="cb34-15"><a aria-label="15"></a>_, sk_score, _ <span class="op">=</span> local_pairwise_align_nucleotide(d1, d2, gap_open_penalty<span class="op">=</span><span class="dv">8</span>, gap_extend_penalty<span class="op">=</span><span class="dv">1</span>)</span>
-<span id="cb34-16"><a aria-label="16"></a><span class="bu">print</span>(<span class="ss">f"  scikit-bio (pure Python) : </span><span class="sc">{</span>t_skbio <span class="op">*</span> <span class="dv">1000</span><span class="sc">:8.3f}</span><span class="ss"> ms   score </span><span class="sc">{</span>sk_score<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb34-17"><a aria-label="17"></a><span class="bu">print</span>(<span class="ss">f"  Biopython  (C)           : </span><span class="sc">{</span>t_bio <span class="op">*</span> <span class="dv">1000</span><span class="sc">:8.3f}</span><span class="ss"> ms   score </span><span class="sc">{</span>al<span class="sc">.</span>align(s1, s2)<span class="sc">.</span>score<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb34-18"><a aria-label="18"></a><span class="bu">print</span>(<span class="ss">f"  speedup                  : </span><span class="sc">{</span>t_skbio <span class="op">/</span> t_bio<span class="sc">:,.0f}</span><span class="ss">x"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="703eda7a" class="cell" data-execution_count="28">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a aria-label="1"></a><span class="im">from</span> skbio.alignment <span class="im">import</span> local_pairwise_align_nucleotide</span>
+<span id="cb46-2"><a aria-label="2"></a></span>
+<span id="cb46-3"><a aria-label="3"></a>s1 <span class="op">=</span> <span class="st">"GGTCTTCGCTAGGCTTTCATCGGGTTCGGCATCTACTCTGAGTTACTACG"</span></span>
+<span id="cb46-4"><a aria-label="4"></a>s2 <span class="op">=</span> <span class="st">"GGTCTTCAGGCTTTCATCGGGAACGGCATCTCTGAGTTACTACC"</span></span>
+<span id="cb46-5"><a aria-label="5"></a>d1, d2 <span class="op">=</span> DNA(s1), DNA(s2)</span>
+<span id="cb46-6"><a aria-label="6"></a></span>
+<span id="cb46-7"><a aria-label="7"></a>t_skbio <span class="op">=</span> <span class="bu">min</span>(timeit.repeat(</span>
+<span id="cb46-8"><a aria-label="8"></a>    <span class="kw">lambda</span>: local_pairwise_align_nucleotide(d1, d2, gap_open_penalty<span class="op">=</span><span class="dv">8</span>, gap_extend_penalty<span class="op">=</span><span class="dv">1</span>),</span>
+<span id="cb46-9"><a aria-label="9"></a>    number<span class="op">=</span><span class="dv">3</span>, repeat<span class="op">=</span><span class="dv">3</span>)) <span class="op">/</span> <span class="dv">3</span></span>
+<span id="cb46-10"><a aria-label="10"></a></span>
+<span id="cb46-11"><a aria-label="11"></a>al <span class="op">=</span> PairwiseAligner(mode<span class="op">=</span><span class="st">"local"</span>, match_score<span class="op">=</span><span class="dv">2</span>, mismatch_score<span class="op">=-</span><span class="dv">3</span>,</span>
+<span id="cb46-12"><a aria-label="12"></a>                     open_gap_score<span class="op">=-</span><span class="dv">8</span>, extend_gap_score<span class="op">=-</span><span class="dv">1</span>)</span>
+<span id="cb46-13"><a aria-label="13"></a>t_bio <span class="op">=</span> <span class="bu">min</span>(timeit.repeat(<span class="kw">lambda</span>: al.align(s1, s2).score, number<span class="op">=</span><span class="dv">300</span>, repeat<span class="op">=</span><span class="dv">3</span>)) <span class="op">/</span> <span class="dv">300</span></span>
+<span id="cb46-14"><a aria-label="14"></a></span>
+<span id="cb46-15"><a aria-label="15"></a>_, sk_score, _ <span class="op">=</span> local_pairwise_align_nucleotide(d1, d2, gap_open_penalty<span class="op">=</span><span class="dv">8</span>, gap_extend_penalty<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb46-16"><a aria-label="16"></a><span class="bu">print</span>(<span class="ss">f"  scikit-bio (pure Python) : </span><span class="sc">{</span>t_skbio <span class="op">*</span> <span class="dv">1000</span><span class="sc">:8.3f}</span><span class="ss"> ms   score </span><span class="sc">{</span>sk_score<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb46-17"><a aria-label="17"></a><span class="bu">print</span>(<span class="ss">f"  Biopython  (C)           : </span><span class="sc">{</span>t_bio <span class="op">*</span> <span class="dv">1000</span><span class="sc">:8.3f}</span><span class="ss"> ms   score </span><span class="sc">{</span>al<span class="sc">.</span>align(s1, s2)<span class="sc">.</span>score<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb46-18"><a aria-label="18"></a><span class="bu">print</span>(<span class="ss">f"  speedup                  : </span><span class="sc">{</span>t_skbio <span class="op">/</span> t_bio<span class="sc">:,.0f}</span><span class="ss">x"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>  scikit-bio (pure Python) :   17.680 ms   score 56.0
-  Biopython  (C)           :    0.025 ms   score 56.0
-  speedup                  : 716x</code></pre>
+<pre><code>  scikit-bio (pure Python) :   14.934 ms   score 56.0
+  Biopython  (C)           :    0.024 ms   score 56.0
+  speedup                  : 635x</code></pre>
 </div>
 </div>
 <p><strong>Same algorithm, same answer, ~700x apart.</strong> The asymptotic complexity is identical — what differs is the constant, and at this scale the constant is what you feel.</p>
+</section>
+<section id="exact-or-heuristic" class="slide level2">
+<h2>Exact, or heuristic?</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>What the book actually compares</strong></p>
+</div>
+<div class="callout-content">
+<p>The book’s fast aligner is not merely the same algorithm in C. <code>local_pairwise_align_ssw</code> (Striped Smith-Waterman) also uses tricks that <strong>skip parts of <span class="math inline">\(F\)</span> and <span class="math inline">\(T\)</span></strong> — it is a <em>heuristic</em>, and on the book’s two sequences it returns a slightly different alignment:</p>
+<pre><code>exact SW : GGTCTTCGCTAGGCTTTCATCGGGTTCGGCATCTACTCTGAGTTACTAC
+           GGTCTTC---AGGCTTTCATCGGGAACGGCATCT---CTGAGTTACTAC
+SSW      : GGTCTTCGCTAGGCTTTCATCGGGTTCGGCATCTACTCTGAGTTACTAC
+           GGTCTTC---AGGCTTTCATCGGGAACGGCAT---CTCTGAGTTACTAC</code></pre>
+<p>Same score, gap placed three positions apart. Two questions decide whether a heuristic is acceptable — and they are the evaluation questions of the whole next lecture:</p>
+<ol type="1">
+<li><strong>how much faster is it?</strong></li>
+<li><strong>how often does it give the same answer as the exact algorithm?</strong></li>
+</ol>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Why the deck cannot rerun this</strong></p>
+</div>
+<div class="callout-content">
+<p>SSW was <strong>removed in scikit-bio 0.7</strong>, so the alignments above are copied from the book. Biopython’s <code>PairwiseAligner</code>, used on the previous slide, is <em>exact</em> — which makes that 700<span class="math inline">\(\times\)</span> a pure implementation effect, not a heuristic one.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="runtime-as-a-function-of-length" class="slide level2 scrollable">
+<h2>Runtime as a function of length</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The book’s experiment: linear, quadratic or exponential?</strong></p>
+</div>
+<div class="callout-content">
+<div id="f384a5a8" class="cell" data-execution_count="29">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb49"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a aria-label="1"></a>rng_len <span class="op">=</span> np.random.default_rng(<span class="dv">42</span>)</span>
+<span id="cb49-2"><a aria-label="2"></a>lengths <span class="op">=</span> np.arange(<span class="dv">1000</span>, <span class="dv">8001</span>, <span class="dv">1000</span>)</span>
+<span id="cb49-3"><a aria-label="3"></a>times <span class="op">=</span> []</span>
+<span id="cb49-4"><a aria-label="4"></a><span class="cf">for</span> n <span class="kw">in</span> lengths:</span>
+<span id="cb49-5"><a aria-label="5"></a>    a <span class="op">=</span> <span class="st">""</span>.join(rng_len.choice(<span class="bu">list</span>(<span class="st">"ACGT"</span>), n))</span>
+<span id="cb49-6"><a aria-label="6"></a>    b <span class="op">=</span> <span class="st">""</span>.join(rng_len.choice(<span class="bu">list</span>(<span class="st">"ACGT"</span>), n))</span>
+<span id="cb49-7"><a aria-label="7"></a>    times.append(<span class="bu">min</span>(timeit.repeat(<span class="kw">lambda</span>: aligner.align(a, b).score, number<span class="op">=</span><span class="dv">1</span>, repeat<span class="op">=</span><span class="dv">3</span>)))</span>
+<span id="cb49-8"><a aria-label="8"></a>times <span class="op">=</span> np.array(times)</span>
+<span id="cb49-9"><a aria-label="9"></a></span>
+<span id="cb49-10"><a aria-label="10"></a>f, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">5.5</span>, <span class="fl">3.2</span>))</span>
+<span id="cb49-11"><a aria-label="11"></a>ax.plot(lengths, times, <span class="st">"o"</span>, label<span class="op">=</span><span class="st">"one processor"</span>)</span>
+<span id="cb49-12"><a aria-label="12"></a>ax.plot(lengths, times <span class="op">/</span> <span class="dv">4</span>, <span class="st">"s"</span>, label<span class="op">=</span><span class="st">"four processors (ideal)"</span>)</span>
+<span id="cb49-13"><a aria-label="13"></a>fit <span class="op">=</span> np.polyfit(lengths, times, <span class="dv">2</span>)</span>
+<span id="cb49-14"><a aria-label="14"></a>xs <span class="op">=</span> np.linspace(<span class="dv">0</span>, lengths.<span class="bu">max</span>(), <span class="dv">100</span>)</span>
+<span id="cb49-15"><a aria-label="15"></a>ax.plot(xs, np.polyval(fit, xs), <span class="st">"-"</span>, lw<span class="op">=</span><span class="fl">0.8</span>, color<span class="op">=</span><span class="st">"grey"</span>)</span>
+<span id="cb49-16"><a aria-label="16"></a>ax.plot(xs, np.polyval(fit, xs) <span class="op">/</span> <span class="dv">4</span>, <span class="st">"-"</span>, lw<span class="op">=</span><span class="fl">0.8</span>, color<span class="op">=</span><span class="st">"grey"</span>)</span>
+<span id="cb49-17"><a aria-label="17"></a>ax.set_xlabel(<span class="st">"sequence length"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"runtime (s)"</span>)</span>
+<span id="cb49-18"><a aria-label="18"></a>ax.set_xlim(<span class="dv">0</span>)<span class="op">;</span> ax.set_ylim(<span class="dv">0</span>)<span class="op">;</span> ax.legend()</span>
+<span id="cb49-19"><a aria-label="19"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure>
+<p><img data-src="bio1_files/figure-revealjs/cell-29-output-1.png" width="598" height="346"></p>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>What the plot says</strong></p>
+</div>
+<div class="callout-content">
+<p>The points sit on a <strong>parabola</strong>: runtime <span class="math inline">\(\approx c \cdot n^2\)</span>. Splitting the work over four processors divides every point by four — and leaves <strong>the same parabola</strong>, only flatter.</p>
+<blockquote>
+<p>Parallelization can reduce the runtime of an algorithm, but it won’t change its computational complexity.</p>
+</blockquote>
+<p>That sentence from the book is the reason the Big Data half of this course spends as long on algorithms as on clusters.</p>
+</div>
+</div>
+</div>
 <!-- source: extends readIAB ch.3 "How long does pairwise sequence alignment
      take?" with the space dimension and banded alignment -->
 </section>
-<section id="memory-not-just-time" class="slide level2 scrollable">
+<section id="memory-not-just-time" class="slide level2 scrollable beyond">
 <h2>Memory, not just time</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1549,11 +1883,11 @@ affine  (open=-11, extend=-1)   score=   2.0
 </div>
 <div class="callout-content">
 <p>Time is <span class="math inline">\(O(mn)\)</span>, and so is <strong>space</strong> — you keep the whole traceback matrix.</p>
-<div id="1e0a3cbc" class="cell" data-execution_count="23">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a aria-label="1"></a><span class="cf">for</span> n <span class="kw">in</span> (<span class="dv">1_000</span>, <span class="dv">10_000</span>, <span class="dv">100_000</span>):</span>
-<span id="cb36-2"><a aria-label="2"></a>    score_only <span class="op">=</span> <span class="dv">2</span> <span class="op">*</span> n <span class="op">*</span> <span class="dv">8</span> <span class="op">/</span> <span class="fl">1e6</span>          <span class="co"># two rows of float64</span></span>
-<span id="cb36-3"><a aria-label="3"></a>    full <span class="op">=</span> n <span class="op">*</span> n <span class="op">*</span> <span class="dv">8</span> <span class="op">/</span> <span class="fl">1e9</span>                <span class="co"># full matrix, GB</span></span>
-<span id="cb36-4"><a aria-label="4"></a>    <span class="bu">print</span>(<span class="ss">f"  n=</span><span class="sc">{</span>n<span class="sc">:&gt;7,}</span><span class="ss">: two rows </span><span class="sc">{</span>score_only<span class="sc">:8.2f}</span><span class="ss"> MB   full matrix </span><span class="sc">{</span>full<span class="sc">:9.2f}</span><span class="ss"> GB"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="7631158f" class="cell" data-execution_count="30">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb50"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb50-1"><a aria-label="1"></a><span class="cf">for</span> n <span class="kw">in</span> (<span class="dv">1_000</span>, <span class="dv">10_000</span>, <span class="dv">100_000</span>):</span>
+<span id="cb50-2"><a aria-label="2"></a>    score_only <span class="op">=</span> <span class="dv">2</span> <span class="op">*</span> n <span class="op">*</span> <span class="dv">8</span> <span class="op">/</span> <span class="fl">1e6</span>          <span class="co"># two rows of float64</span></span>
+<span id="cb50-3"><a aria-label="3"></a>    full <span class="op">=</span> n <span class="op">*</span> n <span class="op">*</span> <span class="dv">8</span> <span class="op">/</span> <span class="fl">1e9</span>                <span class="co"># full matrix, GB</span></span>
+<span id="cb50-4"><a aria-label="4"></a>    <span class="bu">print</span>(<span class="ss">f"  n=</span><span class="sc">{</span>n<span class="sc">:&gt;7,}</span><span class="ss">: two rows </span><span class="sc">{</span>score_only<span class="sc">:8.2f}</span><span class="ss"> MB   full matrix </span><span class="sc">{</span>full<span class="sc">:9.2f}</span><span class="ss"> GB"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>  n=  1,000: two rows     0.02 MB   full matrix      0.01 GB
   n= 10,000: two rows     0.16 MB   full matrix      0.80 GB
@@ -1566,7 +1900,7 @@ affine  (open=-11, extend=-1)   score=   2.0
 </div>
 </div>
 </section>
-<section id="banded-alignment" class="slide level2">
+<section id="banded-alignment" class="slide level2 beyond">
 <h2>Banded alignment</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1590,7 +1924,7 @@ affine  (open=-11, extend=-1)   score=   2.0
 <h1>Beyond pairs</h1>
 
 </section>
-<section id="aligning-more-than-two" class="slide level2">
+<section id="aligning-more-than-two" class="slide level2 beyond">
 <h2>Aligning more than two</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1610,7 +1944,7 @@ affine  (open=-11, extend=-1)   score=   2.0
 </div>
 </div>
 </section>
-<section id="exact-msa-is-out-of-reach" class="slide level2 scrollable">
+<section id="exact-msa-is-out-of-reach" class="slide level2 scrollable beyond">
 <h2>Exact MSA is out of reach</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1636,7 +1970,7 @@ affine  (open=-11, extend=-1)   score=   2.0
 </div>
 </div>
 </section>
-<section id="progressive-alignment" class="slide level2">
+<section id="progressive-alignment" class="slide level2 beyond">
 <h2>Progressive alignment</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1654,7 +1988,7 @@ affine  (open=-11, extend=-1)   score=   2.0
 </div>
 </div>
 </section>
-<section id="once-a-gap-always-a-gap" class="slide level2">
+<section id="once-a-gap-always-a-gap" class="slide level2 beyond">
 <h2>Once a gap, always a gap</h2>
 <div class="callout callout-warning no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1669,7 +2003,7 @@ affine  (open=-11, extend=-1)   score=   2.0
 </div>
 </div>
 </section>
-<section id="what-to-distrust-in-an-msa" class="slide level2">
+<section id="what-to-distrust-in-an-msa" class="slide level2 beyond">
 <h2>What to distrust in an MSA</h2>
 <div class="callout callout-warning no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1688,7 +2022,25 @@ affine  (open=-11, extend=-1)   score=   2.0
 </div>
 <!-- source: readIAB ch.3 closing, motivating ch.4 -->
 </section>
-<section id="the-problem-this-creates" class="slide level2">
+<section id="conclusions-on-scalability" class="slide level2">
+<h2>Conclusions on scalability</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Where the book lands</strong></p>
+</div>
+<div class="callout-content">
+<p>For a <em>pair</em> of sequences, quadratic is fine: a few seconds for two ~100 000-base DNA sequences. The trouble starts when we want more than one pair:</p>
+<ul>
+<li><strong>many sequences aligned to each other</strong> — multiple sequence alignment (the last section of this lecture)</li>
+<li><strong>one sequence against many</strong> — database searching (the next lecture)</li>
+</ul>
+<p>Both multiply a quadratic cost by a large count. The book’s answer, in the next chapter, is to <em>approximate</em>.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="the-problem-this-creates" class="slide level2 extends">
 <h2>The problem this creates</h2>
 <div class="callout callout-warning no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1718,6 +2070,10 @@ affine  (open=-11, extend=-1)   score=   2.0
 </div>
 <div class="callout-content">
 <table class="caption-top">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
 <thead>
 <tr class="header">
 <th>idea</th>
@@ -1726,36 +2082,52 @@ affine  (open=-11, extend=-1)   score=   2.0
 </thead>
 <tbody>
 <tr class="odd">
+<td>a code is an agreement</td>
+<td><span class="math inline">\(n_{\text{messages}} = n_{\text{symbols}}^{\,p}\)</span></td>
+</tr>
+<tr class="even">
 <td>DNA as a base-4 code</td>
 <td>2 bits/base; codons must be 3 long</td>
 </tr>
+<tr class="odd">
+<td>the code is a molecule</td>
+<td>tRNA reads codons; structure is predicted from sequence</td>
+</tr>
 <tr class="even">
+<td>Hamming distance</td>
+<td>breaks on a single indel — the distance <em>is</em> the classifier</td>
+</tr>
+<tr class="odd">
 <td>alignment</td>
 <td>a <strong>hypothesis</strong> about shared ancestry</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>naive diagonals</td>
 <td>finds conserved blocks, cannot choose between them</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>substitution matrices</td>
 <td>scores learned from observed evolution</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>Needleman-Wunsch</td>
 <td>optimal <strong>global</strong> alignment, DP, <span class="math inline">\(O(mn)\)</span></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>Smith-Waterman</td>
 <td>optimal <strong>local</strong> alignment: clamp at 0</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>affine gaps</td>
 <td>one indel event, not <span class="math inline">\(L\)</span> of them</td>
 </tr>
+<tr class="odd">
+<td>exact vs heuristic</td>
+<td>judge a heuristic by speed <strong>and</strong> by how often it agrees</td>
+</tr>
 <tr class="even">
 <td>complexity</td>
-<td><span class="math inline">\(O(mn)\)</span> — measured, and fatal for database search</td>
+<td><span class="math inline">\(O(mn)\)</span> — measured; parallelism divides it, never reshapes it</td>
 </tr>
 </tbody>
 </table>
@@ -1796,6 +2168,13 @@ affine  (open=-11, extend=-1)   score=   2.0
 <li>Implement Hamming distance and compare it with alignment score on sequences that differ by one indel. Why does Hamming fail?</li>
 <li>Time the from-scratch <code>needleman_wunsch</code> against Biopython on the same input. How much of the ~700x gap is Python, and how much is the algorithm?</li>
 </ol>
+<p><strong>From the book</strong></p>
+<ol start="7" type="1">
+<li>By hand: fill row 0, column 0 and cells <span class="math inline">\((1,1)\)</span>, <span class="math inline">\((1,2)\)</span>, <span class="math inline">\((2,1)\)</span> of <span class="math inline">\(F\)</span> and <span class="math inline">\(T\)</span> for <code>HEAGAWGHEE</code> / <code>PAWHEAE</code> before running <code>nw_tables</code>.</li>
+<li>Decode <code>1000001</code>, then <code>AUG UAU GAG GGU ACU AAU UAA</code>, without a computer.</li>
+<li>For the book’s sequences <code>ACCGGTGGAACCGGTAACACCCAC</code> / <code>ACCGGTAACCGGTTAACACCCAC</code>, write down every substitution, insertion and deletion you think happened. Is there one most likely alignment?</li>
+<li>Is the affine-gap recurrence on the <em>Affine gaps in the recurrence</em> slide Smith-Waterman or Needleman-Wunsch? How do you know?</li>
+</ol>
 </div>
 </div>
 </div>
@@ -1813,6 +2192,7 @@ affine  (open=-11, extend=-1)   score=   2.0
 <li><strong>Needleman &amp; Wunsch</strong>, <em>A general method applicable to the search for similarities in the amino acid sequence of two proteins</em>, <strong>J. Mol. Biol.</strong> 48(3), 1970, 443–453. <a href="https://doi.org/10.1016/0022-2836(70)90057-4" class="uri">https://doi.org/10.1016/0022-2836(70)90057-4</a></li>
 <li><strong>Smith &amp; Waterman</strong>, <em>Identification of common molecular subsequences</em>, <strong>J. Mol. Biol.</strong> 147(1), 1981, 195–197. <a href="https://doi.org/10.1016/0022-2836(81)90087-5" class="uri">https://doi.org/10.1016/0022-2836(81)90087-5</a></li>
 <li><strong>Henikoff &amp; Henikoff</strong>, <em>Amino acid substitution matrices from protein blocks</em> (BLOSUM), <strong>PNAS</strong> 89(22), 1992. <a href="https://doi.org/10.1073/pnas.89.22.10915" class="uri">https://doi.org/10.1073/pnas.89.22.10915</a></li>
+<li><strong>Farrar</strong>, <em>Striped Smith-Waterman speeds database searches six times over other SIMD implementations</em>, <strong>Bioinformatics</strong> 23(2), 2007. <a href="https://doi.org/10.1093/bioinformatics/btl582" class="uri">https://doi.org/10.1093/bioinformatics/btl582</a></li>
 <li><strong>Gotoh</strong>, <em>An improved algorithm for matching biological sequences</em> (affine gaps), <strong>J. Mol. Biol.</strong> 162(3), 1982, 705–708. <a href="https://doi.org/10.1016/0022-2836(82)90398-9" class="uri">https://doi.org/10.1016/0022-2836(82)90398-9</a></li>
 <li><strong>Hirschberg</strong>, <em>A linear space algorithm for computing maximal common subsequences</em>, <strong>CACM</strong> 18(6), 1975, 341–343. <a href="https://doi.org/10.1145/360825.360861" class="uri">https://doi.org/10.1145/360825.360861</a></li>
 <li><strong>Wang &amp; Jiang</strong>, <em>On the complexity of multiple sequence alignment</em>, <strong>Journal of Computational Biology</strong> 1(4), 1994, 337–348.</li>

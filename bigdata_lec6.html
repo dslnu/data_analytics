@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.10.18">
 
   <meta name="author" content="MSDE">
-  <title>Big Data analytics / Applied Data analytics – Big Data: Dask tutorial</title>
+  <title>Big Data analytics / Applied Data analytics – Databases: History, Models and Queries</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
@@ -200,7 +200,7 @@
     <div class="slides">
 
 <section id="title-slide" class="quarto-title-block center">
-  <h1 class="title">Big Data: Dask tutorial</h1>
+  <h1 class="title">Databases: History, Models and Queries</h1>
 
 <div class="quarto-title-authors">
 <div class="quarto-title-author">
@@ -214,1384 +214,1099 @@ MSDE
 </div>
 
 </section>
-<section id="intro" class="slide level2">
-<h2>Intro</h2>
-<p><img data-src="https://docs.dask.org/en/latest/_images/dask_horizontal.svg" height="250"></p>
-<ul>
-<li>Dask is a parallel and distributed computing library that scales the existing Python and PyData ecosystem.</li>
-<li>Dask can scale up to your full laptop capacity and out to a cloud cluster.</li>
-</ul>
-</section>
-<section id="installation" class="slide level2">
-<h2>Installation</h2>
-<div class="callout callout-note callout-titled callout-style-default">
+<section id="history" class="slide level2">
+<h2>History</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<p><strong>With uv</strong></p>
+<p><strong>Plimpton 322 tablet (1800 BC)</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a aria-label="1"></a><span class="ex">uv</span> add <span class="st">"dask[complete]"</span></span>
-<span id="cb1-2"><a aria-label="2"></a><span class="ex">uv</span> add s3fs</span>
-<span id="cb1-3"><a aria-label="3"></a><span class="ex">uv</span> add pyarrow</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><img data-src="img/Plimpton_322.jpg" height="500"></p>
 </div>
 </div>
 </div>
 </section>
-<section id="an-example-dask-computation" class="slide level2 font8">
-<h2>An example Dask computation</h2>
+<section id="overview-tech-stack" class="slide level2">
+<h2>Overview: tech stack</h2>
+
+<img data-src="img/db_tech_stack.png" class="r-stretch"></section>
+<section id="overview-data-shapes" class="slide level2">
+<h2>Overview: data shapes</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Data shapes</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>trees</li>
+<li>cubes</li>
+<li>graphs</li>
+<li>unstructured</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="data-models" class="slide level2">
+<h2>Data models</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Origins of databases</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>Business data processing</strong> performed on mainframe computers in the 1960s and ’70s:</p>
+<ul>
+<li>transaction processing (entering sales or banking transactions, airline reservations, stock-keeping in warehouses)</li>
+<li>batch processing (customer invoicing, payroll, reporting).</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-warning no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>History outline</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>1970-1980s: network and hierarchical models</li>
+<li>1980-1990s: object databases</li>
+<li>1970s-present: relational model</li>
+<li>1990s-present: document model</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="hierarchical-model" class="slide level2">
+<h2>Hierarchical model</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Information Management System (IBM)</strong></p>
+</div>
+<div class="callout-content">
+<p>Originally released in 1968, developed for stock keeping of the Apollo space program.</p>
+<p>Represented all data as a tree of records nested within records.</p>
+<ul>
+<li>works well for one-to-many relationships</li>
+<li>not so well for many-to-many relationships</li>
+<li>does not support joins</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="hierarchical-model-1" class="slide level2">
+<h2>Hierarchical model</h2>
+
+<img data-src="img/hierarchical_model.png" class="r-stretch"></section>
+<section id="network-model" class="slide level2">
+<h2>Network model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Conference on Data Systems Languages (CODASYL, 1969)</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>child record can have many parents</li>
+<li>allows modeling of many-to-one and many-to-many relationships</li>
+<li>uses <strong>access paths</strong>: sequences of links between records</li>
+<li>queries are constructed by following access paths</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="network-model-1" class="slide level2">
+<h2>Network model</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Bachman diagram</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/bachman_diagram.jpg"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Edgar Codd. A Relational Model of Data for Large Shared Data Banks (1970)</strong></p>
+</div>
+<div class="callout-content">
+<blockquote>
+<p>A usable database management system should hide all the physical complexity from the user and expose instead a simple, clean model. This model should be based on tables, which gave birth to the relational model and the relational algebra.</p>
+</blockquote>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Data independence</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>Data independence</strong> - the independence of application programs and terminal activities from growth in data types and changes in data representation.</p>
+<p>Logical view on the data is cleanly separated, decoupled, from its physical storage.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-1" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Logical model</strong></p>
+</div>
+<div class="callout-content">
+<p>A relational database management system (RDBMS) exposes this logical model, together with logical building blocks for manipulating it, on top of a physical layer.</p>
+<p>Thus, 2 layers:</p>
+<ul>
+<li><strong>Logical</strong></li>
+<li><strong>Physical</strong></li>
+</ul>
+<p>In relational model, logical view is a <strong>table</strong>.</p>
+</div>
+</div>
+</div>
+
+<aside><div>
+<p>Note: query optimizer handles the construction of access paths (compare with manual effort required in the network model)</p>
+</div></aside></section>
+<section id="relational-model-2" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>RDBMS as a stack</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>A logical query language with which the user can query data;</li>
+<li>A logical model for the data;</li>
+<li>A physical compute layer that processes the query on an instance of the model;</li>
+<li>A physical storage layer where the data is physically stored.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-3" class="slide level2">
+<h2>Relational model</h2>
 <div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Definitions</strong></p>
+</div>
+<div class="callout-content">
+<p>A <strong>relation</strong> <span class="math inline">\(R\)</span> on a family of sets <span class="math inline">\((A_i)_{i=1,n}\)</span> is a subset of their Cartesian product: <span class="math inline">\(R \subseteq A_1 \times \ldots \times A_n\)</span>.</p>
+<p>A <strong>partial function</strong> between two sets <span class="math inline">\(A\)</span> and <span class="math inline">\(B\)</span> is a relation that associates to each element of <span class="math inline">\(A\)</span> at most one element of <span class="math inline">\(B\)</span>: <span class="math display">\[
+\forall (x_A, x_B), (y_A, y_B) \ in p: x_A = y_A \Rightarrow x_B = y_B
+\]</span></p>
+<p>The set of all partial functions from <span class="math inline">\(A\)</span> to <span class="math inline">\(B\)</span> is denoted as <span class="math inline">\(A \mapsto B\)</span>.</p>
+<p>The subset of <span class="math inline">\(A\)</span> with the elements that do get associated to an element of <span class="math inline">\(B\)</span> is denoted <span class="math inline">\(support(p)\)</span>: <span class="math display">\[
+support(p) = \left\{a \in A: \exists b \in B, p(a)=b\right\} = p^{-1}(B).
+\]</span></p>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-4" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Set definitions</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p><span class="math inline">\(\mathbb{S}\)</span> is a set of all strings.</p></li>
+<li><p><span class="math inline">\(\mathbb{V}\)</span> is a set of all possible values. Contains anything that can be stored on persistent storage or in memory as a sequence of 0s and 1s and according to a convention to interpret these bits.</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-5" class="slide level2 font8">
+<h2>Relational model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Set definitions</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p><span class="math inline">\(\mathbb{A} \subset \mathbb{V}\)</span> – the set that contains all atomic values. Atomic values are values that are not structured, i.e., this excludes:</p>
+<ul>
+<li>objects,</li>
+<li>arrays,</li>
+<li>lists,</li>
+<li>sets,</li>
+<li>trees,</li>
+<li>bags,</li>
+<li>etc.</li>
+</ul>
+<p>but only includes:</p>
+<ul>
+<li>strings,</li>
+<li>integers,</li>
+<li>Booleans,</li>
+<li>dates</li>
+</ul>
+<p>and so on.</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-6" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Set definitions</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><p>The <strong>table</strong> itself, which can be seen as a collection of <strong>records</strong>. A synonym is a <strong>collection</strong>.</p></li>
+<li><p>The <strong>attribute</strong>, which is a property that records can have.</p></li>
+<li><p>The <strong>row</strong>, which is a record in a collection. A row associates properties with the values applicable for the record it represents. Synonyms of row are:</p>
+<ul>
+<li>record,</li>
+<li>entity,</li>
+<li>document,</li>
+<li>item.</li>
+</ul></li>
+<li><p>The <strong>primary key</strong>, which is a particular attribute or set of attributes that uniquely identify a record in its table.</p></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-7" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Table definition</strong></p>
+</div>
+<div class="callout-content">
+<p>Expressed formally, given a family of attributes <span class="math inline">\((A_i)_{1\leq i \leq n}\)</span> and their associated domains <span class="math display">\[
+(Domain(A_i))_{1\leq i \leq n}
+\]</span> a table <span class="math inline">\(T\)</span> is a relation over these domains, i.e. <span class="math display">\[
+T \subseteq Domain(A_1) \times Domain(A_2) \times \ldots \times Domain(A_n)
+\]</span></p>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-8" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Table definition</strong></p>
+</div>
+<div class="callout-content">
+<p>A collection of records is a set of partial functions from <span class="math inline">\(\mathbb{S}\)</span> to <span class="math inline">\(\mathbb{V}\)</span>. We denote the set of collections as <span class="math inline">\(\mathcal{C}\)</span>: <span class="math display">\[
+\mathcal{C} = \mathcal{P}(\mathbb{S} \mapsto \mathbb{V})
+\]</span> Each record is thus modelled as a partial function mapping strings to values. <img data-src="img/relational_s_to_v.png"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-9" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Table definition</strong></p>
+</div>
+<div class="callout-content">
+<p>A table is a collection with three constraints:</p>
+<ul>
+<li>Relational integrity</li>
+<li>Domain integrity</li>
+<li>Atomic integrity</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-10" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Relational integrity</strong></p>
+</div>
+<div class="callout-content">
+<p>A collection T fulfils relational integrity if all its records have identical support: <span class="math display">\[
+\forall t, u \in T : support(u) = support(t)
+\]</span> Common support is a property of the table and contains the attributes of the table <span class="math inline">\(T\)</span>: <span class="math inline">\(Attributes_T\)</span>.</p>
+<p>The extension of the table, sometimes denoted <span class="math inline">\(Extension_T\)</span> is its actual content, which is <span class="math inline">\(T\)</span> itself.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-11" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>No relational integrity</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/relational_integrity1.png"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-12" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>With relational integrity</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/relational_integrity2.png" height="500"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-13" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Domain integrity</strong></p>
+</div>
+<div class="callout-content">
+<p>A collection <span class="math inline">\(T\)</span> fulfils domain integrity if the values associated with each attribute are restricted to a domain.</p>
+<p>We define these domains with a function <span class="math inline">\(D\)</span> mapping strings (the attributes) to domains (unused attributes are just associated with empty domains, i.e.&nbsp;this does not need to be a partial function): <span class="math display">\[
+D \in \mathcal{P}(\mathbb{V})^\mathbb{S}
+\]</span></p>
+<p>A collection <span class="math inline">\(T\)</span> fulfils the domain integrity constraint specified by <span class="math inline">\(D\)</span> if, for each row, the values are in the specified domains: <span class="math display">\[
+\forall t \in T, \forall a \in support(t): t.a \in D(a)
+\]</span></p>
+<p><strong>Note:</strong> domain integrity still allows <strong>missing</strong> values.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-14" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Schema</strong></p>
+</div>
+<div class="callout-content">
+<p>Domain mapping <span class="math inline">\(D\)</span> is called a <strong>schema</strong>.</p>
+<p>Schema contains:</p>
+<ul>
+<li><strong>names</strong> of the columns</li>
+<li>the <strong>domain</strong> or <strong>type</strong> of each column (string, integer, date, boolean, and so on).</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-15" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>No domain integrity</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/domain_integrity1.png"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-16" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>With domain integrity</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/domain_integrity2.png"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-17" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Atomic integrity</strong></p>
+</div>
+<div class="callout-content">
+<p>A collection <span class="math inline">\(T\)</span> fulfils the atomic integrity constraint if the values used in it are only atomic values, i.e. <span class="math display">\[
+T \subseteq \mathbb{S} \mapsto \mathbb{A}
+\]</span></p>
+<p>This means that the collection does not contain any nested collections or sets or lists or anything that has a structure of its own: it is <strong>flat</strong>.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-18" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>No atomic integrity</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/atomic_integrity1.png"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-19" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>With atomic integrity</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/atomic_integrity2.png"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-20" class="slide level2">
+<h2>Relational model</h2>
+
+<img data-src="img/integrity_nosql.png" class="r-stretch"></section>
+<section id="relational-model-21" class="slide level2">
+<h2>Relational model</h2>
+
+<img data-src="img/relational_operators.png" class="r-stretch quarto-figure-center"><p class="caption"><strong>Relational algebra:</strong> a framework for manipulating relational tables</p></section>
+<section id="relational-model-22" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Queries</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>Set queries</strong> act on relational tables as sets (as previously described): one can take the union or the intersection of two sets, or subtract a set from another. <!-- %These operators directly and naturally translate to relational tables. --></li>
+<li><strong>Filter queries</strong> take a portion of a table: some or all columns, some or all rows, etc. They are known as <strong>projection</strong> and <strong>selection</strong>. <!-- %There also exists a fancy operator called the “extended projection” that can be used to add more computed columns. --></li>
+<li><strong>Renaming queries</strong> can rename columns.</li>
+<li><strong>Joining queries</strong> can take the Cartesian product of two tables, potentially filtering to match values from both sides. The latter is called a <strong>join</strong>.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-23" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Selection</strong></p>
+</div>
+<div class="callout-content">
+<p>A selection takes a subset of the records belonging to the table, taking a parameter, which is a predicate on the attributes.</p>
+<p>The notation used is the <span class="math inline">\(\sigma\)</span> letter. <span class="math display">\[
+S = \sigma_{B \leq 2}(R)
+\]</span> <img data-src="img/relational_selection.png" height="350"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-24" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Projection</strong></p>
+</div>
+<div class="callout-content">
+<p>A projection keeps all records, but removes columns specified in the parameter list.</p>
+<p>The notation used is the <span class="math inline">\(\pi\)</span> letter: <span class="math display">\[
+S = \pi_{A,C}(R)
+\]</span> <img data-src="img/relational_projection.png" height="350"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-25" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Grouping</strong></p>
+</div>
+<div class="callout-content">
+<p>A grouping, also called aggregation, merges records by grouping on some attributes, and aggregating on all others.</p>
+<p>The notation used is the <span class="math inline">\(\gamma\)</span> letter: <span class="math display">\[
+S = \gamma_{G,SUM(A) \rightarrow A}(R)
+\]</span> This groups by <span class="math inline">\(G\)</span> and aggregate the values in column <span class="math inline">\(A\)</span> (within the same group) with a sum</p>
+<p><strong>Note:</strong> there are grouping and non-grouping attributes.</p>
+<p><strong>Examples:</strong> COUNT, SUM, MAX, MIN, AVERAGE.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-26" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Relational grouping</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/relational_grouping.png"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-27" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Renaming</strong></p>
+</div>
+<div class="callout-content">
+<p>Rename a column from <span class="math inline">\(A\)</span> to <span class="math inline">\(D\)</span>: <span class="math display">\[
+S = \rho_{A \rightarrow D}(R)
+\]</span></p>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-28" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Joins</strong></p>
+</div>
+<div class="callout-content">
+<p>A <strong>natural</strong> join is a filtered Cartesian product in which we only combine directly related tuples and omit all other non-matching pairs. The notation used is the <span class="math inline">\(\bowtie\)</span> symbol: <span class="math display">\[
+T= R \bowtie S
+\]</span> joins <span class="math inline">\(R\)</span> and <span class="math inline">\(S\)</span> but only keeps records that coincide on the attributes common to both sides.</p>
+<p>Joins are computationally <strong>more expensive</strong> than projections or selections.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-29" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Relational join</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/relational_join.png"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-30" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Other joins</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>Theta joins</strong> explicitly specify the joining criterion instead of matching the common attributes, e.g.&nbsp;<span class="math inline">\(T= R \bowtie_{A=D} S\)</span>. Common attributes should be renamed, e.g.&nbsp;<span class="math inline">\(T= R \bowtie_{B=E \rho_{B \rightarrow E}} S\)</span>.</li>
+<li><strong>Outer joins</strong> keep records with no match on the other side, keeping the other attributes absent. Note that this breaks relational integrity in its strictest sense</li>
+<li><strong>Semi-outer joins</strong> are like (full) outer joins but only keep unmatched records on the left, or only on the right.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-31" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Normal forms</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>Atomic integrity</li>
+<li>Each column in a record contains information on the entire record</li>
+<li>No functional dependencies on anything else than the primary key</li>
+</ul>
+<p>Normal forms help to address inconsistencies:</p>
+<ul>
+<li><strong>deletion anomalies:</strong> deleting a record makes the database inconsistent</li>
+<li><strong>insertion anomalies:</strong> inserting a new record makes the database inconsistent</li>
+<li><strong>update anomalies:</strong> updating a record makes the database inconsistent</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-32" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Key idea behind of normalization</strong></p>
+</div>
+<div class="callout-content">
+<p>Removal of <strong>duplication.</strong></p>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Downsides</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>Requires joins</li>
+<li>Loss of locality (also called <strong>shredding</strong>)</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-33" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Transactions</strong></p>
+</div>
+<div class="callout-content">
+<p>ACID guarantees:</p>
+<ul>
+<li><strong>Atomicity</strong>: either an update (called a transaction if it consists of several updates) is applied to the database completely, or not at all;</li>
+<li><strong>Consistency</strong>: before and after the transactions, the data is in a consistent state (e.g., some values sum to another value, another value is positive, etc);</li>
+<li><strong>Isolation:</strong> the system “feels like” the user is the only one using the system, where in fact maybe thousands of people are using it as well concurrently;</li>
+<li><strong>Durability:</strong> any data written to the database is durably stored and will not be lost (e.g., if there is an electricity shortage or a disk crash).</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-34" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Limitations</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>lots of <strong>rows</strong>: beyond a million records, a system on one machine can start showing signs of weakness; even though more recent systems manage to push it a bit higher on a single machine (e.g., close to a billion)</li>
+<li>lots of <strong>columns</strong>: beyond 255 columns, a system on one machine can start showing signs of weakness or even not support it at all</li>
+<li>lots of <strong>nesting</strong>: many systems do not support nested data or, if they do, do so only in a limited fashion and it becomes quickly cumbersome</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-35" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Alternatives</strong></p>
+</div>
+<div class="callout-content">
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>Issue</th>
+<th>Solution</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Lots of rows</td>
+<td>Object storage</td>
+</tr>
+<tr class="even">
+<td>Lots of rows</td>
+<td>Distributed File Systems</td>
+</tr>
+<tr class="odd">
+<td>Lots of nesting</td>
+<td>Syntax</td>
+</tr>
+<tr class="even">
+<td>Lots of rows/columns</td>
+<td>Column storage</td>
+</tr>
+<tr class="odd">
+<td>Lots of nesting</td>
+<td>Data models</td>
+</tr>
+<tr class="even">
+<td>Lots of rows</td>
+<td>Massive Parallel Processing</td>
+</tr>
+<tr class="odd">
+<td>Lots of nesting</td>
+<td>Document Stores</td>
+</tr>
+<tr class="even">
+<td>Lots of nesting</td>
+<td>Querying</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-36" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Drivers for change</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>A need for greater <strong>scalability</strong> than relational databases can easily achieve, including very large datasets or very high write throughput</li>
+<li>A widespread preference for <strong>free and open source</strong> software over commercial database products</li>
+<li><strong>Specialized query operations</strong> that are not well supported by the relational model</li>
+<li>Frustration with the <strong>restrictiveness</strong> of relational schemas, and a desire for a more dynamic and expressive data model</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-37" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Modern systems</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>key-value stores</li>
+<li>wide column stores</li>
+<li>document stores</li>
+<li>graph databases</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="relational-model-38" class="slide level2">
+<h2>Relational model</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Challenges</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>integrity may not hold (nested/heterogeneous data)</li>
+<li>ACID guarantees may not hold</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="cap" class="slide level2">
+<h2>CAP</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Definition</strong></p>
+</div>
+<div class="callout-content">
+<p>CAP: presented as a conjecture by Eric Brewer at the 2000 Symposium on Principles of Distributed Computing and formalized and proven by Gilbert and Lynch in 2002.</p>
+<ul>
+<li><strong>Consistent:</strong> All replicas of the same data will be the same value across a distributed system.</li>
+<li><strong>Available:</strong> All live nodes in a distributed system can process operations and respond to queries.</li>
+<li><strong>Partition Tolerant:</strong> The system is designed to operate in the face of connectivity loss between replicas.</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>CAP (Brewer’s) theorem</strong></p>
+</div>
+<div class="callout-content">
+<p>You can have only two of the above.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="document-model" class="slide level2">
+<h2>Document model</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Comparison</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>vs hierarchical:</strong> child data is stored together with a parent record</li>
+<li><strong>vs relational:</strong> use document references instead of foreign keys</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="document-model-1" class="slide level2">
+<h2>Document model</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
 <p><strong>Example</strong></p>
 </div>
 <div class="callout-content">
-<p>In the following lines of code, we’re reading the NYC taxi cab data from 2015 and finding the mean tip amount.</p>
-<ol type="1">
-<li>Import</li>
-</ol>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a aria-label="1"></a><span class="im">import</span> dask.dataframe <span class="im">as</span> dd</span>
-<span id="cb2-2"><a aria-label="2"></a><span class="im">from</span> dask.distributed <span class="im">import</span> Client</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<ol start="2" type="1">
-<li>Create client.</li>
-</ol>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a aria-label="1"></a>client <span class="op">=</span> Client()</span>
-<span id="cb3-2"><a aria-label="2"></a>client</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<ol start="3" type="1">
-<li>Read data.</li>
-</ol>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a aria-label="1"></a>ddf <span class="op">=</span> dd.read_parquet(</span>
-<span id="cb4-2"><a aria-label="2"></a>    <span class="st">"s3://dask-data/nyc-taxi/nyc-2015.parquet/part.*.parquet"</span>,</span>
-<span id="cb4-3"><a aria-label="3"></a>    columns<span class="op">=</span>[<span class="st">"passenger_count"</span>, <span class="st">"tip_amount"</span>],</span>
-<span id="cb4-4"><a aria-label="4"></a>    storage_options<span class="op">=</span>{<span class="st">"anon"</span>: <span class="va">True</span>},</span>
-<span id="cb4-5"><a aria-label="5"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<ol start="4" type="1">
-<li>Groupby and mean</li>
-</ol>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a aria-label="1"></a>result <span class="op">=</span> ddf.groupby(<span class="st">"passenger_count"</span>).tip_amount.mean().compute()</span>
-<span id="cb5-2"><a aria-label="2"></a>result</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode numberSource json number-lines code-with-copy"><code class="sourceCode json"><span id="cb1-1"><a aria-label="1"></a><span class="fu">{</span><span class="dt">"user_id"</span><span class="fu">:</span> <span class="dv">251</span><span class="fu">,</span></span>
+<span id="cb1-2"><a aria-label="2"></a>  <span class="dt">"first_name"</span><span class="fu">:</span> <span class="st">"Bill"</span><span class="fu">,</span></span>
+<span id="cb1-3"><a aria-label="3"></a>  <span class="dt">"last_name"</span><span class="fu">:</span> <span class="st">"Gates"</span><span class="fu">,</span></span>
+<span id="cb1-4"><a aria-label="4"></a>  <span class="dt">"summary"</span><span class="fu">:</span> <span class="st">"Co-chair of the Bill and Melinda Gates... Active blogger."</span><span class="fu">,</span></span>
+<span id="cb1-5"><a aria-label="5"></a>  <span class="dt">"education"</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb1-6"><a aria-label="6"></a>    <span class="fu">{</span><span class="dt">"school_name"</span><span class="fu">:</span> <span class="st">"Harvard University"</span><span class="fu">,</span> <span class="dt">"start"</span><span class="fu">:</span> <span class="dv">1973</span><span class="fu">,</span> <span class="dt">"end"</span><span class="fu">:</span> <span class="dv">1975</span><span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb1-7"><a aria-label="7"></a>    <span class="fu">{</span><span class="dt">"school_name"</span><span class="fu">:</span> <span class="st">"Lakeside School, Seattle"</span><span class="fu">,</span> <span class="dt">"start"</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span> <span class="dt">"end"</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">}</span></span>
+<span id="cb1-8"><a aria-label="8"></a>  <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb1-9"><a aria-label="9"></a>  <span class="dt">"contact_info"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1-10"><a aria-label="10"></a>    <span class="dt">"blog"</span><span class="fu">:</span> <span class="st">"http://thegatesnotes.com"</span><span class="fu">,</span></span>
+<span id="cb1-11"><a aria-label="11"></a>    <span class="dt">"twitter"</span><span class="fu">:</span> <span class="st">"http://twitter.com/BillGates"</span></span>
+<span id="cb1-12"><a aria-label="12"></a>  <span class="fu">}</span></span>
+<span id="cb1-13"><a aria-label="13"></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
 </section>
-<section id="what-is-dask" class="slide level2">
-<h2>What is <a href="&quot;https://www.dask.org/&quot;">Dask</a>?</h2>
+<section id="document-model-2" class="slide level2">
+<h2>Document model</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
-<p><strong>Many parts</strong></p>
+<p><strong>Pros</strong></p>
 </div>
 <div class="callout-content">
-<p>There are many parts to the “Dask” the project:</p>
 <ul>
-<li>Collections/API also known as “core-library”.</li>
-<li>Distributed – to create clusters</li>
-<li>Integrations and broader ecosystem</li>
+<li>schema flexibility</li>
+<li>data locality (performance implications!)</li>
 </ul>
 </div>
 </div>
 </div>
-</section>
-<section id="dask-collections" class="slide level2 font8">
-<h2>Dask Collections</h2>
-<div class="callout callout-warning no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Overview</strong></p>
-</div>
-<div class="callout-content">
-<p>Dask provides <strong>multi-core</strong> and <strong>distributed+parallel</strong> execution on <strong>larger-than-memory</strong> datasets</p>
-<p><img data-src="img/high_vs_low_level_coll_analogy.png" height="350"></p>
-<ul>
-<li><strong>High-level collections:</strong> Dask provides high-level Array, Bag, and DataFrame collections that mimic NumPy, lists, and pandas but can operate in parallel on datasets that don’t fit into memory.</li>
-<li><strong>Low-level collections:</strong> Dask also provides low-level Delayed and Futures collections that give you finer control to build custom parallel and distributed computations.</li>
-</ul>
-</div>
-</div>
-</div>
-</section>
-<section id="dask-cluster" class="slide level2">
-<h2>Dask Cluster</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
-<p><strong>Cluster</strong></p>
+<p><strong>Cons</strong></p>
 </div>
 <div class="callout-content">
-<p>Most of the times when you are using Dask, you will be using a distributed scheduler, which exists in the context of a Dask cluster. The Dask cluster is structured as:</p>
+<ul>
+<li>no joins</li>
+<li>many-to-one and many-to-many relationships</li>
+</ul>
 </div>
 </div>
 </div>
-
-<img data-src="img/distributed-overview.png" class="r-stretch"></section>
-<section id="dask-ecosystem" class="slide level2">
-<h2>Dask Ecosystem</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
+</section>
+<section id="document-model-3" class="slide level2">
+<h2>Document model</h2>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
-<p><strong>Libraries</strong></p>
+<p><strong>Schemas</strong></p>
 </div>
 <div class="callout-content">
-<p>In addition to the core Dask library and its distributed scheduler, the Dask ecosystem connects several additional initiatives, including:</p>
-<ul>
-<li>Dask-ML (parallel scikit-learn-style API)</li>
-<li>Dask-image</li>
-<li>Dask-cuDF</li>
-<li>Dask-sql</li>
-<li>Dask-snowflake</li>
-<li>Dask-mongo</li>
-<li>Dask-bigquery</li>
-</ul>
+<p>Document DBs are not <strong>schemaless</strong>. They are <strong>schema-on-read</strong>.</p>
+<p>Relational DBs are <strong>schema-on-write</strong>.</p>
+<p><img data-src="img/schema_on_read_write.png" height="350"></p>
 </div>
 </div>
 </div>
 </section>
-<section id="dask-ecosystem-1" class="slide level2 font8">
-<h2>Dask Ecosystem</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Community ibraries</strong></p>
-</div>
-<div class="callout-content">
-<p>Community libraries that have built-in dask integrations like:</p>
-<ul>
-<li>Xarray</li>
-<li>XGBoost</li>
-<li>Prefect</li>
-<li>Airflow</li>
-</ul>
-<p>Dask deployment libraries</p>
-<ul>
-<li>Dask-kubernetes</li>
-<li>Dask-YARN</li>
-<li>Dask-gateway</li>
-<li>Dask-cloudprovider</li>
-<li>jobqueue</li>
-</ul>
-</div>
-</div>
-</div>
-</section>
-<section id="dask-use-cases" class="slide level2">
-<h2>Dask Use Cases</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Use cases</strong></p>
-</div>
-<div class="callout-content">
-<p>Dask is used in multiple fields such as:</p>
-<ul>
-<li>Geospatial</li>
-<li>Finance</li>
-<li>Astrophysics</li>
-<li>Microbiology</li>
-<li>Environmental science</li>
-</ul>
-<p>Check out the Dask <a href="https://stories.dask.org/en/latest/">use cases</a> page that provides a number of sample workflows.</p>
-</div>
-</div>
-</div>
-</section>
-<section>
-<section id="dataframe" class="title-slide slide level1 center">
-<h1>Dataframe</h1>
-
-</section>
-<section id="dask-dataframe---parallelized-pandas" class="slide level2">
-<h2>Dask DataFrame - parallelized pandas</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Description</strong></p>
-</div>
-<div class="callout-content">
-<p>Looks and feels like the pandas API, but for parallel and distributed workflows.</p>
-<ul>
-<li><p>At its core, the <code>dask.dataframe</code> module implements a “blocked parallel” <code>DataFrame</code> object that looks and feels like the pandas API, but for parallel and distributed workflows.</p></li>
-<li><p>One Dask <code>DataFrame</code> is comprised of many in-memory pandas <code>DataFrame</code>s separated along the index.</p></li>
-<li><p>One operation on a Dask <code>DataFrame</code> triggers many pandas operations on the constituent pandas <code>DataFrame</code>s in a way that is mindful of potential parallelism and memory constraints.</p></li>
-</ul>
-</div>
-</div>
-</div>
-</section>
-<section id="dask-dataframe" class="slide level2">
-<h2>Dask DataFrame</h2>
-
-<img data-src="https://docs.dask.org/en/stable/_images/dask-dataframe.svg" class="r-stretch"></section>
-<section id="dask-dataframe-1" class="slide level2">
-<h2>Dask DataFrame</h2>
+<section id="document-model-4" class="slide level2">
+<h2>Document model</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
-<p><strong>Related Documentation</strong></p>
+<p><strong>Hybrids: JSON support in RDBMS</strong></p>
 </div>
 <div class="callout-content">
 <ul>
-<li><a href="https://docs.dask.org/en/latest/dataframe.html">DataFrame documentation</a></li>
-<li><a href="https://youtu.be/AT2XtFehFSQ">DataFrame screencast</a></li>
-<li><a href="https://docs.dask.org/en/latest/dataframe-api.html">DataFrame API</a></li>
-<li><a href="https://examples.dask.org/dataframe.html">DataFrame examples</a></li>
-<li><a href="https://pandas.pydata.org/pandas-docs/stable/">pandas documentation</a></li>
+<li>PostgreSQL 9.3 (2013)</li>
+<li>MySQL 5.7 (2013)</li>
+<li>IBM DB2 10.5 (2013)</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Hybrids: joins support in document DBs</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>RethinkDB: relational-like joins</li>
+<li>MongoDB: client-side joins</li>
 </ul>
 </div>
 </div>
 </div>
 </section>
-<section id="dataframe-1" class="slide level2">
-<h2>DataFrame</h2>
-<div class="callout callout-note no-icon callout-titled callout-style-default">
+<section id="graph-model" class="slide level2">
+<h2>Graph model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
-<p><strong>When to use <code>dask.dataframe</code></strong></p>
+<p><strong>Features</strong></p>
 </div>
 <div class="callout-content">
-<p>pandas is great for tabular datasets that fit in memory. A general rule of thumb for pandas is:</p>
-<blockquote>
-<p>“Have 5 to 10 times as much RAM as the size of your dataset”</p>
-</blockquote>
-<blockquote>
-<p>~ Wes McKinney (2017) in <a href="https://wesmckinney.com/blog/apache-arrow-pandas-internals/">10 things I hate about pandas</a></p>
-</blockquote>
-<p>Here “size of dataset” means dataset size on <em>the disk</em>.</p>
-<p>Dask becomes useful when the datasets exceed the above rule.</p>
-<p>In this notebook, you will be working with the New York City Airline data. This dataset is only ~200MB, so that you can download it in a reasonable time, but <code>dask.dataframe</code> will scale to datasets <strong>much</strong> larger than memory.</p>
+<ul>
+<li>Good for many-to-many relationships</li>
+<li>suitable for homogeneous and heterogeneous data</li>
+<li>several data structuring and querying approaches</li>
+<li>flexible data modeling</li>
+</ul>
 </div>
 </div>
 </div>
 </section>
-<section id="dataframe-2" class="slide level2">
-<h2>DataFrame</h2>
+<section id="graph-model-1" class="slide level2">
+<h2>Graph model</h2>
+
+<img data-src="img/graph_data_example.png" class="r-stretch"></section>
+<section id="graph-model-2" class="slide level2">
+<h2>Graph model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Property graphs (Neo4J, Titan, InfiniteGraph)</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>Vertices</strong>:</p>
+<ul>
+<li>A unique identifier</li>
+<li>A set of outgoing edges</li>
+<li>A set of incoming edges</li>
+<li>A collection of properties (key-value pairs)</li>
+</ul>
+<p><strong>Edges:</strong></p>
+<ul>
+<li>A unique identifier</li>
+<li>The vertex at which the edge starts (the tail vertex)</li>
+<li>The vertex at which the edge ends (the head vertex)</li>
+<li>An edge label</li>
+<li>A collection of properties (key-value pairs)</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="graph-model-3" class="slide level2">
+<h2>Graph model</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
-<p><strong>Create datasets</strong></p>
+<p><strong>Property graph as a pair of relational tables</strong></p>
 </div>
 <div class="callout-content">
-<p>Create the datasets you will be using in this notebook:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a aria-label="1"></a><span class="op">%</span>run prep.py <span class="op">-</span>d flights</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</div>
-</div>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Set up your local cluster</strong></p>
-</div>
-<div class="callout-content">
-<p>Create a local Dask cluster and connect it to the client.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a aria-label="1"></a><span class="im">from</span> dask.distributed <span class="im">import</span> Client</span>
-<span id="cb7-2"><a aria-label="2"></a></span>
-<span id="cb7-3"><a aria-label="3"></a>client <span class="op">=</span> Client(n_workers<span class="op">=</span><span class="dv">4</span>)</span>
-<span id="cb7-4"><a aria-label="4"></a>client</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode numberSource sql number-lines code-with-copy"><code class="sourceCode sql"><span id="cb2-1"><a aria-label="1"></a><span class="kw">CREATE</span> <span class="kw">TABLE</span> vertices (</span>
+<span id="cb2-2"><a aria-label="2"></a>  vertex_id <span class="dt">integer</span> <span class="kw">PRIMARY</span> <span class="kw">KEY</span>,</span>
+<span id="cb2-3"><a aria-label="3"></a>  properties json</span>
+<span id="cb2-4"><a aria-label="4"></a>);</span>
+<span id="cb2-5"><a aria-label="5"></a><span class="kw">CREATE</span> <span class="kw">TABLE</span> edges (</span>
+<span id="cb2-6"><a aria-label="6"></a>  edge_id <span class="dt">integer</span> <span class="kw">PRIMARY</span> <span class="kw">KEY</span>,</span>
+<span id="cb2-7"><a aria-label="7"></a>  tail_vertex <span class="dt">integer</span> <span class="kw">REFERENCES</span> vertices (vertex_id),</span>
+<span id="cb2-8"><a aria-label="8"></a>  head_vertex <span class="dt">integer</span> <span class="kw">REFERENCES</span> vertices (vertex_id),</span>
+<span id="cb2-9"><a aria-label="9"></a>  <span class="kw">label</span> text,</span>
+<span id="cb2-10"><a aria-label="10"></a>  properties json</span>
+<span id="cb2-11"><a aria-label="11"></a>);</span>
+<span id="cb2-12"><a aria-label="12"></a><span class="kw">CREATE</span> <span class="kw">INDEX</span> edges_tails <span class="kw">ON</span> edges (tail_vertex);</span>
+<span id="cb2-13"><a aria-label="13"></a><span class="kw">CREATE</span> <span class="kw">INDEX</span> edges_heads <span class="kw">ON</span> edges (head_vertex);</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
 </section>
-<section id="dataframe-3" class="slide level2">
-<h2>DataFrame</h2>
+<section id="graph-model-4" class="slide level2">
+<h2>Graph model</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
-<p><strong>Dask Diagnostic Dashboard</strong></p>
+<p><strong>Triple stores (Datomic, AllegroGraph)</strong></p>
 </div>
 <div class="callout-content">
-<p>Dask Distributed provides a useful Dashboard to visualize the state of your cluster and computations.</p>
-<p>Click on the dashboard link displayed in the Client details above: <a href="http://127.0.0.1:8787/status" class="uri">http://127.0.0.1:8787/status</a>. It will open a new browser tab with the Dashboard.</p>
-</div>
-</div>
-</div>
-</section>
-<section id="dataframe-4" class="slide level2">
-<h2>DataFrame</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Reading and working with datasets</strong></p>
-</div>
-<div class="callout-content">
-<p>Let’s read an extract of flights in the USA across several years. This data is specific to flights out of the three airports in the New York City area.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a aria-label="1"></a><span class="im">import</span> os</span>
-<span id="cb8-2"><a aria-label="2"></a><span class="im">import</span> dask</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>By convention, we import the module <code>dask.dataframe</code> as <code>dd</code>, and call the corresponding <code>DataFrame</code> object <code>ddf</code>.</p>
-</div>
-</div>
-</div>
-<div class="callout callout-note callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<p><strong>Note</strong></p>
-</div>
-<div class="callout-content">
-<p>The term “Dask DataFrame” is slightly overloaded. Depending on the context, it can refer to the module or the DataFrame object. To avoid confusion:</p>
+<p>All information is stored in the form of very simple three-part statements: <strong>(subject, predicate, object)</strong>:</p>
 <ul>
-<li><code>dask.dataframe</code> (note the all lowercase) refers to the API, and</li>
-<li><code>DataFrame</code> (note the CamelCase) refers to the object.</li>
+<li><strong>subject:</strong> equivalent to a vertex in a graph</li>
+<li><strong>object:</strong> either a primitive datatype or a vertex</li>
 </ul>
 </div>
 </div>
 </div>
 </section>
-<section id="dataframe-5" class="slide level2">
-<h2>DataFrame</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Reading and working with datasets</strong></p>
-</div>
-<div class="callout-content">
-<p>The following filename includes a glob pattern <code>*</code>, so all files in the path matching that pattern will be read into the same <code>DataFrame</code>.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a aria-label="1"></a><span class="im">import</span> dask.dataframe <span class="im">as</span> dd</span>
-<span id="cb9-2"><a aria-label="2"></a></span>
-<span id="cb9-3"><a aria-label="3"></a>ddf <span class="op">=</span> dd.read_csv(</span>
-<span id="cb9-4"><a aria-label="4"></a>    os.path.join(<span class="st">"data"</span>, <span class="st">"nycflights"</span>, <span class="st">"*.csv"</span>), parse_dates<span class="op">=</span>{<span class="st">"Date"</span>: [<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>]}</span>
-<span id="cb9-5"><a aria-label="5"></a>)</span>
-<span id="cb9-6"><a aria-label="6"></a>ddf</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</div>
-</div>
-</section>
-<section id="dataframe-6" class="slide level2">
-<h2>DataFrame</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>What happened?</strong></p>
-</div>
-<div class="callout-content">
-<p>Dask has not loaded the data yet, it has:</p>
-<ul>
-<li>investigated the input path and found that there are ten matching files</li>
-<li>intelligently created a set of jobs for each chunk – one per original CSV file in this case</li>
-</ul>
-</div>
-</div>
-</div>
-<div class="callout callout-note callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<p><strong>Note</strong></p>
-</div>
-<div class="callout-content">
-<p>Notice that the representation of the <code>DataFrame</code> object contains no data - Dask has just done enough to read the start of the first file, and infer the column names and <code>dtype</code>s.</p>
-</div>
-</div>
-</div>
-</section>
-<section id="dataframe-7" class="slide level2">
-<h2>DataFrame</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Lazy Evaluation</strong></p>
-</div>
-<div class="callout-content">
-<p>Most Dask Collections, including Dask <code>DataFrame</code> are evaluated lazily, which means Dask constructs the logic (called task graph) of your computation immediately but “evaluates” them only when necessary.</p>
-<p>You can view this task graph using <code>.visualize()</code>.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a aria-label="1"></a>ddf.visualize()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Note that we need to call <code>.compute()</code> to trigger actual computations.</p>
-</div>
-</div>
-</div>
-</section>
-<section id="dataframe-8" class="slide level2 scrollable">
-<h2>DataFrame</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Lazy Evaluation</strong></p>
-</div>
-<div class="callout-content">
-<p>Some functions like <code>len</code> and <code>head</code> also trigger a computation. Specifically, calling <code>len</code> will:</p>
-<ul>
-<li>load actual data, (that is, load each file into a pandas DataFrame)</li>
-<li>then apply the corresponding functions to each pandas DataFrame (also known as a partition)</li>
-<li>combine the subtotals to give you the final grand total</li>
-</ul>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a aria-label="1"></a><span class="co"># load and count number of rows</span></span>
-<span id="cb11-2"><a aria-label="2"></a><span class="bu">len</span>(ddf)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</div>
-</div>
-</section>
-<section id="dataframe-9" class="slide level2 scrollable">
-<h2>DataFrame</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Lazy Evaluation</strong></p>
-</div>
-<div class="callout-content">
-<p>You can view the start and end of the data as you would in pandas:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a aria-label="1"></a>ddf.head()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a aria-label="1"></a>ddf.tail()</span>
-<span id="cb13-2"><a aria-label="2"></a></span>
-<span id="cb13-3"><a aria-label="3"></a><span class="co"># ValueError: Mismatched dtypes found in `pd.read_csv`/`pd.read_table`.</span></span>
-<span id="cb13-4"><a aria-label="4"></a></span>
-<span id="cb13-5"><a aria-label="5"></a><span class="co"># +----------------+---------+----------+</span></span>
-<span id="cb13-6"><a aria-label="6"></a><span class="co"># | Column         | Found   | Expected |</span></span>
-<span id="cb13-7"><a aria-label="7"></a><span class="co"># +----------------+---------+----------+</span></span>
-<span id="cb13-8"><a aria-label="8"></a><span class="co"># | CRSElapsedTime | float64 | int64    |</span></span>
-<span id="cb13-9"><a aria-label="9"></a><span class="co"># | TailNum        | object  | float64  |</span></span>
-<span id="cb13-10"><a aria-label="10"></a><span class="co"># +----------------+---------+----------+</span></span>
-<span id="cb13-11"><a aria-label="11"></a></span>
-<span id="cb13-12"><a aria-label="12"></a><span class="co"># The following columns also raised exceptions on conversion:</span></span>
-<span id="cb13-13"><a aria-label="13"></a></span>
-<span id="cb13-14"><a aria-label="14"></a><span class="co"># - TailNum</span></span>
-<span id="cb13-15"><a aria-label="15"></a><span class="co">#   ValueError("could not convert string to float: 'N54711'")</span></span>
-<span id="cb13-16"><a aria-label="16"></a></span>
-<span id="cb13-17"><a aria-label="17"></a><span class="co"># Usually this is due to dask's dtype inference failing, and</span></span>
-<span id="cb13-18"><a aria-label="18"></a><span class="co"># *may* be fixed by specifying dtypes manually by adding:</span></span>
-<span id="cb13-19"><a aria-label="19"></a></span>
-<span id="cb13-20"><a aria-label="20"></a><span class="co"># dtype={'CRSElapsedTime': 'float64',</span></span>
-<span id="cb13-21"><a aria-label="21"></a><span class="co">#        'TailNum': 'object'}</span></span>
-<span id="cb13-22"><a aria-label="22"></a></span>
-<span id="cb13-23"><a aria-label="23"></a><span class="co"># to the call to `read_csv`/`read_table`.</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</div>
-</div>
-</section>
-<section id="dataframe-10" class="slide level2 scrollable">
-<h2>DataFrame</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Handling conflicting types</strong></p>
-</div>
-<div class="callout-content">
-<p>Unlike <code>pandas.read_csv</code> which reads in the entire file before inferring datatypes, <code>dask.dataframe.read_csv</code> only reads in a sample from the beginning of the file (or first file if using a glob). These inferred datatypes are then enforced when reading all partitions.</p>
-<p>In this case, the datatypes inferred in the sample are incorrect. The first <code>n</code> rows have no value for <code>CRSElapsedTime</code> (which pandas infers as a <code>float</code>), and later on turn out to be strings (<code>object</code> dtype). When this happens you have a few options:</p>
-<ul>
-<li>Specify dtypes directly using the <code>dtype</code> keyword. This is the recommended solution, as it’s the least error prone (better to be explicit than implicit) and also the most performant.</li>
-<li>Increase the size of the <code>sample</code> keyword (in bytes)</li>
-<li>Use <code>assume_missing</code> to make <code>dask</code> assume that columns inferred to be <code>int</code> (which don’t allow missing values) are actually <code>floats</code> (which do allow missing values). In our particular case this doesn’t apply.</li>
-</ul>
-</div>
-</div>
-</div>
-</section>
-<section id="dataframe-11" class="slide level2">
-<h2>DataFrame</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Handling conflicting types</strong></p>
-</div>
-<div class="callout-content">
-<p>In our case we’ll use the first option and directly specify the <code>dtypes</code> of the offending columns.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a aria-label="1"></a>ddf <span class="op">=</span> dd.read_csv(</span>
-<span id="cb14-2"><a aria-label="2"></a>    os.path.join(<span class="st">"data"</span>, <span class="st">"nycflights"</span>, <span class="st">"*.csv"</span>),</span>
-<span id="cb14-3"><a aria-label="3"></a>    parse_dates<span class="op">=</span>{<span class="st">"Date"</span>: [<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>]},</span>
-<span id="cb14-4"><a aria-label="4"></a>    dtype<span class="op">=</span>{<span class="st">"TailNum"</span>: <span class="bu">str</span>, <span class="st">"CRSElapsedTime"</span>: <span class="bu">float</span>, <span class="st">"Cancelled"</span>: <span class="bu">bool</span>},</span>
-<span id="cb14-5"><a aria-label="5"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a aria-label="1"></a>ddf.tail()  <span class="co"># now works</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</div>
-</div>
-</section>
-<section id="dataframe-12" class="slide level2">
-<h2>DataFrame</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Reading from remote storage</strong></p>
-</div>
-<div class="callout-content">
-<p>If you’re thinking about distributed computing, your data is probably stored remotely on services (like Amazon’s S3 or Google’s cloud storage) and is in a friendlier format (like Parquet). Dask can read data in various formats directly from these remote locations <strong>lazily</strong> and <strong>in parallel</strong>.</p>
-<p>Here’s how you can read the NYC taxi cab data from Amazon S3:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a aria-label="1"></a>ddf <span class="op">=</span> dd.read_parquet(</span>
-<span id="cb16-2"><a aria-label="2"></a>    <span class="st">"s3://nyc-tlc/trip data/yellow_tripdata_2012-*.parquet"</span>,</span>
-<span id="cb16-3"><a aria-label="3"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>You can also leverage Parquet-specific optimizations like column selection and metadata handling, learn more in <a href="https://docs.dask.org/en/stable/dataframe-parquet.html">the Dask documentation on working with Parquet files</a>.</p>
-</div>
-</div>
-</div>
-</section>
-<section id="dataframe-13" class="slide level2">
-<h2>DataFrame</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Computations with <code>dask.dataframe</code></strong></p>
-</div>
-<div class="callout-content">
-<p>Let’s compute the maximum of the flight delay.</p>
-<p>With just pandas, we would loop over each file to find the individual maximums, then find the final maximum over all the individual maximums.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a aria-label="1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb17-2"><a aria-label="2"></a></span>
-<span id="cb17-3"><a aria-label="3"></a>files <span class="op">=</span> os.listdir(os.path.join(<span class="st">'data'</span>, <span class="st">'nycflights'</span>))</span>
-<span id="cb17-4"><a aria-label="4"></a></span>
-<span id="cb17-5"><a aria-label="5"></a>maxes <span class="op">=</span> []</span>
-<span id="cb17-6"><a aria-label="6"></a></span>
-<span id="cb17-7"><a aria-label="7"></a><span class="cf">for</span> <span class="bu">file</span> <span class="kw">in</span> files:</span>
-<span id="cb17-8"><a aria-label="8"></a>    df <span class="op">=</span> pd.read_csv(os.path.join(<span class="st">'data'</span>, <span class="st">'nycflights'</span>, <span class="bu">file</span>))</span>
-<span id="cb17-9"><a aria-label="9"></a>    maxes.append(df.DepDelay.<span class="bu">max</span>())</span>
-<span id="cb17-10"><a aria-label="10"></a>    </span>
-<span id="cb17-11"><a aria-label="11"></a>final_max <span class="op">=</span> <span class="bu">max</span>(maxes)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</div>
-</div>
-</section>
-<section id="dataframe-14" class="slide level2">
-<h2>DataFrame</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Computations with <code>dask.dataframe</code></strong></p>
-</div>
-<div class="callout-content">
-<p><code>dask.dataframe</code> lets us write pandas-like code, that operates on larger-than-memory datasets in parallel.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a aria-label="1"></a><span class="op">%%</span>time</span>
-<span id="cb18-2"><a aria-label="2"></a>result <span class="op">=</span> ddf.DepDelay.<span class="bu">max</span>()</span>
-<span id="cb18-3"><a aria-label="3"></a>result.compute()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>This creates the lazy computation for us and then runs it.</p>
-</div>
-</div>
-</div>
-</section>
-<section id="dataframe-15" class="slide level2">
-<h2>DataFrame</h2>
-<div class="callout callout-note callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<p><strong>Computations with <code>dask.dataframe</code></strong></p>
-</div>
-<div class="callout-content">
-<p>Dask will delete intermediate results (like the full pandas DataFrame for each file) as soon as possible. This means you can handle datasets that are larger than memory but, repeated computations will have to load all of the data in each time. (Run the code above again, is it faster or slower than you would expect?)</p>
-<p>You can view the underlying task graph using <code>.visualize()</code>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a aria-label="1"></a><span class="co"># notice the parallelism</span></span>
-<span id="cb19-2"><a aria-label="2"></a>result.visualize()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</div>
-</div>
-</section>
-<section id="dataframe-16" class="slide level2 scrollable">
-<h2>DataFrame</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Exercises</strong></p>
-</div>
-<div class="callout-content">
-<ol type="1">
-<li>How many rows are in our dataset?</li>
-</ol>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a aria-label="1"></a><span class="co"># Your code here</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<!-- ```python -->
-<!-- #| jupyter: {source_hidden: true} -->
-<!-- #| tags: [] -->
-<!-- len(ddf) -->
-<!-- ``` -->
-<ol start="2" type="1">
-<li>In total, how many non-canceled flights were taken?</li>
-</ol>
-<p><em>Hint</em>: use <a href="https://pandas.pydata.org/pandas-docs/stable/indexing.html#boolean-indexing">boolean indexing</a>.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a aria-label="1"></a><span class="co"># Your code here</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<!-- ```python -->
-<!-- #| jupyter: {source_hidden: true} -->
-<!-- #| tags: [] -->
-<!-- len(ddf[~ddf.Cancelled]) -->
-<!-- ``` -->
-</div>
-</div>
-</div>
-</section>
-<section id="dataframe-17" class="slide level2 scrollable">
-<h2>DataFrame</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Exercises</strong></p>
-</div>
-<div class="callout-content">
-<ol start="3" type="1">
-<li>In total, how many non-canceled flights were taken from each airport?</li>
-</ol>
-<p><em>Hint</em>: use <a href="https://pandas.pydata.org/pandas-docs/stable/groupby.html">groupby</a>.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a aria-label="1"></a><span class="co"># Your code here</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<!-- ```python -->
-<!-- #| jupyter: {source_hidden: true} -->
-<!-- #| tags: [] -->
-<!-- ddf[~ddf.Cancelled].groupby("Origin").Origin.count().compute() -->
-<!-- ``` -->
-<ol start="4" type="1">
-<li>What was the average departure delay from each airport?</li>
-</ol>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a aria-label="1"></a><span class="co"># Your code here</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<!-- ```python -->
-<!-- #| jupyter: {source_hidden: true} -->
-<!-- #| tags: [] -->
-<!-- ddf.groupby("Origin").DepDelay.mean().compute() -->
-<!-- ``` -->
-</div>
-</div>
-</div>
-</section>
-<section id="dataframe-18" class="slide level2 scrollable">
-<h2>DataFrame</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Exercises</strong></p>
-</div>
-<div class="callout-content">
-<ol start="5" type="1">
-<li>What day of the week has the worst average departure delay?</li>
-</ol>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb24"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a aria-label="1"></a><span class="co"># Your code here</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<!-- ```python -->
-<!-- #| jupyter: {source_hidden: true} -->
-<!-- #| tags: [] -->
-<!-- ddf.groupby("DayOfWeek").DepDelay.mean().idxmax().compute() -->
-<!-- ``` -->
-<ol start="6" type="1">
-<li>Let’s say the distance column is erroneous and you need to add 1 to all values, how would you do this?</li>
-</ol>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a aria-label="1"></a><span class="co"># Your code here</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<!-- ```python -->
-<!-- #| jupyter: {source_hidden: true} -->
-<!-- #| tags: [] -->
-<!-- ddf["Distance"].apply( -->
-<!--     lambda x: x + 1 -->
-<!-- ).compute()  # don't worry about the warning, we'll discuss in the next sections -->
-<!-- # OR -->
-<!-- (ddf["Distance"] + 1).compute() -->
-<!-- ``` -->
-</div>
-</div>
-</div>
-</section>
-<section id="dataframe-19" class="slide level2 scrollable">
-<h2>DataFrame</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Sharing Intermediate Results</strong></p>
-</div>
-<div class="callout-content">
-<p>When computing all of the above, we sometimes did the same operation more than once. For most operations, <code>dask.dataframe</code> stores the arguments, allowing duplicate computations to be shared and only computed once.</p>
-<p>For example, let’s compute the mean and standard deviation for departure delay of all non-canceled flights.</p>
-<p>If you compute them with two calls to compute, there is no sharing of intermediate computations.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a aria-label="1"></a>non_canceled <span class="op">=</span> ddf[<span class="op">~</span>ddf.Cancelled]</span>
-<span id="cb26-2"><a aria-label="2"></a>mean_delay <span class="op">=</span> non_canceled.DepDelay.mean()</span>
-<span id="cb26-3"><a aria-label="3"></a>std_delay <span class="op">=</span> non_canceled.DepDelay.std()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a aria-label="1"></a><span class="co">#| tags: []</span></span>
-<span id="cb27-2"><a aria-label="2"></a><span class="op">%%</span>time</span>
-<span id="cb27-3"><a aria-label="3"></a></span>
-<span id="cb27-4"><a aria-label="4"></a>mean_delay_res <span class="op">=</span> mean_delay.compute()</span>
-<span id="cb27-5"><a aria-label="5"></a>std_delay_res <span class="op">=</span> std_delay.compute()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</div>
-</div>
-</section>
-<section id="dataframe-20" class="slide level2">
-<h2>DataFrame</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong><code>dask.compute</code></strong></p>
-</div>
-<div class="callout-content">
-<p>But let’s try by passing both to a single <code>compute</code> call.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a aria-label="1"></a><span class="co">#| tags: []</span></span>
-<span id="cb28-2"><a aria-label="2"></a><span class="op">%%</span>time</span>
-<span id="cb28-3"><a aria-label="3"></a></span>
-<span id="cb28-4"><a aria-label="4"></a>mean_delay_res, std_delay_res <span class="op">=</span> dask.compute(mean_delay, std_delay)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Using <code>dask.compute</code> takes roughly 1/2 the time. This is because the task graphs for both results are merged when calling <code>dask.compute</code>, allowing shared operations to only be done once instead of twice. In particular, using <code>dask.compute</code> only does the following once:</p>
-<ul>
-<li>the calls to <code>read_csv</code></li>
-<li>the filter (<code>df[~df.Cancelled]</code>)</li>
-<li>some of the necessary reductions (<code>sum</code>, <code>count</code>)</li>
-</ul>
-</div>
-</div>
-</div>
-</section>
-<section id="dataframe-21" class="slide level2">
-<h2>DataFrame</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Visualization</strong></p>
-</div>
-<div class="callout-content">
-<ul>
-<li>To see what the merged task graphs between multiple results look like (and what’s shared), you can use the <code>dask.visualize</code> function</li>
-<li>you might want to use <code>filename='graph.pdf'</code> to save the graph to disk so that you can zoom in more easily</li>
-</ul>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a aria-label="1"></a>dask.visualize(mean_delay, std_delay, engine<span class="op">=</span><span class="st">"cytoscape"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</div>
-</div>
-</section>
-<section id="dataframe-22" class="slide level2">
-<h2>DataFrame</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong><code>.persist()</code></strong></p>
-</div>
-<div class="callout-content">
-<p>While using a distributed scheduler (you will learn more about schedulers in the upcoming notebooks), you can keep some <em>data that you want to use often</em> in the <em>distributed memory</em>.</p>
-<p><code>persist</code> generates “Futures” (more on this later as well) and stores them in the same structure as your output. You can use <code>persist</code> with any data or computation that fits in memory.</p>
-<p>If you want to analyze data only for non-canceled flights departing from JFK airport, you can either have two compute calls like in the previous section:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a aria-label="1"></a>non_cancelled <span class="op">=</span> ddf[<span class="op">~</span>ddf.Cancelled]</span>
-<span id="cb30-2"><a aria-label="2"></a>ddf_jfk <span class="op">=</span> non_cancelled[non_cancelled.Origin <span class="op">==</span> <span class="st">"JFK"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a aria-label="1"></a><span class="op">%%</span>time</span>
-<span id="cb31-2"><a aria-label="2"></a>ddf_jfk.DepDelay.mean().compute()</span>
-<span id="cb31-3"><a aria-label="3"></a>ddf_jfk.DepDelay.<span class="bu">sum</span>().compute()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</div>
-</div>
-</section>
-<section id="dataframe-23" class="slide level2">
-<h2>DataFrame</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong><code>.persist()</code></strong></p>
-</div>
-<div class="callout-content">
-<p>Or, consider persisting that subset of data in memory.</p>
-<p>See the “Graph” dashboard plot, the red squares indicate persisted data stored as Futures in memory. You will also notice an increase in Worker Memory (another dashboard plot) consumption.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb32"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a aria-label="1"></a>ddf_jfk <span class="op">=</span> ddf_jfk.persist()  <span class="co"># returns back control immediately</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb33"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a aria-label="1"></a><span class="op">%%</span>time</span>
-<span id="cb33-2"><a aria-label="2"></a>ddf_jfk.DepDelay.mean().compute()</span>
-<span id="cb33-3"><a aria-label="3"></a>ddf_jfk.DepDelay.std().compute()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Analyses on this persisted data is faster because we are not repeating the loading and selecting (non-canceled, JFK departure) operations.</p>
-</div>
-</div>
-</div>
-</section>
-<section id="dataframe-24" class="slide level2">
-<h2>DataFrame</h2>
-<div class="callout callout-warning no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Custom code with Dask DataFrame</strong></p>
-</div>
-<div class="callout-content">
-<p><code>dask.dataframe</code> only covers a small but well-used portion of the pandas API.</p>
-<p>This limitation is for two reasons:</p>
-<ol type="1">
-<li>The Pandas API is <em>huge</em></li>
-<li>Some operations are genuinely hard to do in parallel, e.g, sorting.</li>
-</ol>
-<p>Additionally, some important operations like <code>set_index</code> work, but are slower than in pandas because they include substantial shuffling of data, and may write out to disk.</p>
-</div>
-</div>
-</div>
-</section>
-<section id="dataframe-25" class="slide level2">
-<h2>DataFrame</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Solutions</strong></p>
-</div>
-<div class="callout-content">
-<p>In case it’s a custom function or tricky to implement, <code>dask.dataframe</code> provides a few methods to make applying custom functions to Dask DataFrames easier:</p>
-<ul>
-<li><a href="https://docs.dask.org/en/latest/generated/dask.dataframe.DataFrame.map_partitions.html"><code>map_partitions</code></a>: to run a function on each partition (each pandas DataFrame) of the Dask DataFrame</li>
-<li><a href="https://docs.dask.org/en/latest/generated/dask.dataframe.rolling.map_overlap.html"><code>map_overlap</code></a>: to run a function on each partition (each pandas DataFrame) of the Dask DataFrame, with some rows shared between neighboring partitions</li>
-<li><a href="https://docs.dask.org/en/latest/generated/dask.dataframe.Series.reduction.html"><code>reduction</code></a>: for custom row-wise reduction operations.</li>
-</ul>
-</div>
-</div>
-</div>
-</section>
-<section id="dataframe-26" class="slide level2 scrollable">
-<h2>DataFrame</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong><code>map_partitions</code></strong></p>
-</div>
-<div class="callout-content">
-<p>Let’s take a quick look at the <code>map_partitions()</code> function:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a aria-label="1"></a><span class="co">#| tags: []</span></span>
-<span id="cb34-2"><a aria-label="2"></a><span class="bu">help</span>(ddf.map_partitions)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>The “Distance” column in <code>ddf</code> is currently in miles. Let’s say we want to convert the units to kilometers and we have a general helper function as shown below. In this case, we can use <code>map_partitions</code> to apply this function across each of the internal pandas <code>DataFrame</code>s in parallel.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb35"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a aria-label="1"></a><span class="kw">def</span> my_custom_converter(df, multiplier<span class="op">=</span><span class="dv">1</span>):</span>
-<span id="cb35-2"><a aria-label="2"></a>    <span class="cf">return</span> df <span class="op">*</span> multiplier</span>
-<span id="cb35-3"><a aria-label="3"></a></span>
-<span id="cb35-4"><a aria-label="4"></a></span>
-<span id="cb35-5"><a aria-label="5"></a>meta <span class="op">=</span> pd.Series(name<span class="op">=</span><span class="st">"Distance"</span>, dtype<span class="op">=</span><span class="st">"float64"</span>)</span>
-<span id="cb35-6"><a aria-label="6"></a></span>
-<span id="cb35-7"><a aria-label="7"></a>distance_km <span class="op">=</span> ddf.Distance.map_partitions(</span>
-<span id="cb35-8"><a aria-label="8"></a>    my_custom_converter, multiplier<span class="op">=</span><span class="fl">0.6</span>, meta<span class="op">=</span>meta</span>
-<span id="cb35-9"><a aria-label="9"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb36"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a aria-label="1"></a>distance_km.visualize()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb37"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a aria-label="1"></a>distance_km.head()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</div>
-</div>
-</section>
-<section id="dataframe-27" class="slide level2">
-<h2>DataFrame</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>What is <code>meta</code>?</strong></p>
-</div>
-<div class="callout-content">
-<p>Since Dask operates lazily, it doesn’t always have enough information to infer the output structure (which includes datatypes) of certain operations.</p>
-<p><code>meta</code> is a <em>suggestion</em> to Dask about the output of your computation. Importantly, <code>meta</code> <em>never infers with the output structure</em>. Dask uses this <code>meta</code> until it can determine the actual output structure.</p>
-<p>Even though there are many ways to define <code>meta</code>, we suggest using a small pandas Series or DataFrame that matches the structure of your final output.</p>
-</div>
-</div>
-</div>
-</section>
-<section id="close-you-local-dask-cluster" class="slide level2">
-<h2>Close you local Dask Cluster</h2>
-<div class="callout callout-important callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<p><strong>Important</strong></p>
-</div>
-<div class="callout-content">
-<p>It’s good practice to always close any Dask cluster you create:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb38"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a aria-label="1"></a>client.shutdown()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</div>
-</div>
-</section></section>
-<section>
-<section id="dask-arrays" class="title-slide slide level1 center">
-<h1>Dask Arrays</h1>
-
-</section>
-<section id="dask-arrays-1" class="slide level2">
-<h2>Dask Arrays</h2>
-<div class="callout callout-note no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Dask Arrays - parallelized numpy</strong></p>
-</div>
-<div class="callout-content">
-<p>Parallel, larger-than-memory, n-dimensional array using blocked algorithms.</p>
-<ul>
-<li><strong>Parallel</strong>: Uses all of the cores on your computer</li>
-<li><strong>Larger-than-memory</strong>: Lets you work on datasets that are larger than your available memory by breaking up your array into many small pieces, operating on those pieces in an order that minimizes the memory footprint of your computation, and effectively streaming data from disk.</li>
-<li><strong>Blocked Algorithms</strong>: Perform large computations by performing many smaller computations.</li>
-</ul>
-</div>
-</div>
-</div>
-</section>
-<section id="dask-arrays-2" class="slide level2">
-<h2>Dask Arrays</h2>
-<div class="callout callout-note no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Dask Arrays - parallelized numpy</strong></p>
-</div>
-<div class="callout-content">
-<p><img data-src="https://docs.dask.org/en/stable/_images/dask-array.svg"></p>
-</div>
-</div>
-</div>
-</section>
-<section id="dask-arrays-3" class="slide level2">
-<h2>Dask Arrays</h2>
-<div class="callout callout-note no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Related Documentation</strong></p>
-</div>
-<div class="callout-content">
-<ul>
-<li><a href="https://docs.dask.org/en/latest/array.html">Array documentation</a></li>
-<li><a href="https://youtu.be/9h_61hXCDuI">Array screencast</a></li>
-<li><a href="https://docs.dask.org/en/latest/array-api.html">Array API</a></li>
-<li><a href="https://examples.dask.org/array.html">Array examples</a></li>
-</ul>
-</div>
-</div>
-</div>
-</section>
-<section id="dask-arrays-4" class="slide level2">
-<h2>Dask Arrays</h2>
-<div class="callout callout-note no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Create datasets</strong></p>
-</div>
-<div class="callout-content">
-<p>Create the datasets you will be using in this notebook:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb39"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a aria-label="1"></a><span class="op">%</span>run prep.py <span class="op">-</span>d random</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</div>
-</div>
-</section>
-<section id="dask-arrays-5" class="slide level2">
-<h2>Dask Arrays</h2>
-<div class="callout callout-note no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Start the Client</strong></p>
-</div>
-<div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb40"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a aria-label="1"></a><span class="im">from</span> dask.distributed <span class="im">import</span> Client</span>
-<span id="cb40-2"><a aria-label="2"></a></span>
-<span id="cb40-3"><a aria-label="3"></a>client <span class="op">=</span> Client(n_workers<span class="op">=</span><span class="dv">4</span>)</span>
-<span id="cb40-4"><a aria-label="4"></a>client</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</div>
-</div>
-</section>
-<section id="dask-arrays-6" class="slide level2 scrollable">
-<h2>Dask Arrays</h2>
-<div class="callout callout-note no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Blocked Algorithms in a nutshell</strong></p>
-</div>
-<div class="callout-content">
-<p>Let’s do side by side the sum of the elements of an array using a NumPy array and a Dask array.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb41"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a aria-label="1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb41-2"><a aria-label="2"></a><span class="im">import</span> dask.array <span class="im">as</span> da</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb42"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a aria-label="1"></a><span class="co"># NumPy array</span></span>
-<span id="cb42-2"><a aria-label="2"></a>a_np <span class="op">=</span> np.ones(<span class="dv">10</span>)</span>
-<span id="cb42-3"><a aria-label="3"></a>a_np</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</div>
-</div>
-</section>
-<section id="dask-arrays-7" class="slide level2 scrollable">
-<h2>Dask Arrays</h2>
-<div class="callout callout-note no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Blocked Algorithms in a nutshell</strong></p>
-</div>
-<div class="callout-content">
-<p>We know that we can use <code>sum()</code> to compute the sum of the elements of our array, but to show what a blocksized operation would look like, let’s do:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb43"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a aria-label="1"></a>a_np_sum <span class="op">=</span> a_np[:<span class="dv">5</span>].<span class="bu">sum</span>() <span class="op">+</span> a_np[<span class="dv">5</span>:].<span class="bu">sum</span>()</span>
-<span id="cb43-2"><a aria-label="2"></a>a_np_sum</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Now notice that each sum in the computation above is completely independent so they could be done in parallel. To do this with Dask array, we need to define our “slices”, we do this by defining the amount of elements we want per block using the variable <code>chunks</code>.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb44"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a aria-label="1"></a>a_da <span class="op">=</span> da.ones(<span class="dv">10</span>, chunks<span class="op">=</span><span class="dv">5</span>)</span>
-<span id="cb44-2"><a aria-label="2"></a>a_da</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</div>
-</div>
-</section>
-<section id="dask-arrays-8" class="slide level2">
-<h2>Dask Arrays</h2>
-<div class="callout callout-important callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<p><strong>Important</strong></p>
-</div>
-<div class="callout-content">
-<p>Note here that to get two blocks, we specify <code>chunks=5</code>, in other words, we have 5 elements per block.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb45"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a aria-label="1"></a>a_da_sum <span class="op">=</span> a_da.<span class="bu">sum</span>()</span>
-<span id="cb45-2"><a aria-label="2"></a>a_da_sum</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</div>
-</div>
-</section>
-<section id="dask-arrays-9" class="slide level2">
-<h2>Dask Arrays</h2>
-<div class="callout callout-note no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Task Graphs</strong></p>
-</div>
-<div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb46"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a aria-label="1"></a><span class="co"># visualize the low level Dask graph using cytoscape</span></span>
-<span id="cb46-2"><a aria-label="2"></a>a_da_sum.visualize(engine<span class="op">=</span><span class="st">"cytoscape"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>And then compute:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb47"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a aria-label="1"></a>a_da_sum.compute()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</div>
-</div>
-</section>
-<section id="dask-arrays-10" class="slide level2">
-<h2>Dask Arrays</h2>
-<div class="callout callout-note no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Performance comparison</strong></p>
-</div>
-<div class="callout-content">
-<p>Let’s try a more interesting example. We will create a 20_000 x 20_000 array with normally distributed values, and take the mean along one of its axis.</p>
-<h4 id="numpy-version">Numpy version</h4>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb48"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a aria-label="1"></a><span class="op">%%</span>time</span>
-<span id="cb48-2"><a aria-label="2"></a>xn <span class="op">=</span> np.random.normal(<span class="dv">10</span>, <span class="fl">0.1</span>, size<span class="op">=</span>(<span class="dv">30_000</span>, <span class="dv">30_000</span>))</span>
-<span id="cb48-3"><a aria-label="3"></a>yn <span class="op">=</span> xn.mean(axis<span class="op">=</span><span class="dv">0</span>)</span>
-<span id="cb48-4"><a aria-label="4"></a>yn</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<h4 id="dask-array-version">Dask array version</h4>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb49"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a aria-label="1"></a>xd <span class="op">=</span> da.random.normal(<span class="dv">10</span>, <span class="fl">0.1</span>, size<span class="op">=</span>(<span class="dv">30_000</span>, <span class="dv">30_000</span>), chunks<span class="op">=</span>(<span class="dv">3000</span>, <span class="dv">3000</span>))</span>
-<span id="cb49-2"><a aria-label="2"></a>xd</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb50"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb50-1"><a aria-label="1"></a>xd.nbytes <span class="op">/</span> <span class="fl">1e9</span>  <span class="co"># Gigabytes of the input processed lazily</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb51"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb51-1"><a aria-label="1"></a>yd <span class="op">=</span> xd.mean(axis<span class="op">=</span><span class="dv">0</span>)</span>
-<span id="cb51-2"><a aria-label="2"></a>yd</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</div>
-</div>
-</section>
-<section id="dask-arrays-11" class="slide level2">
-<h2>Dask Arrays</h2>
-<div class="callout callout-note no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Performance comparison</strong></p>
-</div>
-<div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb52"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb52-1"><a aria-label="1"></a><span class="op">%%</span>time</span>
-<span id="cb52-2"><a aria-label="2"></a>xd <span class="op">=</span> da.random.normal(<span class="dv">10</span>, <span class="fl">0.1</span>, size<span class="op">=</span>(<span class="dv">30_000</span>, <span class="dv">30_000</span>), chunks<span class="op">=</span>(<span class="dv">3000</span>, <span class="dv">3000</span>))</span>
-<span id="cb52-3"><a aria-label="3"></a>yd <span class="op">=</span> xd.mean(axis<span class="op">=</span><span class="dv">0</span>)</span>
-<span id="cb52-4"><a aria-label="4"></a>yd.compute()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</div>
-</div>
-</section>
-<section id="dask-arrays-12" class="slide level2">
-<h2>Dask Arrays</h2>
-<div class="callout callout-note no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Exercise</strong></p>
-</div>
-<div class="callout-content">
-<ul>
-<li>What happens if the Dask chunks=(10000,10000)?</li>
-<li>What happens if the Dask chunks=(30,30)?</li>
-<li>For Dask arrays, compute the mean along <code>axis=1</code> of the sum of the x array and its transpose.</li>
-</ul>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb53"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb53-1"><a aria-label="1"></a><span class="co"># Your code here</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<!-- **Solution** -->
-<!-- ```python -->
-<!-- #| jupyter: {source_hidden: true} -->
-<!-- #| tags: [] -->
-<!-- x_sum = xd + xd.T -->
-<!-- res = x_sum.mean(axis=1) -->
-<!-- res.compute() -->
-<!-- ``` -->
-</div>
-</div>
-</div>
-</section>
-<section id="dask-arrays-13" class="slide level2">
-<h2>Dask Arrays</h2>
-<div class="callout callout-note no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Choosing good chunk sizes</strong></p>
-</div>
-<div class="callout-content">
-<p>We can think of Dask arrays as a big structure composed by chunks of a smaller size, where these chunks are typically an a single <code>numpy</code> array, and they are all arranged to form a larger Dask array.</p>
-<p>If you have a Dask array and want to know more information about chunks and their size, you can use the <code>chunksize</code> and <code>chunks</code> attributes to access this information. If you are in a jupyter notebook you can also visualize the Dask array via its HTML representation.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb54"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb54-1"><a aria-label="1"></a>darr <span class="op">=</span> da.random.random((<span class="dv">1000</span>, <span class="dv">1000</span>, <span class="dv">1000</span>))</span>
-<span id="cb54-2"><a aria-label="2"></a>darr</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</div>
-</div>
-</section>
-<section id="dask-arrays-14" class="slide level2 scrollable">
-<h2>Dask Arrays</h2>
-<div class="callout callout-note no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Choosing good chunk sizes</strong></p>
-</div>
-<div class="callout-content">
-<p>Notice that when we created the Dask array, we did not specify the <code>chunks</code>. Dask has set by default <code>chunks='auto'</code> which accommodates ideal chunk sizes. To learn more on how auto-chunking works you can go to this documentation <a href="https://docs.dask.org/en/stable/array-chunks.html#automatic-chunking">here</a>.</p>
-<ul>
-<li><code>darr.chunksize</code> shows the largest chunk size.</li>
-<li>But if your array have irregular chunks, <code>darr.chunks</code> will show you the explicit sizes of all the chunks along all the dimensions of your dask array.</li>
-</ul>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb55"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb55-1"><a aria-label="1"></a>darr.chunksize</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb56"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb56-1"><a aria-label="1"></a>darr.chunks</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</div>
-</div>
-</section>
-<section id="dask-arrays-15" class="slide level2 scrollable">
-<h2>Dask Arrays</h2>
-<div class="callout callout-note no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Choosing good chunk sizes</strong></p>
-</div>
-<div class="callout-content">
-<p>Let’s modify our example to see explore chunking a bit more. We can rechunk our array:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb57"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb57-1"><a aria-label="1"></a>darr <span class="op">=</span> darr.rechunk({<span class="dv">0</span>: <span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>: <span class="dv">100</span>, <span class="dv">2</span>: <span class="st">"auto"</span>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb58"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb58-1"><a aria-label="1"></a>darr</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb59"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb59-1"><a aria-label="1"></a>darr.chunksize</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb60"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb60-1"><a aria-label="1"></a>darr.chunks</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</div>
-</div>
-</section>
-<section id="dask-arrays-16" class="slide level2">
-<h2>Dask Arrays</h2>
-<div class="callout callout-note no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Exercise</strong></p>
-</div>
-<div class="callout-content">
-<ul>
-<li>What does -1 do when specify as the chunk on a certain axis?</li>
-</ul>
-</div>
-</div>
-</div>
-</section>
-<section id="dask-arrays-17" class="slide level2">
-<h2>Dask Arrays</h2>
-<div class="callout callout-warning no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Too small is a problem</strong></p>
-</div>
-<div class="callout-content">
-<ul>
-<li><p>If your chunks are too small, the amount of actual work done by every task is very tiny, and the overhead of coordinating all these tasks results in a very inefficient process.</p></li>
-<li><p>In general, the dask scheduler takes approximately one millisecond to coordinate a single task. That means we want the computation time to be comparatively large, i.e in the order of seconds.</p></li>
-</ul>
-</div>
-</div>
-</div>
-</section>
-<section id="dask-arrays-18" class="slide level2 scrollable">
-<h2>Dask Arrays</h2>
+<section id="graph-model-5" class="slide level2">
+<h2>Graph model</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
-<p><strong>Too big is a problem</strong></p>
+<p><strong>Turtle triple format</strong></p>
 </div>
 <div class="callout-content">
-<ul>
-<li><p>If your chunks are too big, this is also a problem because you will likely run out of memory.</p></li>
-<li><p>You will start seeing in the dashboard that data is being spill to disk and this will lead to performance decrements.</p></li>
-<li><p>If we load to much data into memory, Dask workers will start to spill data to disk to avoid crashing.</p></li>
-<li><p>To watch out for this you can look at the worker memory plot on the dashboard.</p></li>
-<li><p>Orange bars are a warning you are close to the limit, and gray means data is being spilled to disk.</p></li>
-</ul>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode numberSource json number-lines code-with-copy"><code class="sourceCode json"><span id="cb3-1"><a aria-label="1"></a><span class="er">_:lucy</span> <span class="er">a</span> <span class="er">:Person;</span> <span class="er">:name</span> <span class="st">"Lucy"</span><span class="er">;</span> <span class="er">:bornIn</span> <span class="er">_:idaho.</span></span>
+<span id="cb3-2"><a aria-label="2"></a><span class="er">_:idaho</span> <span class="er">a</span> <span class="er">:Location;</span> <span class="er">:name</span> <span class="st">"Idaho"</span><span class="er">;</span> <span class="er">:type</span> <span class="st">"state"</span><span class="er">;</span> <span class="er">:within</span> <span class="er">_:usa.</span></span>
+<span id="cb3-3"><a aria-label="3"></a><span class="er">_:usa</span> <span class="er">a</span> <span class="er">:Location;</span> <span class="er">:name</span> <span class="st">"United States"</span><span class="er">;</span> <span class="er">:type</span> <span class="st">"country"</span><span class="er">;</span> <span class="er">:within</span> <span class="er">_:namerica.</span></span>
+<span id="cb3-4"><a aria-label="4"></a><span class="er">_:namerica</span> <span class="er">a</span> <span class="er">:Location;</span> <span class="er">:name</span> <span class="st">"North America"</span><span class="er">;</span> <span class="er">:type</span> <span class="st">"continent"</span><span class="er">.</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
 </section>
-<section id="dask-arrays-19" class="slide level2 scrollable">
-<h2>Dask Arrays</h2>
-<div class="callout callout-note no-icon callout-titled callout-style-default">
+<section id="graph-model-6" class="slide level2">
+<h2>Graph model</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
-<p><strong>Rules of thumb</strong></p>
+<p><strong>Datalog</strong></p>
 </div>
 <div class="callout-content">
-<ul>
-<li>Users have reported that chunk sizes smaller than 1MB tend to be bad. In general, a chunk size between <strong>100MB and 1GB is good</strong>, while going over 1 or 2GB means you have a really big dataset and/or a lot of memory available per worker.</li>
-<li>Upper bound: Avoid very large task graphs. More than 10,000 or 100,000 chunks may start to perform poorly.</li>
-<li>Lower bound: To get the advantage of parallelization, you need the number of chunks to at least equal the number of worker cores available (or better, the number of worker cores times 2). Otherwise, some workers will stay idle.</li>
-<li>The time taken to compute each task should be much larger than the time needed to schedule the task. The Dask scheduler takes roughly 1 millisecond to coordinate a single task, so a good task computation time would be in the order of seconds (not milliseconds).</li>
-<li>Chunks should be aligned with array storage on disk. Modern NDArray storage formats (HDF5, NetCDF, TIFF, Zarr) allow arrays to be stored in chunks so that the blocks of data can be pulled efficiently. However, data stores often chunk more finely than is ideal for Dask array, so it is common to choose a chunking that is a multiple of your storage chunk size, otherwise you might incur high overhead. For example, if you are loading data that is chunked in blocks of (100, 100), the you might might choose a chunking strategy more like (1000, 2000) that is larger but still divisible by (100, 100).</li>
-</ul>
-<p>For more more advice on chunking see https://docs.dask.org/en/stable/array-chunks.html</p>
+<p>This is a generalized version of triple-store model: <strong>predicate(subject, object)</strong></p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource datalog number-lines code-with-copy"><code class="sourceCode"><span id="cb4-1"><a aria-label="1"></a>name(namerica, 'North America').</span>
+<span id="cb4-2"><a aria-label="2"></a>type(namerica, continent).</span>
+<span id="cb4-3"><a aria-label="3"></a>name(usa, 'United States').</span>
+<span id="cb4-4"><a aria-label="4"></a>type(usa, country).</span>
+<span id="cb4-5"><a aria-label="5"></a>within(usa, namerica).</span>
+<span id="cb4-6"><a aria-label="6"></a>name(idaho, 'Idaho').</span>
+<span id="cb4-7"><a aria-label="7"></a>type(idaho, state).</span>
+<span id="cb4-8"><a aria-label="8"></a>within(idaho, usa).</span>
+<span id="cb4-9"><a aria-label="9"></a>name(lucy, 'Lucy').</span>
+<span id="cb4-10"><a aria-label="10"></a>born_in(lucy, idaho).</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
-</section>
-<section id="dask-arrays-20" class="slide level2">
-<h2>Dask Arrays</h2>
-<div class="callout callout-note no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Example of chunked data with Zarr</strong></p>
-</div>
-<div class="callout-content">
-<p>Zarr is a format for the storage of chunked, compressed, N-dimensional arrays. Zarr provides classes and functions for working with N-dimensional arrays that behave like NumPy arrays (Dask array behave like Numpy arrays) but whose data is divided into chunks and each chunk is compressed. If you are already familiar with HDF5 then Zarr arrays provide similar functionality, but with some additional flexibility.</p>
-<p>For extra material check the <a href="https://zarr.readthedocs.io/en/stable/tutorial.html">Zarr tutorial</a></p>
-<p><strong>Let’s read an array from zarr:</strong></p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb61"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb61-1"><a aria-label="1"></a><span class="im">import</span> zarr</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb62"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb62-1"><a aria-label="1"></a>a <span class="op">=</span> da.from_zarr(<span class="st">"data/random.zarr"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb63"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb63-1"><a aria-label="1"></a>a</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</div>
-</div>
-</section>
-<section id="dask-arrays-21" class="slide level2">
-<h2>Dask Arrays</h2>
-<div class="callout callout-note no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Example of chunked data with Zarr</strong></p>
-</div>
-<div class="callout-content">
-<p>Notice that the array is already chunked, and we didn’t specify anything when loading it. Now notice that the chunks have a nice chunk size, let’s compute the mean and see how long it takes to run</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb64"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb64-1"><a aria-label="1"></a><span class="op">%%</span>time</span>
-<span id="cb64-2"><a aria-label="2"></a>a.mean().compute()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Let’s load a separate example where the <code>chunksize</code> is much smaller, and see what happen</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb65"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb65-1"><a aria-label="1"></a>b <span class="op">=</span> da.from_zarr(<span class="st">"data/random_sc.zarr"</span>)</span>
-<span id="cb65-2"><a aria-label="2"></a>b</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb66"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb66-1"><a aria-label="1"></a><span class="op">%%</span>time</span>
-<span id="cb66-2"><a aria-label="2"></a>b.mean().compute()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</div>
-</div>
-</section>
-<section id="dask-arrays-22" class="slide level2">
-<h2>Dask Arrays</h2>
-<div class="callout callout-note no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Exercise</strong></p>
-</div>
-<div class="callout-content">
-<p>Provide a <code>chunksize</code> when reading <code>b</code> that will improve the time of computation of the mean. Try multiple <code>chunks</code> values and see what happens.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb67"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb67-1"><a aria-label="1"></a><span class="co"># Your code here</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<!-- ```python -->
-<!-- #| jupyter: {source_hidden: true} -->
-<!-- #| tags: [] -->
-<!-- # 1 possible Solution (imitate original). chunks will vary if you are in binder -->
-<!-- c = da.from_zarr("data/random_sc.zarr", chunks=(6250000,)) -->
-<!-- c -->
-<!-- ``` -->
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb68"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb68-1"><a aria-label="1"></a><span class="op">%%</span>time</span>
-<span id="cb68-2"><a aria-label="2"></a>c.mean().compute()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</div>
-</div>
-</section>
-<section id="dask-arrays-23" class="slide level2 scrollable">
-<h2>Dask Arrays</h2>
-<div class="callout callout-note no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Xarray</strong></p>
-</div>
-<div class="callout-content">
-<p>In some applications we have multidimensional data, and sometimes working with all this dimensions can be confusing. Xarray is an open source project and Python package that makes working with labeled multi-dimensional arrays easier.</p>
-<p>Let’s learn how to use xarray and Dask together:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb69"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb69-1"><a aria-label="1"></a><span class="im">import</span> xarray <span class="im">as</span> xr</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb70"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb70-1"><a aria-label="1"></a>ds <span class="op">=</span> xr.tutorial.open_dataset(</span>
-<span id="cb70-2"><a aria-label="2"></a>    <span class="st">"air_temperature"</span>,</span>
-<span id="cb70-3"><a aria-label="3"></a>    chunks<span class="op">=</span>{  <span class="co"># this tells xarray to open the dataset as a dask array</span></span>
-<span id="cb70-4"><a aria-label="4"></a>        <span class="st">"lat"</span>: <span class="dv">25</span>,</span>
-<span id="cb70-5"><a aria-label="5"></a>        <span class="st">"lon"</span>: <span class="dv">25</span>,</span>
-<span id="cb70-6"><a aria-label="6"></a>        <span class="st">"time"</span>: <span class="op">-</span><span class="dv">1</span>,</span>
-<span id="cb70-7"><a aria-label="7"></a>    },</span>
-<span id="cb70-8"><a aria-label="8"></a>)</span>
-<span id="cb70-9"><a aria-label="9"></a>ds</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb71"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb71-1"><a aria-label="1"></a>ds.air</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb72"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb72-1"><a aria-label="1"></a>ds.air.chunks</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb73"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb73-1"><a aria-label="1"></a>mean <span class="op">=</span> ds.air.mean(<span class="st">"time"</span>)  <span class="co"># no activity on dashboard</span></span>
-<span id="cb73-2"><a aria-label="2"></a>mean  <span class="co"># contains a dask array</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb74"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb74-1"><a aria-label="1"></a><span class="co"># we will see dashboard activity</span></span>
-<span id="cb74-2"><a aria-label="2"></a>mean.load()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</div>
-</div>
-</section>
-<section id="dask-arrays-24" class="slide level2">
-<h2>Dask Arrays</h2>
-<div class="callout callout-note no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Standard Xarray Operations</strong></p>
-</div>
-<div class="callout-content">
-<p>Let’s grab the air variable and do some operations. Operations using xarray objects are identical, regardless if the underlying data is stored as a Dask array or a NumPy array.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb75"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb75-1"><a aria-label="1"></a>dair <span class="op">=</span> ds.air</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb76"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb76-1"><a aria-label="1"></a>dair2 <span class="op">=</span> dair.groupby(<span class="st">"time.month"</span>).mean(<span class="st">"time"</span>)</span>
-<span id="cb76-2"><a aria-label="2"></a>dair_new <span class="op">=</span> dair <span class="op">-</span> dair2</span>
-<span id="cb76-3"><a aria-label="3"></a>dair_new</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Call <code>.compute()</code> or <code>.load()</code> when you want your result as a <code>xarray.DataArray</code> with data stored as NumPy arrays.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb77"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb77-1"><a aria-label="1"></a><span class="co"># things happen in the dashboard</span></span>
-<span id="cb77-2"><a aria-label="2"></a>dair_new.load()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</div>
-</div>
-</section>
-<section id="dask-arrays-25" class="slide level2">
-<h2>Dask Arrays</h2>
-<div class="callout callout-note no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Time Series Operations with xarray</strong></p>
-</div>
-<div class="callout-content">
-<p>Because we have a datetime index time-series operations work efficiently, for example we can do a resample and then plot the result.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb78"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb78-1"><a aria-label="1"></a>dair_resample <span class="op">=</span> dair.resample(time<span class="op">=</span><span class="st">"1w"</span>).mean(<span class="st">"time"</span>).std(<span class="st">"time"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb79"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb79-1"><a aria-label="1"></a>dair_resample.load().plot(figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">8</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</div>
-</div>
-</section>
-<section id="dask-arrays-26" class="slide level2">
-<h2>Dask Arrays</h2>
-<div class="callout callout-note no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Learn More</strong></p>
-</div>
-<div class="callout-content">
-<p>Both xarray and zarr have their own tutorials that go into greater depth:</p>
-<ul>
-<li><a href="https://zarr.readthedocs.io/en/stable/tutorial.html">Zarr tutorial</a></li>
-<li><a href="https://tutorial.xarray.dev/intro.html">Xarray tutorial</a></li>
-</ul>
-</div>
-</div>
-</div>
-</section>
-<section id="dask-arrays-27" class="slide level2">
-<h2>Dask Arrays</h2>
-<div class="callout callout-note no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Close your cluster</strong></p>
-</div>
-<div class="callout-content">
-<p>It’s good practice to close any Dask cluster you create:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb80"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb80-1"><a aria-label="1"></a>client.shutdown()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</div>
-</div>
-</section>
-<section id="useful-links" class="slide level2 font8">
-<h2>Useful Links</h2>
-<ul>
-<li>Reference
-<ul>
-<li><a href="https://dask.org/">Docs</a></li>
-<li><a href="https://examples.dask.org/">Examples</a></li>
-<li><a href="https://github.com/dask/dask/">Code</a></li>
-<li><a href="https://blog.dask.org/">Blog</a></li>
-</ul></li>
-<li>Ask for help
-<ul>
-<li><a href="http://stackoverflow.com/questions/tagged/dask"><code>dask</code></a> tag on Stack Overflow, for usage questions</li>
-<li><a href="https://github.com/dask/dask/issues/new">github issues</a> for bug reports and feature requests</li>
-<li><a href="https://dask.discourse.group/">discourse forum</a> for general, non-bug, questions and discussion</li>
-<li>Attend a live tutorial</li>
-</ul></li>
-</ul>
 
 
-</section></section>
+</section>
     </div>
   <div class="quarto-auto-generated-content" style="display: none;">
 <div class="footer footer-default">
@@ -1630,7 +1345,7 @@ MSDE
 'autoAnimateUnmatched': true,
 'jumpToSlide': true,
 'menu': {"side":"left","useTextContentForMissingTitles":true,"markers":false,"loadIcons":false,"custom":[{"title":"Tools","icon":"<i class=\"fas fa-gear\"></i>","content":"<ul class=\"slide-menu-items\">\n<li class=\"slide-tool-item active\" data-item=\"0\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.fullscreen(event)\"><kbd>f</kbd> Fullscreen</a></li>\n<li class=\"slide-tool-item\" data-item=\"1\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.speakerMode(event)\"><kbd>s</kbd> Speaker View</a></li>\n<li class=\"slide-tool-item\" data-item=\"2\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.overview(event)\"><kbd>o</kbd> Slide Overview</a></li>\n<li class=\"slide-tool-item\" data-item=\"3\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.togglePdfExport(event)\"><kbd>e</kbd> PDF Export Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"4\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.toggleScrollView(event)\"><kbd>r</kbd> Scroll View Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"5\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.keyboardHelp(event)\"><kbd>?</kbd> Keyboard Help</a></li>\n</ul>"}],"openButton":true},
-'multiplex': {"url":"https://mplex.vitv.ly","secret":null,"id":"c98a9f6491ac4446afaff3a81eced102c969d99b2e789cbc609eeb67a517bb73"},
+'multiplex': {"url":"https://mplex.vitv.ly","secret":null,"id":"f383d86d234a2b6e614ad0237677d2ea99a3db408e766a57906400c1e456ee63"},
 'smaller': false,
  
         // Display controls in the bottom right corner
@@ -1784,7 +1499,7 @@ MSDE
         margin: 0.1,
 
         math: {
-          mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@2.7.9/MathJax.js',
+          mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js',
           config: 'TeX-AMS_HTML-full',
           tex2jax: {
             inlineMath: [['\\(','\\)']],
@@ -1880,7 +1595,7 @@ MSDE
         }
           var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
           var mailtoRegex = new RegExp(/^mailto:/);
-            var filterRegex = new RegExp('/' + window.location.host + '/');
+            var filterRegex = new RegExp("https:\/\/dslnu\.github\.io\/data_analytics\/");
           var isInternal = (href) => {
               return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
           }
