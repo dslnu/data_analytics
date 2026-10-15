@@ -162,15 +162,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#postgres-for-analytics" id="toc-postgres-for-analytics" class="nav-link active" data-scroll-target="#postgres-for-analytics">Postgres for analytics</a>
+  <li><a href="#postgres-for-analytics-and-duckdb-for-comparison" id="toc-postgres-for-analytics-and-duckdb-for-comparison" class="nav-link active" data-scroll-target="#postgres-for-analytics-and-duckdb-for-comparison">Postgres for analytics, and DuckDB for comparison</a>
   <ul class="collapse">
   <li><a href="#installation" id="toc-installation" class="nav-link" data-scroll-target="#installation">Installation</a></li>
   <li><a href="#dataset" id="toc-dataset" class="nav-link" data-scroll-target="#dataset">Dataset</a></li>
   <li><a href="#exercises" id="toc-exercises" class="nav-link" data-scroll-target="#exercises">Exercises</a>
   <ul class="collapse">
   <li><a href="#load-the-data-into-postgres." id="toc-load-the-data-into-postgres." class="nav-link" data-scroll-target="#load-the-data-into-postgres.">1. Load the data into Postgres.</a></li>
-  <li><a href="#table-setup" id="toc-table-setup" class="nav-link" data-scroll-target="#table-setup">2. Table setup</a></li>
-  <li><a href="#some-queries" id="toc-some-queries" class="nav-link" data-scroll-target="#some-queries">3. Some queries</a></li>
+  <li><a href="#data-quality" id="toc-data-quality" class="nav-link" data-scroll-target="#data-quality">2. Data quality</a></li>
+  <li><a href="#table-setup" id="toc-table-setup" class="nav-link" data-scroll-target="#table-setup">3. Table setup</a></li>
+  <li><a href="#queries" id="toc-queries" class="nav-link" data-scroll-target="#queries">4. Queries</a></li>
+  <li><a href="#postgres-vs-duckdb-performance" id="toc-postgres-vs-duckdb-performance" class="nav-link" data-scroll-target="#postgres-vs-duckdb-performance">5. Postgres vs DuckDB: performance</a></li>
+  <li><a href="#reflection" id="toc-reflection" class="nav-link" data-scroll-target="#reflection">6. Reflection</a></li>
   </ul></li>
   </ul></li>
   </ul>
@@ -198,8 +201,46 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<section id="postgres-for-analytics" class="level1">
-<h1>Postgres for analytics</h1>
+<section id="postgres-for-analytics-and-duckdb-for-comparison" class="level1">
+<h1>Postgres for analytics, and DuckDB for comparison</h1>
+<p>This lab uses two very different SQL engines on the same data:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th><strong>PostgreSQL</strong></th>
+<th><strong>DuckDB</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>architecture</td>
+<td>client–server</td>
+<td>in-process library, like SQLite</td>
+</tr>
+<tr class="even">
+<td>storage</td>
+<td>row-oriented</td>
+<td>column-oriented</td>
+</tr>
+<tr class="odd">
+<td>designed for</td>
+<td>transactions (OLTP), many concurrent users</td>
+<td>analytics (OLAP), one process</td>
+</tr>
+<tr class="even">
+<td>reading a CSV</td>
+<td>load it into a table first</td>
+<td>query the file directly</td>
+</tr>
+</tbody>
+</table>
+<p>Everything you do in Postgres, also do in DuckDB, and keep notes on what differed: syntax, results, and speed.</p>
 <section id="installation" class="level2">
 <h2 class="anchored" data-anchor-id="installation">Installation</h2>
 <ol type="1">
@@ -207,6 +248,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><p>For python: <code>pip install "psycopg[binary,pool]"</code></p></li>
 </ol>
 <p>Use the docs from <a href="https://www.psycopg.org/psycopg3/docs/basic/usage.html" class="uri">https://www.psycopg.org/psycopg3/docs/basic/usage.html</a>.</p>
+<ol start="3" type="1">
+<li>DuckDB — no server needed:</li>
+</ol>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> add duckdb</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> duckdb</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>con <span class="op">=</span> duckdb.<span class="ex">connect</span>(<span class="st">"lab9.duckdb"</span>)   <span class="co"># a single file; duckdb.connect() for in-memory</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>con.sql(<span class="st">"SELECT 42"</span>).show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Docs: <a href="https://duckdb.org/docs/stable/clients/python/overview" class="uri">https://duckdb.org/docs/stable/clients/python/overview</a>. DuckDB can also return results as pandas or Polars DataFrames (<code>.df()</code>, <code>.pl()</code>).</p>
 </section>
 <section id="dataset" class="level2">
 <h2 class="anchored" data-anchor-id="dataset">Dataset</h2>
@@ -229,14 +278,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>There are at least 3 ways how to do this:</p>
 <section id="use-sqlalchemy-package" class="level4">
 <h4 class="anchored" data-anchor-id="use-sqlalchemy-package">1.1. Use SQLAlchemy package:</h4>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> add sqlalchemy</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sqlalchemy <span class="im">import</span> create_engine</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>sqlAlchemyUri <span class="op">=</span> <span class="st">'postgresql+psycopg://&lt;username&gt;:&lt;password&gt;@localhost:5432/lab10'</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>engine <span class="op">=</span> create_engine(sqlAlchemyUri)</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_csv(<span class="st">"somedata.csv"</span>)</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>df.to_sql(<span class="st">'somedata'</span>, engine)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> add sqlalchemy</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sqlalchemy <span class="im">import</span> create_engine</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>sqlAlchemyUri <span class="op">=</span> <span class="st">'postgresql+psycopg://&lt;username&gt;:&lt;password&gt;@localhost:5432/lab10'</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>engine <span class="op">=</span> create_engine(sqlAlchemyUri)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_csv(<span class="st">"somedata.csv"</span>)</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>df.to_sql(<span class="st">'somedata'</span>, engine)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="dask-dataframe-built-in" class="level4">
 <h4 class="anchored" data-anchor-id="dask-dataframe-built-in">1.2. Dask DataFrame built-in</h4>
@@ -245,35 +294,100 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="use-postgresql-copy-from-and-csvkit-python-package." class="level4">
 <h4 class="anchored" data-anchor-id="use-postgresql-copy-from-and-csvkit-python-package.">1.3. Use PostgreSQL <code>COPY FROM</code> and <code>csvkit</code> Python package.</h4>
 <p>First, install <code>csvkit</code></p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> add csvkit</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> add csvkit</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Use <code>csvsql</code> to generate a <code>CREATE TABLE</code> statement:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">csvsql</span> <span class="at">-i</span> postgresql somedata.csv</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">csvsql</span> <span class="at">-i</span> postgresql somedata.csv</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Execute the statement generated by the above line. And then execute the <code>COPY FROM</code> from Python:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> <span class="bu">open</span>(<span class="st">'data/places365.csv'</span>, <span class="st">'r'</span>) <span class="im">as</span> f:</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Notice that we don't need the csv module.</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> cur.copy(<span class="st">"COPY places365 FROM STDIN WITH (FORMAT CSV, header)"</span>) <span class="im">as</span> copy:</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> line <span class="kw">in</span> f:</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>            copy.write(line)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> <span class="bu">open</span>(<span class="st">'data/places365.csv'</span>, <span class="st">'r'</span>) <span class="im">as</span> f:</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Notice that we don't need the csv module.</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> cur.copy(<span class="st">"COPY places365 FROM STDIN WITH (FORMAT CSV, header)"</span>) <span class="im">as</span> copy:</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> line <span class="kw">in</span> f:</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>            copy.write(line)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><strong>Also</strong>: please compare performance of the above 3 methods on a larger (~2GB) file from the original dataset.</p>
 </section>
+<section id="duckdb" class="level4">
+<h4 class="anchored" data-anchor-id="duckdb">1.4. DuckDB</h4>
+<p>DuckDB reads CSV files directly, inferring column types:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>con.sql(<span class="st">"SELECT * FROM 'data/places365.csv' LIMIT 5"</span>)                       <span class="co"># no table at all</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>con.sql(<span class="st">"CREATE TABLE places365 AS SELECT * FROM read_csv_auto('data/places365.csv')"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ol type="1">
+<li>Load all six tables into DuckDB. Time it, and add DuckDB as a fourth row to your loading comparison (including the ~2 GB file).</li>
+<li>Compare the column types DuckDB inferred with the ones <code>csvsql</code> and <code>pandas.to_sql</code> produced. Pay attention to <code>orig_id</code>: in which files is it an integer, and in which a floating-point number? Look at the raw text of <code>perception.csv</code> to see why.</li>
+<li>Compare storage: the size of the <code>lab9.duckdb</code> file against <code>SELECT pg_size_pretty(pg_database_size('lab10'))</code> in Postgres, and against the CSVs. Then export one table to Parquet (<code>COPY places365 TO 'places365.parquet'</code>) and compare again. Which formats are compressed, and why does a column store compress better?</li>
+</ol>
+</section>
+</section>
+<section id="data-quality" class="level3">
+<h3 class="anchored" data-anchor-id="data-quality">2. Data quality</h3>
+<p>Do these in either engine; then check that the other one agrees.</p>
+<ol type="1">
+<li>Every file has both <code>uuid</code> and <code>orig_id</code>. Join <code>metadata</code> to <code>perception</code> <strong>on <code>uuid</code></strong>, then <strong>on <code>orig_id</code></strong>. You should get 10 000 rows the first way and <strong>fewer</strong> the second way. Find the rows that fail to match, print both <code>orig_id</code> values side by side, and explain what happened to the identifiers when the file was written. Which column should be the key, and what does this tell you about storing IDs as floating-point numbers?</li>
+<li>Find images with implausible timestamps (look at the earliest <code>datetime_local</code> values). What do the suspicious values have in common? Propose a rule that flags them, and count how many it flags.</li>
+<li><code>gadm</code> has missing values at different levels. Count images with no <code>COUNTRY</code> and with no level-2 area (<code>GID_2</code>). For a query grouping perception scores by level-2 area, what happens to these rows under <code>JOIN</code>, <code>LEFT JOIN</code> and <code>GROUP BY</code> — are they dropped, grouped together as <code>NULL</code>, or counted somewhere you did not intend? Finally, list the distinct <code>COUNTRY</code> values with their counts: is every one of them actually a country?</li>
+<li>The <code>datetime_local</code> column is a timestamp <strong>with time zone</strong>, and the table also has an <code>hour</code> column. In Postgres, compute <code>extract(hour FROM datetime_local)</code> and count rows where it differs from <code>hour</code>. Then run <code>SET TIME ZONE 'Asia/Tokyo'</code> and repeat. Do the same in DuckDB (<code>SET TimeZone = 'UTC'</code>). Explain what is going on, and write an expression that returns the <em>local</em> hour of the photo without relying on the precomputed column.</li>
+</ol>
 </section>
 <section id="table-setup" class="level3">
-<h3 class="anchored" data-anchor-id="table-setup">2. Table setup</h3>
+<h3 class="anchored" data-anchor-id="table-setup">3. Table setup</h3>
 <ol type="1">
 <li>Create primary keys on all tables.</li>
 <li>Make <code>metadata</code> the master table, link other tables to it via foreign keys.</li>
+<li>Do the same in DuckDB (it supports <code>PRIMARY KEY</code> and <code>FOREIGN KEY</code>). Try inserting a row into <code>perception</code> whose <code>uuid</code> is not in <code>metadata</code> in both engines — do both reject it?</li>
+<li>In Postgres, run <code>EXPLAIN ANALYZE</code> for a query that filters <code>gadm</code> by <code>COUNTRY = 'Japan'</code> and joins <code>perception</code>. Then create an index on <code>gadm(COUNTRY)</code> and run it again. Did the plan change? Did the time change? At what table size would you expect the index to matter, and why might the planner ignore it here?</li>
+<li>DuckDB creates no index for such a query and mostly does not need one. Look up <em>zone maps</em> (min/max statistics per row group) in the DuckDB documentation and explain in two or three sentences why a column store can skip data without an index. Run <code>EXPLAIN ANALYZE</code> on the same query in DuckDB and compare the plans.</li>
 </ol>
 </section>
-<section id="some-queries" class="level3">
-<h3 class="anchored" data-anchor-id="some-queries">3. Some queries</h3>
+<section id="queries" class="level3">
+<h3 class="anchored" data-anchor-id="queries">4. Queries</h3>
+<p>Write every query for <strong>both</strong> engines. Where the syntax differs, keep both versions.</p>
 <ol type="1">
-<li>Calculate average perception scores for:
+<li><p>Calculate average perception scores for:</p>
 <ul>
 <li><code>urban_term</code> column from <code>ghsl</code> table</li>
 <li><code>place</code> column from <code>places365</code> table</li>
 <li><code>country</code> column from <code>gadm</code> table</li>
 </ul></li>
-<li>Create a <code>MATERIALIZED VIEW</code> (https://www.postgresql.org/docs/15/sql-creatematerializedview.html) that will contain total object instance counts (<code>instance.csv</code>) for each gadm level2 area (<code>gadm.csv</code>).</li>
+<li><p>Create a <code>MATERIALIZED VIEW</code> (https://www.postgresql.org/docs/15/sql-creatematerializedview.html) that will contain total object instance counts (<code>instance.csv</code>) for each gadm level2 area (<code>gadm.csv</code>). DuckDB has no materialized views: what is the closest equivalent, and what do you lose? In Postgres, insert a new image and check whether the view sees it before and after <code>REFRESH MATERIALIZED VIEW</code>.</p></li>
+<li><p><strong>Averages you can trust.</strong> Redo 4.1 for countries, but report for each group the number of images, the mean, and the standard error of the mean of <code>Safe</code>; keep only groups with at least 30 images. How many of the “top 10 safest countries” from 4.1 survive? How many images does the original number one have?</p></li>
+<li><p><strong>Medians and percentiles.</strong> For each <code>urban_term</code>, compute the median and the 90th percentile of <code>Safe</code>. Postgres: <code>percentile_cont(...) WITHIN GROUP (ORDER BY ...)</code>; DuckDB: <code>median()</code>, <code>quantile_cont()</code>. Where do the mean and the median rank the categories differently?</p></li>
+<li><p><strong>Top-k per group.</strong> For each country, list the three level-1 areas (<code>NAME_1</code>) with the highest average <code>Safe</code>, among areas with at least 20 images. Solve it with a window function (<code>row_number() OVER (PARTITION BY ...)</code>) in both engines. Then solve it again with Postgres’s <code>DISTINCT ON</code> (for top-1) and DuckDB’s <code>QUALIFY</code> clause or <code>arg_max()</code>. Which version is easiest to read?</p></li>
+<li><p><strong>Subtotals.</strong> Count images per country and level-1 area with <code>GROUP BY ROLLUP (COUNTRY, NAME_1)</code>. The subtotal rows have <code>NULL</code> in <code>NAME_1</code> — but so do real rows with a missing name. Use <code>GROUPING()</code> to tell them apart. Then try <code>CUBE</code> and <code>GROUPING SETS</code>, and explain the difference in one sentence each.</p></li>
+<li><p><strong>Wide to long.</strong> <code>instances</code> has one column per object class (~65 of them). Reshape it into long format <code>(uuid, object, count)</code>:</p>
+<ul>
+<li>DuckDB: <code>UNPIVOT instances ON COLUMNS(* EXCLUDE (uuid, source, orig_id)) INTO NAME object VALUE n</code></li>
+<li>Postgres: no <code>UNPIVOT</code>; use <code>CROSS JOIN LATERAL (VALUES ...)</code> or convert each row to <code>jsonb</code> and use <code>jsonb_each_text</code>.</li>
+</ul>
+<p>Using the long table, find the object classes whose counts correlate most strongly (<code>corr()</code>, both engines have it) with each perception score. Ignore classes that are almost never detected. Does the strongest “safety” predictor make sense? Correlation is not causation: name one confounder.</p></li>
+<li><p><strong>Spatial neighbours.</strong> For the images in the United States, find each image’s nearest other image by great-circle (haversine) distance, using a plain SQL self-join — no PostGIS. Report the median distance to the nearest neighbour and the correlation between an image’s <code>Safe</code> score and its neighbour’s.</p>
+<ul>
+<li>How many pairs does the self-join evaluate? Time the query in both engines.</li>
+<li>Is the correlation you find evidence of <em>spatial autocorrelation</em>? Compare with the correlation between random pairs.</li>
+<li><strong>Optional:</strong> install PostGIS, create a <code>geography</code> column and a GiST index, and use the KNN operator <code>&lt;-&gt;</code> with <code>ORDER BY ... LIMIT 1</code>. How does that compare with the brute-force versions?</li>
+</ul></li>
+</ol>
+</section>
+<section id="postgres-vs-duckdb-performance" class="level3">
+<h3 class="anchored" data-anchor-id="postgres-vs-duckdb-performance">5. Postgres vs DuckDB: performance</h3>
+<ol type="1">
+<li><p><strong>Scale up.</strong> Create a table 100× larger than <code>perception</code> by cross-joining it with a series (<code>generate_series(1, 100)</code> in Postgres, <code>range(100)</code> in DuckDB), generating fresh <code>uuid</code>s (<code>gen_random_uuid()</code> exists in both). Run queries 4.1, 4.3 and 4.5 on 1×, 10× and 100× data in both engines. Run each query at least 5 times and report the median; explain why the first run is often slower.</p></li>
+<li><p><strong>Few columns vs all columns.</strong> On the scaled-up <code>instances</code> table, compare <code>SELECT avg("Car") FROM ...</code> with <code>SELECT * FROM ... WHERE "Car" &gt; 10</code> in both engines. Relate what you see to row vs column storage.</p></li>
+<li><p><strong>The other direction.</strong> Insert 10 000 rows into <code>perception</code> one at a time, each in its own transaction, from Python, in both engines. Then update 10 000 single rows by primary key. Which engine wins now, and why?</p></li>
+<li><p><strong>Engines together.</strong> DuckDB can query a running Postgres directly:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>con.sql(<span class="st">"INSTALL postgres; LOAD postgres;"</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>con.sql(<span class="st">"ATTACH 'dbname=lab10 user=... password=... host=localhost' AS pg (TYPE postgres)"</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>con.sql(<span class="st">"SELECT count(*) FROM pg.public.perception"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Time query 4.1 three ways: in Postgres, in DuckDB on its own tables, and in DuckDB on the attached Postgres tables. What does each of them actually read?</p></li>
+<li><p><strong>Files as tables.</strong> Export the scaled-up tables to Parquet and run the same queries directly on the Parquet files in DuckDB (<code>FROM 'big.parquet'</code>). Compare file sizes (CSV vs Parquet vs DuckDB database vs Postgres) and query times.</p></li>
+</ol>
+<p>Collect everything in one table: rows = tasks, columns = Postgres time / DuckDB time / notes.</p>
+</section>
+<section id="reflection" class="level3">
+<h3 class="anchored" data-anchor-id="reflection">6. Reflection</h3>
+<p>Answer briefly:</p>
+<ol type="1">
+<li>You are building (a) a web application where thousands of users update their profiles, and (b) a weekly report that aggregates 500 million logged events. Which engine for each, and why?</li>
+<li>Which data-quality problem from section 2 would have silently changed a result in section 4 if you had not caught it?</li>
+<li>What did DuckDB make easier, and what did it make impossible or harder (think: concurrent writers, users and permissions, a server that other programs connect to)?</li>
 </ol>
 
 

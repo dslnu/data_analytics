@@ -1,0 +1,767 @@
+---
+title: "Databases: History, Models and Queries"
+author: 
+  - name: MSDE
+    affiliation: Lviv University
+code-fold: false
+execute:
+  enabled: true
+  cache: true
+diagram:
+  cache: true
+  cache-dir: ./cache
+  engine:
+    tikz:
+      execpath: lualatex
+      additional-packages: |
+        \usetikzlibrary{arrows.meta}
+        \usetikzlibrary{positioning}
+        \usetikzlibrary{decorations.pathreplacing}
+filters:
+  - diagram
+format: 
+  revealjs:
+    css: custom.css
+    html-math-method:
+      method: mathjax
+      url: "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"
+    preview-links: auto
+    slide-number: true
+    theme: default
+    multiplex:
+      url: 'https://mplex.vitv.ly'
+      secret: '589a3556f26f555b43372da9855fb80b'
+      id: 'f383d86d234a2b6e614ad0237677d2ea99a3db408e766a57906400c1e456ee63'
+---
+
+
+## History
+:::{.callout-important icon=false}
+## Plimpton 322 tablet (1800 BC)
+![](img/Plimpton_322.jpg){height=500}
+:::
+
+
+## Overview: tech stack
+![](img/db_tech_stack)
+
+## Overview: data shapes
+:::{.callout-tip icon=false}
+## Data shapes
+
+- trees
+- cubes
+- graphs
+- unstructured
+:::
+
+## Data models
+:::{.callout-important icon=false}
+## Origins of databases
+**Business data processing** performed on mainframe computers in the 1960s and ’70s:
+
+- transaction processing (entering sales or banking transactions, airline reservations, stock-keeping in warehouses)
+- batch processing (customer invoicing, payroll, reporting).
+:::
+
+:::{.callout-warning icon=false}
+## History outline
+
+- 1970-1980s: network and hierarchical models
+- 1980-1990s: object databases
+- 1970s-present: relational model
+- 1990s-present: document model
+:::
+
+## Hierarchical model
+:::{.callout-important icon=false}
+## Information Management System (IBM)
+Originally released in 1968, developed for stock keeping of the Apollo space program.
+
+Represented all data as a tree of records nested within records.
+
+- works well for one-to-many relationships
+- not so well for many-to-many relationships
+- does not support joins
+:::
+
+## Hierarchical model
+![](img/hierarchical_model)
+
+## Network model
+:::{.callout-tip icon=false}
+## Conference on Data Systems Languages (CODASYL, 1969)
+
+- child record can have many parents
+- allows modeling of many-to-one and many-to-many relationships
+- uses **access paths**: sequences of links between records
+- queries are constructed by following access paths
+:::
+
+## Network model
+:::{.callout-important icon=false}
+## Bachman diagram
+![](img/bachman_diagram.jpg)
+:::
+
+## Relational model
+:::{.callout-tip icon=false}
+## Edgar Codd. A Relational Model of Data for Large Shared Data Banks (1970)
+
+> A usable database management
+system should hide all the physical complexity from the user and expose instead a simple, clean model.
+This model should be based on tables, which gave birth to the relational
+model and the relational algebra.
+
+:::
+
+:::{.callout-important icon=false}
+## Data independence
+**Data independence** - the independence of application programs
+and terminal activities from growth in data types and
+changes in data representation.
+
+Logical view on the data is cleanly separated, decoupled, from its physical storage.
+:::
+
+## Relational model
+:::{.callout-tip icon=false}
+## Logical model
+A relational database management system (RDBMS) exposes this
+logical model, together with logical building blocks for manipulating
+it, on top of a physical layer.
+
+Thus, 2 layers:
+
+- **Logical**
+- **Physical**
+
+In relational model, logical view is a **table**. 
+:::
+
+::: aside
+Note: query optimizer handles the construction of access paths (compare with manual effort required in the network model)
+:::
+
+## Relational model
+:::{.callout-tip icon=false}
+## RDBMS as a stack
+
+- A logical query language with which the user can query data;
+- A logical model for the data;
+- A physical compute layer that processes the query on an instance of the model;
+- A physical storage layer where the data is physically stored.
+:::
+
+## Relational model
+:::{.callout-note icon=false}
+## Definitions
+A **relation** $R$ on a family of sets $(A_i)_{i=1,n}$ is a subset of their Cartesian product:
+$R \subseteq A_1 \times \ldots \times A_n$.
+
+A **partial function** between two sets $A$ and $B$ is a relation that associates to each element of $A$
+at most one element of $B$:
+$$
+\forall (x_A, x_B), (y_A, y_B) \ in p: x_A = y_A \Rightarrow x_B = y_B
+$$
+
+The set of all partial functions from $A$ to $B$ is denoted as $A \mapsto B$.
+
+The subset of $A$ with the elements that do get associated to an
+element of $B$ is denoted $support(p)$:
+$$
+support(p) = \left\{a \in A: \exists b \in B, p(a)=b\right\} = p^{-1}(B).
+$$
+:::
+
+## Relational model
+
+:::{.callout-tip icon=false}
+## Set definitions
+
+- $\mathbb{S}$ is a set of all strings.
+
+- $\mathbb{V}$ is a set of all possible values. Contains anything that can be stored on persistent storage or in memory as a sequence of 0s and 1s and according to a
+convention to interpret these bits.
+:::
+
+## Relational model {.font8}
+:::{.callout-tip icon=false}
+## Set definitions
+
+- $\mathbb{A} \subset \mathbb{V}$ -- the set that contains all atomic values. Atomic
+  values are values that are not structured, i.e., this excludes:
+
+  - objects,
+  - arrays,
+  - lists,
+  - sets,
+  - trees,
+  - bags,
+  - etc.
+
+  but only includes:
+  
+  - strings,
+  - integers,
+  - Booleans,
+  - dates
+
+  and so on.
+:::
+
+## Relational model
+:::{.callout-tip icon=false}
+## Set definitions
+
+- The **table** itself, which can be seen as a collection of **records**. 
+      A synonym is a **collection**.
+- The **attribute**, which is a property that records can have. 
+- The **row**, which is a record in a collection. A row associates
+properties with the values applicable for the record it represents.
+Synonyms of row are:
+
+  - record,
+  - entity,
+  - document,
+  - item.
+
+- The **primary key**, which is a particular attribute or set of attributes that uniquely identify a record in its table. 
+:::
+
+## Relational model
+:::{.callout-important icon=false}
+## Table definition
+Expressed formally, given a family of attributes $(A_i)_{1\leq i \leq n}$ and their
+associated domains
+$$
+(Domain(A_i))_{1\leq i \leq n}
+$$
+a table $T$ is a relation over these domains, i.e.
+$$
+T \subseteq Domain(A_1) \times Domain(A_2) \times \ldots \times Domain(A_n)
+$$
+:::
+
+## Relational model
+:::{.callout-important icon=false}
+## Table definition
+A collection of records is a set of partial functions from $\mathbb{S}$ to $\mathbb{V}$.
+We denote the set of collections as $\mathcal{C}$:
+$$
+\mathcal{C} = \mathcal{P}(\mathbb{S} \mapsto \mathbb{V})
+$$
+Each record is thus modelled as a partial function mapping strings
+to values.
+![](img/relational_s_to_v)
+:::
+
+## Relational model
+:::{.callout-important icon=false}
+## Table definition
+A table is a collection with three constraints:
+
+- Relational integrity
+- Domain integrity
+- Atomic integrity
+:::
+
+## Relational model
+:::{.callout-note icon=false}
+## Relational integrity
+A collection T fulfils relational integrity if all its records have identical
+support:
+$$
+\forall t, u \in T : support(u) = support(t)
+$$
+Common support is a property of the table and contains the attributes
+of the table $T$: $Attributes_T$.
+
+The extension of the table, sometimes denoted $Extension_T$ is its actual content, which is $T$ itself.
+:::
+
+## Relational model
+:::{.callout-important icon=false}
+## No relational integrity
+![](img/relational_integrity1)
+:::
+
+## Relational model
+:::{.callout-tip icon=false}
+## With relational integrity
+![](img/relational_integrity2){height=500}
+:::
+  
+## Relational model
+:::{.callout-note icon=false}
+## Domain integrity
+A collection $T$ fulfils domain integrity if the values associated with
+each attribute are restricted to a domain.
+
+We define these domains
+with a function $D$ mapping strings (the attributes) to domains (unused
+attributes are just associated with empty domains, i.e. this does not
+need to be a partial function):
+$$
+D \in \mathcal{P}(\mathbb{V})^\mathbb{S}
+$$
+
+A collection $T$ fulfils the domain integrity constraint specified by $D$
+if, for each row, the values are in the specified domains:
+$$
+\forall t \in T, \forall a \in support(t): t.a \in D(a)
+$$
+
+**Note:** domain integrity still allows **missing** values.
+:::
+
+## Relational model
+:::{.callout-important icon=false}
+## Schema
+Domain mapping $D$ is called a **schema**.
+
+Schema contains:
+
+- **names** of the columns
+- the **domain** or **type** of each column (string, integer, date, boolean, and so on).
+:::
+
+## Relational model
+
+:::{.callout-important icon=false}
+## No domain integrity
+![](img/domain_integrity1)
+:::
+
+## Relational model
+:::{.callout-tip icon=false}
+## With domain integrity
+![](img/domain_integrity2)
+:::
+
+## Relational model
+:::{.callout-tip icon=false}
+## Atomic integrity
+A collection $T$ fulfils the atomic integrity constraint if the values used
+in it are only atomic values, i.e.
+$$
+T \subseteq \mathbb{S} \mapsto \mathbb{A}
+$$
+
+This means that the collection does not contain any nested collections or sets or lists or anything that has a structure of its own: it is **flat**.
+:::
+
+## Relational model
+:::{.callout-important icon=false}
+## No atomic integrity
+![](img/atomic_integrity1)
+:::
+  
+## Relational model
+:::{.callout-tip icon=false}
+## With atomic integrity
+![](img/atomic_integrity2)
+:::
+
+## Relational model
+![](img/integrity_nosql)
+
+## Relational model
+
+![**Relational algebra:** a framework for manipulating relational tables](img/relational_operators)
+
+
+## Relational model
+:::{.callout-note icon=false}
+## Queries
+
+- **Set queries** act on relational tables as sets (as previously described): one can take the union or the intersection of two sets,
+or subtract a set from another. 
+<!-- %These operators directly and naturally translate to relational tables. -->
+- **Filter queries** take a portion of a table: some
+      or all columns, some or all rows, etc. They are known as **projection** and **selection**. 
+<!-- %There also exists a fancy operator called the “extended projection” that can be used to add more computed columns. -->
+- **Renaming queries** can rename columns.
+- **Joining queries** can take the Cartesian product
+of two tables, potentially filtering to match values from both sides.
+The latter is called a **join**.
+:::
+
+## Relational model
+:::{.callout-tip icon=false}
+## Selection
+A selection takes a subset of the records belonging to the table,
+taking a parameter, which is a predicate on the attributes. 
+
+The notation used is the $\sigma$ letter. 
+$$
+S = \sigma_{B \leq 2}(R)
+$$
+![](img/relational_selection){height=350}
+:::
+
+
+## Relational model
+:::{.callout-tip icon=false}
+## Projection
+A projection keeps all records, but removes columns specified in the parameter list.
+
+The notation used is the $\pi$ letter:
+$$
+S = \pi_{A,C}(R)
+$$
+![](img/relational_projection){height=350}
+:::
+
+
+## Relational model
+:::{.callout-note icon=false}
+## Grouping
+A grouping, also called aggregation, merges records by grouping on
+some attributes, and aggregating on all others.
+
+The notation used is the $\gamma$ letter:
+$$
+S = \gamma_{G,SUM(A) \rightarrow A}(R)
+$$
+This groups by $G$ and aggregate the values in column $A$ (within the same group) with a sum
+
+**Note:** there are grouping and non-grouping attributes.
+
+**Examples:** COUNT, SUM, MAX, MIN, AVERAGE.
+:::
+
+## Relational model
+:::{.callout-important icon=false}
+## Relational grouping
+![](img/relational_grouping)
+:::
+
+## Relational model
+:::{.callout-note icon=false}
+## Renaming
+Rename a column from $A$ to $D$:
+$$
+S = \rho_{A \rightarrow D}(R)
+$$
+:::
+
+## Relational model
+:::{.callout-important icon=false}
+## Joins
+A **natural** join is a filtered Cartesian product in which we only combine directly related
+tuples and omit all other non-matching pairs.
+The notation used is the $\bowtie$ symbol:
+$$
+T= R \bowtie S
+$$
+joins $R$ and $S$ but only keeps records that coincide on the attributes
+common to both sides.
+
+Joins are computationally **more expensive** than projections or selections.
+:::
+
+## Relational model
+:::{.callout-important icon=false}
+## Relational join
+![](img/relational_join)
+:::
+
+## Relational model
+:::{.callout-tip icon=false}
+## Other joins
+
+- **Theta joins** explicitly specify the joining criterion instead of matching the common attributes, e.g. $T= R \bowtie_{A=D} S$. 
+        Common attributes should be renamed, e.g. $T= R \bowtie_{B=E \rho_{B \rightarrow E}} S$.
+- **Outer joins** keep records with no match on the other side, keeping the other attributes absent. Note that this breaks relational
+integrity in its strictest sense
+- **Semi-outer joins** are like (full) outer joins but only keep unmatched records on the left, or only on the right.
+:::
+
+## Relational model
+:::{.callout-tip icon=false}
+## Normal forms
+
+- Atomic integrity
+- Each column in a record contains information on the entire record
+- No functional dependencies on anything else than the primary key
+
+Normal forms help to address inconsistencies:
+
+- **deletion anomalies:** deleting a record makes the database inconsistent
+- **insertion anomalies:** inserting a new record makes the database inconsistent
+- **update anomalies:** updating a record makes the database inconsistent
+:::
+
+## Relational model
+:::{.callout-tip icon=false}
+## Key idea behind of normalization
+Removal of **duplication.**
+:::
+
+:::{.callout-important icon=false}
+## Downsides
+
+- Requires joins
+- Loss of locality (also called **shredding**)
+:::
+
+## Relational model
+:::{.callout-tip icon=false}
+## Transactions
+ACID guarantees:
+
+- **Atomicity**: either an update (called a transaction if it consists of
+several updates) is applied to the database completely, or not at
+all;
+- **Consistency**: before and after the transactions, the data is in a
+consistent state (e.g., some values sum to another value, another
+value is positive, etc);
+- **Isolation:** the system “feels like” the user is the only one using
+the system, where in fact maybe thousands of people are using it
+as well concurrently;
+- **Durability:** any data written to the database is durably stored
+and will not be lost (e.g., if there is an electricity shortage or a
+disk crash). 
+:::
+
+## Relational model
+:::{.callout-important icon=false}
+## Limitations
+
+- lots of **rows**: beyond a million records, a system on
+one machine can start showing signs of weakness; even though
+more recent systems manage to push it a bit higher on a single
+machine (e.g., close to a billion)
+- lots of **columns**: beyond 255 columns, a system on
+one machine can start showing signs of weakness or even not
+support it at all
+- lots of **nesting**: many systems do not support nested
+data or, if they do, do so only in a limited fashion and it becomes
+quickly cumbersome
+:::
+
+## Relational model
+:::{.callout-tip icon=false}
+## Alternatives
+
+|Issue|Solution|
+|----|----|
+|Lots of rows | Object storage|
+|Lots of rows | Distributed File Systems|
+|Lots of nesting | Syntax |
+|Lots of rows/columns | Column storage|
+|Lots of nesting | Data models |
+|Lots of rows | Massive Parallel Processing |
+|Lots of nesting | Document Stores|
+|Lots of nesting | Querying |
+
+:::
+
+
+## Relational model
+:::{.callout-tip icon=false}
+## Drivers for change
+
+- A need for greater **scalability** than relational databases can easily achieve, including very large datasets or very high write throughput
+- A widespread preference for **free and open source** software over commercial database products
+- **Specialized query operations** that are not well supported by the relational model
+- Frustration with the **restrictiveness** of relational schemas, and a desire for a more dynamic and expressive data model
+:::
+
+## Relational model
+:::{.callout-tip icon=false}
+## Modern systems
+
+-  key-value stores
+- wide column stores
+- document stores 
+- graph databases
+:::  
+
+## Relational model
+:::{.callout-important icon=false}
+## Challenges
+
+- integrity may not hold (nested/heterogeneous data)
+- ACID guarantees may not hold
+:::
+ 
+## CAP
+:::{.callout-important icon=false}
+## Definition
+CAP: presented as a conjecture by Eric Brewer at the 2000 Symposium on Principles of Distributed Computing and formalized and proven by Gilbert and Lynch in 2002.
+
+- **Consistent:** All replicas of the same data will be the same value across a distributed system.
+- **Available:** All live nodes in a distributed system can process operations and respond to queries.
+- **Partition Tolerant:** The system is designed to operate in the face of connectivity loss between replicas.
+:::
+
+:::{.callout-tip icon=false}
+## CAP (Brewer's) theorem 
+You can have only two of the above.
+:::
+
+
+## Document model
+:::{.callout-note icon=false}
+## Comparison
+
+- **vs hierarchical:** child data is stored together with a parent record
+- **vs relational:** use document references instead of foreign keys
+:::
+
+## Document model
+:::{.callout-important icon=false}
+## Example
+```json
+{"user_id": 251,
+  "first_name": "Bill",
+  "last_name": "Gates",
+  "summary": "Co-chair of the Bill and Melinda Gates... Active blogger.",
+  "education": [
+    {"school_name": "Harvard University", "start": 1973, "end": 1975},
+    {"school_name": "Lakeside School, Seattle", "start": null, "end": null}
+  ],
+  "contact_info": {
+    "blog": "http://thegatesnotes.com",
+    "twitter": "http://twitter.com/BillGates"
+  }
+}
+```
+:::
+
+
+## Document model
+:::{.callout-tip icon=false}
+## Pros
+
+- schema flexibility
+- data locality (performance implications!)
+:::
+
+:::{.callout-important icon=false}
+## Cons
+
+- no joins
+- many-to-one and many-to-many relationships
+:::
+
+## Document model
+:::{.callout-note icon=false}
+## Schemas
+Document DBs are not **schemaless**. They are **schema-on-read**.
+
+Relational DBs are **schema-on-write**.
+
+![](img/schema_on_read_write){height=350}
+:::
+
+
+## Document model
+:::{.callout-important icon=false}
+## Hybrids: JSON support in RDBMS
+
+- PostgreSQL 9.3 (2013)
+- MySQL 5.7 (2013)
+- IBM DB2 10.5 (2013)
+:::
+
+:::{.callout-tip icon=false}
+## Hybrids: joins support in document DBs
+
+- RethinkDB: relational-like joins
+- MongoDB: client-side joins
+:::
+
+## Graph model
+:::{.callout-tip icon=false}
+## Features
+
+- Good for many-to-many relationships
+- suitable for homogeneous and heterogeneous data
+- several data structuring and querying approaches
+- flexible data modeling
+:::
+
+## Graph model
+![](img/graph_data_example)
+
+## Graph model
+:::{.callout-tip icon=false}
+## Property graphs (Neo4J, Titan, InfiniteGraph)
+**Vertices**: 
+
+- A unique identifier
+- A set of outgoing edges
+- A set of incoming edges
+- A collection of properties (key-value pairs)
+
+**Edges:**
+
+- A unique identifier
+- The vertex at which the edge starts (the tail vertex)
+- The vertex at which the edge ends (the head vertex)
+- An edge label
+- A collection of properties (key-value pairs)
+:::
+
+## Graph model
+:::{.callout-important icon=false}
+## Property graph as a pair of relational tables
+```sql
+CREATE TABLE vertices (
+  vertex_id integer PRIMARY KEY,
+  properties json
+);
+CREATE TABLE edges (
+  edge_id integer PRIMARY KEY,
+  tail_vertex integer REFERENCES vertices (vertex_id),
+  head_vertex integer REFERENCES vertices (vertex_id),
+  label text,
+  properties json
+);
+CREATE INDEX edges_tails ON edges (tail_vertex);
+CREATE INDEX edges_heads ON edges (head_vertex);
+```
+:::
+
+
+## Graph model
+:::{.callout-tip icon=false}
+## Triple stores (Datomic, AllegroGraph)
+All information is stored in the form of very simple three-part statements: **(subject, predicate, object)**:
+
+
+- **subject:** equivalent to a vertex in a graph
+- **object:** either a primitive datatype or a vertex
+:::
+
+## Graph model
+:::{.callout-important icon=false}
+## Turtle triple format
+```json
+_:lucy a :Person; :name "Lucy"; :bornIn _:idaho.
+_:idaho a :Location; :name "Idaho"; :type "state"; :within _:usa.
+_:usa a :Location; :name "United States"; :type "country"; :within _:namerica.
+_:namerica a :Location; :name "North America"; :type "continent".
+```
+:::
+
+## Graph model
+:::{.callout-tip icon=false}
+## Datalog
+This is a generalized version of triple-store model: **predicate(subject, object)**
+```datalog
+name(namerica, 'North America').
+type(namerica, continent).
+name(usa, 'United States').
+type(usa, country).
+within(usa, namerica).
+name(idaho, 'Idaho').
+type(idaho, state).
+within(idaho, usa).
+name(lucy, 'Lucy').
+born_in(lucy, idaho).
+```
+:::
