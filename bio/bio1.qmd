@@ -1094,3 +1094,136 @@ $$
 
 Notice how we only use the gap extend penalty if the previous max score resulted from a gap in the same sequence because it represents the continuation of an existing gap in that sequence. We know which sequence a gap is being introduced in by the characters in the traceback matrix: ↑ always implies a gap in the sequence on the horizontal axis of $F$ and $T$, and ← always implies a gap in the sequence on the vertical axis of $F$ and $T$.
 :::
+## Differential gap scoring {.scrollable}
+
+:::{.callout-tip icon=false}
+## Gap scoring
+Pass penalties as 3rd and 4th argument to `_compute_score_and_traceback_matrices`:
+```{python}
+seq1 = TabularMSA([Protein("HEAGAWGHEE")])
+seq2 = TabularMSA([Protein("PAWHEAE")])
+
+sw_matrix, traceback_matrix = _compute_score_and_traceback_matrices(seq1, seq2, 8, 1, blosum50)
+
+show_F(seq1[0], seq2[0], sw_matrix)
+```
+And $T$:
+```{python}
+show_T(seq1[0], seq2[0], traceback_matrix)
+```
+:::
+
+## Differential gap scoring {.scrollable}
+
+:::{.callout-tip icon=false}
+## Gap scoring
+And for global alignment:
+
+```{python}
+seq1 = TabularMSA([Protein("HEAGAWGFHEE")])
+seq2 = TabularMSA([Protein("PAWHEAE")])
+```
+
+```{python}
+aln, score, _ = global_pairwise_align(seq1, seq2, 8, 8, blosum50)
+print(aln)
+print(score)
+```
+```{python}
+aln, score, _ = global_pairwise_align(seq1, seq2, 8, 1, blosum50)
+print(aln)
+print(score)
+```
+:::
+
+## Benchmarking
+:::{.callout-tip icon=false}
+## Comparing implementations
+```{python}
+from skbio.alignment import local_pairwise_align_nucleotide
+
+seq1 = DNA("GGTCTTCGCTAGGCTTTCATCGGGTTCGGCATCTACTCTGAGTTACTACG")
+seq2 = DNA("GGTCTTCAGGCTTTCATCGGGAACGGCATCTCTGAGTTACTACC")
+
+%timeit local_pairwise_align_nucleotide(seq1, seq2, gap_open_penalty=8, gap_extend_penalty=1)
+```
+
+Faster implementation:
+
+```{python}
+from skbio.alignment import local_pairwise_align_ssw
+
+%timeit local_pairwise_align_ssw(seq1, seq2)
+```
+:::
+
+## Benchmarking
+:::{.callout-tip icon=false}
+## Runtime as function of length
+
+Helper function to generate random sequences:
+```{python}
+import numpy as np
+
+def random_sequence(moltype, length):
+    result = []
+    # Our "alphabet" here will consist of the standard characters in a
+    # molecules alphabet.
+    alphabet = list(moltype.nondegenerate_chars)
+    for e in range(length):
+        result.append(np.random.choice(alphabet))
+    return moltype(''.join(result))
+```
+
+Test:
+
+```{python}
+print(random_sequence(DNA, 10))
+print(random_sequence(DNA, 10))
+print(random_sequence(DNA, 25))
+print(random_sequence(DNA, 50))
+```
+
+:::
+## Benchmarking {.scrollable}
+:::{.callout-tip icon=false}
+## Different lengths
+```{python}
+import timeit
+
+times = []
+seq_lengths = range(5000,110000,20000)
+
+def get_time_function(seq_length):
+    def f():
+        seq1 = random_sequence(DNA, seq_length)
+        seq2 = random_sequence(DNA, seq_length)
+        local_pairwise_align_ssw(seq1, seq2)
+    return f
+
+for seq_length in seq_lengths:
+    times.append(min(timeit.Timer(get_time_function(seq_length)).repeat(repeat=3, number=3)))
+
+print("Done!")
+```
+
+Show table:
+```{python}
+import pandas as pd
+runtimes = pd.DataFrame(data=np.asarray([seq_lengths, times]).T, columns=["Sequence length", "Runtime (s)"] )
+runtimes
+```
+
+Plot it:
+```{python}
+import seaborn as sns
+ax = sns.regplot(x="Sequence length", y="Runtime (s)", data=runtimes, fit_reg=False)
+ax.set_xlim(0)
+ax.set_ylim(0)
+ax
+```
+We have a **quadratic relationship**.
+:::
+
+## Benchmarking {.scrollable}
+![](../img/bio/bigo)
