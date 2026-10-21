@@ -1,0 +1,86 @@
+---
+title: "Bioinformatics: Lab 1"
+execute:
+  enabled: true
+  echo: true
+  cache: true
+format:
+  html:
+    code-fold: false
+    toc: true
+jupyter: python3
+---
+
+## 1. Reverse complement
+
+DNA is double-stranded, and a read can come from either strand. The *reverse complement* reads the other
+strand: complement every base (`A↔T`, `C↔G`) and reverse the result. Keep `N` (unknown base) as `N`.
+
+```python
+def reverse_complement(seq: str) -> str:
+    ...
+
+# tests
+assert reverse_complement("AAAACCCGGT") == "ACCGGGTTTT"
+assert reverse_complement("") == ""
+assert reverse_complement("ACGTN") == "NACGT"
+assert reverse_complement(reverse_complement("GATTACA")) == "GATTACA"
+```
+
+## 2. Hamming distance
+
+<https://leetcode.com/problems/hamming-distance/description/>
+
+## 3. The longest substring
+
+Return the length of the longest substring shared *exactly* by `a` and `b`.
+
+See also <https://leetcode.com/problems/maximum-length-of-repeated-subarray/description/>
+
+```python
+def longest_common_run(a: str, b: str) -> int:
+    ...
+
+# tests
+assert longest_common_run("ACCGGTGGAACCGGTAACACCCAC", "ACCGGTAACCGGTTAACACCCAC") == 10
+assert longest_common_run("ABC", "XYZ") == 0
+assert longest_common_run("GATTACA", "GATTACA") == 7
+assert longest_common_run("", "ACGT") == 0
+```
+
+## 4. Longest common subsequence
+
+A *subsequence* may skip characters; a substring may not. Return the length of the longest common
+subsequence.
+
+See also <https://leetcode.com/problems/longest-common-subsequence/description/>
+
+```python
+def lcs_length(a: str, b: str) -> int:
+    ...
+
+# tests
+assert lcs_length("ABCBDAB", "BDCABA") == 4
+assert lcs_length("AGGTAB", "GXTXAYB") == 4
+assert lcs_length("ACGT", "") == 0
+assert lcs_length("GATTACA", "GATTACA") == 7
+```
+
+## 5. Maximum subarray --- Smith-Waterman in one dimension
+
+Given a list of numbers, return the largest sum of a contiguous, non-empty slice.
+
+Hint: <https://en.wikipedia.org/wiki/Maximum_subarray_problem#Kadane's_algorithm>
+
+See also: <https://leetcode.com/problems/maximum-subarray/description/>
+
+```python
+def max_subarray(nums: list[float]) -> float:
+    ...
+
+# tests
+assert max_subarray([-2, 1, -3, 4, -1, 2, 1, -5, 4]) == 6
+assert max_subarray([1]) == 1
+assert max_subarray([-3, -1, -2]) == -1          # non-empty: the best single element
+assert max_subarray([5, 4, -1, 7, 8]) == 23
+```

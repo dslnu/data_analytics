@@ -29,8 +29,8 @@ format:
     theme: default
     multiplex:
       url: 'https://mplex.vitv.ly'
-      secret: '04a7bbbb5a7ec68e43c6d059cfd0b620'
-      id: 'c1c05966d7094c54b63a9d02668b279610b06479786c58416d7abdf1be0213ee'
+      secret: '7cf7079cb10832c727ab521bd584fc09'
+      id: '1a22cd8141caf4939746059ae3064679ba8880fc46aeb88e6b95e1d1a9f1f8f6'
 ---
 
 ```{python}
@@ -1148,13 +1148,14 @@ seq2 = DNA("GGTCTTCAGGCTTTCATCGGGAACGGCATCTCTGAGTTACTACC")
 %timeit local_pairwise_align_nucleotide(seq1, seq2, gap_open_penalty=8, gap_extend_penalty=1)
 ```
 
-Faster implementation:
+Faster implementation (compiled):
 
 ```{python}
-from skbio.alignment import local_pairwise_align_ssw
+from skbio.alignment import pair_align_nucl
 
-%timeit local_pairwise_align_ssw(seq1, seq2)
+%timeit pair_align_nucl(seq1, seq2, mode="local")
 ```
+
 :::
 
 ## Benchmarking
@@ -1192,17 +1193,19 @@ print(random_sequence(DNA, 50))
 import timeit
 
 times = []
-seq_lengths = range(5000,110000,20000)
+# the book goes to 105 000 bases with the SSW heuristic; an exact aligner needs the
+# full m x n matrix, so we stop at 9 000 (a 105k x 105k matrix would not fit in RAM)
+seq_lengths = range(1000, 10000, 2000)
 
 def get_time_function(seq_length):
     def f():
         seq1 = random_sequence(DNA, seq_length)
         seq2 = random_sequence(DNA, seq_length)
-        local_pairwise_align_ssw(seq1, seq2)
+        pair_align_nucl(seq1, seq2, mode="local", max_paths=1)
     return f
 
 for seq_length in seq_lengths:
-    times.append(min(timeit.Timer(get_time_function(seq_length)).repeat(repeat=3, number=3)))
+    times.append(min(timeit.Timer(get_time_function(seq_length)).repeat(repeat=3, number=1)))
 
 print("Done!")
 ```
