@@ -510,6 +510,18 @@ def show_F(h_sequence, v_sequence, data, hide_zeros=False, nonzero_val=None):
                     current_row.append(e)
         rows.append(current_row)
     return tabulate.tabulate(rows, headers=col_headers, tablefmt='html')
+
+
+def show_T(h_sequence, v_sequence, data):
+    if data.dtype == int:
+        data_ = T = np.full(shape=data.shape, fill_value=" ", dtype=str)
+        translation_table = {0: "•", 1: "↖", 2: "↑", 3: "←"}
+        for i, row in enumerate(data):
+            for j, value in enumerate(row):
+                data_[i, j] =  translation_table[value]
+    else:
+        data_ = data
+    return show_F(h_sequence, v_sequence, data_)
 ```
 
 Show the matrix:
@@ -825,9 +837,9 @@ nw_matrix, traceback_matrix = _compute_score_and_traceback_matrices(
 
 show_F(seq1[0], seq2[0], nw_matrix)
 ```
-And $T$:
+And $T$ --- scikit-bio stores it as integer codes (1 = diagonal, 2 = up, 3 = left, 0 = end), so `show_T` translates them to arrows:
 ```{python}
-show_F(seq1[0], seq2[0], traceback_matrix)
+show_T(seq1[0], seq2[0], traceback_matrix)
 ```
 :::
 
@@ -852,4 +864,233 @@ print(aln1[0])
 print(aln2[0])
 print(score)
 ```
+:::
+
+## Needleman-Wunsch algorithm {.scrollable}
+:::{.callout-tip icon=false}
+## API
+We'd like to define a function that takes all of the necessary input and provides the aligned sequences and the score as output, without requiring the user to make several function calls. This requires API definition:
+
+- inputs
+- outputs
+- name
+
+scikit-bio implementation:
+```{python}
+from skbio.alignment import global_pairwise_align
+%psource global_pairwise_align
+```
+Usage:
+```{python}
+aln, score, _ = global_pairwise_align(Protein("HEAGAWGHEE"), Protein("PAWHEAE"), 8, 8, blosum50, penalize_terminal_gaps=True)
+
+print(aln)
+print(score)
+```
+:::
+
+## Local alignment
+
+:::{.callout-tip icon=false}
+## Global vs local
+Global alignment: we align both sequences from their beginning through their end. 
+
+Local alignment: we have a pair of sequences that we suspect may partially overlap each other, and we want to know what the best possible alignment of all or part of one sequence is with all or part of the other sequences.
+
+Application: sequence database searching (e.g., the [BLAST web server](http://blast.ncbi.nlm.nih.gov/Blast.cgi)), where we have a query sequence and we want to find the closest match (or matches) in a reference database containing many different gene sequences. 
+:::
+
+## Local alignment
+
+:::{.callout-tip icon=false}
+## Smith-Waterman
+Originally published by Temple F. Smith and Michael S. Waterman (1981).
+
+Aligned sequences in Smith-Waterman can be a subsequence of one or both of the unaligned (input) sequences. In Needleman-Wunsch alignment, the aligned sequences will be full-length with respect to the unaligned sequences.
+```{python}
+from skbio import Protein
+seq1 = Protein("HEAGAWGHEE")
+seq2 = Protein("PAWHEAE")
+
+print(seq1)
+print(seq2)
+```
+:::
+
+## Local alignment {.scrollable}
+
+:::{.callout-tip icon=false}
+## Smith-Waterman
+Create blank matrices:
+
+```{python}
+num_rows = len(seq2) + 1
+num_cols = len(seq1) + 1
+F = np.zeros(shape=(num_rows, num_cols), dtype=int)
+show_F(seq1, seq2, F)
+```
+```{python}
+T = np.full(shape=(num_rows, num_cols), fill_value=" ", dtype=str)
+show_T(seq1, seq2, T)
+```
+:::
+
+## Local alignment {.scrollable}
+
+:::{.callout-tip icon=false}
+## Smith-Waterman
+Compute $F$ and $T$:
+
+
+$$
+\begin{align}
+& F(0, 0) = 0\\
+& F(i, 0) = 0\\
+& F(0, j) = 0
+\end{align}
+$$
+
+
+```{python}
+d = 8
+F[0][0] = 0
+for i in range(1, num_rows):
+    F[i][0] = 0
+
+for j in range(1, num_cols):
+    F[0][j] = 0
+
+show_F(seq1, seq2, F)
+```
+
+And $T$:
+```{python}
+T[0][0] = "•"
+for i in range(1, num_rows):
+    T[i][0] = "•"
+
+for j in range(1, num_cols):
+    T[0][j] = "•"
+
+show_T(seq1, seq2, T)
+```
+:::
+## Local alignment {.scrollable}
+
+:::{.callout-tip icon=false}
+## Smith-Waterman
+Compute remaining cells:
+
+$$
+F(i, j) = max \left(\begin{align}
+& 0\\
+& F(i-1, j-1) + s(c_i, c_j)\\
+& F(i-1, j) - d\\
+& F(i, j-1) - d)
+\end{align}\right)
+$$
+
+```{python}
+from skbio.alignment._pairwise import _init_matrices_sw
+seq1 = TabularMSA([seq1])
+seq2 = TabularMSA([seq2])
+
+sw_matrix, traceback_matrix = _compute_score_and_traceback_matrices(
+    seq1, seq2, 8, 8, blosum50, new_alignment_score=0.0,
+    init_matrices_f=_init_matrices_sw)
+
+show_F(seq1[0], seq2[0], sw_matrix)
+```
+And $T$:
+```{python}
+show_T(seq1[0], seq2[0], traceback_matrix)
+```
+:::
+## Local alignment {.scrollable}
+
+:::{.callout-tip icon=false}
+## Smith-Waterman
+Transcribe: we should now begin tracing back from the cell with the highest value in $F$, rather than the bottom right cell of the matrix. As before, the alignment terminates when we hit a bullet (•) character, but in contrast to Needleman-Wunsch alignment, this can happen anywhere in the matrix, not only in $F(0, 0)$.
+
+```{python}
+max_value = 0.0
+max_i = 0
+max_j = 0
+for i in range(sw_matrix.shape[0]):
+    for j in range(sw_matrix.shape[1]):
+        if sw_matrix[i, j] > max_value:
+            max_i, max_j = i, j
+            max_value = sw_matrix[i, j]
+
+aln1, aln2, score, start_a1, start_a2 = _traceback(traceback_matrix, sw_matrix, seq1, seq2, max_i, max_j)
+print(aln1[0])
+print(aln2[0])
+print(score)
+```
+:::
+## Local alignment {.scrollable}
+
+:::{.callout-tip icon=false}
+## Smith-Waterman
+Using Python API:
+```{python}
+from skbio.alignment import local_pairwise_align
+
+%psource local_pairwise_align
+```
+Use a generic wrapper:
+```{python}
+def align(sequence1, sequence2, gap_penalty, substitution_matrix, local):
+    if local:
+        return local_pairwise_align(sequence1, sequence2, gap_penalty, gap_penalty, substitution_matrix)
+    else:
+        return global_pairwise_align(sequence1, sequence2, gap_penalty, gap_penalty, substitution_matrix)
+```
+Use for local:
+
+```{python}
+aln, score, _ = align(Protein('HEAGAWGHEE'), Protein('PAWHEAE'), 8, blosum50, True)
+
+print(aln)
+print(score)
+```
+
+Use for global:
+
+```{python}
+aln, score, _ = align(Protein('HEAGAWGHEE'), Protein('PAWHEAE'), 8, blosum50, False)
+
+print(aln)
+print(score)
+```
+:::
+
+## Differential gap scoring {.scrollable}
+
+:::{.callout-tip icon=false}
+## Gap scoring
+
+We might want to incur a large penalty for opening a gap, but a smaller penalty for extending an existing gap. This is referred to as *affine gap scoring*.
+
+More info [here](http://www.ncbi.nlm.nih.gov/books/NBK21114/).
+
+When we compute the score corresponding to a gap in our alignment (i.e., where we'd insert either a ↑ or a ← in $T$), we should incur a *gap extension penalty* if the value in $T$ that the new arrow will point to is the same type of arrow. Otherwise, we should incur the *gap open penalty*.
+:::
+
+## Differential gap scoring {.scrollable}
+
+:::{.callout-tip icon=false}
+## Gap scoring
+If we represent our gap open penalty as $d^0$, and our gap extend penalty as $d^e$, our scoring scheme would look now like the following:
+
+$$
+F(i, j) = max \left(\begin{align}
+& 0\\
+& F(i-1, j-1) + s(c_i, c_j)\\
+& \left\{\begin{array}{l l} F(i-1, j) - d^e \quad \text{if $T(i-1, j)$ is ↑}\\ F(i-1, j) - d^o \quad \text{if $T(i-1, j)$ is not ↑} \end{array}  \right\} \\
+& \left\{\begin{array}{l l} F(i, j-1) - d^e \quad \text{if $T(i, j-1)$ is ←}\\ F(i, j-1) - d^o \quad \text{if $T(i, j-1)$ is not ←} \end{array}  \right\}
+ \end{align}\right)
+$$
+
+Notice how we only use the gap extend penalty if the previous max score resulted from a gap in the same sequence because it represents the continuation of an existing gap in that sequence. We know which sequence a gap is being introduced in by the characters in the traceback matrix: ↑ always implies a gap in the sequence on the horizontal axis of $F$ and $T$, and ← always implies a gap in the sequence on the vertical axis of $F$ and $T$.
 :::
