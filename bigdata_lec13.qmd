@@ -708,7 +708,7 @@ Reusing a column alias (`revenue`, `last_year`) later in the same `SELECT` is a 
 
 # Data lakes and lakehouses
 
-## OLTP vs OLAP
+## Data lakes and lakehouses
 :::{.callout-tip icon=false}
 ## Data warehouse challenges
 
@@ -719,7 +719,7 @@ not store and query at all.
 - **schema-on-write**
 :::
 
-## OLTP vs OLAP
+## Data lakes and lakehouses
 :::{.callout-tip icon=false}
 ## Solution
 **Data lakes** aka OLAP Gen 2.
@@ -733,7 +733,7 @@ Features:
 - started with HDFS (Apache Hadoop)
 :::
 
-## OLTP vs OLAP
+## Data lakes and lakehouses
 :::{.callout-note icon=false}
 ## Cloud data lake: storage layer
 
@@ -742,10 +742,10 @@ Features:
 - GCS (Google)
 :::
 
-## OLTP vs OLAP
+## Data lakes and lakehouses
 ![](img/datalakes)
 
-## OLTP vs OLAP
+## Data lakes and lakehouses
 :::{.callout-important icon=false}
 ## Data lake issues
 
@@ -760,7 +760,7 @@ differences between the data lake and warehouse engines.
 - **total cost of ownership**: users pay double the storage cost for data copied to a warehouse
 :::
 
-## OLTP vs OLAP
+## Data lakes and lakehouses
 :::{.callout-warning icon=false}
 ## Lakehouses
 Compared to data warehouses:
@@ -770,10 +770,10 @@ Compared to data warehouses:
 - offer state-of-the-art **performance**.
 :::
 
-## OLTP vs OLAP
+## Data lakes and lakehouses
 ![](img/lakehouses)
 
-## OLTP vs OLAP
+## Data lakes and lakehouses
 :::{.callout-tip icon=false}
 ## Technologies enabling Lakehouse transition
 
@@ -782,7 +782,7 @@ Compared to data warehouses:
 - **SQL performance:** Databricks Delta Engine, Presto, Trino
 :::
 
-## OLTP vs OLAP
+## Data lakes and lakehouses
 :::{.callout-important icon=false}
 ## Lakehouse definition
 Lakehouse is a data management system based on low-cost and directly-accessible storage that also provides traditional analytical DBMS management and performance features such as:
@@ -795,7 +795,7 @@ Lakehouse is a data management system based on low-cost and directly-accessible 
 - query optimization
 :::
 
-## OLTP vs OLAP
+## Data lakes and lakehouses
 :::{.callout-note icon=false}
 ## Lakehouse features
 
@@ -806,13 +806,13 @@ such as indexes and statistics, and data layout optimizations
 - **declarative DataFrame APIs:** TensorFlow and Spark MLlib
 :::
 
-## OLTP vs OLAP
+## Data lakes and lakehouses
 ![](img/lakehouses2)
 
-## OLTP vs OLAP
+## Data lakes and lakehouses
 ![](img/datalake_tech_components)
 
-## OLTP vs OLAP
+## Data lakes and lakehouses
 :::{.callout-tip icon=false}
 ## Lakehouses: Metadata
 For instance, Apache Iceberg stores the information about which objects are part of a table in the data lake itself as a transaction log in Parquet format, enabling it to scale to billions of objects per table.
@@ -820,7 +820,7 @@ For instance, Apache Iceberg stores the information about which objects are part
 
 ![](img/presto)
 
-## OLTP vs OLAP
+## Data lakes and lakehouses
 :::{.callout-note icon=false}
 ## Lakehouses: SQL
 
@@ -831,7 +831,7 @@ For instance, Apache Iceberg stores the information about which objects are part
 - whitebox compression
 :::
 
-## OLTP vs OLAP
+## Data lakes and lakehouses
 :::{.callout-important icon=false}
 ## Whitebox compression
 ![](img/whitebox_compression){height=550}
@@ -859,6 +859,25 @@ In columnar storage, all the values from a single **column** are stored together
   
 ## Columnar storage
 ![](img/columnar_storage)
+
+## Columnar storage
+:::{.callout-tip icon=false}
+## Vectorization
+
+- efficient usage of CPU-memory bandwidth
+- compress data so that it fits in CPU L1 cache
+- SIMD
+:::
+
+## Columnar storage
+:::{.callout-note icon=false}
+## Sorting
+
+- help with compression
+- multiple sort orders
+- slow down writes: solution is to use LSM trees
+:::
+
 
 ## Columnar storage
 :::{.callout-important icon=false}
@@ -993,6 +1012,8 @@ SELECT i                                                AS trip_id,   -- 0, 1, 2
        ['cash', 'card', 'app'][1 + (hash(i) % 3)::INTEGER] AS payment, -- 3 distinct strings
        1000 + (random() * 50)::INTEGER                  AS zone_id,   -- narrow range
        round(random() * 100, 2)                         AS fare,      -- 2 decimal digits
+       random() * 100                                   AS raw_fare,  -- full-precision doubles
+       'https://example.com/trips/' || i                AS url,       -- unique strings
        1                                                AS one        -- constant
 FROM range(1000000) t(i);
 CHECKPOINT;
@@ -1007,22 +1028,141 @@ ORDER BY column_name, segments DESC
 ```
 
 ```{python}
-# uncompressed: trip_id, pickup_ts, fare: 8 bytes; vendor_id, zone_id, one: 4 bytes; plus the strings
-raw_mb = 1_000_000 * (3 * 8 + 3 * 4) / 1e6
+# uncompressed: trip_id, pickup_ts, fare, raw_fare: 8 bytes; vendor_id, zone_id, one: 4 bytes; plus the strings
+raw_mb = 1_000_000 * (4 * 8 + 3 * 4) / 1e6
 print(f"file size: {os.path.getsize(demo_path) / 1e6:.1f} MB, "
       f"uncompressed: more than {raw_mb:.0f} MB")
 ```
 
-DuckDB's `BitPacking` also covers FOR and delta modes, and `DICT_FSST` is dictionary + FSST for strings.
+## DuckDB's compression methods {.font8 .scrollable}
 
-## Columnar storage
+| Method | Columns in the demo | How it works |
+|---|---|---|
+| `Constant` | `one`; `vendor_id` in the last row group | the whole segment holds one value: store it once |
+| `RLE` | `vendor_id` | (value, run length) pairs |
+| `BitPacking` | `trip_id`, `pickup_ts`, `zone_id` | picks a mode per group of values: **constant**, **constant delta** (arithmetic sequences: only the start and the step are stored), **delta + FOR**, or **FOR**; the result is bit-packed |
+| `DICT_FSST` | `payment`, `url` | dictionary of the distinct strings, codes bit-packed; the dictionary strings themselves are compressed with **FSST** |
+| `ALP` | `fare` | floating-point numbers that are really decimals |
+| `ALPRD` | `raw_fare` | "real" doubles with many significant digits |
+| `Uncompressed` | | fallback when nothing helps |
+
 :::{.callout-tip icon=false}
-## Vectorization
-
-- efficient usage of CPU-memory bandwidth
-- compress data so that it fits in CPU L1 cache
-- SIMD
+## How DuckDB chooses
+When a row group is written (at `CHECKPOINT`), DuckDB runs an **analyze** phase for every column: each applicable method estimates the compressed size on the actual data, and the smallest wins. So the same column can use different methods in different row groups, as `vendor_id` does.
 :::
+
+:::{.callout-note icon=false}
+## Reading the demo
+
+- `trip_id` = 0, 1, 2, ... and `pickup_ts` = every 10 s are arithmetic sequences: constant delta, almost zero bits per value
+- `zone_id` = 1000--1050: FOR leaves offsets 0--50, i.e. 6 bits instead of 32
+:::
+
+## ALP: Adaptive Lossless floating-Point compression {.font8}
+:::{.callout-important icon=false}
+## Problem
+A `DOUBLE` takes 64 bits. Its bits look random to general-purpose compressors, and older float-specific schemes (Gorilla 2015, Chimp 2022, which XOR each value with the previous one) give modest gains.
+:::
+
+:::{.callout-tip icon=false}
+## Observation
+Many doubles are really **decimals** with few digits: prices, measurements, percentages. `37.45` has no exact binary representation, but `37.45 × 100` rounds to the integer `3745`, and `3745 / 100` gives back exactly the same double.
+:::
+
+:::{.callout-note icon=false}
+## Algorithm (per vector of 1,024 values)
+
+1. choose a power of ten $10^e$ by **sampling** the vector (hence "adaptive")
+2. encode each value as an integer $n = \text{round}(v \cdot 10^e)$
+3. check that decoding $n / 10^e$ gives back **exactly** $v$, bit for bit (hence "lossless"); values that fail are stored separately as **exceptions**
+4. compress the integers with FOR + bit-packing
+
+`fare` ranges over 0.00--100.00, i.e. integers 0--10,000: **14 bits** instead of 64.
+:::
+
+Afroozeh, Kuffó, Boncz, "ALP: Adaptive Lossless floating-Point Compression", SIGMOD 2024.
+
+## ALPRD: "real doubles" {.font8}
+:::{.callout-note icon=false}
+## When ALP does not apply
+Values like `random() * 100` = `37.4518230981...` use all ~16 significant digits: no small power of ten turns them into integers.
+:::
+
+:::{.callout-tip icon=false}
+## Idea
+Split each 64-bit value into two parts:
+
+- **left part:** sign, exponent and the top mantissa bits. Within a column these take **few distinct values** (the numbers have similar magnitudes), so they are dictionary-encoded with a handful of bits.
+- **right part:** the remaining mantissa bits, which really are random: stored bit-packed as they are.
+:::
+
+:::{.callout-warning icon=false}
+## Result
+Much smaller savings than ALP, but still lossless and fast to decode. Measured on 10 million values in DuckDB, including file overhead: `random() * 100` with ALPRD takes ~56 bits per value; `round(random() * 100, 2)` with ALP takes ~17.
+:::
+
+## FSST: Fast Static Symbol Table {.font8}
+:::{.callout-note icon=false}
+## Idea
+
+- learn a **symbol table** from a sample of the strings: up to 255 symbols, each 1--8 bytes long, chosen for frequent substrings
+- each string becomes a sequence of **1-byte codes**; code 255 is an escape, followed by a literal byte
+:::
+
+:::{.callout-tip icon=false}
+## Example
+Symbols: `https://`, `example.`, `com/`, `trips/`, ...
+
+`https://example.com/trips/42` (28 bytes) → `[https://] [example.] [com/] [trips/] [4] [2]` = **6 bytes**
+:::
+
+:::{.callout-important icon=false}
+## Why not LZ4 or zstd?
+They compress a whole block, so reading one string means decompressing the block. FSST compresses **each string separately**: any single string can be decoded on its own (random access), and decoding runs at gigabytes per second. Compression ratios are similar to LZ4.
+:::
+
+Boncz, Neumann, Leis, "FSST: Fast Random Access String Compression", VLDB 2020.
+
+## Zone maps
+:::{.callout-note icon=false}
+## Min/max indexes
+For each block of rows, store the **minimum and maximum** of every column:
+
+- DuckDB: row groups of 122,880 rows
+- Parquet: row groups, plus page indexes
+- Snowflake: micro-partitions; Iceberg and Delta: per-file statistics
+:::
+
+:::{.callout-tip icon=false}
+## Data skipping
+`WHERE trip_id BETWEEN 500000 AND 500100` only reads the blocks whose `[min, max]` range overlaps the condition. The rest are **skipped without being read**.
+:::
+
+:::{.callout-warning icon=false}
+## Only works on clustered data
+If the column is sorted or clustered, block ranges are narrow and disjoint, so most blocks are skipped. If the values are random, every block spans the whole range and nothing can be skipped. This is another reason to **sort**, or to use Z-order/Hilbert curves when filtering on several columns.
+:::
+
+## Demo: zone maps in DuckDB {.font8 .scrollable}
+The statistics of the first row groups of the `trips` table from the compression demo:
+```{python}
+demo.sql("""
+SELECT column_name, row_group_id,
+       min(stats.min::DOUBLE) AS min,
+       max(stats.max::DOUBLE) AS max
+FROM pragma_storage_info('trips')
+WHERE column_name IN ('trip_id', 'fare')
+  AND segment_type <> 'VALIDITY'
+  AND row_group_id < 4
+GROUP BY ALL
+ORDER BY column_name, row_group_id
+""").df()
+```
+
+- `trip_id` is sorted: the row groups have disjoint ranges, so a filter on it reads only one row group.
+- `fare` is random: every row group spans about 0--100, so a filter on it must read them all.
+
+# Query execution models
 
 ## Query execution models
 :::{.callout-note icon=false}
@@ -1056,7 +1196,7 @@ Every operator implements `next()`, which returns **one tuple**. The root pulls 
 - fine when disk I/O was the bottleneck, too slow for in-memory analytics
 :::
 
-## Vectorized execution {.font8}
+## Vectorized execution {.font8 .scrollable}
 :::{.callout-note icon=false}
 ## How it works
 `next()` returns a **vector**: a batch of ~1,000--2,000 values per column (2,048 in DuckDB). Each operator runs a tight loop over plain arrays.
@@ -1142,54 +1282,6 @@ for name, db in [("SQLite", lite), ("DuckDB", duck)]:
     print(f"{name}: {time.perf_counter() - start:.3f} s")
 ```
 
-## Columnar storage
-:::{.callout-note icon=false}
-## Sorting
-
-- help with compression
-- multiple sort orders
-- slow down writes: solution is to use LSM trees
-:::
-
-## Zone maps
-:::{.callout-note icon=false}
-## Min/max indexes
-For each block of rows, store the **minimum and maximum** of every column:
-
-- DuckDB: row groups of 122,880 rows
-- Parquet: row groups, plus page indexes
-- Snowflake: micro-partitions; Iceberg and Delta: per-file statistics
-:::
-
-:::{.callout-tip icon=false}
-## Data skipping
-`WHERE trip_id BETWEEN 500000 AND 500100` only reads the blocks whose `[min, max]` range overlaps the condition. The rest are **skipped without being read**.
-:::
-
-:::{.callout-warning icon=false}
-## Only works on clustered data
-If the column is sorted or clustered, block ranges are narrow and disjoint, so most blocks are skipped. If the values are random, every block spans the whole range and nothing can be skipped. This is another reason to **sort**, or to use Z-order/Hilbert curves when filtering on several columns.
-:::
-
-## Demo: zone maps in DuckDB {.font8 .scrollable}
-The statistics of the first row groups of the `trips` table from the compression demo:
-```{python}
-demo.sql("""
-SELECT column_name, row_group_id,
-       min(stats.min::DOUBLE) AS min,
-       max(stats.max::DOUBLE) AS max
-FROM pragma_storage_info('trips')
-WHERE column_name IN ('trip_id', 'fare')
-  AND segment_type <> 'VALIDITY'
-  AND row_group_id < 4
-GROUP BY ALL
-ORDER BY column_name, row_group_id
-""").df()
-```
-
-- `trip_id` is sorted: the row groups have disjoint ranges, so a filter on it reads only one row group.
-- `fare` is random: every row group spans about 0--100, so a filter on it must read them all.
-
 ## Late materialization
 :::{.callout-note icon=false}
 ## Query
@@ -1233,7 +1325,7 @@ Columns that are not needed for a row are never read or decoded for it.
 SQL is **declarative**: it says *what* to compute, not *how*. For the same query, a good plan and a bad plan can differ by orders of magnitude. In analytics, queries scan billions of rows, so the optimizer matters more than anywhere else.
 :::
 
-## Logical vs physical plan {.font8}
+## Logical vs physical plan {.font8 .scrollable}
 
 | | Logical plan | Physical plan |
 |---|---|---|
@@ -1327,7 +1419,7 @@ for p in predicates:
 - `strftime` turns the timestamp into a string: no range on `pickup_ts` can be derived, so every row group is scanned.
 - `fare` is not clustered: the predicate is pushed down, but every row group's `[min, max]` is about `[0, 100]`.
 
-## Join algorithms {.font8}
+## Join algorithms {.font8 .scrollable}
 
 | | Nested loop join | Hash join | Sort-merge join |
 |---|---|---|---|
