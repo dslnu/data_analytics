@@ -866,7 +866,7 @@ In columnar storage, all the values from a single **column** are stored together
 ![](img/column_compression){height=500}
 :::
 
-## Lightweight encodings
+## Lightweight encodings {.scrollable}
 :::{.callout-note icon=false}
 ## Idea
 Values in one column have the same type and are often similar, so they compress much better than whole rows. Columnar engines use **lightweight encodings**:
@@ -878,8 +878,31 @@ Values in one column have the same type and are often similar, so they compress 
 
 :::{.callout-tip icon=false}
 ## Encodings
-Dictionary, run-length (RLE), bit-packing, frame of reference (FOR), delta. Also specialised encodings for floats (ALP) and strings (FSST).
+
+- dictionary
+- run-length (RLE)
+- bit-packing
+- frame of reference (FOR)
+- delta
+
+There are also specialised encodings for floats (ALP) and strings (FSST).
+
 :::
+
+## Bitmap vs lightweight encodings {.font8 .scrollable}
+
+| | Lightweight encodings | Bitmap encoding |
+|---|---|---|
+| Layout | one value or code per row (or per run) | one bit vector per distinct value |
+| Size ($n$ rows, $k$ distinct values) | dictionary: $n \cdot \log_2 k$ bits | $n \cdot k$ bits uncompressed; needs RLE or Roaring compression unless $k$ is small |
+| Main goal | small storage, fast scanning and decoding | fast evaluation of filters |
+| Filters | compare codes or values | bitwise operations: `a IN (x, y) AND b = z` → `(Bx OR By) AND Bz`; counting is a popcount |
+| Where you see it | storage format of Parquet, DuckDB, ClickHouse | **indexes**: Oracle bitmap indexes, Druid and Pinot (Roaring bitmaps), Lucene; PostgreSQL bitmap heap scans |
+
+:::{.callout-note}
+Bitmap encoding is a dictionary encoding laid out as one-hot vectors: more space, but very cheap to combine filters. Modern columnar formats store data with lightweight encodings; bitmaps appear as secondary indexes and at run time (null masks, selection vectors).
+:::
+
 
 ## Dictionary encoding
 :::{.callout-note icon=false}
@@ -940,7 +963,7 @@ Ideal for increasing columns: IDs, timestamps. The deltas are then bit-packed.
 
 ## Which encoding? {.font8 .scrollable}
 
-| Data in the column | Good encoding |
+| Data | Preferred encoding |
 |---|---|
 | the same value everywhere | constant: store one value |
 | long runs of equal values (sorted) | RLE |
@@ -950,8 +973,7 @@ Ideal for increasing columns: IDs, timestamps. The deltas are then bit-packed.
 | floating-point numbers with few decimal digits | ALP |
 | strings with repeating fragments (URLs, e-mails) | FSST |
 
-:::{.callout-tip icon=false}
-## Note
+:::{.callout-note}
 Parquet does the same: it encodes each column chunk (dictionary, RLE, delta, ...), and can then apply general-purpose compression (Snappy, zstd) on top.
 :::
 
