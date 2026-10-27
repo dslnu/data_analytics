@@ -501,7 +501,8 @@ distance_sorted_axis_summary = axis_summaries.sort_values(by='maximum distance',
 ```{python}
 largest_distance_axis_idx = distance_sorted_axis_summary.index[-1]
 _ = sns.stripplot(x=sequence_polar_ordination[largest_distance_axis_idx], 
-                  y=sequence_labels['legend entry'])
+                  y=sequence_labels['legend entry'],
+                  hue=sequence_labels['legend entry'])
 ```
 
 Samples within each species roughly group together; maybe even some separation of species.
@@ -512,7 +513,8 @@ Samples within each species roughly group together; maybe even some separation o
 smallest_distance_axis_idx = distance_sorted_axis_summary.index[0]
 
 _ = sns.stripplot(x=sequence_polar_ordination[smallest_distance_axis_idx], 
-                  y=sequence_labels['legend entry'])
+                  y=sequence_labels['legend entry'],
+                  hue=sequence_labels['legend entry'])
 ```
 
 Clustering by species is much less apparent. Later axes represent smaller differences - focus on the **first few** axes.
@@ -537,16 +539,7 @@ _ = plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
 
 :::
 
-## Correlated axes add little
-
-:::{.callout-tip icon=false}
-## Observations
-- We don't get much more information from the second axis than from the first.
-- Draw a line along the diagonal: placement of points along it ≈ the strip plot of the first axis.
-- The correlated axis adds little to our understanding of clustering — we might as well not have it.
-:::
-
-## Directionality of the axes
+## Directionality of the axes {.font8 .scrollable}
 
 :::{.callout-tip icon=false}
 ## End points are arbitrary
@@ -555,109 +548,103 @@ Which sample is placed at $0$ and which at $D$ was an arbitrary choice.
 
 ::: {.columns}
 ::: {.column width="50%"}
-```python
+```{python}
+#| code-fold: true
 axis1_values_a = compute_axis(
     sequence_distance_matrix,
     sample_id1, sample_id2)
+_ = sns.stripplot(x=axis1_values_a, 
+                  hue=sequence_labels['legend entry'],
+                  y=sequence_labels['legend entry'], legend=False).set(yticklabels=[], ylabel=None)
 ```
-![](../img/bio/iab-machine-learning_61_0.png)
 :::
 ::: {.column width="50%"}
-```python
+```{python}
+#| code-fold: true
 axis1_values_b = compute_axis(
     sequence_distance_matrix,
     sample_id2, sample_id1)
+_ = sns.stripplot(x=axis1_values_b, 
+                  y=sequence_labels['legend entry'],
+                  hue=sequence_labels['legend entry'], legend=False).set(yticklabels=[], ylabel=None)
 ```
-![](../img/bio/iab-machine-learning_63_0.png)
 :::
 :::
 
-## Mirror images
-
-:::{.callout-tip icon=false}
-## Direction is not meaningful
-- The two plots are **mirror images**: perfectly anti-correlated, identical information about grouping.
-- True for **any** axis in an ordination: you can always flip an axis and have the same result.
-- Running the same ordination multiple times may flip axes — an implementation detail that doesn't affect results.
-:::
-
-## Principal Coordinates Analysis (PCoA)
+## Principal Coordinates Analysis (PCoA) {.scrollable}
 
 :::{.callout-tip icon=false}
 ## PCoA
 - Math more complex than polar ordination, but it **works better** and should be preferred in practice.
 - scikit-bio includes an implementation.
-:::
 
-```python
+```{python}
 import skbio.stats.ordination
 sequence_pcoa_ordination = skbio.stats.ordination.pcoa(sequence_distance_matrix)
 
 _ = sns.scatterplot(x=sequence_pcoa_ordination.samples['PC1'],
                     y=sequence_pcoa_ordination.samples['PC2'])
 ```
+:::
 
-![](../img/bio/iab-machine-learning_67_0.png){height=250}
-
-## PCoA with labels
+## PCoA with labels {.font8 .scrollable}
 
 ```python
-_ = sns.scatterplot(x=sequence_pcoa_ordination.samples['PC1'],
-                    y=sequence_pcoa_ordination.samples['PC2'],
+_ = sns.scatterplot(x=sequence_pcoa_ordination.samples['PC1'], 
+                    y=sequence_pcoa_ordination.samples['PC2'], 
                     hue=sequence_labels['legend entry'])
+_ = plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
 ```
-
-![](../img/bio/iab-machine-learning_69_0.png){height=360}
 
 As with polar ordination, labels were **not used** in the PCoA computation.
 
-## Exploratory analysis: coloring by phylum
+## Exploratory analysis: coloring by phylum {.font8 .scrollable}
 
-```python
-_ = sns.scatterplot(x=sequence_pcoa_ordination.samples['PC1'],
-                    y=sequence_pcoa_ordination.samples['PC2'],
+```{python}
+_ = sns.scatterplot(x=sequence_pcoa_ordination.samples['PC1'], 
+                    y=sequence_pcoa_ordination.samples['PC2'], 
                     hue=sequence_labels['phylum'])
+_ = plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
 ```
-
-![](../img/bio/iab-machine-learning_71_0.png){height=320}
 
 Ordination plots are used to see if sample similarity is associated with metadata. Samples cluster **more distinctly by phylum** than by species.
 
-## Further axes: PC1 vs PC3
+## Further axes: PC1 vs PC3 {.scrollable}
 
 :::{.callout-tip icon=false}
 ## Many axes
 - Ordination generates many axes (number depends on method; generally a function of the number of samples).
 - Axes are ordered by **variation explained**: axis 1 > axis 2 > axis 3 ...
 - Visualizations focus on the first two or three; later axes may be misleading.
+
+```{python}
+_ = sns.scatterplot(x=sequence_pcoa_ordination.samples['PC1'], 
+                    y=sequence_pcoa_ordination.samples['PC3'], 
+                    hue=sequence_labels['legend entry'])
+_ = plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+```
 :::
 
-![](../img/bio/iab-machine-learning_73_0.png){height=300}
-
-## Exploratory analysis ≠ hypothesis testing
+## Exploratory analysis $\neq$ hypothesis testing {.scrollable}
 
 :::{.callout-warning}
 - Exploratory analysis of ordination doesn't replace **statistical comparisons** of sample composition.
-- Finding a pattern then testing it ≠ having an *a priori* hypothesis and testing it.
-- Many metadata categories + few samples → **spurious patterns** likely.
+- Finding a pattern then testing it $\neq$ having an *a priori* hypothesis and testing it.
+- Many metadata categories + few samples $\rightarrow$ **spurious patterns** likely.
 - **Treat observations from exploratory analysis as hypotheses to be tested with different data.**
 - Hypothesis generation and hypothesis testing cannot be performed on the same data.
 :::
 
-:::{.callout-tip icon=false}
-## Emperor
-Widely used tool for **interactive** ordination plots: color by metadata, compare axes, invert axes — a few mouse clicks.
+:::{.callout-note}
+## Exercise
+How does the clustering of samples compare between polar ordination and PCoA?
 :::
-
-**Exercise**: how does the clustering of samples compare between polar ordination and PCoA?
-
-# Supervised classification
 
 ## Naive Bayes
 
 :::{.callout-tip icon=false}
 ## Supervised classification
-- Algorithm: **Naive Bayes** — relatively straight-forward math, widely used and powerful.
+- Algorithm: **Naive Bayes** - simple math, widely used and powerful.
 - Familiar topic: **taxonomic classification of 16S rRNA sequences**.
 - Same problem as before: query $q_i$ (unannotated), reference $R$ of annotated sequences $r_1, \ldots, r_n$; infer taxonomy for $q_i$.
 - Previously solved with pairwise alignment; now: build a Naive Bayes classifier from the feature table + labels, apply it to unlabeled data.
