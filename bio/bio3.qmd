@@ -1,0 +1,1130 @@
+---
+title: "Bioinformatics 3"
+subtitle: "Machine learning in Bioinformatics"
+author:
+  - name: MSDE
+    affiliation: Lviv University
+code-fold: false
+execute:
+  enabled: true
+  cache: true
+  echo: true
+format:
+  revealjs:
+    css: custom.css
+    preview-links: auto
+    slide-number: true
+    theme: default
+    multiplex:
+      url: 'https://mplex.vitv.ly'
+      secret: '7cf7079cb10832c727ab521bd584fc09'
+      id: '1a22cd8141caf4939746059ae3064679ba8880fc46aeb88e6b95e1d1a9f1f8f6'
+---
+
+## Machine learning
+
+:::{.callout-tip icon=false}
+## Why
+
+- used for tasks where an algorithm should help **identify patterns in a complex dataset**.
+- we'll use [scikit-learn](http://scikit-learn.org/): popular, well-documented Python ML library
+:::
+
+:::{.callout-warning}
+ML algorithms can easily be misused to give **misleading results**. See scikit-learn's [Common pitfalls and recommended practices](https://scikit-learn.org/stable/common_pitfalls.html).
+:::
+
+## The feature table
+
+:::{.callout-tip icon=false}
+## Samples $\times$ features
+- ML algorithms get a table of **samples** and user-defined **features** of those samples.
+- A matrix: samples are **rows**, features are **columns** $\rightarrow$ the **feature table**.
+- Central to ML and many subfields of bioinformatics.
+- Terms are purposefully general: samples = any unit of study; features = attributes of samples.
+- **Labels** / **response variables** may be associated with samples $\rightarrow$ a different class of methods applies.
+:::
+
+## The Iris dataset {.scrollable}
+
+:::{.callout-tip icon=false}
+## Description
+- Originally published by **RA Fisher** (1936).
+- Four features of **150 specimens** of *Iris* (a genus of flowering plant), **three species**.
+
+```{python}
+import sklearn.datasets
+import pandas as pd
+
+iris_dataset = sklearn.datasets.load_iris(as_frame=True)
+iris_feature_table = iris_dataset.frame.drop('target', axis=1)
+iris_feature_table.index.name = 'sample-id'
+# map target integers onto species names
+iris_labels = pd.Series(iris_dataset.target_names[iris_dataset.target],
+                        index=iris_dataset.target.index, name='species').to_frame()
+iris_labels.index.name = 'sample-id'
+iris_feature_table
+```
+
+```{python}
+iris_labels
+```
+:::
+
+## The Iris dataset {.scrollable}
+:::{.callout-note}
+## Vectors
+- **Sample vector** (row): sample id + value of each feature.
+- **Feature vector** (column): feature id + values measured in each sample.
+- Feature ids can be simple descriptions - or integers.
+:::
+
+
+:::{.callout-tip icon=false}
+## Feature table
+- The feature table alone $\rightarrow$ input for **unsupervised** learning (e.g., are there groups of similar samples?).
+- Sample ids in labels must match the feature table.
+- Features + labels $\rightarrow$ input for **supervised** learning (e.g., a classifier that reports species from sepal/petal measurements).
+- Three classes: `setosa`, `versicolor`, `virginica`.
+:::
+
+## Unsupervised vs supervised learning
+:::{.callout-tip icon=false}
+## Unsupervised learning
+- Labels are **not available or not used**; operates on the feature table alone.
+- Goal: discover **structure** - which samples are most similar based on feature values.
+- Example: **ordination** - very widely used in biology (PCoA, NMDS plots).
+:::
+
+:::{.callout-warning icon=false}
+## Supervised learning
+- Sample **labels** are used in addition to the feature table.
+- Discrete labels $\rightarrow$ **classification**; continuous labels $\rightarrow$ **regression**.
+- Goal: a model that accurately predicts an unlabeled sample's label from its features.
+:::
+
+## ML applied to microbial sequence data
+
+:::{.callout-tip icon=false}
+## Setup
+- 16S rRNA sequences from **Greengenes** $\rightarrow$ build a feature table.
+- Labels: used in the supervised task, and to aid interpretation in the unsupervised task.
+- **Goal**: explore **species-level taxonomy** of a few microbial species.
+  - Unsupervised: are sequences from the same species more similar to each other than to other species?
+  - Supervised: can we build a classifier predicting species from an unlabeled sequence?
+:::
+
+## Loading annotated sequences {.scrollable}
+
+:::{.callout-tip icon=false}
+## Define helper function
+
+```{python}
+import collections
+import qiime_default_reference as qdr
+import skbio
+import random
+
+def load_annotated_sequences(taxa_of_interest, class_size=None, sequence_length=500,
+                             verbose=True, ids_to_exclude=None):
+    result = {}
+    SequenceRecord = collections.namedtuple(typename='SequenceRecord',
+                                            field_names=['identifier', 'split_taxonomy', 'taxonomy', 'sequence'])
+    taxon_to_sequence_records = {t: list() for t in taxa_of_interest}
+
+    id_to_taxonomy_record = {}
+    for line in open(qdr.get_reference_taxonomy()):
+        identifier, taxonomy = line.strip().split('\t')
+        id_to_taxonomy_record[identifier] = taxonomy
+
+    for seq in skbio.io.read(qdr.get_reference_sequences(), format='fasta',
+                             constructor=skbio.DNA):
+        identifier = seq.metadata['id']
+        if ids_to_exclude is not None and identifier in ids_to_exclude:
+            continue
+        tax = id_to_taxonomy_record[identifier]
+        split_taxonomy = [e.strip() for e in tax.split(';')]
+        taxonomy = ';'.join(split_taxonomy)
+        if taxonomy not in taxon_to_sequence_records:
+            continue
+        if seq.has_degenerates():
+            continue
+        if sequence_length is not None:
+            sequence = seq[:sequence_length]
+        else:
+            sequence = seq
+        sr = SequenceRecord(identifier=identifier, split_taxonomy=split_taxonomy,
+                            taxonomy=taxonomy, sequence=sequence)
+        taxon_to_sequence_records[taxonomy].append(sr)
+
+    if class_size is None:
+        result = {sr.identifier: sr for srs in taxon_to_sequence_records.values() for sr in srs}
+    else:
+        result = {}
+        for taxon, srs in taxon_to_sequence_records.items():
+            sampled_sequence_records = random.sample(srs, k=class_size)
+            result.update({sr.identifier: sr for sr in sampled_sequence_records})
+    return result
+```
+:::
+
+## Taxa of interest {.scrollable}
+
+:::{.callout-note icon=false}
+## Load sequence data
+Five sequences from each of seven species:
+
+```{python}
+taxa_of_interest = {
+    'k__Bacteria;p__Bacteroidetes;c__Bacteroidia;o__Bacteroidales;f__Prevotellaceae;g__Prevotella;s__stercorea',
+    'k__Bacteria;p__Bacteroidetes;c__Bacteroidia;o__Bacteroidales;f__Prevotellaceae;g__Prevotella;s__copri',
+    'k__Bacteria;p__Bacteroidetes;c__Bacteroidia;o__Bacteroidales;f__Prevotellaceae;g__Prevotella;s__melaninogenica',
+    'k__Bacteria;p__Bacteroidetes;c__Flavobacteriia;o__Flavobacteriales;f__Flavobacteriaceae;g__Flavobacterium;s__succinicans',
+    'k__Bacteria;p__Actinobacteria;c__Actinobacteria;o__Actinomycetales;f__Propionibacteriaceae;g__Propionibacterium;s__acnes',
+    'k__Bacteria;p__Proteobacteria;c__Gammaproteobacteria;o__Pseudomonadales;f__Pseudomonadaceae;g__Pseudomonas;s__veronii',
+    'k__Bacteria;p__Proteobacteria;c__Gammaproteobacteria;o__Pseudomonadales;f__Pseudomonadaceae;g__Pseudomonas;s__viridiflava'
+}
+sequences_per_taxon = 5
+seq_data = load_annotated_sequences(taxa_of_interest, class_size=sequences_per_taxon)
+```
+:::
+
+## Taxa of interest {.scrollable}
+:::{.callout-tip icon=false}
+## Check records
+Look at random records:
+
+```{python}
+for sr in random.sample(list(seq_data.values()), 3):
+    print(sr.identifier)
+    print(sr.taxonomy)
+    print(sr.sequence)
+    print('🦠')
+```
+:::
+
+
+## Choosing features: k-mers
+
+:::{.callout-tip icon=false}
+## What should the features be?
+- k-mers helped find relevant sequences in database searching - may be useful here too.
+- **Longer** k-mers are more likely to be **specific** to certain taxa - helpful.
+- **Too long**: less likely to be observed in other sequences (more variation across closely related organisms) - we need features **shared** among related samples.
+- Here $k = 4$, chosen by experimenting with multiple Greengenes subsamples. Other values of $k$, or other sequence features, are possible.
+:::
+
+## Building the feature table {.scrollable}
+
+:::{.callout-tip icon=false}
+## Python code
+```{python}
+k = 4
+
+def feature_table_from_sequence_records(sequence_records, k):
+    kmer_frequencies = {id_ : sr.sequence.kmer_frequencies(k=k) for id_, sr in sequence_records.items()}
+    result = pd.DataFrame(kmer_frequencies).fillna(0).astype(int).T
+    result.index.name = 'id'
+    return result
+
+sequence_feature_table = feature_table_from_sequence_records(seq_data, k)
+sequence_feature_table
+```
+:::
+
+## Sample labels {.scrollable}
+
+:::{.callout-tip icon=false}
+## Python code
+```{python}
+def feature_labels_from_sequence_records(sequence_records):
+    result = pd.DataFrame({id_:sr.split_taxonomy for id_, sr in sequence_records.items()}).T
+    result.columns = ['domain', 'phylum', 'class', 'order', 'family', 'genus', 'species']
+    result.index.name = 'id'
+    legend_entries = []
+    for _, (g, s, p) in result[['genus', 'species', 'phylum']].iterrows():
+        legend_entries.append('%s %s (%s)' % (g[3:], s[3:], p[3:]))
+    result['legend entry'] = legend_entries
+    return result
+
+sequence_labels = feature_labels_from_sequence_records(seq_data)
+sequence_labels[:12]
+```
+:::
+
+## Unsupervised learning
+
+:::{.callout-tip icon=false}
+## Ordination
+
+Two types:
+
+1. **Polar Ordination** - simple math, not widely used in practice (more informative techniques exist). Shows how ordination **reduces dimensionality** and how to interpret results.
+2. **Principal Coordinates Analysis (PCoA)** - more complicated math; applied using scikit-bio.
+:::
+
+## Computing distances between samples
+
+:::{.callout-tip icon=false}
+## Jaccard
+Most ordination techniques start by computing **distances** between all pairs of samples. Here: the fraction of k-mers unique to either sample - the **Jaccard distance**.
+
+$$\text{Jaccard Index}_{(A,B)} = \frac{|A \cap B|}{|A \cup B|}$$
+
+- $|A \cap B|$: number of features observed (value $\geq$ 1) in **both** samples - size of the intersection.
+- $|A \cup B|$: number of features observed in **either or both** - size of the union.
+
+$$\text{Jaccard Distance}_{(A,B)} = 1 - \text{Jaccard Index}_{(A,B)}$$
+:::
+
+## Computing distances between samples {.scrollable}
+
+:::{.callout-tip icon=false}
+## Distance matrix
+Applying this to all pairs of samples gives a **distance matrix**:
+
+```{python}
+import skbio.diversity
+
+sequence_distance_matrix = skbio.diversity.beta_diversity('jaccard', sequence_feature_table,
+                                                          ids=sequence_feature_table.index)
+sequence_distance_matrix
+```
+:::
+
+:::{.callout-note icon=false}
+## Properties
+- Diagonal is zero: $\text{Jaccard Distance}_{(A,A)} = 0$.
+- Symmetric: $\text{Jaccard Distance}_{(A,B)} = \text{Jaccard Distance}_{(B,A)}$.
+:::
+
+## Computing distances between samples {.scrollable}
+
+:::{.callout-tip icon=false}
+## Distance matrix
+```{python}
+sample_id1 = sequence_feature_table.index[0]
+sample_id2 = sequence_feature_table.index[1]
+d = sequence_distance_matrix[sample_id1, sample_id2]
+print('The Jaccard Distance between samples %s and %s is %1.3f.' % (sample_id1, sample_id2, d))
+```
+:::
+
+:::{.callout-note icon=false}
+## Exercixe
+Compare to the sample labels (`sequence_labels`) - do you notice any patterns?
+:::
+
+## Polar ordination
+
+:::{.callout-tip icon=false}
+## Building a scatterplot from a distance matrix
+Ordination results are typically viewed in a 2D or 3D scatterplot.
+
+**Step 1**: find the **largest distance** $D$ in the distance matrix and its two samples.
+
+```{python}
+import numpy as np
+
+sorted_indices = np.argsort(sequence_distance_matrix.data, axis=None)[::-1]
+sorted_indices = np.unravel_index(sorted_indices, shape=sequence_distance_matrix.shape)
+sample_id1 = sequence_distance_matrix.ids[sorted_indices[0][0]]
+sample_id2 = sequence_distance_matrix.ids[sorted_indices[0][1]]
+D = sequence_distance_matrix[sample_id1, sample_id2]
+print('The largest distance in the distance matrix is %1.3f, between samples %s and %s.' % 
+    (D, sample_id1, sample_id2))
+```
+:::
+
+## The first axis {.scrollable}
+
+:::{.callout-tip icon=false}
+## Placing samples
+- These two samples define the **first axis**, of length $D$: one at $0$, the other at $D$ (which goes where doesn't matter).
+- Every other sample $s$ is placed at:
+
+$$A_s = \frac{D^2 + D_1^2 - D_2^2}{2 \times D}$$
+
+- $D_1$: distance between $s$ and the sample at $0$; $D_2$: distance between $s$ and the sample at $D$ (both from the distance matrix).
+:::
+
+## The first axis {.scrollable}
+:::{.callout-tip icon=false}
+## Compute axis
+```{python}
+def compute_axis(dm, endpoint1, endpoint2):
+    d = dm[endpoint1, endpoint2]
+    result = {endpoint1: 0, endpoint2: d}
+    non_endpoints = set(dm.ids) - set([endpoint1, endpoint2])
+    for e in non_endpoints:
+        d1 = dm[endpoint1, e]
+        d2 = dm[endpoint2, e]
+        result[e] = (d**2 + d1**2 - d2**2) / (2 * d)
+    return pd.Series(result)
+```
+
+Axis values:
+
+```{python}
+axis1_values = compute_axis(sequence_distance_matrix, sample_id1, sample_id2)
+axis1_values.sort_values()
+```
+:::
+
+:::{.callout-note icon=false}
+## Exercise
+Compare with `sequence_labels` - any patterns in the ordered samples?
+:::
+
+## Strip plot of the first axis {.scrollable}
+
+:::{.callout-tip icon=false}
+## Plot
+```{python}
+import seaborn as sns
+_ = sns.stripplot(x=axis1_values)
+```
+
+- Only placement on the **horizontal** axis is meaningful; vertical jitter aids visualization.
+- Each point is a sample; closer samples are more similar in k-mer composition.
+:::
+
+## More axes {.scrollable}
+
+:::{.callout-tip icon=false}
+## Selecting further axes
+- Additional axes **uncorrelated** with the first provide more information.
+- Selecting them is more complicated: compute **all** axes (one for every pair of samples), then pick those representing large distances but **uncorrelated** with previously selected axes.
+
+```{python}
+def polar_ordination(dm):
+    result = {}
+    for i, id1 in enumerate(dm.ids):
+        for id2 in dm.ids[:i]:
+            axis_label = '%s to %s' % (id1, id2)
+            result[axis_label] = compute_axis(dm, id1, id2)
+    result = pd.DataFrame(result)
+    return result
+
+sequence_polar_ordination = polar_ordination(sequence_distance_matrix)
+sequence_polar_ordination
+```
+:::
+
+## Scoring axes
+
+:::{.callout-tip icon=false}
+## An objective criterion
+- 595 axes aren't more interpretable than the distance matrix.
+- Axis 1: the largest distance. Axis 2: a large distance **and** uncorrelated with axis 1.
+- "Uncorrelated" is subjective. So we define a **score**:
+
+$$\text{Score}_{A} = \frac{\text{max distance on } A}{|\text{Spearman}(\text{Axis 1}, A)|}$$
+:::
+
+## `select_polar_ordination_axes` {.scrollable}
+
+:::{.callout-tip icon=false}
+## Python code
+This function takes a polar ordination result as input and returns the identifiers of the first two axes as well as a summary of the maximum distance along each axis, the correlation of each axis with the first axis, and the score for each axis.
+
+```{python}
+def select_polar_ordination_axes(polar_ordination):
+    # this function would be better if it defined more axes, 
+    # eg by always looking for correlation with preceding axis. 
+    distance_sorted_ord_axes = polar_ordination.max().sort_values(ascending=False)
+    first_axis_idx = distance_sorted_ord_axes.index[0]
+    corrs = polar_ordination.corrwith(polar_ordination[first_axis_idx], method='spearman').abs().sort_values(ascending=False)
+    scores = distance_sorted_ord_axes / corrs
+    result = pd.concat([distance_sorted_ord_axes, corrs, scores], axis=1)
+    result.columns = ['maximum distance', 'corr with first axis', 'score']
+    result.sort_values(by='score', ascending=False, inplace=True)
+    second_axis_idx = result.index[0]
+    return first_axis_idx, second_axis_idx, result
+
+first_axis_idx, second_axis_idx, axis_summaries = select_polar_ordination_axes(sequence_polar_ordination)
+print('Axis 1 is defined by the distance from sample %s' % first_axis_idx)
+print('Axis 2 is defined by the distance from sample %s' % second_axis_idx)
+```
+:::
+
+## Axis summaries {.font8 .scrollable}
+```{python}
+axis_summaries
+```
+
+## Two-dimensional polar ordination {.font8 .scrollable}
+
+```{python}
+_ = sns.scatterplot(x=sequence_polar_ordination[first_axis_idx],
+                    y=sequence_polar_ordination[second_axis_idx])
+```
+
+Grouping should be more distinct than in the strip plot: samples can separate along **two** axes.
+
+## What has been "learned"
+
+:::{.callout-tip icon=false}
+## Structure in the data
+- Samples close in the scatterplot have, on average, **smaller distances** than samples far apart.
+- This structure is what the polar ordination algorithm has "learned".
+- Labels were **not used** - yet samples that cluster together are from the **same species**.
+:::
+
+## Coloring by label {.scrollable}
+
+```{python}
+_ = sns.scatterplot(x=sequence_polar_ordination[first_axis_idx],
+                    y=sequence_polar_ordination[second_axis_idx],
+                    hue=sequence_labels['legend entry'])
+```
+
+:::{.callout-note}
+Labels help **interpret** the plot but were not used to **compute** it - this is what makes the ordination **unsupervised**.
+:::
+
+## Interpreting ordination plots: axis order {.scrollable}
+
+:::{.callout-tip icon=false}
+## Axis order matters
+- The **first** axis typically represents the **largest** differences in the dataset.
+- The **second**: the next largest differences, uncorrelated with the first.
+- Without axes representing the largest distances, we'd be less likely to see patterns.
+:::
+
+```{python}
+distance_sorted_axis_summary = axis_summaries.sort_values(by='maximum distance', ascending=True)
+```
+
+## Largest-distance axis {.font8 .scrollable}
+
+```{python}
+largest_distance_axis_idx = distance_sorted_axis_summary.index[-1]
+_ = sns.stripplot(x=sequence_polar_ordination[largest_distance_axis_idx], 
+                  y=sequence_labels['legend entry'])
+```
+
+Samples within each species roughly group together; maybe even some separation of species.
+
+## Smallest-distance axis {.font8 .scrollable}
+
+```{python}
+smallest_distance_axis_idx = distance_sorted_axis_summary.index[0]
+
+_ = sns.stripplot(x=sequence_polar_ordination[smallest_distance_axis_idx], 
+                  y=sequence_labels['legend entry'])
+```
+
+Clustering by species is much less apparent. Later axes represent smaller differences - focus on the **first few** axes.
+
+## Uncorrelated axes {.scrollable}
+
+:::{.callout-tip icon=false}
+## Why uncorrelated
+Correlated axes, by definition, present **similar information**. Plot a second axis highly correlated with the first:
+
+```{python}
+import matplotlib.pyplot as plt
+# the axis most correlated with first_axis_idx will be first_axis_idx, so 
+# select the second axis
+correlated_axis_idx = axis_summaries.sort_values(by='corr with first axis', ascending=False).index[1]
+
+_ = sns.scatterplot(x=sequence_polar_ordination[first_axis_idx], 
+                    y=sequence_polar_ordination[correlated_axis_idx], 
+                    hue=sequence_labels['legend entry'])
+_ = plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+```
+
+:::
+
+## Correlated axes add little
+
+:::{.callout-tip icon=false}
+## Observations
+- We don't get much more information from the second axis than from the first.
+- Draw a line along the diagonal: placement of points along it ≈ the strip plot of the first axis.
+- The correlated axis adds little to our understanding of clustering — we might as well not have it.
+:::
+
+## Directionality of the axes
+
+:::{.callout-tip icon=false}
+## End points are arbitrary
+Which sample is placed at $0$ and which at $D$ was an arbitrary choice.
+:::
+
+::: {.columns}
+::: {.column width="50%"}
+```python
+axis1_values_a = compute_axis(
+    sequence_distance_matrix,
+    sample_id1, sample_id2)
+```
+![](../img/bio/iab-machine-learning_61_0.png)
+:::
+::: {.column width="50%"}
+```python
+axis1_values_b = compute_axis(
+    sequence_distance_matrix,
+    sample_id2, sample_id1)
+```
+![](../img/bio/iab-machine-learning_63_0.png)
+:::
+:::
+
+## Mirror images
+
+:::{.callout-tip icon=false}
+## Direction is not meaningful
+- The two plots are **mirror images**: perfectly anti-correlated, identical information about grouping.
+- True for **any** axis in an ordination: you can always flip an axis and have the same result.
+- Running the same ordination multiple times may flip axes — an implementation detail that doesn't affect results.
+:::
+
+## Principal Coordinates Analysis (PCoA)
+
+:::{.callout-tip icon=false}
+## PCoA
+- Math more complex than polar ordination, but it **works better** and should be preferred in practice.
+- scikit-bio includes an implementation.
+:::
+
+```python
+import skbio.stats.ordination
+sequence_pcoa_ordination = skbio.stats.ordination.pcoa(sequence_distance_matrix)
+
+_ = sns.scatterplot(x=sequence_pcoa_ordination.samples['PC1'],
+                    y=sequence_pcoa_ordination.samples['PC2'])
+```
+
+![](../img/bio/iab-machine-learning_67_0.png){height=250}
+
+## PCoA with labels
+
+```python
+_ = sns.scatterplot(x=sequence_pcoa_ordination.samples['PC1'],
+                    y=sequence_pcoa_ordination.samples['PC2'],
+                    hue=sequence_labels['legend entry'])
+```
+
+![](../img/bio/iab-machine-learning_69_0.png){height=360}
+
+As with polar ordination, labels were **not used** in the PCoA computation.
+
+## Exploratory analysis: coloring by phylum
+
+```python
+_ = sns.scatterplot(x=sequence_pcoa_ordination.samples['PC1'],
+                    y=sequence_pcoa_ordination.samples['PC2'],
+                    hue=sequence_labels['phylum'])
+```
+
+![](../img/bio/iab-machine-learning_71_0.png){height=320}
+
+Ordination plots are used to see if sample similarity is associated with metadata. Samples cluster **more distinctly by phylum** than by species.
+
+## Further axes: PC1 vs PC3
+
+:::{.callout-tip icon=false}
+## Many axes
+- Ordination generates many axes (number depends on method; generally a function of the number of samples).
+- Axes are ordered by **variation explained**: axis 1 > axis 2 > axis 3 ...
+- Visualizations focus on the first two or three; later axes may be misleading.
+:::
+
+![](../img/bio/iab-machine-learning_73_0.png){height=300}
+
+## Exploratory analysis ≠ hypothesis testing
+
+:::{.callout-warning}
+- Exploratory analysis of ordination doesn't replace **statistical comparisons** of sample composition.
+- Finding a pattern then testing it ≠ having an *a priori* hypothesis and testing it.
+- Many metadata categories + few samples → **spurious patterns** likely.
+- **Treat observations from exploratory analysis as hypotheses to be tested with different data.**
+- Hypothesis generation and hypothesis testing cannot be performed on the same data.
+:::
+
+:::{.callout-tip icon=false}
+## Emperor
+Widely used tool for **interactive** ordination plots: color by metadata, compare axes, invert axes — a few mouse clicks.
+:::
+
+**Exercise**: how does the clustering of samples compare between polar ordination and PCoA?
+
+# Supervised classification
+
+## Naive Bayes
+
+:::{.callout-tip icon=false}
+## Supervised classification
+- Algorithm: **Naive Bayes** — relatively straight-forward math, widely used and powerful.
+- Familiar topic: **taxonomic classification of 16S rRNA sequences**.
+- Same problem as before: query $q_i$ (unannotated), reference $R$ of annotated sequences $r_1, \ldots, r_n$; infer taxonomy for $q_i$.
+- Previously solved with pairwise alignment; now: build a Naive Bayes classifier from the feature table + labels, apply it to unlabeled data.
+:::
+
+## Defining a classification task
+
+:::{.callout-tip icon=false}
+## Classes
+- Two or more **pre-defined classes**; goal: assign observations to them.
+- Humans do this every day: books you want to read vs everything else; phone apps into folders ("school", "entertainment", "social media").
+:::
+
+:::{.callout-tip icon=false}
+## Spam filter
+- Every email: spam or not spam → spam folder or inbox.
+- Too permissive → inbox filled with junk; too restrictive → relevant messages go to spam.
+:::
+
+Here: classes are **microbial species**. Input: an unannotated sequence; output: the species it most likely came from.
+
+## Training data
+
+:::{.callout-tip icon=false}
+## Training the classifier
+- Classifiers need data to develop a **model** → **training** the classifier.
+- **Training data**: observations with defined classes — the "supervision" in supervised learning.
+- Spam filter: emails annotated as spam / not spam. Species assignment: 16S sequences annotated at species level.
+- Training data should typically be **balanced**: roughly the same number of examples of each class.
+:::
+
+## Test data and real-world data
+
+:::{.callout-tip icon=false}
+## Test data
+- An **independent** collection of labeled observations, **not** used for training.
+- Evaluates performance on previously unseen data → predicts performance on **real world** data (class unknown: new emails; environmental DNA sequences).
+- Don't use test data for **optimization**: train → test → change → re-test risks **over-fitting** to that test set; performance would no longer predict real-world performance.
+:::
+
+## k-fold cross validation
+
+::: {.columns}
+::: {.column width="45%"}
+- Training/test sets can be **costly** to develop (hours of human annotation).
+- Split training data into `k` sets (usually 5 or 10).
+- In each, $1/k$ of entries are test data, the rest training data.
+- Train and test `k` times; **average** performance.
+- Allows developing and optimizing without dedicated test data.
+:::
+::: {.column width="55%"}
+![](../img/bio/iab-ml-cross-validation.png)
+
+::: {.font6}
+Colors indicate class (e.g., red = spam, green = not spam). Image: Gufosowa, CC BY-SA 4.0, via Wikimedia Commons.
+:::
+:::
+:::
+
+## Evaluating a binary classifier
+
+:::{.callout-tip icon=false}
+## Disease X
+- **Binary classifier**: exactly two classes — easiest to understand.
+- Predict whether an individual is **healthy** or has **Disease X**, from features extracted from medical data.
+- A function: features of a sample → "healthy" or "diseased".
+- Positive result: the patient has Disease X; negative: healthy.
+:::
+
+## Outcomes on test data
+
+:::{.callout-tip icon=false}
+## Four possibilities
+| | Known: Disease X | Known: healthy |
+|---|---|---|
+| **Predicted positive** | **True positive (TP)** | **False positive (FP)** — type 1 error |
+| **Predicted negative** | **False negative (FN)** — type 2 error | **True negative (TN)** |
+:::
+
+Tallies of TP, FP, FN, TN over many samples are presented in a **confusion matrix**, from which many performance values can be computed.
+
+## Accuracy
+
+$$\text{accuracy} = \frac{TP + TN}{TP + FP + FN + TN}$$
+
+:::{.callout-tip icon=false}
+## Fraction classified correctly — but it hides information
+- Doesn't tell whether poor performance comes from type 1 errors, type 2 errors, or both.
+- A low-accuracy classifier that often gives FPs but almost never FNs can still be **clinically useful**:
+  - negative result → the person doesn't have the disease;
+  - positive result → indicator that additional testing is needed.
+- Useful as a cheap first screening if additional tests are more expensive.
+:::
+
+## Precision and recall
+
+:::{.callout-tip icon=false}
+## Computed as a pair
+More informative than accuracy: they indicate whether a classifier suffers more from FPs or FNs.
+
+$$\text{precision} = \frac{TP}{TP + FP} \qquad \text{recall} = \frac{TP}{TP + FN}$$
+
+- **Precision**: fraction of reported positives that are actually positive → how often we get **false positives**.
+- **Recall**: fraction of actual positives reported as positive → how often we get **false negatives**.
+- We want both high, but depending on the application we may prefer one over the other.
+:::
+
+## Naive Bayes classifiers
+
+:::{.callout-tip icon=false}
+## Plan
+- Instead of alignment, train Naive Bayes classifiers by building **kmer-based models** of the 16S sequences of taxa in the training data.
+- Run test sequences through the models to find the most likely taxonomic origin.
+- Test sequences have known taxonomy → evaluate accuracy.
+- Well-designed training/testing → test performance tells us what to expect on data of unknown origin.
+:::
+
+## Training: the set of all features $W$
+
+:::{.callout-tip icon=false}
+## Inputs
+- Model of what each class looks like, from labeled training data: **feature table + class labels**.
+- k-mers as features (same `k`).
+- First, the set of **all possible** words of length `k` given the alphabet → $W$.
+:::
+
+```python
+alphabet = skbio.DNA.nondegenerate_chars
+
+def compute_W(alphabet, k):
+    return set(map(''.join, itertools.product(alphabet, repeat=k)))
+
+W = compute_W(alphabet, k)
+```
+
+```
+Alphabet contains the characters: G, A, T, C
+For an alphabet size of 4, W contains 256 length-4 kmers.
+```
+
+## Exercise and taxonomic level
+
+:::{.callout-note icon=false}
+## Exercise
+With the DNA alphabet (A, C, G, T): how many different 3-mers are there? How many 5-mers? How many 5-mers with a twenty-character alphabet (protein sequences)?
+:::
+
+:::{.callout-tip icon=false}
+## Taxonomic specificity
+- Less specific levels (phylum, class) → higher accuracy expected, but less biologically informative.
+- More specific levels (genus, species) → more informative.
+- Here: a **species** classifier (mirroring the unsupervised task).
+:::
+
+## The k-mer probability table
+
+:::{.callout-tip icon=false}
+## Estimating probabilities from frequencies
+Goal: the probability of observing each k-mer in $W$ in a sequence from a given species.
+
+- $N$: total number of sequences in the training data
+- $W$: set of all possible kmers, given $k$ and an alphabet
+- $w_i$: an individual k-mer in $W$
+- $n(w_i)$: number of training sequences containing $w_i$
+:::
+
+## Pseudocounts
+
+:::{.callout-tip icon=false}
+## $P_i$
+Probability of observing $w_i$ in a relevant real-world sequence from **any** species.
+
+- Naively $n(w_i)/N$ — but a k-mer in a real-world sequence might be absent from training data ($n(w_i) = 0$).
+- So: $P_i = \dfrac{n(w_i) + 0.5}{N + 1}$ — the added values are **pseudocounts**.
+:::
+
+:::{.callout-tip icon=false}
+## $P(w_i \mid species)$
+Probability of observing $w_i$ in a sequence from a **given** species.
+
+- Proportion of the species' sequences containing $w_i$, plus pseudocounts.
+- Numerator pseudocount scaled by how frequent $w_i$ is overall: $P_i$. Denominator pseudocount: 1.
+:::
+
+## Computing the table {.scrollable}
+
+```python
+def compute_kmer_probability_table(feature_table, sequence_labels, W):
+    N = feature_table.shape[0] # number of training sequences
+
+    # number of sequences containing kmer wi
+    n_wi = pd.Series(0, index=W)
+    n_wi = n_wi + feature_table.astype(bool).sum(axis=0)
+    n_wi = n_wi.fillna(0)
+    n_wi.name = 'n(w_i)'
+
+    # probabilities of observing each kmer
+    Pi = (n_wi + 0.5) / (N + 1)
+    Pi.name = 'P_i'
+
+    # number of times each taxon appears in training set
+    taxon_counts = collections.Counter(sequence_labels)
+    taxon_table = pd.DataFrame(0, index=taxon_counts.keys(), columns=W)
+    taxon_table = taxon_table + feature_table.astype(bool).groupby(by=sequence_labels, axis=0).sum()
+    taxon_table = taxon_table.fillna(0)
+
+    # probabilities of observing each kmer in each taxon
+    p_wi_t = []
+    for taxon, count in taxon_counts.items():
+        p_wi_t.append(pd.Series((taxon_table.loc[taxon] + Pi) / (count + 1), name=taxon))
+
+    return pd.DataFrame(p_wi_t).T
+
+kmer_probability_table = compute_kmer_probability_table(sequence_feature_table,
+                                                        sequence_labels['legend entry'], W)
+```
+
+## The k-mer probability table {.scrollable}
+
+::: {.font6}
+| | F. succinicans | P. acnes | P. melaninogenica | P. stercorea | Ps. viridiflava | Ps. veronii | P. copri |
+|----|----|----|----|----|----|----|----|
+| AAAA | 0.368 | 0.201 | 0.535 | 0.201 | 0.035 | 0.035 | 0.035 |
+| AAAC | 0.975 | 0.975 | 0.975 | 0.975 | 0.308 | 0.808 | 0.975 |
+| AAAG | 0.998 | 0.998 | 0.998 | 0.998 | 0.998 | 0.998 | 0.998 |
+| AAAT | 0.891 | 0.225 | 0.058 | 0.725 | 0.058 | 0.225 | 0.225 |
+| AACA | 0.975 | 0.975 | 0.641 | 0.975 | 0.641 | 0.808 | 0.975 |
+| AACC | 0.785 | 0.951 | 0.951 | 0.951 | 0.118 | 0.285 | 0.951 |
+| AAGA | 0.965 | 0.965 | 0.965 | 0.132 | 0.965 | 0.799 | 0.799 |
+| AAGC | 0.789 | 0.956 | 0.123 | 0.456 | 0.956 | 0.956 | 0.956 |
+| AATC | 0.938 | 0.271 | 0.771 | 0.271 | 0.938 | 0.938 | 0.271 |
+| AATT | 0.933 | 0.266 | 0.766 | 0.933 | 0.433 | 0.600 | 0.266 |
+| ACAA | 0.947 | 0.947 | 0.447 | 0.280 | 0.947 | 0.947 | 0.280 |
+| ACAG | 0.975 | 0.475 | 0.641 | 0.975 | 0.975 | 0.975 | 0.975 |
+| ACCC | 0.567 | 0.067 | 0.400 | 0.900 | 0.067 | 0.067 | 0.734 |
+:::
+
+Our k-mer-based models of the species: used to compute probabilities of real-world sequences belonging to each species.
+
+## Applying a Naive Bayes classifier
+
+Test data: sequences for our species of interest, **excluding** those used in training:
+
+```python
+test_seq_data = load_annotated_sequences(taxa_of_interest, class_size=sequences_per_taxon,
+                                          verbose=False, ids_to_exclude=sequence_labels.index)
+test_labels = feature_labels_from_sequence_records(test_seq_data)
+```
+
+:::{.callout-tip icon=false}
+## Classifying a query sequence
+1. Extract the set of all k-mers from the query → $V$.
+2. For each species: $P(query \mid species)$ = **product** of its k-mer probabilities for that species.
+3. Return the species with the **highest** probability.
+
+Without pseudocounts, a single zero k-mer probability would make the whole product zero.
+:::
+
+## Classification code
+
+```python
+# Classifies a sequence that has already been split into a list of kmers.
+def classify_V(V, kmer_probability_table):
+    P_S_t = [] # probability of the sequence given the taxon
+    for taxon in kmer_probability_table:
+        kmer_probabilities = kmer_probability_table[taxon]
+        # Multiplying many probabilities often hits the lower limit of the
+        # computer's precision (less than machine epsilon). We therefore take
+        # the log of each observed probability and sum those logs.
+        query_log_probability = sum(list(map(np.log, kmer_probabilities[V])))
+        P_S_t.append((query_log_probability, taxon))
+    return max(P_S_t)[1], V
+
+# Classifies a sequence directly, first computing V, then calling classify_V.
+def classify_sequence(query_sequence, kmer_probability_table, k):
+    V = list(map(str, query_sequence.iter_kmers(k=k)))
+    return classify_V(V, kmer_probability_table)
+```
+
+## Classifying a test sequence
+
+```python
+def random_sequence_record_choice(sequence_records):
+    return random.sample(list(sequence_records.values()), 1)[0]
+
+query_sr = random_sequence_record_choice(test_seq_data)
+taxon_assignment, V = classify_sequence(query_sr.sequence, kmer_probability_table, k)
+```
+
+```
+Sequence 4465561 is predicted to be from the species Prevotella melaninogenica (Bacteroidetes).
+Sequence 4465561 is known to be from the species Prevotella melaninogenica (Bacteroidetes).
+```
+
+Test data has known labels — unlike real-world queries — so we can estimate real-world performance.
+
+:::{.callout-note icon=false}
+## Exercise
+Was it the correct species? Genus? Phylum? Classify a few more — does the classifier seem to work well?
+:::
+
+## Confidence in the results
+
+:::{.callout-tip icon=false}
+## How confident should we be?
+- Training/test sequences are random → results differ each run; some assignments will be wrong.
+- How dependent is the assignment on the **specific** query? With slight differences (a different strain, sequencing errors), would we get the same answer?
+  - Yes → higher confidence. No → lower confidence.
+- Important: the classifier as implemented will **always** return one of the classes, even if the query is very different from all references.
+:::
+
+## Bootstrapping
+
+:::{.callout-tip icon=false}
+## Procedure
+1. Assign taxonomy using $V$, as before.
+2. For a user-specified number of iterations: create a random subset of $V$ **sampled with replacement**, and assign taxonomy to it.
+3. Count how often the subset assignment equals the assignment for the full $V$.
+4. Confidence = count / iterations.
+
+Always the same → confidence 1; never the same → confidence 0.
+:::
+
+## `classify_sequence_with_confidence`
+
+```python
+def classify_sequence_with_confidence(query_sequence, kmer_probability_table, k,
+                                      confidence_iterations=100):
+    # classify the query sequence, as we did above
+    taxon, V = classify_sequence(query_sequence, kmer_probability_table, k)
+
+    count_same_taxon = 0
+    # Size of each subsample: 10% of the actual number of kmers in the query.
+    subsample_size = int(len(V) * 0.1)
+    # Classify random subsets of the query's kmers; count how often the
+    # result is the same as for the full query.
+    for i in range(confidence_iterations):
+        subsample_V = np.random.choice(V, subsample_size, replace=True)
+        subsample_taxon, _ = classify_V(subsample_V, kmer_probability_table)
+        if taxon == subsample_taxon:
+            count_same_taxon += 1
+    confidence = count_same_taxon / confidence_iterations
+
+    return (taxon, confidence)
+```
+
+```
+Sequence 326403 is predicted to be from the species Prevotella stercorea (Bacteroidetes).
+Confidence in this assignment is: 0.75.
+Sequence 326403 is known to be from the species Prevotella stercorea (Bacteroidetes).
+```
+
+## Choosing a confidence threshold
+
+:::{.callout-tip icon=false}
+## What is a good confidence score?
+- Use the test data to find out.
+- Then define a **threshold**: accept assignments above it; label sequences below it as "**unclassified**".
+- Compute assignments and confidence for **all** test sequences; compare distributions for correct vs incorrect assignments.
+:::
+
+```python
+for query_id, query_sr in test_seq_data.items():
+    predicted_taxonomy, confidence = classify_sequence_with_confidence(query_sr.sequence,
+                                                                       kmer_probability_table, k)
+    known_taxonomy = test_labels['legend entry'][query_sr.identifier]
+    correct_assignment = known_taxonomy == predicted_taxonomy
+    ...
+```
+
+## Summary of test results {.scrollable}
+
+::: {.font6}
+| | Predicted taxonomy | Known taxonomy | Confidence | Correct |
+|----|----|----|----|----|
+| 0 | Flavobacterium succinicans | Flavobacterium succinicans | 0.91 | True |
+| 6 | Propionibacterium acnes | Propionibacterium acnes | 0.36 | True |
+| 12 | Prevotella melaninogenica | Prevotella melaninogenica | 0.39 | True |
+| 15 | Prevotella stercorea | Prevotella stercorea | 0.70 | True |
+| 16 | Prevotella copri | Prevotella stercorea | 0.46 | False |
+| 17 | Prevotella copri | Prevotella stercorea | 0.48 | False |
+| 18 | Prevotella copri | Prevotella stercorea | 0.63 | False |
+| 19 | Prevotella copri | Prevotella stercorea | 0.92 | False |
+| 20 | Pseudomonas veronii | Pseudomonas viridiflava | 0.46 | False |
+| 21 | Pseudomonas viridiflava | Pseudomonas viridiflava | 0.59 | True |
+| 24 | Pseudomonas veronii | Pseudomonas viridiflava | 0.55 | False |
+| 25 | Pseudomonas veronii | Pseudomonas veronii | 0.71 | True |
+| 27 | Pseudomonas viridiflava | Pseudomonas veronii | 0.43 | False |
+| 31 | Prevotella copri | Prevotella copri | 0.90 | True |
+| ... | ... | ... | ... | ... |
+:::
+
+## Confidence: correct vs incorrect
+
+```python
+ax = sns.boxplot(data=[correct_assignment_confidences, incorrect_assignment_confidences])
+ax = sns.swarmplot(data=[correct_assignment_confidences, incorrect_assignment_confidences], color="black")
+```
+
+![](../img/bio/iab-machine-learning_97_1.png){height=300}
+
+:::{.callout-note icon=false}
+## Questions
+How well is a confidence threshold likely to work? If you never wanted to reject a correct assignment, how often would you accept an incorrect one? And vice versa?
+:::
+
+## Accuracy and the confusion matrix
+
+```python
+accuracy = n_correct_assignments / (n_correct_assignments + n_incorrect_assignments)
+# The accuracy of the classifier was 0.800.
+```
+
+:::{.callout-tip icon=false}
+## Confusion matrix
+- Two axes: **actual** assignments and **predicted** assignments (same class order on both).
+- Values: how each instance of each known class was classified.
+- A good classifier has high values along the **diagonal**.
+- Off-diagonal values show where the classifier got **confused**.
+:::
+
+```python
+confusion_matrix = summary.groupby('Predicted taxonomy')['Known taxonomy'].value_counts().to_frame()
+confusion_matrix.columns = ['count']
+confusion_matrix = pd.pivot_table(confusion_matrix, index=['Predicted taxonomy'],
+                                  columns=['Known taxonomy'], fill_value=0)
+```
+
+## Confusion matrix
+
+::: {.font6}
+| Predicted \\ Known | F. succinicans | P. copri | P. melaninogenica | P. stercorea | P. acnes | Ps. veronii | Ps. viridiflava |
+|----|----|----|----|----|----|----|----|
+| **F. succinicans** | 5 | 0 | 0 | 0 | 0 | 0 | 0 |
+| **P. copri** | 0 | 5 | 0 | 4 | 0 | 0 | 0 |
+| **P. melaninogenica** | 0 | 0 | 5 | 0 | 0 | 0 | 0 |
+| **P. stercorea** | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
+| **P. acnes** | 0 | 0 | 0 | 0 | 5 | 0 | 0 |
+| **Ps. veronii** | 0 | 0 | 0 | 0 | 0 | 4 | 2 |
+| **Ps. viridiflava** | 0 | 0 | 0 | 0 | 0 | 1 | 3 |
+:::
+
+:::{.callout-note icon=false}
+## Exercises
+- Where classifications were wrong, was the **phylum** at least correct?
+- Change `k` and the taxonomic level. How does accuracy change when increasing/decreasing `k` with the level fixed? And the level with `k` fixed?
+:::
+
+## Variations on the input
+
+:::{.callout-tip icon=false}
+## Labels and features
+- Labels here are **discrete** (categorical/qualitative). With **continuous** labels (e.g., abundance of an organism in an environment) → supervised **regression** instead of classification.
+- Features here were continuous; they could also be **discrete** (e.g., sex of a subject, species of a specimen). Algorithms may change, but ML still applies.
+:::
+
+## Takeaway
+
+:::{.callout-tip icon=false}
+## If you can build a feature table...
+- scikit-learn has other example datasets: **diabetes**, **housing market**, **hand-writing** — other types of data for ML tasks.
+- If you can wrangle your data into a **feature table**, potentially with **sample labels**, you can likely apply ML techniques.
+- This barely scratches the surface. With accessible software, it's easy to know **enough to get into trouble** — continue learning before applying ML in research ([scikit-learn documentation](https://scikit-learn.org/)).
+:::
+
+## Works cited
+
+- R A Fisher. The use of multiple measurements in taxonomic problems. *Ann. Eugen.*, 7(2):179–188, 1936.
+- Y Vázquez-Baeza, M Pirrung, A Gonzalez, R Knight. EMPeror: a tool for visualizing high-throughput microbial community data. *Gigascience*, 2(1):16, 2013.
+- J Gregory Caporaso. *Applied Bioinformatics*. [readiab.org](https://readiab.org)
