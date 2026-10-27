@@ -654,38 +654,30 @@ How does the clustering of samples compare between polar ordination and PCoA?
 
 :::{.callout-tip icon=false}
 ## Classes
-- Two or more **pre-defined classes**; goal: assign observations to them.
-- Humans do this every day: books you want to read vs everything else; phone apps into folders ("school", "entertainment", "social media").
+- Two or more **pre-defined classes**. **Goal:** assign observations to them.
+- Here classes are **microbial species**. **Input:** an unannotated sequence; output: the species it most likely came from.
 :::
-
-:::{.callout-tip icon=false}
-## Spam filter
-- Every email: spam or not spam → spam folder or inbox.
-- Too permissive → inbox filled with junk; too restrictive → relevant messages go to spam.
-:::
-
-Here: classes are **microbial species**. Input: an unannotated sequence; output: the species it most likely came from.
 
 ## Training data
 
 :::{.callout-tip icon=false}
 ## Training the classifier
-- Classifiers need data to develop a **model** → **training** the classifier.
-- **Training data**: observations with defined classes — the "supervision" in supervised learning.
-- Spam filter: emails annotated as spam / not spam. Species assignment: 16S sequences annotated at species level.
+- Classifiers need data to develop a **model**. This is called **training** the classifier.
+- **Training data**: observations with defined classes - the "supervision" in supervised learning.
+- Species assignment: 16S sequences annotated at species level.
 - Training data should typically be **balanced**: roughly the same number of examples of each class.
 :::
 
 ## Test data and real-world data
 
-:::{.callout-tip icon=false}
+:::{.callout-warning icon=false}
 ## Test data
 - An **independent** collection of labeled observations, **not** used for training.
-- Evaluates performance on previously unseen data → predicts performance on **real world** data (class unknown: new emails; environmental DNA sequences).
-- Don't use test data for **optimization**: train → test → change → re-test risks **over-fitting** to that test set; performance would no longer predict real-world performance.
+- Evaluates performance on previously unseen data $\rightarrow$ predicts performance on **real world** data (class unknown: new emails; environmental DNA sequences).
+- Don't use test data for **optimization**: train $\rightarrow$ test $\rightarrow$ change $\rightarrow$ re-test risks **over-fitting** to that test set; performance would no longer predict real-world performance.
 :::
 
-## k-fold cross validation
+## k-fold cross validation {.font8 .scrollable}
 
 ::: {.columns}
 ::: {.column width="45%"}
@@ -708,9 +700,9 @@ Colors indicate class (e.g., red = spam, green = not spam). Image: Gufosowa, CC 
 
 :::{.callout-tip icon=false}
 ## Disease X
-- **Binary classifier**: exactly two classes — easiest to understand.
+- **Binary classifier**: exactly two classes - easiest to understand.
 - Predict whether an individual is **healthy** or has **Disease X**, from features extracted from medical data.
-- A function: features of a sample → "healthy" or "diseased".
+- A function: features of a sample $\rightarrow$ "healthy" or "diseased".
 - Positive result: the patient has Disease X; negative: healthy.
 :::
 
@@ -720,8 +712,8 @@ Colors indicate class (e.g., red = spam, green = not spam). Image: Gufosowa, CC 
 ## Four possibilities
 | | Known: Disease X | Known: healthy |
 |---|---|---|
-| **Predicted positive** | **True positive (TP)** | **False positive (FP)** — type 1 error |
-| **Predicted negative** | **False negative (FN)** — type 2 error | **True negative (TN)** |
+| **Predicted positive** | **True positive (TP)** | **False positive (FP)** - type 1 error |
+| **Predicted negative** | **False negative (FN)** - type 2 error | **True negative (TN)** |
 :::
 
 Tallies of TP, FP, FN, TN over many samples are presented in a **confusion matrix**, from which many performance values can be computed.
@@ -734,8 +726,8 @@ $$\text{accuracy} = \frac{TP + TN}{TP + FP + FN + TN}$$
 ## Fraction classified correctly — but it hides information
 - Doesn't tell whether poor performance comes from type 1 errors, type 2 errors, or both.
 - A low-accuracy classifier that often gives FPs but almost never FNs can still be **clinically useful**:
-  - negative result → the person doesn't have the disease;
-  - positive result → indicator that additional testing is needed.
+  - negative result $\rightarrow$ the person doesn't have the disease;
+  - positive result $\rightarrow$ indicator that additional testing is needed.
 - Useful as a cheap first screening if additional tests are more expensive.
 :::
 
@@ -747,8 +739,8 @@ More informative than accuracy: they indicate whether a classifier suffers more 
 
 $$\text{precision} = \frac{TP}{TP + FP} \qquad \text{recall} = \frac{TP}{TP + FN}$$
 
-- **Precision**: fraction of reported positives that are actually positive → how often we get **false positives**.
-- **Recall**: fraction of actual positives reported as positive → how often we get **false negatives**.
+- **Precision**: fraction of reported positives that are actually positive $\rightarrow$ how often we get **false positives**.
+- **Recall**: fraction of actual positives reported as positive $\rightarrow$ how often we get **false negatives**.
 - We want both high, but depending on the application we may prefer one over the other.
 :::
 
@@ -758,44 +750,46 @@ $$\text{precision} = \frac{TP}{TP + FP} \qquad \text{recall} = \frac{TP}{TP + FN
 ## Plan
 - Instead of alignment, train Naive Bayes classifiers by building **kmer-based models** of the 16S sequences of taxa in the training data.
 - Run test sequences through the models to find the most likely taxonomic origin.
-- Test sequences have known taxonomy → evaluate accuracy.
-- Well-designed training/testing → test performance tells us what to expect on data of unknown origin.
+- Test sequences have known taxonomy $\rightarrow$ evaluate accuracy.
+- Well-designed training/testing $\rightarrow$ test performance tells us what to expect on data of unknown origin.
 :::
 
-## Training: the set of all features $W$
+## Training: the set of all features $W$ {.scrollable}
 
 :::{.callout-tip icon=false}
 ## Inputs
 - Model of what each class looks like, from labeled training data: **feature table + class labels**.
 - k-mers as features (same `k`).
-- First, the set of **all possible** words of length `k` given the alphabet → $W$.
-:::
+- First, the set of **all possible** words of length `k` given the alphabet $\rightarrow$ $W$.
 
-```python
+```{python}
+import itertools
+
 alphabet = skbio.DNA.nondegenerate_chars
 
 def compute_W(alphabet, k):
     return set(map(''.join, itertools.product(alphabet, repeat=k)))
 
 W = compute_W(alphabet, k)
+
+print('Alphabet contains the characters: %s' % ', '.join(alphabet))
+print('For an alphabet size of %d, W contains %d length-%d kmers.' % (len(alphabet), len(W), k))
 ```
 
-```
-Alphabet contains the characters: G, A, T, C
-For an alphabet size of 4, W contains 256 length-4 kmers.
-```
-
-## Exercise and taxonomic level
+:::
 
 :::{.callout-note icon=false}
 ## Exercise
 With the DNA alphabet (A, C, G, T): how many different 3-mers are there? How many 5-mers? How many 5-mers with a twenty-character alphabet (protein sequences)?
 :::
 
+## Taxonomic level
+
+
 :::{.callout-tip icon=false}
 ## Taxonomic specificity
-- Less specific levels (phylum, class) → higher accuracy expected, but less biologically informative.
-- More specific levels (genus, species) → more informative.
+- Less specific levels (phylum, class) $\rightarrow$ higher accuracy expected, but less biologically informative.
+- More specific levels (genus, species) $\rightarrow$ more informative.
 - Here: a **species** classifier (mirroring the unsupervised task).
 :::
 
@@ -817,11 +811,11 @@ Goal: the probability of observing each k-mer in $W$ in a sequence from a given 
 ## $P_i$
 Probability of observing $w_i$ in a relevant real-world sequence from **any** species.
 
-- Naively $n(w_i)/N$ — but a k-mer in a real-world sequence might be absent from training data ($n(w_i) = 0$).
-- So: $P_i = \dfrac{n(w_i) + 0.5}{N + 1}$ — the added values are **pseudocounts**.
+- Naively $n(w_i)/N$ - but a k-mer in a real-world sequence might be absent from training data ($n(w_i) = 0$).
+- So: $P_i = \dfrac{n(w_i) + 0.5}{N + 1}$ - the added values are **pseudocounts**.
 :::
 
-:::{.callout-tip icon=false}
+:::{.callout-note icon=false}
 ## $P(w_i \mid species)$
 Probability of observing $w_i$ in a sequence from a **given** species.
 
@@ -829,9 +823,9 @@ Probability of observing $w_i$ in a sequence from a **given** species.
 - Numerator pseudocount scaled by how frequent $w_i$ is overall: $P_i$. Denominator pseudocount: 1.
 :::
 
-## Computing the table {.scrollable}
+## Computing the table {.font8 .scrollable}
 
-```python
+```{python}
 def compute_kmer_probability_table(feature_table, sequence_labels, W):
     N = feature_table.shape[0] # number of training sequences
 
@@ -847,8 +841,10 @@ def compute_kmer_probability_table(feature_table, sequence_labels, W):
 
     # number of times each taxon appears in training set
     taxon_counts = collections.Counter(sequence_labels)
-    taxon_table = pd.DataFrame(0, index=taxon_counts.keys(), columns=W)
-    taxon_table = taxon_table + feature_table.astype(bool).groupby(by=sequence_labels, axis=0).sum()
+
+    taxon_table = pd.DataFrame(0, index=taxon_counts.keys(), columns=sorted(W))
+    taxon_table = taxon_table + feature_table.astype(bool).groupby(by=sequence_labels).sum()
+
     taxon_table = taxon_table.fillna(0)
 
     # probabilities of observing each kmer in each taxon
@@ -860,99 +856,104 @@ def compute_kmer_probability_table(feature_table, sequence_labels, W):
 
 kmer_probability_table = compute_kmer_probability_table(sequence_feature_table,
                                                         sequence_labels['legend entry'], W)
+kmer_probability_table[:25]
 ```
 
-## The k-mer probability table {.scrollable}
+## Applying a Naive Bayes classifier {.scrollable}
+:::{.callout-tip icon=false}
+## Test data
+We select sequences for our species of interest, **excluding** those used in training:
 
-::: {.font6}
-| | F. succinicans | P. acnes | P. melaninogenica | P. stercorea | Ps. viridiflava | Ps. veronii | P. copri |
-|----|----|----|----|----|----|----|----|
-| AAAA | 0.368 | 0.201 | 0.535 | 0.201 | 0.035 | 0.035 | 0.035 |
-| AAAC | 0.975 | 0.975 | 0.975 | 0.975 | 0.308 | 0.808 | 0.975 |
-| AAAG | 0.998 | 0.998 | 0.998 | 0.998 | 0.998 | 0.998 | 0.998 |
-| AAAT | 0.891 | 0.225 | 0.058 | 0.725 | 0.058 | 0.225 | 0.225 |
-| AACA | 0.975 | 0.975 | 0.641 | 0.975 | 0.641 | 0.808 | 0.975 |
-| AACC | 0.785 | 0.951 | 0.951 | 0.951 | 0.118 | 0.285 | 0.951 |
-| AAGA | 0.965 | 0.965 | 0.965 | 0.132 | 0.965 | 0.799 | 0.799 |
-| AAGC | 0.789 | 0.956 | 0.123 | 0.456 | 0.956 | 0.956 | 0.956 |
-| AATC | 0.938 | 0.271 | 0.771 | 0.271 | 0.938 | 0.938 | 0.271 |
-| AATT | 0.933 | 0.266 | 0.766 | 0.933 | 0.433 | 0.600 | 0.266 |
-| ACAA | 0.947 | 0.947 | 0.447 | 0.280 | 0.947 | 0.947 | 0.280 |
-| ACAG | 0.975 | 0.475 | 0.641 | 0.975 | 0.975 | 0.975 | 0.975 |
-| ACCC | 0.567 | 0.067 | 0.400 | 0.900 | 0.067 | 0.067 | 0.734 |
-:::
-
-Our k-mer-based models of the species: used to compute probabilities of real-world sequences belonging to each species.
-
-## Applying a Naive Bayes classifier
-
-Test data: sequences for our species of interest, **excluding** those used in training:
-
-```python
+```{python}
 test_seq_data = load_annotated_sequences(taxa_of_interest, class_size=sequences_per_taxon,
                                           verbose=False, ids_to_exclude=sequence_labels.index)
 test_labels = feature_labels_from_sequence_records(test_seq_data)
 ```
 
+Review:
+
+```{python}
+for sr in random.sample(list(test_seq_data.values()), 3):
+    print(sr.identifier)
+    print(sr.taxonomy)
+    print(sr.sequence)
+    print('🦠')
+```
+:::
+
+## Applying a Naive Bayes classifier
 :::{.callout-tip icon=false}
 ## Classifying a query sequence
-1. Extract the set of all k-mers from the query → $V$.
+1. Extract the set of all k-mers from the query. We will label it as $V$.
 2. For each species: $P(query \mid species)$ = **product** of its k-mer probabilities for that species.
 3. Return the species with the **highest** probability.
 
 Without pseudocounts, a single zero k-mer probability would make the whole product zero.
 :::
 
-## Classification code
+## Classification code {.font8 .scrollable}
 
-```python
-# Classifies a sequence that has already been split into a list of kmers.
+```{python}
+# This function classifies a sequence that has already been split into a list
+# of kmers.
 def classify_V(V, kmer_probability_table):
     P_S_t = [] # probability of the sequence given the taxon
     for taxon in kmer_probability_table:
         kmer_probabilities = kmer_probability_table[taxon]
-        # Multiplying many probabilities often hits the lower limit of the
-        # computer's precision (less than machine epsilon). We therefore take
-        # the log of each observed probability and sum those logs.
+        # TODO: Confirm this step
+        # Because we're multiplying many probabilities, we often will hit the lower
+        # limit of the computer's precision (i.e., our probability will be 
+        # less than machine epsilon). We therefore take the log of each observed 
+        # probability and sum those logs. 
         query_log_probability = sum(list(map(np.log, kmer_probabilities[V])))
         P_S_t.append((query_log_probability, taxon))
     return max(P_S_t)[1], V
 
-# Classifies a sequence directly, first computing V, then calling classify_V.
+# This function is more convenient to use. It classifies a sequence 
+# directly, first by computing V, and then by calling classify_V.
 def classify_sequence(query_sequence, kmer_probability_table, k):
     V = list(map(str, query_sequence.iter_kmers(k=k)))
     return classify_V(V, kmer_probability_table)
 ```
 
-## Classifying a test sequence
+## Classifying a test sequence {.scrollable}
 
-```python
+:::{.callout-tip icon=false}
+## Classification
+
+```{python}
 def random_sequence_record_choice(sequence_records):
     return random.sample(list(sequence_records.values()), 1)[0]
 
 query_sr = random_sequence_record_choice(test_seq_data)
 taxon_assignment, V = classify_sequence(query_sr.sequence, kmer_probability_table, k)
-```
-
-```
-Sequence 4465561 is predicted to be from the species Prevotella melaninogenica (Bacteroidetes).
-Sequence 4465561 is known to be from the species Prevotella melaninogenica (Bacteroidetes).
+print("Sequence %s is predicted to be from the species %s." % (query_sr.identifier, taxon_assignment))
 ```
 
 Test data has known labels — unlike real-world queries — so we can estimate real-world performance.
 
+Verify:
+```{python}
+print("Sequence %s is known to be from the species %s." % (query_sr.identifier, test_labels['legend entry'][query_sr.identifier]))
+```
+:::
+
+## Classifying a test sequence {.scrollable}
 :::{.callout-note icon=false}
-## Exercise
-Was it the correct species? Genus? Phylum? Classify a few more — does the classifier seem to work well?
+## Exercises
+1. Was this sequence classified as the correct species? If not, was it at least classified to the correct genus? What about the correct phylum?
+
+2. Try classifying a few other query sequences and determining if the returned species assignment was correct. You can do this by running the previous two code cells over again in order. Does this classifier seem to be working well?
 :::
 
 ## Confidence in the results
 
 :::{.callout-tip icon=false}
 ## How confident should we be?
-- Training/test sequences are random → results differ each run; some assignments will be wrong.
+- Training/test sequences are random $\rightarrow$ results differ each run; some assignments will be wrong.
 - How dependent is the assignment on the **specific** query? With slight differences (a different strain, sequencing errors), would we get the same answer?
-  - Yes → higher confidence. No → lower confidence.
+  - Yes $\rightarrow$ higher confidence
+  - No $\rightarrow$ lower confidence
 - Important: the classifier as implemented will **always** return one of the classes, even if the query is very different from all references.
 :::
 
@@ -965,22 +966,30 @@ Was it the correct species? Genus? Phylum? Classify a few more — does the clas
 3. Count how often the subset assignment equals the assignment for the full $V$.
 4. Confidence = count / iterations.
 
-Always the same → confidence 1; never the same → confidence 0.
+- always the same $\rightarrow$ confidence 1
+- never the same $\rightarrow$ confidence 0.
 :::
 
-## `classify_sequence_with_confidence`
+## Classification with confidence {.scrollable}
 
-```python
+:::{.callout-note icon=false}
+## `classify_sequence_with_confidence`
+The following funtion will assign taxonomy to a query sequence, and will compute and return a confidence value for the assignment.
+```{python}
 def classify_sequence_with_confidence(query_sequence, kmer_probability_table, k,
                                       confidence_iterations=100):
     # classify the query sequence, as we did above
     taxon, V = classify_sequence(query_sequence, kmer_probability_table, k)
 
     count_same_taxon = 0
-    # Size of each subsample: 10% of the actual number of kmers in the query.
+    # Define the size of each subsample as 10% of the actual number of
+    # kmers in the query sequence.
     subsample_size = int(len(V) * 0.1)
-    # Classify random subsets of the query's kmers; count how often the
-    # result is the same as for the full query.
+    # Perform n iterations (where n is provided by the user as 
+    # confidence_iterations) where a random subset of the query sequence's
+    # kmers are used for the classification task.
+    # Keep track of the number of times the observed result is the same as
+    # that for the query sequence. 
     for i in range(confidence_iterations):
         subsample_V = np.random.choice(V, subsample_size, replace=True)
         subsample_taxon, _ = classify_V(subsample_V, kmer_probability_table)
@@ -991,103 +1000,102 @@ def classify_sequence_with_confidence(query_sequence, kmer_probability_table, k,
     return (taxon, confidence)
 ```
 
-```
-Sequence 326403 is predicted to be from the species Prevotella stercorea (Bacteroidetes).
-Confidence in this assignment is: 0.75.
-Sequence 326403 is known to be from the species Prevotella stercorea (Bacteroidetes).
+:::
+## Classification with confidence {.scrollable}
+
+:::{.callout-note icon=false}
+## Apply and test
+```{python}
+query_sr = random_sequence_record_choice(test_seq_data)
+taxon_assignment, confidence = classify_sequence_with_confidence(query_sr.sequence, kmer_probability_table, k)
+print(taxon_assignment)
+print(confidence)
+print("Sequence %s is predicted to be from the species %s. Confidence in this assignment is: %1.2f." % (query_sr.identifier, taxon_assignment, confidence))
 ```
 
-## Choosing a confidence threshold
+Test:
+```{python}
+print("Sequence %s is known to be from the species %s." % (query_sr.identifier, test_labels['legend entry'][query_sr.identifier]))
+```
+:::
+
+## Choosing a confidence threshold {.scrollable}
 
 :::{.callout-tip icon=false}
 ## What is a good confidence score?
 - Use the test data to find out.
 - Then define a **threshold**: accept assignments above it; label sequences below it as "**unclassified**".
 - Compute assignments and confidence for **all** test sequences; compare distributions for correct vs incorrect assignments.
-:::
 
-```python
+```{python}
+correct_assignment_confidences = []
+incorrect_assignment_confidences = []
+summary = []
+
 for query_id, query_sr in test_seq_data.items():
-    predicted_taxonomy, confidence = classify_sequence_with_confidence(query_sr.sequence,
-                                                                       kmer_probability_table, k)
+    predicted_taxonomy, confidence = classify_sequence_with_confidence(query_sr.sequence, kmer_probability_table, k)
     known_taxonomy = test_labels['legend entry'][query_sr.identifier]
     correct_assignment = known_taxonomy == predicted_taxonomy
-    ...
+    if correct_assignment:
+        correct_assignment_confidences.append(confidence)
+    else:
+        incorrect_assignment_confidences.append(confidence)
+
+    summary.append([predicted_taxonomy, known_taxonomy, confidence, correct_assignment])
+
+summary = pd.DataFrame(summary, columns=['Predicted taxonomy', 'Known taxonomy', 'Confidence', 'Correct assignment'])
+
+summary
 ```
-
-## Summary of test results {.scrollable}
-
-::: {.font6}
-| | Predicted taxonomy | Known taxonomy | Confidence | Correct |
-|----|----|----|----|----|
-| 0 | Flavobacterium succinicans | Flavobacterium succinicans | 0.91 | True |
-| 6 | Propionibacterium acnes | Propionibacterium acnes | 0.36 | True |
-| 12 | Prevotella melaninogenica | Prevotella melaninogenica | 0.39 | True |
-| 15 | Prevotella stercorea | Prevotella stercorea | 0.70 | True |
-| 16 | Prevotella copri | Prevotella stercorea | 0.46 | False |
-| 17 | Prevotella copri | Prevotella stercorea | 0.48 | False |
-| 18 | Prevotella copri | Prevotella stercorea | 0.63 | False |
-| 19 | Prevotella copri | Prevotella stercorea | 0.92 | False |
-| 20 | Pseudomonas veronii | Pseudomonas viridiflava | 0.46 | False |
-| 21 | Pseudomonas viridiflava | Pseudomonas viridiflava | 0.59 | True |
-| 24 | Pseudomonas veronii | Pseudomonas viridiflava | 0.55 | False |
-| 25 | Pseudomonas veronii | Pseudomonas veronii | 0.71 | True |
-| 27 | Pseudomonas viridiflava | Pseudomonas veronii | 0.43 | False |
-| 31 | Prevotella copri | Prevotella copri | 0.90 | True |
-| ... | ... | ... | ... | ... |
 :::
 
-## Confidence: correct vs incorrect
+## Confidence: correct vs incorrect {.scrollable}
 
-```python
+```{python}
+import seaborn as sns
+
 ax = sns.boxplot(data=[correct_assignment_confidences, incorrect_assignment_confidences])
 ax = sns.swarmplot(data=[correct_assignment_confidences, incorrect_assignment_confidences], color="black")
-```
+_ = ax.set_xticklabels(['Correct assignments', 'Incorrect assignments'])
+_ = ax.set_ylabel('Confidence')
 
-![](../img/bio/iab-machine-learning_97_1.png){height=300}
+ax
+```
 
 :::{.callout-note icon=false}
 ## Questions
 How well is a confidence threshold likely to work? If you never wanted to reject a correct assignment, how often would you accept an incorrect one? And vice versa?
 :::
 
-## Accuracy and the confusion matrix
-
-```python
-accuracy = n_correct_assignments / (n_correct_assignments + n_incorrect_assignments)
-# The accuracy of the classifier was 0.800.
-```
+## Accuracy and the confusion matrix {.scrollable}
 
 :::{.callout-tip icon=false}
+## Accuracy
+```{python}
+n_correct_assignments = len(correct_assignment_confidences)
+n_incorrect_assignments = len(incorrect_assignment_confidences)
+accuracy = n_correct_assignments / (n_correct_assignments + n_incorrect_assignments)
+print('The accuracy of the classifier was %1.3f.' % accuracy)
+```
+:::
+
+:::{.callout-note icon=false}
 ## Confusion matrix
 - Two axes: **actual** assignments and **predicted** assignments (same class order on both).
 - Values: how each instance of each known class was classified.
 - A good classifier has high values along the **diagonal**.
 - Off-diagonal values show where the classifier got **confused**.
-:::
 
-```python
+```{python}
 confusion_matrix = summary.groupby('Predicted taxonomy')['Known taxonomy'].value_counts().to_frame()
 confusion_matrix.columns = ['count']
-confusion_matrix = pd.pivot_table(confusion_matrix, index=['Predicted taxonomy'],
-                                  columns=['Known taxonomy'], fill_value=0)
+confusion_matrix = pd.pivot_table(confusion_matrix, index=['Predicted taxonomy'], columns=['Known taxonomy'], fill_value=0)
+confusion_matrix
 ```
 
-## Confusion matrix
-
-::: {.font6}
-| Predicted \\ Known | F. succinicans | P. copri | P. melaninogenica | P. stercorea | P. acnes | Ps. veronii | Ps. viridiflava |
-|----|----|----|----|----|----|----|----|
-| **F. succinicans** | 5 | 0 | 0 | 0 | 0 | 0 | 0 |
-| **P. copri** | 0 | 5 | 0 | 4 | 0 | 0 | 0 |
-| **P. melaninogenica** | 0 | 0 | 5 | 0 | 0 | 0 | 0 |
-| **P. stercorea** | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
-| **P. acnes** | 0 | 0 | 0 | 0 | 5 | 0 | 0 |
-| **Ps. veronii** | 0 | 0 | 0 | 0 | 0 | 4 | 2 |
-| **Ps. viridiflava** | 0 | 0 | 0 | 0 | 0 | 1 | 3 |
 :::
 
-:::{.callout-note icon=false}
+:::{.callout-warning icon=false}
 ## Exercises
 - Where classifications were wrong, was the **phylum** at least correct?
 - Change `k` and the taxonomic level. How does accuracy change when increasing/decreasing `k` with the level fixed? And the level with `k` fixed?
@@ -1097,21 +1105,6 @@ confusion_matrix = pd.pivot_table(confusion_matrix, index=['Predicted taxonomy']
 
 :::{.callout-tip icon=false}
 ## Labels and features
-- Labels here are **discrete** (categorical/qualitative). With **continuous** labels (e.g., abundance of an organism in an environment) → supervised **regression** instead of classification.
+- Labels here are **discrete** (categorical/qualitative). With **continuous** labels (e.g., abundance of an organism in an environment), we'd use supervised **regression** instead of classification.
 - Features here were continuous; they could also be **discrete** (e.g., sex of a subject, species of a specimen). Algorithms may change, but ML still applies.
 :::
-
-## Takeaway
-
-:::{.callout-tip icon=false}
-## If you can build a feature table...
-- scikit-learn has other example datasets: **diabetes**, **housing market**, **hand-writing** — other types of data for ML tasks.
-- If you can wrangle your data into a **feature table**, potentially with **sample labels**, you can likely apply ML techniques.
-- This barely scratches the surface. With accessible software, it's easy to know **enough to get into trouble** — continue learning before applying ML in research ([scikit-learn documentation](https://scikit-learn.org/)).
-:::
-
-## Works cited
-
-- R A Fisher. The use of multiple measurements in taxonomic problems. *Ann. Eugen.*, 7(2):179–188, 1936.
-- Y Vázquez-Baeza, M Pirrung, A Gonzalez, R Knight. EMPeror: a tool for visualizing high-throughput microbial community data. *Gigascience*, 2(1):16, 2013.
-- J Gregory Caporaso. *Applied Bioinformatics*. [readiab.org](https://readiab.org)
