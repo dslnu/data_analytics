@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en"><head>
-<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2" crossorigin="anonymous"></script><script src="site_libs/clipboard/clipboard.min.js"></script>
 <script src="site_libs/quarto-html/tabby.min.js"></script>
 <script src="site_libs/quarto-html/popper.min.js"></script>
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
@@ -194,6 +194,9 @@
       margin-right: 0; 
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/requirejs@2.3.6/require.min.js" integrity="sha384-c9c+LnTbwQ3aujuU7ULEPVvgLs+Fn6fJUvIGTsuu1ZcCf11fiEubah0ttpca4ntM sha384-6V1/AdqZRWk1KAlWbKBlGhN7VG4iE/yAZcO6NZPMF8od0vukrvr0tg4qY6NSrItx" crossorigin="anonymous"></script>
+  
+  <script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
 </head>
 <body class="quarto-light">
   <div class="reveal">
@@ -346,7 +349,7 @@ MSDE
 <ul>
 <li>The first byte, <code>0x83</code>, indicates that what follows is an object (top four bits = <code>0x80</code>) with three fields (bottom four bits = <code>0x03</code>)</li>
 <li>The second byte, <code>0xa8</code>, indicates that what follows is a string (top four bits = <code>0xa0</code>) that is eight bytes long (bottom four bits = <code>0x08</code>)</li>
-<li>The next eight bytes are the field name <code>userName</code> in ASCII indicated previously, there’s no need for any marker to tell us where the string ends (or any escaping)</li>
+<li>The next eight bytes are the field name <code>userName</code> in ASCII. Since the length was indicated previously, there’s no need for any marker to tell us where the string ends (or any escaping)</li>
 <li>The next seven bytes encode the six-letter string value Martin with a prefix <code>0xa6</code></li>
 </ul>
 </div>
@@ -439,7 +442,7 @@ MSDE
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
-<p><strong>Protocol Buffers: <strong>34</strong> bytes</strong></p>
+<p><strong>Protocol Buffers: <strong>33</strong> bytes</strong></p>
 </div>
 <div class="callout-content">
 <p><img data-src="img/protobuf.png" height="500"></p>
@@ -452,19 +455,134 @@ MSDE
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
-<p><strong>Thrift/Protobuf details</strong></p>
+<p><strong>Thrift/Protobuf: schema evolution</strong></p>
 </div>
 <div class="callout-content">
+<p>Field <strong>tags</strong> (<code>1</code>, <code>2</code>, <code>3</code>), not names, are written to the bytes. So:</p>
 <ul>
-<li><p><strong>Schema evolution</strong> is supported by incrementing tag numbers.</p></li>
-<li><p><strong>Lists</strong> not supported in Protobuf.</p></li>
-<li><p>Thrift supports <strong>nested lists</strong>.</p></li>
+<li>a field can be <strong>renamed</strong>, but its tag can <strong>never change</strong></li>
+<li>a new field gets a <strong>new tag</strong> and must be optional or have a default (forward compatibility: old code skips unknown tags)</li>
+<li>only optional fields can be removed, and their tag must never be reused</li>
 </ul>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Lists</strong></p>
+</div>
+<div class="callout-content">
+<p>Protobuf has no list type: a <code>repeated</code> field is a list. Thrift has a <code>list&lt;...&gt;</code> type, which also allows <strong>nested lists</strong>.</p>
 </div>
 </div>
 </div>
 </section>
 <section id="formats-14" class="slide level2">
+<h2>Formats</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Avro</strong></p>
+</div>
+<div class="callout-content">
+<p>Started in 2009 as a Hadoop subproject. Thrift did not fit Hadoop well.</p>
+<pre><code>record Person {
+  string userName;
+  union { null, long } favoriteNumber = null;
+  array&lt;string&gt; interests;
+}</code></pre>
+</div>
+</div>
+</div>
+
+<img data-src="img/avro_schemas.png" class="r-stretch"></section>
+<section id="formats-15" class="slide level2">
+<h2>Formats</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Avro encoding: <strong>32</strong> bytes</strong></p>
+</div>
+<div class="callout-content">
+<p>No tags and no field names: just values concatenated in schema order. <img data-src="img/avro_encoding.png"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="formats-16" class="slide level2">
+<h2>Formats</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Avro: writer’s schema vs reader’s schema</strong></p>
+</div>
+<div class="callout-content">
+<p>The bytes can only be decoded with the <strong>exact schema they were written with</strong>.</p>
+<ul>
+<li>the <strong>writer’s schema</strong> is stored with the data: once in the header of an Avro file, or as a version number in a schema registry (Kafka)</li>
+<li>the <strong>reader’s schema</strong> is what the application expects</li>
+<li>Avro <strong>resolves</strong> the two by field <strong>name</strong>: fields missing in the writer’s schema take the reader’s default, and extra fields are ignored</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Why it matters</strong></p>
+</div>
+<div class="callout-content">
+<p>Avro schemas can be <strong>generated</strong> from a database schema: there are no tags to assign by hand. Avro is used for Kafka messages, Hadoop data, and Iceberg <strong>manifests</strong> (see below).</p>
+</div>
+</div>
+</div>
+</section>
+<section id="formats-17" class="slide level2">
+<h2>Formats</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Recall: schema-on-write vs schema-on-read</strong></p>
+</div>
+<div class="callout-content">
+<table class="caption-top">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th>Schema-on-write</th>
+<th>Schema-on-read</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Databases</td>
+<td>relational</td>
+<td>document (MongoDB)</td>
+</tr>
+<tr class="even">
+<td>Encodings</td>
+<td>Thrift, Protobuf, Avro</td>
+<td>JSON, MessagePack</td>
+</tr>
+<tr class="odd">
+<td>Change</td>
+<td>migration / new schema version</td>
+<td>handled in application code</td>
+</tr>
+</tbody>
+</table>
+<p>Binary encodings <strong>write the schema down</strong>, but still let it evolve: the same compatibility question as <code>ALTER TABLE</code>, now for bytes on disk and on the wire.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="formats-18" class="slide level2">
 <h2>Formats</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -483,11 +601,11 @@ MSDE
 </div>
 </section>
 <section>
-<section id="google-dremel-and-apache-parquet" class="title-slide slide level1 center">
-<h1>Google Dremel and Apache Parquet</h1>
+<section id="google-dremel" class="title-slide slide level1 center">
+<h1>Google Dremel</h1>
 
 </section>
-<section id="formats-15" class="slide level2">
+<section id="formats-19" class="slide level2">
 <h2>Formats</h2>
 <div class="callout callout-note no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -504,11 +622,11 @@ MSDE
 <aside><div>
 <p>Introduced in “Dremel: Interactive Analysis of Web-Scale Datasets. Communications of the ACM, 2011, 54(6).”</p>
 </div></aside></section>
-<section id="formats-16" class="slide level2">
+<section id="formats-20" class="slide level2">
 <h2>Formats</h2>
 
 <img data-src="img/dremel_pumpkin_tool.png" class="r-stretch"></section>
-<section id="formats-17" class="slide level2">
+<section id="formats-21" class="slide level2">
 <h2>Formats</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -517,7 +635,7 @@ MSDE
 </div>
 <div class="callout-content">
 <ul>
-<li>read-only nested data.</li>
+<li>read-only nested data</li>
 <li>multilevel execution trees</li>
 <li>columnar data layout</li>
 </ul>
@@ -550,6 +668,16 @@ MSDE
 <li><p>data used in Web and scientific computing are often non-relational.</p></li>
 <li><p>Data structures used in programming languages, messages exchanged by distributed systems, structured documents, etc., are often nested <!-- as well a nested representation. --></p></li>
 </ul>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Recall: hierarchical DB models</strong></p>
+</div>
+<div class="callout-content">
+<p>This is the <strong>hierarchical</strong> model of IMS and the <strong>document</strong> model of MongoDB. Dremel does not normalize it into tables. It keeps the tree and <strong>stores it by column</strong>.</p>
 </div>
 </div>
 </div>
@@ -602,7 +730,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="formats-dremel-4" class="slide level2">
+<section id="formats-dremel-4" class="slide level2 scrollable">
 <h2>Formats: Dremel</h2>
 <div class="callout callout-important no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -614,69 +742,14 @@ MSDE
 </div>
 </div>
 </div>
-</section>
-<section id="formats-dremel-5" class="slide level2">
-<h2>Formats: Dremel</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Path deltas</strong></p>
-</div>
-<div class="callout-content">
-<p><img data-src="img/dremel_path_deltas.png"></p>
-</div>
-</div>
-</div>
-</section>
-<section id="formats-dremel-6" class="slide level2">
-<h2>Formats: Dremel</h2>
-<div class="callout callout-note no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Tablets</strong></p>
-</div>
-<div class="callout-content">
-<p>A table is stored as a set of <strong>tablets</strong>.</p>
-<p>A tablet is a self-contained horizontal partition of the table. <img data-src="img/dremel_tablet.png"></p>
-</div>
-</div>
-</div>
-</section>
-<section id="formats-dremel-7" class="slide level2">
-<h2>Formats: Dremel</h2>
-<div class="callout callout-important no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Record assembly</strong></p>
-</div>
-<div class="callout-content">
-<ul>
-<li>create a finite state machine (FSM) that reads the field values and levels for each field, and appends the values sequentially to the output records.</li>
-<li>An FSM state corresponds to a field reader for each selected field.</li>
-<li>State transitions are labeled with repetition levels.</li>
-<li>Once a reader fetches a value, we look at the next repetition level to decide what next reader to use.</li>
-<li>The FSM is traversed from the start to end state once for each record.</li>
-</ul>
-</div>
-</div>
-</div>
-</section>
-<section id="formats-dremel-8" class="slide level2">
-<h2>Formats: Dremel</h2>
 
-<img data-src="img/dremel_record_assembly.png" class="r-stretch"></section>
-<section id="formats-dremel-9" class="slide level2">
-<h2>Formats: Dremel</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>2 fields example</strong></p>
-</div>
-<div class="callout-content">
-<p><img data-src="img/dremel_automaton.png"></p>
-</div>
-</div>
-</div>
+<aside><div>
+<p><code>r</code> and <code>d</code> are the <strong>repetition</strong> and <strong>definition</strong> levels. Parquet uses the same scheme, and we go through them in detail with Parquet below.</p>
+</div></aside></section></section>
+<section>
+<section id="google-bigquery" class="title-slide slide level1 center">
+<h1>Google BigQuery</h1>
+
 </section>
 <section id="dremel-aftermath" class="slide level2">
 <h2>Dremel aftermath</h2>
@@ -698,48 +771,6 @@ MSDE
 </div>
 </section>
 <section id="dremel-aftermath-1" class="slide level2">
-<h2>Dremel aftermath</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Dremel SQL</strong></p>
-</div>
-<div class="callout-content">
-<ul>
-<li>First-class support of nested data (because of Protobuf usage)</li>
-<li>therefore, hierarchical schemas</li>
-<li>ability to interactively and analyze huge datasets</li>
-<li>merged with other dialects at Google into GoogleSQL</li>
-<li>support for joins and other analytic queries added later</li>
-</ul>
-</div>
-</div>
-</div>
-</section>
-<section id="dremel-aftermath-2" class="slide level2">
-<h2>Dremel aftermath</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Separated compute and storage</strong></p>
-</div>
-<div class="callout-content">
-<ul>
-<li>Started running on a few hundred shared-nothing server</li>
-<li>moved to Borg (managed system, precursor to Kubernetes)</li>
-<li>replicated storage (each table stored on 3 separate disks)</li>
-<li>later on, move to disaggregated storage (akin to GFS)</li>
-<li>disaggregated memory shuffling</li>
-</ul>
-</div>
-</div>
-</div>
-</section>
-<section id="dremel-aftermath-3" class="slide level2">
-<h2>Dremel aftermath</h2>
-
-<img data-src="img/dremel_memory_shuffle.png" class="r-stretch"></section>
-<section id="dremel-aftermath-4" class="slide level2">
 <h2>Dremel aftermath</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -766,70 +797,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="dremel-aftermath-5" class="slide level2">
-<h2>Dremel aftermath</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Tree architecture</strong></p>
-</div>
-<div class="callout-content">
-<p>Forms a massively parallel distributed tree for pushing down a query to the tree and then aggregating the results from the leaves.</p>
-</div>
-</div>
-</div>
-
-<img data-src="img/dremel_execution_tree1.png" class="r-stretch"></section>
-<section id="dremel-aftermath-6" class="slide level2">
-<h2>Dremel aftermath</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Query execution</strong></p>
-</div>
-<div class="callout-content">
-<p><img data-src="img/dremel_execution_tree2.png"></p>
-</div>
-</div>
-</div>
-</section>
-<section id="dremel-aftermath-7" class="slide level2">
-<h2>Dremel aftermath</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Query execution</strong></p>
-</div>
-<div class="callout-content">
-<ul>
-<li>read, filter, partially pre-aggregate, shuffle</li>
-<li>final GROUP BY, sort, truncate</li>
-<li>final ordering and truncation</li>
-<li>query coordinator reads final 100 records</li>
-</ul>
-</div>
-</div>
-</div>
-</section>
-<section id="dremel-aftermath-8" class="slide level2">
-<h2>Dremel aftermath</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Serverless computing</strong></p>
-</div>
-<div class="callout-content">
-<ul>
-<li>centralized scheduling, superseding dispatcher</li>
-<li>shuffle persistence layer</li>
-<li>flexible execution DAGs</li>
-<li>dynamic query execution</li>
-</ul>
-</div>
-</div>
-</div>
-</section>
-<section id="dremel-aftermath-9" class="slide level2">
+<section id="dremel-aftermath-2" class="slide level2">
 <h2>Dremel aftermath</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -844,7 +812,7 @@ MSDE
 </div>
 
 <img data-src="img/bigquery_logo.png" class="r-stretch"></section>
-<section id="dremel-aftermath-10" class="slide level2">
+<section id="dremel-aftermath-3" class="slide level2">
 <h2>Dremel aftermath</h2>
 
 <img data-src="img/bq-architecture.png" class="r-stretch"></section></section>
@@ -880,16 +848,156 @@ MSDE
 <p><strong>Columnar storage advantages</strong></p>
 </div>
 <div class="callout-content">
-<ul>
-<li><strong>better compression</strong> (data is more homogenous)</li>
-<li><strong>reduced I/O</strong> will be reduced <!-- %as we can efficiently scan only a subset of the columns while reading the data. Better compression also reduces the bandwidth required to read the input. --></li>
-<li><strong>better encodings</strong> suitable for vectorization</li>
-</ul>
+<p>The same as for columnar databases: better compression, reduced I/O, encodings suitable for vectorization. Parquet brings them to <strong>files</strong>.</p>
 </div>
 </div>
 </div>
 </section>
 <section id="formats-parquet-2" class="slide level2">
+<h2>Formats: Parquet</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>File layout</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/parquet_arch.png" height="500"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="formats-parquet-3" class="slide level2 font8">
+<h2>Formats: Parquet</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>File layout</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>row group</strong>: a horizontal slice of the table, typically 64 MB to 1 GB (DuckDB writes 122,880 rows by default)</li>
+<li><strong>column chunk</strong>: the values of one column within one row group, stored contiguously</li>
+<li><strong>page</strong>: the unit of encoding and compression inside a column chunk (about 1 MB)</li>
+<li><strong>footer</strong>: the schema, plus the location and <strong>statistics</strong> (min, max, null count) of every column chunk. It is written last, so a writer can stream the data first.</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Reading a Parquet file</strong></p>
+</div>
+<div class="callout-content">
+<ol type="1">
+<li>read the footer (the last bytes of the file)</li>
+<li>pick the <strong>columns</strong> the query needs (projection pushdown)</li>
+<li>skip the <strong>row groups</strong> whose min/max cannot match the filter (filter pushdown)</li>
+<li>read and decode only the remaining column chunks</li>
+</ol>
+</div>
+</div>
+</div>
+</section>
+<section id="formats-parquet-4" class="slide level2 font8">
+<h2>Formats: Parquet</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Recall: columnar DBs</strong></p>
+</div>
+<div class="callout-content">
+<table class="caption-top">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Columnar databases</th>
+<th>Parquet</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>DuckDB row groups</td>
+<td>row groups</td>
+</tr>
+<tr class="even">
+<td>zone maps (min/max per block)</td>
+<td>column chunk statistics in the footer, page indexes</td>
+</tr>
+<tr class="odd">
+<td>dictionary encoding</td>
+<td><code>RLE_DICTIONARY</code></td>
+</tr>
+<tr class="even">
+<td>RLE, bit-packing</td>
+<td>RLE/bit-packing hybrid (for dictionary codes, levels, booleans)</td>
+</tr>
+<tr class="odd">
+<td>delta</td>
+<td><code>DELTA_BINARY_PACKED</code>, <code>DELTA_BYTE_ARRAY</code></td>
+</tr>
+<tr class="even">
+<td>projection and filter pushdown</td>
+<td>read only the needed column chunks and row groups</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Encoding, then compression</strong></p>
+</div>
+<div class="callout-content">
+<p>Pages are first <strong>encoded</strong> (lightweight, type-aware), then optionally <strong>compressed</strong> with a general-purpose codec: Snappy (fast, the old default), zstd (smaller), gzip, LZ4.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="formats-parquet-5" class="slide level2 font8">
+<h2>Formats: Parquet</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Page index: skipping inside a row group</strong></p>
+</div>
+<div class="callout-content">
+<p>Row-group statistics are coarse: one min/max per ~100,000 rows. The optional <strong>page index</strong>, stored next to the footer, adds:</p>
+<ul>
+<li><strong>column index</strong>: min/max and null count of every <strong>page</strong></li>
+<li><strong>offset index</strong>: where each page starts, so a reader can jump to the matching pages only</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Bloom filters: where min/max fails</strong></p>
+</div>
+<div class="callout-content">
+<p><code>WHERE user_id = 'u_83412'</code> on a high-cardinality, unsorted column: every row group’s <code>[min, max]</code> contains the value, so nothing is skipped.</p>
+<p>A <strong>Bloom filter</strong> per column chunk answers “definitely not here” or “maybe here”, with no false negatives. Parquet uses split-block Bloom filters: a few KB per column chunk, checked with a few cache-friendly bit tests.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Note</strong></p>
+</div>
+<div class="callout-content">
+<p>Recall the Bloom filters that LSM engines use to skip SSTables. Same idea, now per file part.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="formats-parquet-6" class="slide level2">
 <h2>Formats: Parquet</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -917,7 +1025,7 @@ MSDE
 </div>
 </div>
 </section>
-<section id="formats-parquet-3" class="slide level2">
+<section id="formats-parquet-7" class="slide level2">
 <h2>Formats: Parquet</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -925,19 +1033,19 @@ MSDE
 <p><strong>Schema example</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource protobuf number-lines code-with-copy"><code class="sourceCode protobuf"><span id="cb4-1"><a aria-label="1"></a><span class="kw">message</span> AddressBook {</span>
-<span id="cb4-2"><a aria-label="2"></a>  <span class="kw">required</span> <span class="dt">string</span> owner;</span>
-<span id="cb4-3"><a aria-label="3"></a>  <span class="kw">repeated</span> <span class="dt">string</span> ownerPhoneNumbers;</span>
-<span id="cb4-4"><a aria-label="4"></a>  <span class="kw">repeated</span> group contacts {</span>
-<span id="cb4-5"><a aria-label="5"></a>    <span class="kw">required</span> <span class="dt">string</span> name;</span>
-<span id="cb4-6"><a aria-label="6"></a>    <span class="kw">optional</span> <span class="dt">string</span> phoneNumber;</span>
-<span id="cb4-7"><a aria-label="7"></a>  }</span>
-<span id="cb4-8"><a aria-label="8"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource protobuf number-lines code-with-copy"><code class="sourceCode protobuf"><span id="cb5-1"><a aria-label="1"></a><span class="kw">message</span> AddressBook {</span>
+<span id="cb5-2"><a aria-label="2"></a>  <span class="kw">required</span> <span class="dt">string</span> owner;</span>
+<span id="cb5-3"><a aria-label="3"></a>  <span class="kw">repeated</span> <span class="dt">string</span> ownerPhoneNumbers;</span>
+<span id="cb5-4"><a aria-label="4"></a>  <span class="kw">repeated</span> group contacts {</span>
+<span id="cb5-5"><a aria-label="5"></a>    <span class="kw">required</span> <span class="dt">string</span> name;</span>
+<span id="cb5-6"><a aria-label="6"></a>    <span class="kw">optional</span> <span class="dt">string</span> phoneNumber;</span>
+<span id="cb5-7"><a aria-label="7"></a>  }</span>
+<span id="cb5-8"><a aria-label="8"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
 </section>
-<section id="formats-parquet-4" class="slide level2">
+<section id="formats-parquet-8" class="slide level2">
 <h2>Formats: Parquet</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -945,9 +1053,9 @@ MSDE
 <p><strong>List Schema</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource protobuf number-lines code-with-copy"><code class="sourceCode protobuf"><span id="cb5-1"><a aria-label="1"></a><span class="kw">message</span> ExampleList {</span>
-<span id="cb5-2"><a aria-label="2"></a>  <span class="kw">repeated</span> <span class="dt">string</span> list;</span>
-<span id="cb5-3"><a aria-label="3"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode numberSource protobuf number-lines code-with-copy"><code class="sourceCode protobuf"><span id="cb6-1"><a aria-label="1"></a><span class="kw">message</span> ExampleList {</span>
+<span id="cb6-2"><a aria-label="2"></a>  <span class="kw">repeated</span> <span class="dt">string</span> list;</span>
+<span id="cb6-3"><a aria-label="3"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -957,17 +1065,17 @@ MSDE
 <p><strong>List Data</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode numberSource protobuf number-lines code-with-copy"><code class="sourceCode protobuf"><span id="cb6-1"><a aria-label="1"></a>{</span>
-<span id="cb6-2"><a aria-label="2"></a>  list<span class="op">:</span> <span class="st">"a"</span>,</span>
-<span id="cb6-3"><a aria-label="3"></a>  list<span class="op">:</span> <span class="st">"b"</span>,</span>
-<span id="cb6-4"><a aria-label="4"></a>  list<span class="op">:</span> <span class="st">"c"</span>,</span>
-<span id="cb6-5"><a aria-label="5"></a>  ...</span>
-<span id="cb6-6"><a aria-label="6"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode numberSource protobuf number-lines code-with-copy"><code class="sourceCode protobuf"><span id="cb7-1"><a aria-label="1"></a>{</span>
+<span id="cb7-2"><a aria-label="2"></a>  list<span class="op">:</span> <span class="st">"a"</span>,</span>
+<span id="cb7-3"><a aria-label="3"></a>  list<span class="op">:</span> <span class="st">"b"</span>,</span>
+<span id="cb7-4"><a aria-label="4"></a>  list<span class="op">:</span> <span class="st">"c"</span>,</span>
+<span id="cb7-5"><a aria-label="5"></a>  ...</span>
+<span id="cb7-6"><a aria-label="6"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
 </section>
-<section id="formats-parquet-5" class="slide level2">
+<section id="formats-parquet-9" class="slide level2">
 <h2>Formats: Parquet</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -975,12 +1083,12 @@ MSDE
 <p><strong>Map Schema</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode numberSource protobuf number-lines code-with-copy"><code class="sourceCode protobuf"><span id="cb7-1"><a aria-label="1"></a><span class="kw">message</span> ExampleMap {</span>
-<span id="cb7-2"><a aria-label="2"></a>  <span class="kw">repeated</span> group map { </span>
-<span id="cb7-3"><a aria-label="3"></a>    <span class="kw">required</span> <span class="dt">string</span> key;</span>
-<span id="cb7-4"><a aria-label="4"></a>    <span class="kw">optional</span> <span class="dt">string</span> value;</span>
-<span id="cb7-5"><a aria-label="5"></a>  }</span>
-<span id="cb7-6"><a aria-label="6"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode numberSource protobuf number-lines code-with-copy"><code class="sourceCode protobuf"><span id="cb8-1"><a aria-label="1"></a><span class="kw">message</span> ExampleMap {</span>
+<span id="cb8-2"><a aria-label="2"></a>  <span class="kw">repeated</span> group map { </span>
+<span id="cb8-3"><a aria-label="3"></a>    <span class="kw">required</span> <span class="dt">string</span> key;</span>
+<span id="cb8-4"><a aria-label="4"></a>    <span class="kw">optional</span> <span class="dt">string</span> value;</span>
+<span id="cb8-5"><a aria-label="5"></a>  }</span>
+<span id="cb8-6"><a aria-label="6"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -990,24 +1098,24 @@ MSDE
 <p><strong>Map Data</strong></p>
 </div>
 <div class="callout-content">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode numberSource protobuf number-lines code-with-copy"><code class="sourceCode protobuf"><span id="cb8-1"><a aria-label="1"></a>{</span>
-<span id="cb8-2"><a aria-label="2"></a>  map<span class="op">:</span> {</span>
-<span id="cb8-3"><a aria-label="3"></a>    key<span class="op">:</span> <span class="st">"AL"</span>,</span>
-<span id="cb8-4"><a aria-label="4"></a>    value<span class="op">:</span> <span class="st">"Alabama"</span>},</span>
-<span id="cb8-5"><a aria-label="5"></a>  map<span class="op">:</span> {</span>
-<span id="cb8-6"><a aria-label="6"></a>    key<span class="op">:</span> <span class="st">"AK"</span>,</span>
-<span id="cb8-7"><a aria-label="7"></a>    value<span class="op">:</span> <span class="st">"Alaska"</span> },</span>
-<span id="cb8-8"><a aria-label="8"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode numberSource protobuf number-lines code-with-copy"><code class="sourceCode protobuf"><span id="cb9-1"><a aria-label="1"></a>{</span>
+<span id="cb9-2"><a aria-label="2"></a>  map<span class="op">:</span> {</span>
+<span id="cb9-3"><a aria-label="3"></a>    key<span class="op">:</span> <span class="st">"AL"</span>,</span>
+<span id="cb9-4"><a aria-label="4"></a>    value<span class="op">:</span> <span class="st">"Alabama"</span>},</span>
+<span id="cb9-5"><a aria-label="5"></a>  map<span class="op">:</span> {</span>
+<span id="cb9-6"><a aria-label="6"></a>    key<span class="op">:</span> <span class="st">"AK"</span>,</span>
+<span id="cb9-7"><a aria-label="7"></a>    value<span class="op">:</span> <span class="st">"Alaska"</span> },</span>
+<span id="cb9-8"><a aria-label="8"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
 </section>
-<section id="formats-parquet-6" class="slide level2">
+<section id="formats-parquet-10" class="slide level2 scrollable">
 <h2>Formats: Parquet</h2>
 <p><img data-src="img/parquet_nested_example.png" height="300"></p>
 <p><img data-src="img/parquet_nested_columns.png" height="300"></p>
 </section>
-<section id="formats-parquet-7" class="slide level2">
+<section id="formats-parquet-11" class="slide level2">
 <h2>Formats: Parquet</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1017,22 +1125,22 @@ MSDE
 <div class="callout-content">
 <p>Level for which the field is null.</p>
 <p>When a field is defined then all its parents are defined too, but when it is null we need to record the level at which it started being null to be able to reconstruct the record.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode numberSource protobuf number-lines code-with-copy"><code class="sourceCode protobuf"><span id="cb9-1"><a aria-label="1"></a><span class="kw">message</span> ExampleDefinitionLevel {</span>
-<span id="cb9-2"><a aria-label="2"></a>  <span class="kw">optional</span> group a {</span>
-<span id="cb9-3"><a aria-label="3"></a>    <span class="kw">optional</span> group b {</span>
-<span id="cb9-4"><a aria-label="4"></a>      <span class="kw">optional</span> <span class="dt">string</span> c;</span>
-<span id="cb9-5"><a aria-label="5"></a>    }</span>
-<span id="cb9-6"><a aria-label="6"></a>  }</span>
-<span id="cb9-7"><a aria-label="7"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode numberSource protobuf number-lines code-with-copy"><code class="sourceCode protobuf"><span id="cb10-1"><a aria-label="1"></a><span class="kw">message</span> ExampleDefinitionLevel {</span>
+<span id="cb10-2"><a aria-label="2"></a>  <span class="kw">optional</span> group a {</span>
+<span id="cb10-3"><a aria-label="3"></a>    <span class="kw">optional</span> group b {</span>
+<span id="cb10-4"><a aria-label="4"></a>      <span class="kw">optional</span> <span class="dt">string</span> c;</span>
+<span id="cb10-5"><a aria-label="5"></a>    }</span>
+<span id="cb10-6"><a aria-label="6"></a>  }</span>
+<span id="cb10-7"><a aria-label="7"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
 </section>
-<section id="formats-parquet-8" class="slide level2">
+<section id="formats-parquet-12" class="slide level2">
 <h2>Formats: Parquet</h2>
 
 <img data-src="img/parquet_definition_level.png" class="r-stretch"></section>
-<section id="formats-parquet-9" class="slide level2">
+<section id="formats-parquet-13" class="slide level2">
 <h2>Formats: Parquet</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1042,24 +1150,24 @@ MSDE
 <div class="callout-content">
 <p>The level at which we have to create a new list for the current value. <!-- %In other words, the repetition level can be seen as a marker of when to start a new list and at which level. --></p>
 <p>Only levels that are repeated need a Repetition level: optional or required fields are never repeated</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode numberSource protobuf number-lines code-with-copy"><code class="sourceCode protobuf"><span id="cb10-1"><a aria-label="1"></a><span class="kw">message</span> nestedLists {</span>
-<span id="cb10-2"><a aria-label="2"></a>  <span class="kw">repeated</span> group level1 {</span>
-<span id="cb10-3"><a aria-label="3"></a>    <span class="kw">repeated</span> <span class="dt">string</span> level2;</span>
-<span id="cb10-4"><a aria-label="4"></a>  }</span>
-<span id="cb10-5"><a aria-label="5"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode numberSource protobuf number-lines code-with-copy"><code class="sourceCode protobuf"><span id="cb11-1"><a aria-label="1"></a><span class="kw">message</span> nestedLists {</span>
+<span id="cb11-2"><a aria-label="2"></a>  <span class="kw">repeated</span> group level1 {</span>
+<span id="cb11-3"><a aria-label="3"></a>    <span class="kw">repeated</span> <span class="dt">string</span> level2;</span>
+<span id="cb11-4"><a aria-label="4"></a>  }</span>
+<span id="cb11-5"><a aria-label="5"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
 </section>
-<section id="formats-parquet-10" class="slide level2">
+<section id="formats-parquet-14" class="slide level2">
 <h2>Formats: Parquet</h2>
 
 <img data-src="img/parquet_repetition_level.png" class="r-stretch"></section>
-<section id="formats-parquet-11" class="slide level2">
+<section id="formats-parquet-15" class="slide level2">
 <h2>Formats: Parquet</h2>
 
 <img data-src="img/parquet_addressbook_levels.png" class="r-stretch"></section>
-<section id="formats-parquet-12" class="slide level2">
+<section id="formats-parquet-16" class="slide level2">
 <h2>Formats: Parquet</h2>
 <pre><code>AddressBook {
   owner: "John Smith",
@@ -1075,14 +1183,852 @@ AddressBook {
   owner: "Random Guy"
 }</code></pre>
 </section>
-<section id="formats-parquet-13" class="slide level2">
+<section id="formats-parquet-17" class="slide level2">
 <h2>Formats: Parquet</h2>
 
-<img data-src="img/parquet_addressbook_example.png" class="r-stretch"></section></section>
+<img data-src="img/parquet_addressbook_example.png" class="r-stretch"></section>
+<section id="formats-parquet-18" class="slide level2">
+<h2>Formats: Parquet</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Record assembly</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>create a finite state machine (FSM) that reads the field values and levels for each field, and appends the values sequentially to the output records.</li>
+<li>An FSM state corresponds to a field reader for each selected field.</li>
+<li>State transitions are labeled with repetition levels.</li>
+<li>Once a reader fetches a value, we look at the next repetition level to decide what next reader to use.</li>
+<li>The FSM is traversed from the start to end state once for each record.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="formats-parquet-19" class="slide level2">
+<h2>Formats: Parquet</h2>
+
+<img data-src="img/dremel_record_assembly.png" class="r-stretch"></section>
+<section id="formats-parquet-20" class="slide level2">
+<h2>Formats: Parquet</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>2 fields example</strong></p>
+</div>
+<div class="callout-content">
+<p><img data-src="img/dremel_automaton.png"></p>
+</div>
+</div>
+</div>
+</section>
+<section id="formats-orc" class="slide level2 font8">
+<h2>Formats: ORC</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Optimized Row Columnar</strong></p>
+</div>
+<div class="callout-content">
+<p>Developed in 2013 for Apache Hive (Hortonworks and Facebook), at the same time as Parquet (Twitter and Cloudera).</p>
+<ul>
+<li><strong>stripes</strong> (about 64 MB) ≈ Parquet row groups</li>
+<li>lightweight indexes every 10,000 rows: min/max, optional <strong>Bloom filters</strong></li>
+<li>nested types stored as separate child columns with presence and length streams, instead of Dremel levels</li>
+<li>built-in support for Hive ACID tables</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Comparison</strong></p>
+</div>
+<div class="callout-content">
+<table class="caption-top">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th>Avro</th>
+<th>Parquet</th>
+<th>ORC</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Layout</td>
+<td>row</td>
+<td>column</td>
+<td>column</td>
+</tr>
+<tr class="even">
+<td>Nested data</td>
+<td>yes</td>
+<td>Dremel levels</td>
+<td>child columns</td>
+</tr>
+<tr class="odd">
+<td>Best for</td>
+<td>writing records one by one, messages, schema evolution</td>
+<td>analytics, most engines (Spark, DuckDB, Polars, BigQuery, Snowflake)</td>
+<td>analytics in the Hive ecosystem</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</section></section>
+<section>
+<section id="apache-arrow" class="title-slide slide level1 center">
+<h1>Apache Arrow</h1>
+
+</section>
+<section id="apache-arrow-1" class="slide level2 font8">
+<h2>Apache Arrow</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>In-memory columnar format</strong></p>
+</div>
+<div class="callout-content">
+<p>Parquet is the standard <strong>on-disk</strong> columnar format. <strong>Arrow</strong> (2016) is its <strong>in-memory</strong> counterpart:</p>
+<ul>
+<li>a column is a contiguous <strong>buffer</strong> of values, plus a validity bitmap for nulls (and an offsets buffer for strings and lists)</li>
+<li>data is processed in <strong>record batches</strong> of columns, the vectors of vectorized execution</li>
+<li>the same layout in every language: C++, Rust, Java, Python, R, …</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Why it matters: zero copy (<span class="math inline">\(n^2\)</span> problem)</strong></p>
+</div>
+<div class="callout-content">
+<p>Without a shared format, every exchange between two systems (database <span class="math inline">\(\rightarrow\)</span> Python, Spark <span class="math inline">\(\rightarrow\)</span> pandas) means serializing and deserializing every value. With Arrow, systems pass <strong>pointers to the same buffers</strong>.</p>
+<p>DuckDB, Polars, pandas (<code>ArrowDtype</code>; Arrow-backed strings by default since pandas 3.0), Spark (<code>toPandas</code>, pandas UDFs), and Dask can all exchange Arrow tables.</p>
+</div>
+</div>
+</div>
+
+<aside><div>
+<p>Announced in 2016 as a top-level Apache project, led by es McKinney(creator of pandas) and acques Nadeau(Dremio), together with others.</p>
+</div></aside></section>
+<section id="apache-arrow-2" class="slide level2 font8">
+<h2>Apache Arrow</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Arrow vs Parquet</strong></p>
+</div>
+<div class="callout-content">
+<table class="caption-top">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th>Parquet</th>
+<th>Arrow</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Lives</td>
+<td>on disk, object storage</td>
+<td>in memory, on the wire</td>
+</tr>
+<tr class="even">
+<td>Optimized for</td>
+<td>small size: encodings + compression</td>
+<td>fast processing: random access, SIMD</td>
+</tr>
+<tr class="odd">
+<td>Decoding needed?</td>
+<td>yes</td>
+<td>no: compute directly on the buffers</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The Arrow ecosystem</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>Arrow IPC / Feather</strong>: Arrow buffers written to a file or stream as they are</li>
+<li><strong>Arrow Flight</strong>: RPC protocol for sending record batches over the network</li>
+<li><strong>ADBC</strong>: a database API (like JDBC/ODBC) that returns Arrow instead of rows</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="apache-arrow-memory-layout" class="slide level2 font8 scrollable">
+<h2>Apache Arrow: memory layout</h2>
+<p>A string column with a null, as three contiguous buffers:</p>
+<img data-src="bigdata_lec14_files/mediabag/e1e030e2eb78c5ca4603076331280789d5c95831.svg" style="width:90.0%">
+<ul>
+<li>fixed-width types (<code>int64</code>, <code>double</code>, <code>timestamp</code>): just a validity bitmap and one values buffer: value <span class="math inline">\(i\)</span> is at byte <span class="math inline">\(8i\)</span>, <strong>O(1)</strong> random access</li>
+<li>buffers aligned to 64 bytes: ready for SIMD, and for the vectorized execution of the query execution lecture</li>
+<li><strong>nulls</strong> live in the validity bitmap, not in the values:
+<ul>
+<li>a null still occupies its slot (offsets <code>4, 4</code>; 8 arbitrary bytes in an <code>int64</code> column): positions never shift, so access stays O(1) and loops have no special cases</li>
+<li>no sentinel values: pandas used <code>NaN</code> for missing values, so an <code>int</code> column with a null became <code>float</code>; in Arrow any type can be null, and <code>NaN</code> and null are different things</li>
+<li>cheap: 1 bit per value (~1.5% of an <code>int64</code> column), omitted entirely when <code>null_count == 0</code>; filters combine bitmaps 64 rows at a time with bitwise AND/OR</li>
+<li>contrast with Parquet: no slot for nulls at all, only <strong>definition levels</strong>. Smaller on disk, but no positional access: storage format vs in-memory format</li>
+</ul></li>
+</ul>
+</section>
+<section id="apache-arrow-more-layouts" class="slide level2 font8 scrollable">
+<h2>Apache Arrow: more layouts</h2>
+<table class="caption-top">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Layout</th>
+<th>Buffers</th>
+<th>Used for</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>primitive</td>
+<td>validity + values</td>
+<td>numbers, dates, timestamps, booleans (1 bit each)</td>
+</tr>
+<tr class="even">
+<td>variable-size binary</td>
+<td>validity + offsets + data</td>
+<td><code>string</code>, <code>binary</code> (as on the previous slide)</td>
+</tr>
+<tr class="odd">
+<td><strong>string view</strong> (2024)</td>
+<td>validity + 16-byte views + data buffers</td>
+<td>short strings (≤ 12 bytes) stored <strong>inline</strong> in the view; longer ones store a 4-byte prefix + pointer. Fast comparisons and slicing. From Umbra’s “German strings”; used by Polars, DataFusion, Velox</td>
+</tr>
+<tr class="even">
+<td>list</td>
+<td>validity + offsets + child array</td>
+<td><code>LIST</code>, the nested data of Dremel/Parquet</td>
+</tr>
+<tr class="odd">
+<td>struct</td>
+<td>validity + one child array per field</td>
+<td><code>STRUCT</code></td>
+</tr>
+<tr class="even">
+<td>dictionary</td>
+<td>indices + dictionary array</td>
+<td>low-cardinality columns: dictionary encoding, in memory</td>
+</tr>
+<tr class="odd">
+<td>run-end encoded</td>
+<td>run ends + values</td>
+<td>long runs of equal values: RLE, in memory</td>
+</tr>
+</tbody>
+</table>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>From arrays to tables</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>array</strong>: one column chunk, a set of buffers</li>
+<li><strong>record batch</strong>: a schema + arrays of equal length: the unit that flows between operators and over the wire</li>
+<li><strong>table</strong>: a schema + <strong>chunked arrays</strong> (a column may consist of many record batches)</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="apache-arrow-interchange" class="slide level2 font8 scrollable">
+<h2>Apache Arrow: interchange</h2>
+<table class="caption-top">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Mechanism</th>
+<th>Scope</th>
+<th>How</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>C Data Interface</strong></td>
+<td>inside one process</td>
+<td>two small C structs (<code>ArrowSchema</code>, <code>ArrowArray</code>) with pointers to the buffers. Libraries share data <strong>without</strong> depending on each other’s code. In Python: the PyCapsule protocol (<code>__arrow_c_stream__</code>)</td>
+</tr>
+<tr class="even">
+<td><strong>IPC format</strong></td>
+<td>files, pipes, sockets</td>
+<td>the in-memory buffers written as they are + a small FlatBuffers header. Files can be <strong>memory-mapped</strong>: reading = no copy. Feather v2 = IPC file</td>
+</tr>
+<tr class="odd">
+<td><strong>Arrow Flight / Flight SQL</strong></td>
+<td>network</td>
+<td>gRPC streams of record batches, parallel streams from many servers</td>
+</tr>
+<tr class="even">
+<td><strong>ADBC</strong></td>
+<td>databases</td>
+<td>a JDBC/ODBC-like API that returns Arrow instead of rows (PostgreSQL, Snowflake, DuckDB, SQLite, …)</td>
+</tr>
+</tbody>
+</table>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Who speaks Arrow</strong></p>
+</div>
+<div class="callout-content">
+<p>DuckDB, Polars, pandas, DataFusion, Spark (pandas UDFs, <code>toPandas</code>, Spark Connect results), Dremio, InfluxDB 3, BigQuery Storage Read API, Snowflake connectors, R (<code>arrow</code>), JavaScript. Implementations: C++ (PyArrow, R), Rust (<code>arrow-rs</code>), Java, Go, JS, and the tiny C library <strong>nanoarrow</strong>.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="parquet-downsides" class="slide level2 font8">
+<h2>Parquet downsides</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Parquet was designed in 2013 for HDFS and spinning disks</strong></p>
+</div>
+<div class="callout-content">
+<p>Large sequential scans of a few columns. Today’s workloads look different:</p>
+<ul>
+<li><strong>random access</strong>: ML training samples random rows, vector search fetches single records. Parquet must decode at least a whole page to read one value.</li>
+<li><strong>wide tables</strong>: ML feature tables have thousands of columns. The Thrift footer must be decoded <strong>entirely</strong> before reading anything.</li>
+<li><strong>CPU-bound decoding</strong>: on NVMe and fast networks, decompression becomes the bottleneck. Snappy/zstd pages must be decompressed before filtering.</li>
+<li><strong>SIMD and GPUs</strong>: the RLE/bit-packing hybrid decodes value by value, which is hard to vectorize.</li>
+<li><strong>slow evolution</strong>: a new encoding (e.g.&nbsp;ALP) is useful only when <strong>every</strong> reader supports it, so writers stay with the old ones.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="vortex" class="slide level2 font8">
+<h2>Vortex</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Overview</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>created by SpiralDB, donated to the <strong>Linux Foundation</strong> (LF AI &amp; Data) in August 2025, backed by Microsoft, Snowflake, Palantir, NVIDIA</li>
+<li>file format stable (backward compatible) since version 0.36</li>
+<li>readers in DuckDB (core extension), DataFusion, Spark, Trino, Ray; bindings for Rust, Python, Java, C/C++</li>
+<li>types are <strong>Arrow’s</strong>: a Vortex array converts to Arrow without copying</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Key separation</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>Logical type</strong> (<code>i64</code>, <code>utf8</code>, <code>struct</code>, …) vs <strong>physical encoding</strong> (how the bytes are laid out). An array is a <strong>tree</strong> of encodings, and new encodings can be added as plugins.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="vortex-ideas-it-builds-on" class="slide level2 font8 scrollable">
+<h2>Vortex: ideas it builds on</h2>
+<p>Vortex does not invent new compression. It combines published research, much of it from CWI (where DuckDB comes from):</p>
+<table class="caption-top">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Idea</th>
+<th>Source</th>
+<th>What it gives Vortex</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>FastLanes</strong></td>
+<td>Afroozeh, Boncz, VLDB 2023</td>
+<td>bit-packing, delta, FOR, RLE over vectors of 1,024 values in an interleaved (“transposed”) layout: decoded with simple loops that compilers auto-vectorize on any CPU, and that map well to GPU threads</td>
+</tr>
+<tr class="even">
+<td><strong>ALP</strong></td>
+<td>Afroozeh, Kuffó, Boncz, SIGMOD 2024</td>
+<td>doubles that are really decimals → small integers (see the columnar storage slides)</td>
+</tr>
+<tr class="odd">
+<td><strong>FSST</strong></td>
+<td>Boncz, Neumann, Leis, VLDB 2020</td>
+<td>strings compressed with a symbol table, each string decodable on its own</td>
+</tr>
+<tr class="even">
+<td><strong>BtrBlocks</strong></td>
+<td>Kuschewski et al., SIGMOD 2023</td>
+<td><strong>cascading</strong> compression: pick the best encoding per block by trying candidates on a <strong>sample</strong> (~1%), then compress the encoding’s outputs again, recursively. Lightweight encodings only, no zstd.</td>
+</tr>
+</tbody>
+</table>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Compute on compressed data</strong></p>
+</div>
+<div class="callout-content">
+<p>Because the reader knows the encoding tree, many operations run <strong>without decompressing</strong>:</p>
+<ul>
+<li><code>payment = 'card'</code> on a dictionary: compare 2-bit codes, not strings</li>
+<li><code>min</code>/<code>max</code>/<code>count</code> from the arrays’ statistics, <code>trip_id = 42</code> on a sequence: arithmetic, no data at all</li>
+<li>filters, projections and expressions are pushed down to the encoded arrays (on CPU, and by design on GPU); values are <strong>materialized late</strong>, only for rows that survive</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="vortex-cascading-compression-in-practice" class="slide level2 font8 scrollable">
+<h2>Vortex: cascading compression in practice</h2>
+<p>Output of <code>vortex.compress(...).display_tree()</code> (Python package <code>vortex-data</code> 0.90) on 100,000 synthetic trips:</p>
+<pre><code>trip_id   vortex.sequence(i64)  nbytes=0 B         base: 0, multiplier: 1
+
+payment   vortex.dict(utf8)     nbytes=25.12 kB
+            codes:  fastlanes.bitpacked(u8)   bit_width: 2     25.09 kB
+            values: vortex.fsst(utf8, len=3)                    35 B
+
+fare      vortex.alp(f64)       nbytes=175.62 kB   exponents: e: 14, f: 12
+            encoded: fastlanes.bitpacked(i64) bit_width: 14   175.62 kB
+
+url       vortex.onpair(utf8)   nbytes=868.51 kB
+            codes:        fastlanes.bitpacked(u16)  bit_width: 12
+            codes_offsets: fastlanes.bitpacked(u32) bit_width: 19</code></pre>
+<ul>
+<li><code>trip_id</code> = 0, 1, 2, …: stored as <strong>two numbers</strong>.</li>
+<li><code>payment</code>: dictionary → codes bit-packed to 2 bits; the 3 dictionary strings themselves FSST-compressed. Encodings <strong>nest</strong>.</li>
+<li><code>fare</code>: ALP turns prices into integers 0..10,000 → <strong>14 bits</strong>, exactly as computed on the ALP slide.</li>
+<li>uncompressed, the 4 columns take 5.9 MB; compressed, 1.07 MB.</li>
+</ul>
+</section>
+<section id="vortex-layouts" class="slide level2 font8">
+<h2>Vortex: layouts</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>A file is a serialized tree of layouts</strong></p>
+</div>
+<div class="callout-content">
+<p>Parquet fixes the structure: row groups → column chunks → pages. Vortex composes it from generic <strong>layouts</strong>:</p>
+<ul>
+<li><strong>struct</strong>: one child per column</li>
+<li><strong>chunked</strong>: split rows into parts</li>
+<li><strong>zoned</strong>: a zone map (min, max, …) for every 8,192 rows: finer than Parquet’s row groups</li>
+<li><strong>dictionary</strong>: one dictionary shared by many chunks</li>
+<li><strong>flat</strong>: one serialized array</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Consequences</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>default file: struct → zoned → chunked (~2 MB) → compressed → flat. A Parquet-like file is just a different composition.</li>
+<li>the footer is a <strong>FlatBuffer</strong>: a reader can jump to one column’s metadata in O(1), without decoding the metadata of the other 9,999 columns</li>
+<li>extensible: new encodings and layouts are plugins. The design also allows embedding <strong>WebAssembly</strong> decoders in the file, so old readers can decode new encodings.</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="demo-parquet-vs-vortex" class="slide level2 font8 scrollable">
+<h2>Demo: Parquet vs Vortex</h2>
+<p>The synthetic taxi trips from the columnar storage lecture (1M rows), via DuckDB’s <code>vortex</code> extension:</p>
+<div id="74c7fba4" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a aria-label="1"></a><span class="im">import</span> os, tempfile, time</span>
+<span id="cb14-2"><a aria-label="2"></a><span class="im">import</span> duckdb</span>
+<span id="cb14-3"><a aria-label="3"></a></span>
+<span id="cb14-4"><a aria-label="4"></a>work <span class="op">=</span> tempfile.mkdtemp()</span>
+<span id="cb14-5"><a aria-label="5"></a>con <span class="op">=</span> duckdb.<span class="ex">connect</span>()</span>
+<span id="cb14-6"><a aria-label="6"></a>con.sql(<span class="st">"""</span></span>
+<span id="cb14-7"><a aria-label="7"></a><span class="st">SELECT setseed(0.42);</span></span>
+<span id="cb14-8"><a aria-label="8"></a><span class="st">CREATE TABLE trips AS</span></span>
+<span id="cb14-9"><a aria-label="9"></a><span class="st">SELECT i                                                   AS trip_id,</span></span>
+<span id="cb14-10"><a aria-label="10"></a><span class="st">       TIMESTAMP '2025-01-01' + to_seconds(i * 10)         AS pickup_ts,</span></span>
+<span id="cb14-11"><a aria-label="11"></a><span class="st">       (i // 100000)::INTEGER                              AS vendor_id,</span></span>
+<span id="cb14-12"><a aria-label="12"></a><span class="st">       ['cash', 'card', 'app'][1 + (hash(i) % 3)::INTEGER] AS payment,</span></span>
+<span id="cb14-13"><a aria-label="13"></a><span class="st">       1000 + (random() * 50)::INTEGER                     AS zone_id,</span></span>
+<span id="cb14-14"><a aria-label="14"></a><span class="st">       round(random() * 100, 2)                            AS fare</span></span>
+<span id="cb14-15"><a aria-label="15"></a><span class="st">FROM range(1000000) t(i);</span></span>
+<span id="cb14-16"><a aria-label="16"></a><span class="st">"""</span>)</span>
+<span id="cb14-17"><a aria-label="17"></a>con.sql(<span class="st">"INSTALL vortex; LOAD vortex;"</span>)</span>
+<span id="cb14-18"><a aria-label="18"></a></span>
+<span id="cb14-19"><a aria-label="19"></a>vx_files <span class="op">=</span> {</span>
+<span id="cb14-20"><a aria-label="20"></a>    <span class="st">"v2_snappy.parquet"</span>: <span class="st">"(FORMAT parquet, PARQUET_VERSION v2, COMPRESSION snappy)"</span>,</span>
+<span id="cb14-21"><a aria-label="21"></a>    <span class="st">"v2_zstd.parquet"</span>:   <span class="st">"(FORMAT parquet, PARQUET_VERSION v2, COMPRESSION zstd)"</span>,</span>
+<span id="cb14-22"><a aria-label="22"></a>    <span class="st">"trips.vortex"</span>:      <span class="st">"(FORMAT vortex)"</span>,</span>
+<span id="cb14-23"><a aria-label="23"></a>}</span>
+<span id="cb14-24"><a aria-label="24"></a><span class="cf">for</span> name, options <span class="kw">in</span> vx_files.items():</span>
+<span id="cb14-25"><a aria-label="25"></a>    con.sql(<span class="ss">f"COPY trips TO '</span><span class="sc">{</span>work<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">' </span><span class="sc">{</span>options<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb14-26"><a aria-label="26"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>name<span class="sc">:18}</span><span class="ss"> </span><span class="sc">{</span>os<span class="sc">.</span>path<span class="sc">.</span>getsize(<span class="ss">f'</span><span class="sc">{</span>work<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">'</span>) <span class="op">/</span> <span class="fl">1e6</span><span class="sc">:4.1f}</span><span class="ss"> MB"</span>)</span>
+<span id="cb14-27"><a aria-label="27"></a></span>
+<span id="cb14-28"><a aria-label="28"></a>ids <span class="op">=</span> <span class="st">","</span>.join(<span class="bu">str</span>(r[<span class="dv">0</span>]) <span class="cf">for</span> r <span class="kw">in</span> con.sql(</span>
+<span id="cb14-29"><a aria-label="29"></a>    <span class="st">"SELECT (random() * 999999)::BIGINT FROM range(100)"</span>).fetchall())</span>
+<span id="cb14-30"><a aria-label="30"></a>queries <span class="op">=</span> {</span>
+<span id="cb14-31"><a aria-label="31"></a>    <span class="st">"scan + filter"</span>:   <span class="st">"SELECT payment, avg(fare) FROM '</span><span class="sc">{f}</span><span class="st">' WHERE zone_id &lt; 1010 GROUP BY payment"</span>,</span>
+<span id="cb14-32"><a aria-label="32"></a>    <span class="st">"100 random rows"</span>: <span class="st">"SELECT * FROM '</span><span class="sc">{f}</span><span class="st">' WHERE trip_id IN ("</span> <span class="op">+</span> ids <span class="op">+</span> <span class="st">")"</span>,</span>
+<span id="cb14-33"><a aria-label="33"></a>}</span>
+<span id="cb14-34"><a aria-label="34"></a><span class="kw">def</span> best_ms(sql, runs<span class="op">=</span><span class="dv">5</span>):</span>
+<span id="cb14-35"><a aria-label="35"></a>    times <span class="op">=</span> []</span>
+<span id="cb14-36"><a aria-label="36"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(runs):</span>
+<span id="cb14-37"><a aria-label="37"></a>        t <span class="op">=</span> time.perf_counter()<span class="op">;</span> con.sql(sql).fetchall()<span class="op">;</span> times.append(time.perf_counter() <span class="op">-</span> t)</span>
+<span id="cb14-38"><a aria-label="38"></a>    <span class="cf">return</span> <span class="dv">1000</span> <span class="op">*</span> <span class="bu">min</span>(times)</span>
+<span id="cb14-39"><a aria-label="39"></a></span>
+<span id="cb14-40"><a aria-label="40"></a><span class="cf">for</span> qname, q <span class="kw">in</span> queries.items():</span>
+<span id="cb14-41"><a aria-label="41"></a>    <span class="cf">for</span> name <span class="kw">in</span> vx_files:</span>
+<span id="cb14-42"><a aria-label="42"></a>        <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>qname<span class="sc">:16}</span><span class="ss"> </span><span class="sc">{</span>name<span class="sc">:18}</span><span class="ss"> </span><span class="sc">{</span>best_ms(q.<span class="bu">format</span>(f<span class="op">=</span><span class="ss">f'</span><span class="sc">{</span>work<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">'</span>))<span class="sc">:5.1f}</span><span class="ss"> ms"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>v2_snappy.parquet   3.4 MB
+v2_zstd.parquet     3.2 MB
+trips.vortex        2.8 MB
+scan + filter    v2_snappy.parquet    2.0 ms
+scan + filter    v2_zstd.parquet      2.2 ms
+scan + filter    trips.vortex         2.1 ms
+100 random rows  v2_snappy.parquet    4.0 ms
+100 random rows  v2_zstd.parquet      3.9 ms
+100 random rows  trips.vortex         2.8 ms</code></pre>
+</div>
+</div>
+<ul>
+<li>Milliseconds on a laptop: noisy. Re-run it before drawing conclusions.</li>
+<li>Results depend on the data: on a column of unique URLs, the Vortex file was ~4× <strong>larger</strong> than zstd Parquet.</li>
+</ul>
+</section>
+<section id="vortex-results-and-caveats" class="slide level2 font8">
+<h2>Vortex: results and caveats</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>DuckDB’s benchmark (TPC-H SF100, Jan 2026, one Mac M1)</strong></p>
+</div>
+<div class="callout-content">
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th></th>
+<th>Parquet v1</th>
+<th>Parquet v2</th>
+<th>Vortex</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>geometric mean per query</td>
+<td>2.32 s</td>
+<td>1.84 s</td>
+<td><strong>1.51 s</strong></td>
+</tr>
+<tr class="even">
+<td>total size</td>
+<td>33.1 GB</td>
+<td><strong>25.4 GB</strong></td>
+<td>28.6 GB</td>
+</tr>
+</tbody>
+</table>
+<p>Vortex was ~18% faster than Parquet v2, ~35% faster than v1, with less variance, but 12% larger than v2 (Parquet with Snappy, Vortex with no general-purpose compression).</p>
+</div>
+</div>
+</div>
+<div class="callout callout-warning no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Caveats</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>version 0.x, young ecosystem; most table formats (Iceberg, Delta) still assume Parquet</li>
+<li>vendor claims (e.g.&nbsp;100× faster random access) come from the project’s own benchmarks</li>
+<li>GPU decoding straight from object storage is a goal, not yet the common case</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="other-new-formats" class="slide level2 font8 scrollable">
+<h2>Other new formats</h2>
+<table class="caption-top">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Format</th>
+<th>From</th>
+<th>Focus</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Lance</strong></td>
+<td>LanceDB</td>
+<td>ML and vector data: fast random access, vector indexes, versioning built in (a file <strong>and</strong> table format)</td>
+</tr>
+<tr class="even">
+<td><strong>Nimble</strong></td>
+<td>Meta</td>
+<td>very wide ML feature tables (thousands of columns), extensible encodings</td>
+</tr>
+<tr class="odd">
+<td><strong>F3</strong></td>
+<td>academia (CMU, Tsinghua, with Wes McKinney)</td>
+<td>future-proof: files carry their own WebAssembly decoders</td>
+</tr>
+<tr class="even">
+<td><strong>Parquet</strong> itself</td>
+<td>Apache</td>
+<td>proposals for newer encodings (e.g.&nbsp;ALP) and a faster footer; slow to roll out</td>
+</tr>
+</tbody>
+</table>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Common themes</strong></p>
+</div>
+<div class="callout-content">
+<p>Lightweight cascading encodings instead of block compression, random access, cheap metadata for wide tables, and extensibility. The same ideas as the columnar database engines, now in the <strong>file</strong>.</p>
+</div>
+</div>
+</div>
+</section></section>
 <section>
 <section id="log-structured-tables" class="title-slide slide level1 center">
 <h1>Log-Structured Tables</h1>
 
+</section>
+<section id="recap-warehouse-lake-lakehouse" class="slide level2 font8">
+<h2>Recap: warehouse, lake, lakehouse</h2>
+<table class="caption-top">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th>Warehouse</th>
+<th>Lake</th>
+<th>Lakehouse</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Storage</td>
+<td>proprietary</td>
+<td>open files on object storage</td>
+<td>open files on object storage</td>
+</tr>
+<tr class="even">
+<td>Schema</td>
+<td>on write</td>
+<td>on read</td>
+<td>on write, can evolve</td>
+</tr>
+<tr class="odd">
+<td>ACID</td>
+<td>yes</td>
+<td>no</td>
+<td>yes</td>
+</tr>
+<tr class="even">
+<td>Cost</td>
+<td>high</td>
+<td>low</td>
+<td>low</td>
+</tr>
+<tr class="odd">
+<td>ML on raw data</td>
+<td>poor</td>
+<td>good</td>
+<td>good</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="recap-warehouse-lake-lakehouse-1" class="slide level2 font8">
+<h2>Recap: warehouse, lake, lakehouse</h2>
+<p><img data-src="img/iceberg_data_lakehouse.png" height="420"></p>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>File vs Table</strong></p>
+</div>
+<div class="callout-content">
+<p>Parquet gives us efficient <strong>files</strong>. A <strong>table</strong> needs more: which files belong to it right now, atomic changes, and a history of versions. That is what <strong>table formats</strong> add.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="table-formats" class="slide level2">
+<h2>Table formats</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Data lake history</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>Data on Apache Hadoop + MapReduce</li>
+<li>Apache Hive: convert SQL to MapReduce, tables as dirs/files</li>
+<li>Object storage, SQL engines, using Hive as table format</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="table-formats-1" class="slide level2">
+<h2>Table formats</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Table Format</strong></p>
+</div>
+<div class="callout-content">
+<p>A table format is a method of structuring a dataset’s files to present them as a unified table.</p>
+<p>From the user’s perspective, it can be defined as the answer to the question <strong>“what data is in this table?</strong></p>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Goals</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>abstract the complexity of the physical data structure</li>
+<li>facilitate Data Manipulation Language (DML) operations (e.g., doing inserts, updates, and deletes) and changing a table’s schema.</li>
+<li>add atomicity and consistency guarantees</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="table-formats-2" class="slide level2">
+<h2>Table formats</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Apache Hive</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>Tables as directories</li>
+<li>Partitions as subdirectories</li>
+<li>Hive Metastore tracks the paths</li>
+</ul>
+</div>
+</div>
+</div>
+
+<img data-src="img/hive_table_format.png" class="r-stretch"></section>
+<section id="table-formats-3" class="slide level2">
+<h2>Table formats</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Hive features</strong></p>
+</div>
+<div class="callout-content">
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>Pros</th>
+<th>Cons</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Efficient query patterns</td>
+<td>File/dir listings are slow</td>
+</tr>
+<tr class="even">
+<td>File format agnostic</td>
+<td>Partitions not always advantageous</td>
+</tr>
+<tr class="odd">
+<td>Hive Metastore atomic swaps</td>
+<td>Dir swaps needed for single files</td>
+</tr>
+<tr class="even">
+<td></td>
+<td>Stale table statistics</td>
+</tr>
+<tr class="odd">
+<td></td>
+<td>Concurrency issues</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</section>
+<section id="table-formats-4" class="slide level2">
+<h2>Table formats</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Iceberg, Delta Lake table formats</strong></p>
+</div>
+<div class="callout-content">
+<p>Table defined by <strong>files</strong>, not <strong>directories</strong>.</p>
+<p>A standard of how metadata defining a data lakehouse table should be written across several files.</p>
+<ul>
+<li>Enable ACID</li>
+<li>Safe concurrent writes</li>
+<li>Better table statistics</li>
+</ul>
+</div>
+</div>
+</div>
 </section>
 <section id="lsts" class="slide level2">
 <h2>LSTs</h2>
@@ -1142,6 +2088,39 @@ AddressBook {
 </div>
 </div>
 </section>
+<section id="lsts-object-storage" class="slide level2 font8">
+<h2>LSTs: object storage</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>What S3 (GCS, Azure Blob, MinIO) gives you</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>immutable objects</strong>: write a whole object or replace it. No append, no in-place update, no atomic rename of directories</li>
+<li><strong>strong read-after-write consistency</strong> (S3 since Dec 2020; before that, listings could miss new files)</li>
+<li><strong>conditional writes</strong> (S3 since 2024): “create only if it does not exist” / “replace only if unchanged”: a compare-and-swap</li>
+<li>cheap storage, but <strong>per-request</strong> cost and 10–100 ms latency per request</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Consequences for table formats</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>every change writes <strong>new</strong> files: hence log-structured</li>
+<li>listing a directory is slow and was not consistent: hence an explicit list of files in the metadata, not the directory tree (Hive)</li>
+<li>atomic commits need one compare-and-swap: a catalog, or a conditional write</li>
+<li>many small files = many requests: hence compaction</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
 <section id="lsts-2" class="slide level2">
 <h2>LSTs</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
@@ -1153,7 +2132,7 @@ AddressBook {
 <ul>
 <li>stored within file structure of the table</li>
 <li>commit log of additions/deletions/etc.</li>
-<li>Copy-on-Write for read-heave scenarios</li>
+<li>Copy-on-Write for read-heavy scenarios</li>
 <li>Merge-on-Read for write-heavy scenarios</li>
 </ul>
 </div>
@@ -1163,13 +2142,174 @@ AddressBook {
 <section id="lsts-3" class="slide level2">
 <h2>LSTs</h2>
 
-<img data-src="img/deltalake_update.png" class="r-stretch"></section></section>
+<img data-src="img/deltalake_update.png" class="r-stretch"></section>
+<section id="lsts-4" class="slide level2 font8">
+<h2>LSTs</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Recall: why “log-structured”?</strong></p>
+</div>
+<div class="callout-content">
+<table class="caption-top">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Storage engines (SSTables, LSM)</th>
+<th>Log-structured tables</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>append-only log</td>
+<td>commit log of table versions (<code>_delta_log</code>, Iceberg snapshots)</td>
+</tr>
+<tr class="even">
+<td>immutable SSTable segments</td>
+<td>immutable Parquet data files</td>
+</tr>
+<tr class="odd">
+<td>memtable flush → new segment</td>
+<td>every write → new data files</td>
+</tr>
+<tr class="even">
+<td>tombstones</td>
+<td>delete files, deletion vectors</td>
+</tr>
+<tr class="odd">
+<td>background compaction</td>
+<td>compaction jobs (<code>OPTIMIZE</code>, <code>rewrite_data_files</code>)</td>
+</tr>
+<tr class="even">
+<td>reads merge several segments</td>
+<td>Merge-on-Read: readers apply delete files</td>
+</tr>
+<tr class="odd">
+<td>RUM conjecture: read, update, memory</td>
+<td>Copy-on-Write vs Merge-on-Read</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Difference</strong></p>
+</div>
+<div class="callout-content">
+<p>An LSM tree is a key-value index on one machine. A table format works at the scale of <strong>files on object storage</strong>. Object storage cannot modify a file in place, so everything has to be append-only.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="delta-lake" class="slide level2 font8">
+<h2>Delta Lake</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Table layout</strong></p>
+</div>
+<div class="callout-content">
+<pre><code>my_table/
+  _delta_log/
+    00000000000000000000.json      &lt;- commit 0: add file part-000.parquet
+    00000000000000000001.json      &lt;- commit 1: add part-001, remove part-000
+    ...
+    00000000000000000010.checkpoint.parquet   &lt;- full table state every 10 commits
+    _last_checkpoint
+  part-000.parquet
+  part-001.parquet</code></pre>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>How it works</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>each commit is a JSON file of <strong>actions</strong>: <code>add</code> file (with statistics), <code>remove</code> file, <code>metaData</code> (schema), <code>commitInfo</code></li>
+<li>table version <span class="math inline">\(n\)</span> = replay the log up to <span class="math inline">\(n\)</span>, starting from the latest <strong>checkpoint</strong> (in Parquet, so readers can use the same Parquet reader)</li>
+<li>a commit creates file <span class="math inline">\(n+1\)</span> only if it <strong>does not exist yet</strong> (put-if-absent): two writers cannot both create version <span class="math inline">\(n+1\)</span></li>
+<li>created at Databricks (2017, open-sourced 2019)</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="delta-lake-vs-hudi-vs-iceberg" class="slide level2 font8 scrollable">
+<h2>Delta Lake vs Hudi vs Iceberg</h2>
+<table class="caption-top">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th>Delta Lake</th>
+<th>Apache Hudi</th>
+<th>Apache Iceberg</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Origin</td>
+<td>Databricks, 2017</td>
+<td>Uber, 2016</td>
+<td>Netflix, 2017</td>
+</tr>
+<tr class="even">
+<td>Metadata</td>
+<td>JSON log + Parquet checkpoints</td>
+<td>timeline of instants + metadata table</td>
+<td>tree: metadata JSON → manifest lists → manifests (Avro)</td>
+</tr>
+<tr class="odd">
+<td>Focus</td>
+<td>Spark, Databricks</td>
+<td>streaming upserts, incremental pulls</td>
+<td>engine-neutral, very large tables</td>
+</tr>
+<tr class="even">
+<td>Row-level changes</td>
+<td>CoW, deletion vectors</td>
+<td>CoW and MoR (log files)</td>
+<td>CoW, MoR (delete files, deletion vectors in v3)</td>
+</tr>
+<tr class="odd">
+<td>Partitioning</td>
+<td>Hive-style, liquid clustering</td>
+<td>Hive-style</td>
+<td>hidden partitioning, partition evolution</td>
+</tr>
+</tbody>
+</table>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Note</strong></p>
+</div>
+<div class="callout-content">
+<p>The formats are converging. <strong>Delta UniForm</strong> and <strong>Apache XTable</strong> write the metadata of the other formats for the same Parquet files. Iceberg v3 adopted deletion vectors, which come from Delta.</p>
+</div>
+</div>
+</div>
+</section></section>
 <section>
 <section id="example-architecture-apache-iceberg" class="title-slide slide level1 center">
 <h1>Example architecture: Apache Iceberg</h1>
 
 </section>
-<section id="iceberg" class="slide level2">
+<section id="iceberg" class="slide level2 scrollable">
 <h2>Iceberg</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1185,29 +2325,9 @@ AddressBook {
 </div>
 </div>
 </div>
-<!--
-% \begin{frame}{Iceberg}
-%   Apache Iceberg is one of the leading open formats for
-% updatable Parquet-based tables, which are emerging as the
-% new data storage standard for analytics. Historically,
-% relational databases have stored data row-by-row, packed
-% into physical pages for efficient I/O. Columnar table
-% formats, however, have proven far more efficient for query-
-% intensive workloads. Data lakes began by supporting
-% queries over columnar formats such as Parquet, but of
-% course, transactional updates must also be supported
-% efficiently to address traditional warehouse scenarios.
-% Iceberg is emerging as a popular choice of table format
-% supporting scenarios that require query-intensive
-% workloads mixed with updates, and bulk ingests.
-% \end{frame}
--->
-</section>
-<section id="iceberg-1" class="slide level2">
-<h2>Iceberg</h2>
 
 <img data-src="img/analytical_workload_components.png" class="r-stretch"></section>
-<section id="iceberg-2" class="slide level2">
+<section id="iceberg-1" class="slide level2">
 <h2>Iceberg</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1215,43 +2335,17 @@ AddressBook {
 <p><strong>File format</strong></p>
 </div>
 <div class="callout-content">
+<p>How the data of a single file is encoded:</p>
 <ul>
-<li>Structured (CSV)</li>
-<li>Semi-structured (JSON)</li>
-<li>Unstructured (text files, media)</li>
+<li>row-based: CSV, JSON, Avro</li>
+<li>columnar: Parquet, ORC</li>
 </ul>
+<p>Analytical table formats store their data in <strong>Parquet</strong> (most common), ORC or Avro files.</p>
 </div>
 </div>
 </div>
 </section>
-<section id="iceberg-3" class="slide level2">
-<h2>Iceberg</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Table format</strong></p>
-</div>
-<div class="callout-content">
-<p>The table format acts like a metadata layer on top of the file format and is responsible for specifying how the datafiles should be laid out in storage.</p>
-</div>
-</div>
-</div>
-<div class="callout callout-note no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Goals</strong></p>
-</div>
-<div class="callout-content">
-<ul>
-<li>abstract the complexity of the physical data structure</li>
-<li>facilitate Data Manipulation Language (DML) operations (e.g., doing inserts, updates, and deletes) and changing a table’s schema.</li>
-<li>add atomicity and consistency guarantees</li>
-</ul>
-</div>
-</div>
-</div>
-</section>
-<section id="iceberg-4" class="slide level2">
+<section id="iceberg-2" class="slide level2">
 <h2>Iceberg</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1270,7 +2364,7 @@ AddressBook {
 </div>
 </div>
 </section>
-<section id="iceberg-5" class="slide level2">
+<section id="iceberg-3" class="slide level2">
 <h2>Iceberg</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1280,14 +2374,13 @@ AddressBook {
 <div class="callout-content">
 <ul>
 <li>The catalog is the central location where compute engines and users can go to find out about the existence of a table, as well as additional information such as the table name, table schema, and where the table data is stored on the storage system.</li>
-<li>Some catalogs are internal to a system and can only be directly interacted with via that system’s engine; examples of these catalogs include Postgres and Snowflake.</li>
-<li>Other catalogs, such as Hive and Project Nessie, are open for any system to use.</li>
+<li>Some catalogs are internal to one system (Postgres, Snowflake); open catalogs can be used by any engine. The Iceberg catalogs are covered below.</li>
 </ul>
 </div>
 </div>
 </div>
 </section>
-<section id="iceberg-6" class="slide level2">
+<section id="iceberg-4" class="slide level2">
 <h2>Iceberg</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1299,244 +2392,16 @@ AddressBook {
 <p>There can be multiple engines.</p>
 <p>Massively parallel processing (MPP) engines:</p>
 <ul>
-<li>Apache Spark</li>
-<li>Snowflake</li>
-<li>Dremio.</li>
+<li>Apache Spark, Apache Flink (streaming)</li>
+<li>Trino / Presto</li>
+<li>Snowflake, Dremio, BigQuery</li>
+<li>single-node: DuckDB, Polars</li>
 </ul>
 </div>
 </div>
 </div>
 </section>
-<section id="iceberg-7" class="slide level2">
-<h2>Iceberg</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Data warehouse</strong></p>
-</div>
-<div class="callout-content">
-<p><img data-src="img/iceberg_data_warehouse.png" height="500"></p>
-</div>
-</div>
-</div>
-</section>
-<section id="iceberg-8" class="slide level2">
-<h2>Iceberg</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Warehouse features</strong></p>
-</div>
-<div class="callout-content">
-<table class="caption-top">
-<thead>
-<tr class="header">
-<th>Pros</th>
-<th>Cons</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Single source of truth</td>
-<td>Vendor-specific</td>
-</tr>
-<tr class="even">
-<td>Fast analytical workloads</td>
-<td>Expensive</td>
-</tr>
-<tr class="odd">
-<td>Organizes data layout</td>
-<td>Not good for ML</td>
-</tr>
-<tr class="even">
-<td>Single source of truth</td>
-<td>Vendor-specific</td>
-</tr>
-<tr class="odd">
-<td>Ensures data schemas</td>
-<td>Mainly supports structured data</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-</div>
-</section>
-<section id="iceberg-9" class="slide level2">
-<h2>Iceberg</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Data lake history</strong></p>
-</div>
-<div class="callout-content">
-<ul>
-<li>Data on Apache Hadoop + MapReduce</li>
-<li>Apache Hive: convert SQL to MapReduce, tables as dirs/files</li>
-<li>Object storage, SQL engines, using Hive as table format</li>
-</ul>
-</div>
-</div>
-</div>
-</section>
-<section id="iceberg-10" class="slide level2">
-<h2>Iceberg</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Data lake</strong></p>
-</div>
-<div class="callout-content">
-<p><img data-src="img/iceberg_data_lake.png" height="500"></p>
-</div>
-</div>
-</div>
-</section>
-<section id="iceberg-11" class="slide level2">
-<h2>Iceberg</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Data lake features</strong></p>
-</div>
-<div class="callout-content">
-<table class="caption-top">
-<thead>
-<tr class="header">
-<th>Pros</th>
-<th>Cons</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Cost</td>
-<td>Performance</td>
-</tr>
-<tr class="even">
-<td>Open formats</td>
-<td>Lots of config</td>
-</tr>
-<tr class="odd">
-<td>Unstructured data support</td>
-<td>No ACID support</td>
-</tr>
-<tr class="even">
-<td>Supports ML workloads</td>
-<td></td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-</div>
-</section>
-<section id="iceberg-12" class="slide level2">
-<h2>Iceberg</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Data lakehouse</strong></p>
-</div>
-<div class="callout-content">
-<p><img data-src="img/iceberg_data_lakehouse.png" height="500"></p>
-</div>
-</div>
-</div>
-</section>
-<section id="iceberg-13" class="slide level2">
-<h2>Iceberg</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Table Format</strong></p>
-</div>
-<div class="callout-content">
-<p>A table format is a method of structuring a dataset’s files to present them as a unified table.</p>
-<p>From the user’s perspective, it can be defined as the answer to the question <strong>“what data is in this table?</strong></p>
-</div>
-</div>
-</div>
-</section>
-<section id="iceberg-14" class="slide level2">
-<h2>Iceberg</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Apache Hive</strong></p>
-</div>
-<div class="callout-content">
-<ul>
-<li>Tables as directories</li>
-<li>Partitions as subdirectories</li>
-<li>Hive Metastore tracks the paths</li>
-</ul>
-</div>
-</div>
-</div>
-
-<img data-src="img/hive_table_format.png" class="r-stretch"></section>
-<section id="iceberg-15" class="slide level2">
-<h2>Iceberg</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Hive features</strong></p>
-</div>
-<div class="callout-content">
-<table class="caption-top">
-<thead>
-<tr class="header">
-<th>Pros</th>
-<th>Cons</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Efficient query patterns</td>
-<td>File/dir listings are slow</td>
-</tr>
-<tr class="even">
-<td>File format agnostic</td>
-<td>Partitions not always advantageous</td>
-</tr>
-<tr class="odd">
-<td>Hive Metastore atomic swaps</td>
-<td>Dir swaps needed for single files</td>
-</tr>
-<tr class="even">
-<td></td>
-<td>Stale table statistics</td>
-</tr>
-<tr class="odd">
-<td></td>
-<td>Concurrency issues</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-</div>
-</section>
-<section id="iceberg-16" class="slide level2">
-<h2>Iceberg</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Iceberg, Delta Lake table formats</strong></p>
-</div>
-<div class="callout-content">
-<p>Table defined by <strong>files</strong>, not <strong>directories</strong>.</p>
-<p>A standard of how metadata defining a data lakehouse table should be written across several files.</p>
-<ul>
-<li>Enable ACID</li>
-<li>Safe concurrent writes</li>
-<li>Better table statistics</li>
-</ul>
-</div>
-</div>
-</div>
-</section>
-<section id="iceberg-17" class="slide level2">
+<section id="iceberg-5" class="slide level2">
 <h2>Iceberg</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1555,7 +2420,7 @@ AddressBook {
 </div>
 </div>
 </section>
-<section id="iceberg-18" class="slide level2">
+<section id="iceberg-6" class="slide level2">
 <h2>Iceberg</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1565,7 +2430,7 @@ AddressBook {
 <div class="callout-content">
 <ul>
 <li>ACID transactions: <strong>optimistic concurrency control</strong></li>
-<li>Partion evolution, enabled by metadata files</li>
+<li>Partition evolution, enabled by metadata files</li>
 <li>Hidden partitioning: physical (column) + optional transform</li>
 <li>Row-level ops: Copy-On-Write and Merge-On-Read</li>
 <li>Time travel, version rollback</li>
@@ -1574,11 +2439,7 @@ AddressBook {
 </div>
 </div>
 </section>
-<section id="iceberg-19" class="slide level2">
-<h2>Iceberg</h2>
-
-<img data-src="img/iceberg_partition_evolution.png" class="r-stretch"></section>
-<section id="iceberg-20" class="slide level2">
+<section id="iceberg-7" class="slide level2">
 <h2>Iceberg</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1591,7 +2452,7 @@ AddressBook {
 </div>
 </div>
 </section>
-<section id="iceberg-21" class="slide level2">
+<section id="iceberg-8" class="slide level2">
 <h2>Iceberg</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1609,7 +2470,7 @@ AddressBook {
 </div>
 </div>
 </section>
-<section id="iceberg-22" class="slide level2">
+<section id="iceberg-9" class="slide level2">
 <h2>Iceberg</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1628,25 +2489,12 @@ AddressBook {
 </div>
 </div>
 </section>
-<section id="iceberg-23" class="slide level2">
+<section id="iceberg-10" class="slide level2">
 <h2>Iceberg</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
-<p><strong>Parquet architecture</strong></p>
-</div>
-<div class="callout-content">
-<p><img data-src="img/parquet_arch.png" height="500"></p>
-</div>
-</div>
-</div>
-</section>
-<section id="iceberg-24" class="slide level2">
-<h2>Iceberg</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Parquet architecture</strong></p>
+<p><strong>Data layer: datafiles and delete files</strong></p>
 </div>
 <div class="callout-content">
 <p><img data-src="img/iceberg_file_layout.png" height="500"></p>
@@ -1654,7 +2502,7 @@ AddressBook {
 </div>
 </div>
 </section>
-<section id="iceberg-25" class="slide level2">
+<section id="iceberg-11" class="slide level2">
 <h2>Iceberg</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1671,7 +2519,7 @@ AddressBook {
 </div>
 </div>
 </section>
-<section id="iceberg-26" class="slide level2">
+<section id="iceberg-12" class="slide level2">
 <h2>Iceberg</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1684,7 +2532,7 @@ AddressBook {
 </div>
 </div>
 </section>
-<section id="iceberg-27" class="slide level2">
+<section id="iceberg-13" class="slide level2">
 <h2>Iceberg</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1697,25 +2545,7 @@ AddressBook {
 </div>
 </div>
 </section>
-<section id="iceberg-28" class="slide level2">
-<h2>Iceberg</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Iceberg metadata</strong></p>
-</div>
-<div class="callout-content">
-<p>A tree structure consisting of three components:</p>
-<ul>
-<li>manifest files</li>
-<li>manifest lists</li>
-<li>metadata files</li>
-</ul>
-</div>
-</div>
-</div>
-</section>
-<section id="iceberg-29" class="slide level2">
+<section id="iceberg-14" class="slide level2 scrollable">
 <h2>Iceberg</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1726,7 +2556,7 @@ AddressBook {
 <p>Manifest files keep track of files in the data layer (i.e., datafiles and delete files) as well as additional details and statistics about each file, such as the minimum and maximum values for a datafile’s columns.</p>
 <p>Each manifest file keeps track of a subset of the datafiles.</p>
 <ul>
-<li>stored in Avro format</li>
+<li>stored in <strong>Avro</strong> format (see the encoding section): written once, read whole, schema stored in the file</li>
 <li>lower/upper column bounds</li>
 <li>record counts</li>
 <li>partition membership</li>
@@ -1734,39 +2564,18 @@ AddressBook {
 </div>
 </div>
 </div>
-</section>
-<section id="iceberg-30" class="slide level2">
-<h2>Iceberg</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout callout-note no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
-<p><strong>Avro architecture</strong></p>
+<p><strong>Two levels of data skipping</strong></p>
 </div>
 <div class="callout-content">
-<pre><code>record Person {
-  string userName;
-  union { null, long } favoriteNumber = null;
-  array&lt;string&gt; interests;
-}</code></pre>
-</div>
-</div>
-</div>
-
-<img data-src="img/avro_schemas.png" class="r-stretch"></section>
-<section id="iceberg-31" class="slide level2">
-<h2>Iceberg</h2>
-<div class="callout callout-tip no-icon callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<p><strong>Avro encoding</strong></p>
-</div>
-<div class="callout-content">
-<p><img data-src="img/avro_encoding.png"></p>
+<p>A query first skips whole <strong>files</strong> using the bounds in the manifests, then skips <strong>row groups</strong> inside the remaining files using the Parquet footers.</p>
 </div>
 </div>
 </div>
 </section>
-<section id="iceberg-32" class="slide level2">
+<section id="iceberg-15" class="slide level2">
 <h2>Iceberg</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1785,7 +2594,7 @@ AddressBook {
 </div>
 </div>
 </section>
-<section id="iceberg-33" class="slide level2">
+<section id="iceberg-16" class="slide level2">
 <h2>Iceberg</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1797,20 +2606,82 @@ AddressBook {
 <p>Store metadata about an Iceberg table at a certain point in time</p>
 <p>Contain:</p>
 <ul>
-<li>table schema</li>
-<li>partition information
-<ul>
-<li>snapshots, and a pointer to the current one</li>
-<li>created every time a change is made to the Iceberg table</li>
-<li>registered atomically via the catalog</li>
-</ul></li>
+<li>table schema (and its history)</li>
+<li>partition specification</li>
+<li>list of snapshots, and a pointer to the current one</li>
 </ul>
+<p>A new metadata file is created every time the table changes, and it is registered atomically via the catalog.</p>
 </div>
 </div>
 </div>
 </section>
-<section id="iceberg-34" class="slide level2">
-<h2>Iceberg</h2>
+<section id="iceberg-schema-evolution" class="slide level2 font8">
+<h2>Iceberg: schema evolution</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Columns have IDs</strong></p>
+</div>
+<div class="callout-content">
+<p>Every column gets a unique <strong>field ID</strong> in the metadata, and the ID is written into the Parquet schema of each datafile. Readers match columns by ID, not by name or position.</p>
+<p>The same idea as the <strong>tags</strong> of Thrift and Protobuf at the start of the lecture.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>What this makes safe</strong></p>
+</div>
+<div class="callout-content">
+<table class="caption-top">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Change</th>
+<th>Hive-style table (by name or position)</th>
+<th>Iceberg (by ID)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>add a column</td>
+<td>ok</td>
+<td>ok, old files return <code>NULL</code> (or the default, v3)</td>
+</tr>
+<tr class="even">
+<td>drop, then re-add a column with the same name</td>
+<td>old values come back</td>
+<td>new ID: old values stay hidden</td>
+</tr>
+<tr class="odd">
+<td>rename</td>
+<td>data disappears (by name)</td>
+<td>metadata-only</td>
+</tr>
+<tr class="even">
+<td>reorder</td>
+<td>wrong values (by position)</td>
+<td>metadata-only</td>
+</tr>
+<tr class="odd">
+<td>widen type (<code>int</code> → <code>long</code>)</td>
+<td>depends on the reader</td>
+<td>allowed promotions only</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<p>None of these changes rewrites any datafile.</p>
+</section>
+<section id="iceberg-puffin-files" class="slide level2">
+<h2>Iceberg: Puffin files</h2>
 <div class="columns">
 <div class="column" style="width:60%;">
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
@@ -1823,8 +2694,9 @@ AddressBook {
 <li>store statistics and indexes about the data in the table</li>
 <li>in addition to stats already in datafile and metadata</li>
 <li>contain sets of blobs and associated metadata</li>
-<li>currently support Theta sketches</li>
-<li>potentially support any index structures (e.g.&nbsp;Bloom filters)</li>
+<li>Theta sketches (distinct counts)</li>
+<li><strong>deletion vectors</strong> (Iceberg v3): a bitmap of deleted row positions per datafile</li>
+<li>potentially any index structure (e.g.&nbsp;Bloom filters)</li>
 </ul>
 </div>
 </div>
@@ -1833,7 +2705,7 @@ AddressBook {
 <p><img data-src="img/iceberg_puffin_files.png" height="500"></p>
 </div></div>
 </section>
-<section id="iceberg-35" class="slide level2">
+<section id="iceberg-17" class="slide level2">
 <h2>Iceberg</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1847,7 +2719,33 @@ AddressBook {
 </div>
 
 <img data-src="img/theta_sketch.png" class="r-stretch"></section>
-<section id="iceberg-36" class="slide level2">
+<section id="iceberg-18" class="slide level2 font8">
+<h2>Iceberg</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Why not just store distinct counts per file?</strong></p>
+</div>
+<div class="callout-content">
+<p>Manifests already keep min, max, null count and row count per file. These <strong>combine</strong> across files: min of mins, sum of counts.</p>
+<p>Distinct counts do not: two files with 1,000 distinct <code>customer_id</code>s each can hold anywhere from 1,000 to 2,000 together. This is a <strong>non-additive measure</strong> (dimensional modeling).</p>
+<p>Sketches are <strong>mergeable</strong>: union the per-file sketches and you get an estimate for the whole table, or any subset of files, without re-reading the data.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Who uses them: the optimizer</strong></p>
+</div>
+<div class="callout-content">
+<p>The number of distinct values (NDV) drives <strong>cardinality estimation</strong>, the weak spot of every optimizer (query optimization). This determines join order and the build side of hash joins.</p>
+<p>Engines like Trino and Spark write the sketches into Puffin files (e.g.&nbsp;with <code>ANALYZE</code>), so a lakehouse gets the statistics that classic data lakes lacked.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="iceberg-19" class="slide level2">
 <h2>Iceberg</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1856,42 +2754,85 @@ AddressBook {
 </div>
 <div class="callout-content">
 <p>Stores the current location of the current metadata pointer.</p>
-<p>Must provide atomic guarantees.</p>
+<p>Must provide an <strong>atomic swap</strong> of that pointer.</p>
 <ul>
-<li>Amazon S3</li>
-<li>Hive Metastore</li>
-<li>Project Nessie</li>
-<li>AWS Glue</li>
-<li>RDBMS</li>
-<li>REST</li>
+<li>file system (“Hadoop” catalog): a <code>version-hint</code> file; safe only where rename is atomic</li>
+<li>Hive Metastore, AWS Glue</li>
+<li>JDBC: any relational database</li>
+<li>Project Nessie: git-like branches and tags across tables</li>
+<li><strong>REST catalog</strong>: an open HTTP API, now the standard. Implementations: Apache Polaris, Unity Catalog, Lakekeeper, AWS S3 Tables</li>
 </ul>
 </div>
 </div>
 </div>
 </section>
-<section id="iceberg-37" class="slide level2">
-<h2>Iceberg</h2>
-
-<img data-src="img/iceberg_query_path.png" class="r-stretch"></section>
-<section id="iceberg-38" class="slide level2">
+<section id="iceberg-20" class="slide level2 font8">
 <h2>Iceberg</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
-<p><strong>Query path</strong></p>
+<p><strong>ACID via optimistic concurrency control</strong></p>
+</div>
+<div class="callout-content">
+<p>Recall ACID transactions. Iceberg has no lock manager: only the catalog’s atomic pointer swap.</p>
+<ol type="1">
+<li>read the current metadata file <code>v3.metadata.json</code></li>
+<li>write new datafiles, manifests, manifest list and <code>v4.metadata.json</code>. Nobody sees them yet.</li>
+<li>ask the catalog: <strong>“set the pointer to <code>v4</code> if it still points to <code>v3</code>”</strong> (compare-and-swap)</li>
+<li>if another writer committed <code>v4</code> first, the swap fails: re-read, check for conflicts, re-apply the change on top, and retry</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Properties</strong></p>
 </div>
 <div class="callout-content">
 <ul>
-<li>Parsing</li>
-<li>Consult the catalog</li>
-<li>Write the datafiles/metadata files</li>
-<li>Update catalog file</li>
+<li><strong>atomicity</strong>: readers see either the old or the new snapshot, never a mix</li>
+<li><strong>isolation</strong>: snapshot isolation by default, serializable as an option</li>
+<li>optimistic: cheap when writers rarely touch the same data, many retries when they often do</li>
+<li>Delta Lake does the same with put-if-absent on the next log file</li>
 </ul>
 </div>
 </div>
 </div>
 </section>
-<section id="iceberg-39" class="slide level2">
+<section id="iceberg-21" class="slide level2">
+<h2>Iceberg</h2>
+
+<img data-src="img/iceberg_query_path.png" class="r-stretch"></section>
+<section id="iceberg-22" class="slide level2">
+<h2>Iceberg</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Write path</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>Parse the query</li>
+<li>Consult the catalog for the current metadata file</li>
+<li>Write the datafiles, then the metadata files</li>
+<li>Update the catalog pointer (atomically)</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Read path</strong></p>
+</div>
+<div class="callout-content">
+<p>Catalog → metadata file → manifest list of the current (or requested) snapshot → manifests → datafiles.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="iceberg-23" class="slide level2">
 <h2>Iceberg</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1904,7 +2845,7 @@ AddressBook {
 </div>
 </div>
 </section>
-<section id="iceberg-40" class="slide level2">
+<section id="iceberg-24" class="slide level2">
 <h2>Iceberg</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1917,7 +2858,7 @@ AddressBook {
 </div>
 </div>
 </section>
-<section id="iceberg-41" class="slide level2">
+<section id="iceberg-25" class="slide level2">
 <h2>Iceberg</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1930,7 +2871,7 @@ AddressBook {
 </div>
 </div>
 </section>
-<section id="iceberg-42" class="slide level2">
+<section id="iceberg-26" class="slide level2">
 <h2>Iceberg</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1943,7 +2884,7 @@ AddressBook {
 </div>
 </div>
 </section>
-<section id="iceberg-43" class="slide level2">
+<section id="iceberg-27" class="slide level2">
 <h2>Iceberg</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1956,7 +2897,7 @@ AddressBook {
 </div>
 </div>
 </section>
-<section id="iceberg-44" class="slide level2">
+<section id="iceberg-28" class="slide level2">
 <h2>Iceberg</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1969,7 +2910,53 @@ AddressBook {
 </div>
 </div>
 </section>
-<section id="iceberg-45" class="slide level2">
+<section id="iceberg-time-travel-branches-tags" class="slide level2 font8 scrollable">
+<h2>Iceberg: time travel, branches, tags</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Time travel (Spark SQL)</strong></p>
+</div>
+<div class="callout-content">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode numberSource sql number-lines code-with-copy"><code class="sourceCode sql"><span id="cb17-1"><a aria-label="1"></a><span class="kw">SELECT</span> <span class="op">*</span> <span class="kw">FROM</span> db.trips VERSION <span class="kw">AS</span> <span class="kw">OF</span> <span class="dv">4348509232513452120</span>;     <span class="co">-- snapshot id</span></span>
+<span id="cb17-2"><a aria-label="2"></a><span class="kw">SELECT</span> <span class="op">*</span> <span class="kw">FROM</span> db.trips <span class="dt">TIMESTAMP</span> <span class="kw">AS</span> <span class="kw">OF</span> <span class="st">'2026-10-01 00:00:00'</span>;</span>
+<span id="cb17-3"><a aria-label="3"></a><span class="kw">SELECT</span> <span class="op">*</span> <span class="kw">FROM</span> db.trips.snapshots;                              <span class="co">-- metadata tables</span></span>
+<span id="cb17-4"><a aria-label="4"></a><span class="kw">CALL</span> catalog.<span class="kw">system</span>.rollback_to_snapshot(<span class="st">'db.trips'</span>, <span class="dv">4348509232513452120</span>);</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Branches and tags</strong></p>
+</div>
+<div class="callout-content">
+<p>A snapshot is just a pointer target, so you can have <strong>named</strong> pointers, like git:</p>
+<ul>
+<li><strong>tag</strong>: a fixed snapshot kept for a given time, e.g.&nbsp;end-of-year reporting</li>
+<li><strong>branch</strong>: an independent line of snapshots</li>
+</ul>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode numberSource sql number-lines code-with-copy"><code class="sourceCode sql"><span id="cb18-1"><a aria-label="1"></a><span class="kw">ALTER</span> <span class="kw">TABLE</span> db.trips <span class="kw">CREATE</span> TAG eoy_2025 RETAIN <span class="dv">365</span> DAYS;</span>
+<span id="cb18-2"><a aria-label="2"></a><span class="kw">ALTER</span> <span class="kw">TABLE</span> db.trips <span class="kw">CREATE</span> BRANCH <span class="kw">audit</span>;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Write-audit-publish (WAP)</strong></p>
+</div>
+<div class="callout-content">
+<ol type="1">
+<li>the ETL job writes to branch <code>audit</code>; readers of <code>main</code> see nothing</li>
+<li>data-quality checks run on <code>audit</code></li>
+<li>if they pass, <code>main</code> is fast-forwarded to <code>audit</code> (<code>CALL catalog.system.fast_forward('db.trips', 'main', 'audit')</code>)</li>
+</ol>
+</div>
+</div>
+</div>
+</section>
+<section id="iceberg-29" class="slide level2">
 <h2>Iceberg</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -1991,11 +2978,11 @@ AddressBook {
 </div>
 </div>
 </section>
-<section id="iceberg-46" class="slide level2">
+<section id="iceberg-30" class="slide level2">
 <h2>Iceberg</h2>
 
 <img data-src="img/z_order_compaction.png" class="r-stretch"></section>
-<section id="iceberg-47" class="slide level2">
+<section id="iceberg-31" class="slide level2">
 <h2>Iceberg</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -2013,7 +3000,7 @@ AddressBook {
 </div>
 </div>
 </section>
-<section id="iceberg-48" class="slide level2">
+<section id="iceberg-32" class="slide level2">
 <h2>Iceberg</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -2027,7 +3014,54 @@ AddressBook {
 </div>
 
 <img data-src="img/iceberg_partitioning.png" class="r-stretch"></section>
-<section id="iceberg-49" class="slide level2">
+<section id="partitioning-hive-style-vs-hidden" class="slide level2 font8 scrollable">
+<h2>Partitioning: Hive-style vs hidden</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Hive-style: partitions in the path</strong></p>
+</div>
+<div class="callout-content">
+<pre><code>trips/year=2025/month=1/data_0.parquet
+trips/year=2025/month=2/data_0.parquet</code></pre>
+<p>DuckDB, Polars, Spark and Dask read this directly. The engine prunes directories by the <code>key=value</code> names:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode numberSource sql number-lines code-with-copy"><code class="sourceCode sql"><span id="cb22-1"><a aria-label="1"></a><span class="kw">COPY</span> (<span class="kw">SELECT</span> <span class="op">*</span>, <span class="dt">year</span>(pickup_ts) <span class="kw">AS</span> <span class="dt">year</span>, <span class="dt">month</span>(pickup_ts) <span class="kw">AS</span> <span class="dt">month</span> <span class="kw">FROM</span> trips)</span>
+<span id="cb22-2"><a aria-label="2"></a>  <span class="kw">TO</span> <span class="st">'trips'</span> (FORMAT parquet, PARTITION_BY (<span class="dt">year</span>, <span class="dt">month</span>));</span>
+<span id="cb22-3"><a aria-label="3"></a><span class="kw">SELECT</span> <span class="fu">count</span>(<span class="op">*</span>) <span class="kw">FROM</span> read_parquet(<span class="st">'trips/*/*/*.parquet'</span>, hive_partitioning <span class="op">=</span> <span class="kw">true</span>)</span>
+<span id="cb22-4"><a aria-label="4"></a><span class="kw">WHERE</span> <span class="dt">year</span> <span class="op">=</span> <span class="dv">2025</span> <span class="kw">AND</span> <span class="dt">month</span> <span class="op">=</span> <span class="dv">1</span>;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Problems</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>users must filter on <code>year</code>/<code>month</code>, not on <code>pickup_ts</code>, or nothing is pruned</li>
+<li>changing the scheme means rewriting the table</li>
+<li>many small partitions → many small files</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Iceberg hidden partitioning</strong></p>
+</div>
+<div class="callout-content">
+<p>The partition spec is a <strong>transform</strong> of a column, <code>month(pickup_ts)</code>, stored in the metadata. A filter on <code>pickup_ts</code> is pruned automatically, and the spec can evolve without rewriting old files. Partitioning across machines comes back with distributed systems.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="iceberg-partition-evolution" class="slide level2">
+<h2>Iceberg: partition evolution</h2>
+
+<img data-src="img/iceberg_partition_evolution.png" class="r-stretch"></section>
+<section id="iceberg-33" class="slide level2">
 <h2>Iceberg</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -2059,13 +3093,18 @@ AddressBook {
 <td>Slow</td>
 <td>Fastest</td>
 </tr>
+<tr class="even">
+<td>Merge-on-Read (deletion vectors, v3)</td>
+<td>Fast</td>
+<td>Fast</td>
+</tr>
 </tbody>
 </table>
 </div>
 </div>
 </div>
 </section>
-<section id="iceberg-50" class="slide level2">
+<section id="iceberg-34" class="slide level2">
 <h2>Iceberg</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -2078,7 +3117,7 @@ AddressBook {
 </div>
 </div>
 </section>
-<section id="iceberg-51" class="slide level2">
+<section id="iceberg-35" class="slide level2">
 <h2>Iceberg</h2>
 <div class="callout callout-tip no-icon callout-titled callout-style-default">
 <div class="callout-body">
@@ -2090,6 +3129,822 @@ AddressBook {
 </div>
 </div>
 </div>
+</section>
+<section id="table-maintenance" class="slide level2 font8">
+<h2>Table maintenance</h2>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The small-files problem</strong></p>
+</div>
+<div class="callout-content">
+<p>Streaming and frequent small writes create thousands of tiny datafiles and manifests. Every file costs an object-store request, and a footer and a manifest entry to read. Queries get slower even though the data is small.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Regular jobs (Iceberg Spark procedures)</strong></p>
+</div>
+<div class="callout-content">
+<table class="caption-top">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Job</th>
+<th>Procedure</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>compaction</td>
+<td><code>rewrite_data_files</code></td>
+<td>merge small files, apply delete files, re-sort</td>
+</tr>
+<tr class="even">
+<td>expire snapshots</td>
+<td><code>expire_snapshots</code></td>
+<td>old snapshots keep old files alive: storage cost, GDPR deletes</td>
+</tr>
+<tr class="odd">
+<td>remove orphan files</td>
+<td><code>remove_orphan_files</code></td>
+<td>files written by failed jobs and never committed</td>
+</tr>
+<tr class="even">
+<td>rewrite manifests</td>
+<td><code>rewrite_manifests</code></td>
+<td>regroup manifests so they match the query filters</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Note</strong></p>
+</div>
+<div class="callout-content">
+<p>Expiring snapshots ends <strong>time travel</strong> to them: choose a retention period (e.g.&nbsp;7 days).</p>
+</div>
+</div>
+</div>
+</section>
+<section id="iceberg-v3-2025" class="slide level2 font8">
+<h2>Iceberg v3 (2025)</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>New in the v3 spec</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>deletion vectors</strong>: one bitmap per datafile in a Puffin file instead of many positional delete files (from Delta Lake)</li>
+<li><strong>row lineage</strong>: each row gets an id and a last-updated sequence number, for incremental processing</li>
+<li>new types: <strong><code>VARIANT</code></strong> (semi-structured JSON-like data, stored efficiently), geometry/geography, nanosecond timestamps</li>
+<li>default column values: add a column without rewriting the data</li>
+</ul>
+</div>
+</div>
+</div>
+</section></section>
+<section>
+<section id="ducklake" class="title-slide slide level1 center">
+<h1>DuckLake</h1>
+
+</section>
+<section id="ducklake-1" class="slide level2 font8">
+<h2>DuckLake</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Idea (DuckDB, 2025)</strong></p>
+</div>
+<div class="callout-content">
+<p>Iceberg and Delta store metadata as <strong>files</strong> on object storage (JSON, Avro), plus a catalog that only holds one pointer. Every commit writes several files, and every read follows the tree.</p>
+<p>DuckLake stores <strong>all</strong> metadata (snapshots, schemas, file lists, statistics) in a <strong>SQL database</strong>: DuckDB, SQLite, PostgreSQL or MySQL. The data stays in Parquet files on object storage.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Consequences</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>a commit is one SQL transaction: ACID comes from the database, not from file tricks</li>
+<li>multi-table transactions, and finding the files of a snapshot with one query</li>
+<li>small inserts can be <strong>inlined</strong> into the catalog database, which avoids the small-files problem</li>
+<li>trade-off: needs a running database for the catalog</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="demo-ducklake" class="slide level2 font8 scrollable">
+<h2>Demo: DuckLake</h2>
+<div id="466d3323" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a aria-label="1"></a>con.sql(<span class="st">"INSTALL ducklake; LOAD ducklake;"</span>)</span>
+<span id="cb23-2"><a aria-label="2"></a>con.sql(<span class="ss">f"ATTACH 'ducklake:</span><span class="sc">{</span>work<span class="sc">}</span><span class="ss">/meta.ducklake' AS lake (DATA_PATH '</span><span class="sc">{</span>work<span class="sc">}</span><span class="ss">/lake_data/')"</span>)</span>
+<span id="cb23-3"><a aria-label="3"></a></span>
+<span id="cb23-4"><a aria-label="4"></a>con.sql(<span class="st">"CREATE TABLE lake.trips AS SELECT trip_id, fare FROM trips WHERE trip_id &lt; 1000"</span>)</span>
+<span id="cb23-5"><a aria-label="5"></a>con.sql(<span class="st">"INSERT INTO lake.trips SELECT trip_id, fare FROM trips WHERE trip_id BETWEEN 1000 AND 1009"</span>)</span>
+<span id="cb23-6"><a aria-label="6"></a>con.sql(<span class="st">"UPDATE lake.trips SET fare = fare * 1.1 WHERE trip_id &lt; 100"</span>)</span>
+<span id="cb23-7"><a aria-label="7"></a>con.sql(<span class="st">"DELETE FROM lake.trips WHERE trip_id &gt;= 1000"</span>)</span>
+<span id="cb23-8"><a aria-label="8"></a></span>
+<span id="cb23-9"><a aria-label="9"></a>con.sql(<span class="st">"SELECT snapshot_id, changes FROM ducklake_snapshots('lake')"</span>).df()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="3">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+
+<table class="dataframe caption-top" data-border="1">
+<thead>
+<tr class="header" style="text-align: right;">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">snapshot_id</th>
+<th data-quarto-table-cell-role="th">changes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>0</td>
+<td>{'schemas_created': ['main']}</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>1</td>
+<td>{'tables_created': ['main.trips'], 'tables_ins...</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>2</td>
+<td>{'inlined_insert': ['1']}</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>3</td>
+<td>{'tables_inserted_into': ['1'], 'tables_delete...</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
+<td>4</td>
+<td>{'inlined_delete': ['1']}</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<div id="de77ca10" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a aria-label="1"></a><span class="co"># time travel: the table as of snapshot 2 still has the 10 inserted rows</span></span>
+<span id="cb24-2"><a aria-label="2"></a>con.sql(<span class="st">"""</span></span>
+<span id="cb24-3"><a aria-label="3"></a><span class="st">SELECT (SELECT count(*) FROM lake.trips)                   AS now,</span></span>
+<span id="cb24-4"><a aria-label="4"></a><span class="st">       (SELECT count(*) FROM lake.trips AT (VERSION =&gt; 2)) AS at_version_2</span></span>
+<span id="cb24-5"><a aria-label="5"></a><span class="st">"""</span>).df()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="4">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+
+<table class="dataframe caption-top" data-border="1">
+<thead>
+<tr class="header" style="text-align: right;">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">now</th>
+<th data-quarto-table-cell-role="th">at_version_2</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>1000</td>
+<td>1010</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<div id="df593c97" class="cell" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a aria-label="1"></a><span class="co"># the data layer: immutable Parquet files, including a delete file</span></span>
+<span id="cb25-2"><a aria-label="2"></a><span class="cf">for</span> root, _, files <span class="kw">in</span> os.walk(<span class="ss">f"</span><span class="sc">{</span>work<span class="sc">}</span><span class="ss">/lake_data"</span>):</span>
+<span id="cb25-3"><a aria-label="3"></a>    <span class="cf">for</span> f <span class="kw">in</span> <span class="bu">sorted</span>(files):</span>
+<span id="cb25-4"><a aria-label="4"></a>        <span class="bu">print</span>(os.path.relpath(os.path.join(root, f), work))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>lake_data/main/trips/ducklake-01a187c4-1c2b-74df-a444-47fc1fc226ef.parquet
+lake_data/main/trips/ducklake-01a187c4-1c54-7114-857a-7a4be4b88cc4-delete.parquet
+lake_data/main/trips/ducklake-01a187c4-1c54-7371-97ae-172ddc1053cc.parquet</code></pre>
+</div>
+</div>
+<ul>
+<li>The <code>UPDATE</code> wrote a new datafile and a <strong>delete file</strong> (Merge-on-Read), and did not modify the original file.</li>
+<li>The 10-row insert was <strong>inlined</strong> into the catalog database: no tiny Parquet file.</li>
+</ul>
+</section></section>
+<section>
+<section id="engines-on-open-formats" class="title-slide slide level1 center">
+<h1>Engines on open formats</h1>
+
+</section>
+<section id="apache-spark-architecture" class="slide level2 font8 scrollable">
+<h2>Apache Spark: architecture</h2>
+<div class="columns">
+<div class="column" style="width:50%;">
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Components</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li><strong>driver</strong>: runs your program, builds the plan, schedules tasks</li>
+<li><strong>cluster manager</strong>: standalone, YARN, Kubernetes</li>
+<li><strong>executors</strong>: JVM processes on the workers that run <strong>tasks</strong>, one per data partition, and cache data</li>
+</ul>
+</div>
+</div>
+</div>
+</div><div class="column" style="width:50%;">
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Execution: the same model as Dask</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>transformations are <strong>lazy</strong>: they build a DAG</li>
+<li>an <strong>action</strong> (<code>count</code>, <code>write</code>, <code>collect</code>) triggers execution</li>
+<li>the DAG is cut into <strong>stages</strong> at <strong>shuffles</strong> (wide dependencies: <code>groupBy</code>, <code>join</code>)</li>
+<li>each stage = one task per partition; shuffle files connect stages</li>
+<li>failure: re-run the lost tasks from <strong>lineage</strong>, not the whole job</li>
+</ul>
+</div>
+</div>
+</div>
+</div></div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>From DataFrame to execution</strong></p>
+</div>
+<div class="callout-content">
+<ol type="1">
+<li><strong>Catalyst</strong> optimizer: logical plan → rule-based rewrites (pushdown, constant folding) → cost-based join selection → physical plan</li>
+<li><strong>Tungsten</strong>: whole-stage <strong>code generation</strong>: a stage is compiled into one Java function (query compilation, as in the execution models slides)</li>
+<li><strong>Adaptive Query Execution</strong> (Spark 3.0): re-optimize between stages using real sizes (coalesce partitions, switch join strategy, split skewed partitions)</li>
+</ol>
+</div>
+</div>
+</div>
+</section>
+<section id="apache-spark-evolution" class="slide level2 font8 scrollable">
+<h2>Apache Spark: evolution</h2>
+<table class="caption-top">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Year</th>
+<th>Version</th>
+<th>What changed</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>2012</td>
+<td></td>
+<td><strong>RDDs</strong> (Zaharia et al., NSDI 2012): in-memory, fault-tolerant datasets with lineage. 10–100× faster than MapReduce for iterative jobs</td>
+</tr>
+<tr class="even">
+<td>2015</td>
+<td>1.3–1.6</td>
+<td><strong>DataFrames</strong> and Catalyst (SIGMOD 2015): declarative API → optimizer can see the whole query</td>
+</tr>
+<tr class="odd">
+<td>2016</td>
+<td>2.0</td>
+<td>Tungsten whole-stage codegen, Structured Streaming</td>
+</tr>
+<tr class="even">
+<td>2020</td>
+<td>3.0</td>
+<td>Adaptive Query Execution, dynamic partition pruning</td>
+</tr>
+<tr class="odd">
+<td>2023</td>
+<td>3.4</td>
+<td><strong>Spark Connect</strong>: client–server protocol (gRPC + Arrow)</td>
+</tr>
+<tr class="even">
+<td>2025</td>
+<td>4.0</td>
+<td>ANSI SQL mode by default, <code>VARIANT</code> type, Python data source API, Java 17+</td>
+</tr>
+<tr class="odd">
+<td>2025</td>
+<td>4.1</td>
+<td>declarative pipelines, real-time mode for streaming</td>
+</tr>
+</tbody>
+</table>
+<div class="callout callout-warning no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>The JVM bottleneck and native accelerators</strong></p>
+</div>
+<div class="callout-content">
+<p>Row-oriented JVM execution with generated code leaves performance on the table compared with vectorized C++/Rust engines. Hence <strong>native</strong> execution plugged under Spark’s planner:</p>
+<ul>
+<li><strong>Photon</strong> (Databricks, proprietary, C++)</li>
+<li><strong>Gluten + Velox</strong> (Apache, incubating; Velox from Meta, C++)</li>
+<li><strong>Comet</strong> (Apache DataFusion subproject, Rust; donated by Apple)</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="spark-connect" class="slide level2 font8">
+<h2>Spark Connect</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Decoupling client and server</strong></p>
+</div>
+<div class="callout-content">
+<p>Classic PySpark: your Python process <strong>is</strong> the driver, with a JVM inside. Spark Connect: a thin client sends <strong>unresolved logical plans</strong> over gRPC; results come back as <strong>Arrow</strong> batches.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a aria-label="1"></a><span class="im">from</span> pyspark.sql <span class="im">import</span> SparkSession</span>
+<span id="cb27-2"><a aria-label="2"></a></span>
+<span id="cb27-3"><a aria-label="3"></a>spark <span class="op">=</span> SparkSession.builder.remote(<span class="st">"sc://localhost:15002"</span>).getOrCreate()</span>
+<span id="cb27-4"><a aria-label="4"></a>spark.read.parquet(<span class="st">"trips.parquet"</span>).groupBy(<span class="st">"payment"</span>).avg(<span class="st">"fare"</span>).show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Consequence</strong></p>
+</div>
+<div class="callout-content">
+<p>The <strong>protocol</strong> is now the interface, not the JVM. Any engine that speaks Spark Connect can run unmodified PySpark code: this is how <strong>Sail</strong> works.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="apache-datafusion" class="slide level2 font8">
+<h2>Apache DataFusion</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>A query engine as a library</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>written in <strong>Rust</strong>, on <strong>Arrow</strong> memory: started by Andy Grove, donated to Apache Arrow in 2019, top-level Apache project since 2024</li>
+<li>not a database: no server, no storage of its own. A <strong>toolkit</strong> to build databases and engines, often called “the LLVM of query engines”</li>
+<li>SQL and DataFrame front ends → logical plan → optimizer (~30 rules) → physical plan → streams of Arrow record batches, partitioned across CPU cores (Tokio)</li>
+<li>reads Parquet (with pushdown, page index, Bloom filters), CSV, JSON, Avro, Arrow</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Extensible at every level</strong></p>
+</div>
+<div class="callout-content">
+<p>Custom table providers (your own storage or table format), scalar/aggregate/window UDFs, optimizer rules, physical operators, SQL dialects. You keep what you need and replace the rest.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="apache-datafusion-who-builds-on-it" class="slide level2 font8 scrollable">
+<h2>Apache DataFusion: who builds on it</h2>
+<table class="caption-top">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>System</th>
+<th>What it uses DataFusion for</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>InfluxDB 3</strong></td>
+<td>the whole query layer of a time-series database (“FDAP” stack: Flight, DataFusion, Arrow, Parquet)</td>
+</tr>
+<tr class="even">
+<td><strong>Comet</strong></td>
+<td>native execution of Spark plans</td>
+</tr>
+<tr class="odd">
+<td><strong>Sail</strong></td>
+<td>a Spark-compatible engine (next slide)</td>
+</tr>
+<tr class="even">
+<td><strong>delta-rs</strong> (<code>deltalake</code>)</td>
+<td><code>UPDATE</code>, <code>DELETE</code>, <code>MERGE</code> on Delta tables: what ran in the lab</td>
+</tr>
+<tr class="odd">
+<td><strong>iceberg-rust</strong></td>
+<td>Iceberg tables as DataFusion tables</td>
+</tr>
+<tr class="even">
+<td><strong>LanceDB</strong>, <strong>Vortex</strong></td>
+<td>query integration for the new file formats</td>
+</tr>
+<tr class="odd">
+<td><strong>Ballista</strong></td>
+<td>distributed execution of DataFusion plans</td>
+</tr>
+</tbody>
+</table>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a aria-label="1"></a><span class="im">from</span> datafusion <span class="im">import</span> SessionContext      <span class="co"># pip install datafusion</span></span>
+<span id="cb28-2"><a aria-label="2"></a></span>
+<span id="cb28-3"><a aria-label="3"></a>ctx <span class="op">=</span> SessionContext()</span>
+<span id="cb28-4"><a aria-label="4"></a>ctx.register_parquet(<span class="st">"trips"</span>, <span class="st">"trips.parquet"</span>)</span>
+<span id="cb28-5"><a aria-label="5"></a>ctx.sql(<span class="st">"SELECT payment, avg(fare) FROM trips GROUP BY payment"</span>).show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Note</strong></p>
+</div>
+<div class="callout-content">
+<p>DuckDB is a <strong>finished product</strong> you embed; DataFusion is a <strong>kit</strong> you build your own product from. Both are vectorized, columnar, and fast on a single node.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="sail" class="slide level2 font8">
+<h2>Sail</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Spark API, Rust engine</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>Sail</strong> (LakeSail, open source) is a <strong>Spark Connect server</strong> built on DataFusion and Arrow. Your PySpark code stays the same, only the session changes:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a aria-label="1"></a><span class="im">from</span> pysail.spark <span class="im">import</span> SparkConnectServer   <span class="co"># pip install pysail</span></span>
+<span id="cb29-2"><a aria-label="2"></a><span class="im">from</span> pyspark.sql <span class="im">import</span> SparkSession</span>
+<span id="cb29-3"><a aria-label="3"></a></span>
+<span id="cb29-4"><a aria-label="4"></a>server <span class="op">=</span> SparkConnectServer()<span class="op">;</span> server.start()</span>
+<span id="cb29-5"><a aria-label="5"></a>_, port <span class="op">=</span> server.listening_address</span>
+<span id="cb29-6"><a aria-label="6"></a>spark <span class="op">=</span> SparkSession.builder.remote(<span class="ss">f"sc://localhost:</span><span class="sc">{</span>port<span class="sc">}</span><span class="ss">"</span>).getOrCreate()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>What you gain</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>no JVM: starts in seconds, tens of MB when idle, no garbage-collection pauses or JVM tuning</li>
+<li>vectorized Arrow execution; Python UDFs run in the same process with zero-copy Arrow data</li>
+<li>runs locally or distributed on Kubernetes</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-warning no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Caveats</strong></p>
+</div>
+<div class="callout-content">
+<p>Vendor benchmarks claim ~4–10× faster than Spark on derived TPC-H. Only the <strong>DataFrame and SQL</strong> API: no RDDs, no MLlib, no Spark packages that need the JVM; streaming is still on the roadmap. A mismatch with Spark’s behaviour is a bug, but there are still some.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="polars" class="slide level2 font8">
+<h2>Polars</h2>
+<div class="callout callout-tip no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>DataFrames, Rust, Arrow memory</strong></p>
+</div>
+<div class="callout-content">
+<p>Started by Ritchie Vink (2020). Single-node DataFrame library with an <strong>expression</strong> API, a <strong>lazy</strong> mode with a query optimizer, and a streaming engine for larger-than-memory data.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a aria-label="1"></a><span class="im">import</span> polars <span class="im">as</span> pl</span>
+<span id="cb30-2"><a aria-label="2"></a></span>
+<span id="cb30-3"><a aria-label="3"></a>(pl.scan_parquet(<span class="st">"trips.parquet"</span>)             <span class="co"># lazy: nothing is read yet</span></span>
+<span id="cb30-4"><a aria-label="4"></a>   .<span class="bu">filter</span>(pl.col(<span class="st">"zone_id"</span>) <span class="op">&lt;</span> <span class="dv">1010</span>)          <span class="co"># predicate pushdown into the Parquet scan</span></span>
+<span id="cb30-5"><a aria-label="5"></a>   .group_by(<span class="st">"payment"</span>)</span>
+<span id="cb30-6"><a aria-label="6"></a>   .agg(pl.col(<span class="st">"fare"</span>).mean())</span>
+<span id="cb30-7"><a aria-label="7"></a>   .collect())                                <span class="co"># optimize, then execute</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Note</strong></p>
+</div>
+<div class="callout-content">
+<p>Same ideas as the database engines (vectorized execution, projection and predicate pushdown, row-group skipping), with a DataFrame API instead of SQL. Reads Delta (via delta-rs) and Iceberg (via PyIceberg).</p>
+</div>
+</div>
+</div>
+</section>
+<section id="spark-vs-sail-vs-duckdb-vs-polars" class="slide level2 font8 scrollable">
+<h2>Spark vs Sail vs DuckDB vs Polars</h2>
+<table class="caption-top">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th>Spark</th>
+<th>Sail</th>
+<th>DuckDB</th>
+<th>Polars</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Language, runtime</td>
+<td>Scala, JVM</td>
+<td>Rust (DataFusion + Arrow)</td>
+<td>C++</td>
+<td>Rust</td>
+</tr>
+<tr class="even">
+<td>API</td>
+<td>DataFrame (Python, Scala, Java, R), SQL</td>
+<td>the <strong>Spark</strong> API via Spark Connect</td>
+<td>SQL (+ Python relational API)</td>
+<td>DataFrame expressions (+ SQL subset)</td>
+</tr>
+<tr class="odd">
+<td>Execution</td>
+<td>stages + shuffles, codegen; native via Photon/Gluten/Comet</td>
+<td>vectorized Arrow streams</td>
+<td>vectorized, push-based pipelines</td>
+<td>vectorized; lazy optimizer; streaming engine</td>
+</tr>
+<tr class="even">
+<td>Scale</td>
+<td>cluster: TB–PB</td>
+<td>one machine → Kubernetes cluster</td>
+<td>one machine, out-of-core: up to ~TB</td>
+<td>one machine; streaming for &gt; RAM</td>
+</tr>
+<tr class="odd">
+<td>Startup, footprint</td>
+<td>seconds, GBs of JVM</td>
+<td>sub-second, tens of MB</td>
+<td>instant, embedded in your process</td>
+<td>instant, embedded in your process</td>
+</tr>
+<tr class="even">
+<td>Fault tolerance</td>
+<td>task retry from lineage</td>
+<td>task retry (distributed mode)</td>
+<td>none: one process</td>
+<td>none: one process</td>
+</tr>
+<tr class="odd">
+<td>Table formats</td>
+<td>Delta, Iceberg, Hudi: most mature</td>
+<td>Delta, Iceberg: growing</td>
+<td>Delta, Iceberg, DuckLake (extensions)</td>
+<td>Delta, Iceberg (via delta-rs, PyIceberg)</td>
+</tr>
+<tr class="even">
+<td>Ecosystem</td>
+<td>MLlib, Structured Streaming, huge</td>
+<td>Spark SQL / DataFrame subset</td>
+<td>extensions; Arrow, pandas, Polars interop</td>
+<td>Python data science stack</td>
+</tr>
+<tr class="odd">
+<td>Choose when</td>
+<td>data does not fit one machine; existing Spark pipelines</td>
+<td>existing PySpark code that should be cheaper and faster</td>
+<td>SQL analytics on one machine, notebooks, lab work</td>
+<td>DataFrame-style transformations in Python</td>
+</tr>
+</tbody>
+</table>
+<div class="callout callout-important no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Rule of thumb</strong></p>
+</div>
+<div class="callout-content">
+<p>Most analytical datasets fit on one large machine today. Start with DuckDB or Polars. Move to a cluster engine (Spark, or Sail when its API coverage is enough) when the data or the team’s existing pipelines require it. With open table formats, all of them read the <strong>same</strong> tables.</p>
+</div>
+</div>
+</div>
+</section></section>
+<section>
+<section id="summary" class="title-slide slide level1 center">
+<h1>Summary</h1>
+
+</section>
+<section id="summary-the-layers" class="slide level2 font8 scrollable">
+<h2>Summary: the layers</h2>
+<table class="caption-top">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Layer</th>
+<th>Question it answers</th>
+<th>Examples</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>encoding</td>
+<td>how is one record or value turned into bytes?</td>
+<td>JSON, Protobuf, Avro; dictionary, RLE, delta</td>
+</tr>
+<tr class="even">
+<td>file format</td>
+<td>how are many records laid out in one file?</td>
+<td>CSV, Avro (rows); Parquet, ORC (columns)</td>
+</tr>
+<tr class="odd">
+<td>in-memory format</td>
+<td>how do engines exchange data without copying?</td>
+<td>Arrow</td>
+</tr>
+<tr class="even">
+<td>table format</td>
+<td>which files make up the table now, and before?</td>
+<td>Hive, Delta Lake, Hudi, Iceberg</td>
+</tr>
+<tr class="odd">
+<td>catalog</td>
+<td>where is the current version of each table?</td>
+<td>Hive Metastore, REST (Polaris, Unity), DuckLake’s SQL database</td>
+</tr>
+<tr class="even">
+<td>engine</td>
+<td>who runs the query?</td>
+<td>Spark, Trino, Flink, DuckDB, Snowflake</td>
+</tr>
+</tbody>
+</table>
+<p>Each layer can be swapped independently: that is the point of <strong>open</strong> formats.</p>
+</section>
+<section id="summary-how-the-technologies-relate" class="slide level2">
+<h2>Summary: how the technologies relate</h2>
+<img data-src="bigdata_lec14_files/mediabag/51864d88f8aa44ff82103dd6e5d90ee1ad272250.svg">
+</section>
+<section id="summary-engines" class="slide level2 font8 scrollable">
+<h2>Summary: engines</h2>
+<table class="caption-top">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th>Spark</th>
+<th>Presto / Trino</th>
+<th>DuckDB</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Origin</td>
+<td>UC Berkeley AMPLab, 2009</td>
+<td>Facebook, 2012 (Presto); Trino = 2019 fork by Presto’s creators</td>
+<td>CWI Amsterdam, 2019</td>
+</tr>
+<tr class="even">
+<td>Architecture</td>
+<td>cluster: driver + executors; DAG of stages (like Dask)</td>
+<td>MPP cluster: coordinator + workers, pipelined in memory</td>
+<td>single node, embedded in your process</td>
+</tr>
+<tr class="odd">
+<td>Best for</td>
+<td>batch ETL, ML, streaming; Python/Scala/SQL APIs</td>
+<td>interactive SQL; <strong>federated</strong> queries over many sources (Iceberg + Postgres + Kafka)</td>
+<td>local analytics, notebooks, files up to 100s of GB</td>
+</tr>
+<tr class="even">
+<td>Failures</td>
+<td>retries failed tasks/stages</td>
+<td>re-runs the query (Trino: optional fault-tolerant mode)</td>
+<td>n/a</td>
+</tr>
+<tr class="odd">
+<td>Commercial</td>
+<td>Databricks, AWS EMR, Google Dataproc</td>
+<td>Starburst, AWS Athena</td>
+<td>MotherDuck</td>
+</tr>
+</tbody>
+</table>
+<div class="callout callout-note no-icon callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<p><strong>Where Databricks fits</strong></p>
+</div>
+<div class="callout-content">
+<p>Databricks (2013, by Spark’s creators) is a <strong>platform</strong> on top of these layers: managed Spark plus Photon (a vectorized C++ engine), <strong>Delta Lake</strong> (table format), <strong>Unity Catalog</strong> (catalog, open-sourced 2024), notebooks, MLflow. It coined “lakehouse”, and bought Tabular (Iceberg’s creators) in 2024: Delta UniForm writes Iceberg metadata for the same files.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="summary-which-format-when" class="slide level2 font8">
+<h2>Summary: which format when?</h2>
+<table class="caption-top">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Situation</th>
+<th>Choice</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>config files, small APIs, debugging</td>
+<td>JSON</td>
+</tr>
+<tr class="even">
+<td>service-to-service messages, RPC</td>
+<td>Protobuf (gRPC)</td>
+</tr>
+<tr class="odd">
+<td>event streams with evolving schemas</td>
+<td>Avro + schema registry</td>
+</tr>
+<tr class="even">
+<td>analytical files</td>
+<td>Parquet (zstd, sorted on common filters)</td>
+</tr>
+<tr class="odd">
+<td>data passed between engines and languages in memory</td>
+<td>Arrow</td>
+</tr>
+<tr class="even">
+<td>tables with updates, many writers, history</td>
+<td>Iceberg or Delta Lake (DuckLake for simple setups)</td>
+</tr>
+</tbody>
+</table>
 
 
 </section></section>
@@ -2381,7 +4236,7 @@ AddressBook {
         }
           var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
           var mailtoRegex = new RegExp(/^mailto:/);
-            var filterRegex = new RegExp("https:\/\/dslnu\.github\.io\/data_analytics\/");
+            var filterRegex = new RegExp('/' + window.location.host + '/');
           var isInternal = (href) => {
               return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
           }
