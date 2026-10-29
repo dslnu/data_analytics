@@ -174,19 +174,72 @@ message Person {
 
 ## Formats
 :::{.callout-tip icon=false}
-## Protocol Buffers: **34** bytes
+## Protocol Buffers: **33** bytes
 ![](img/protobuf){height=500}
 :::
 
 ## Formats
 :::{.callout-important icon=false}
-## Thrift/Protobuf details
-    
-- **Schema evolution** is supported by incrementing tag numbers.
+## Thrift/Protobuf: schema evolution
+Field **tags** (`1`, `2`, `3`), not names, are written to the bytes. So:
 
-- **Lists** not supported in Protobuf.
+- a field can be **renamed**, but its tag can **never change**
+- a new field gets a **new tag** and must be optional or have a default (forward compatibility: old code skips unknown tags)
+- only optional fields can be removed, and their tag must never be reused
+:::
 
-- Thrift supports **nested lists**.
+:::{.callout-note icon=false}
+## Lists
+Protobuf has no list type: a `repeated` field is a list. Thrift has a `list<...>` type, which also allows **nested lists**.
+:::
+
+## Formats
+:::{.callout-tip icon=false}
+## Avro
+Started in 2009 as a Hadoop subproject. Thrift did not fit Hadoop well.
+```
+record Person {
+  string userName;
+  union { null, long } favoriteNumber = null;
+  array<string> interests;
+}
+```
+:::
+![](img/avro_schemas)
+
+## Formats
+:::{.callout-tip icon=false}
+## Avro encoding: **32** bytes
+No tags and no field names: just values concatenated in schema order.
+![](img/avro_encoding)
+:::
+
+## Formats
+:::{.callout-important icon=false}
+## Avro: writer's schema vs reader's schema
+The bytes can only be decoded with the **exact schema they were written with**.
+
+- the **writer's schema** is stored with the data: once in the header of an Avro file, or as a version number in a schema registry (Kafka)
+- the **reader's schema** is what the application expects
+- Avro **resolves** the two by field **name**: fields missing in the writer's schema take the reader's default, and extra fields are ignored
+:::
+
+:::{.callout-note icon=false}
+## Why it matters
+Avro schemas can be **generated** from a database schema: there are no tags to assign by hand. Avro is used for Kafka messages, Hadoop data, and Iceberg **manifests** (see below).
+:::
+
+## Formats
+:::{.callout-tip icon=false}
+## Recall: schema-on-write vs schema-on-read
+
+| | Schema-on-write | Schema-on-read |
+|---|---|---|
+| Databases | relational | document (MongoDB) |
+| Encodings | Thrift, Protobuf, Avro | JSON, MessagePack |
+| Change | migration / new schema version | handled in application code |
+
+Binary encodings **write the schema down**, but still let it evolve: the same compatibility question as `ALTER TABLE`, now for bytes on disk and on the wire.
 :::
 
 
@@ -244,8 +297,13 @@ seconds.
 non-relational. 
 
 - Data structures used in programming languages, messages exchanged by distributed systems, structured documents, etc., are often nested
-<!-- as well a nested representation. --> 
-:::  
+<!-- as well a nested representation. -->
+:::
+
+:::{.callout-note icon=false}
+## Recall: hierarchical DB models
+This is the **hierarchical** model of IMS and the **document** model of MongoDB. Dremel does not normalize it into tables. It keeps the tree and **stores it by column**.
+:::
 
 ## Formats: Dremel
 :::{.callout-important icon=false}
@@ -273,52 +331,17 @@ $$
 ![](img/dremel_records){height=500}
 :::
 
-## Formats: Dremel
+## Formats: Dremel {.scrollable}
 :::{.callout-important icon=false}
 ## Column-striped representation
 ![](img/dremel_columnar_representation){height=500}
 :::
 
-## Formats: Dremel
-:::{.callout-tip icon=false}
-## Path deltas
-![](img/dremel_path_deltas)
+::: aside
+`r` and `d` are the **repetition** and **definition** levels. Parquet uses the same scheme, and we go through them in detail with Parquet below.
 :::
 
-## Formats: Dremel
-:::{.callout-note icon=false}
-## Tablets
-A table is stored as a set of **tablets**. 
-
-A tablet is a self-contained horizontal partition of the table.
-![](img/dremel_tablet)
-:::
-
-## Formats: Dremel
-:::{.callout-important icon=false}
-## Record assembly
-
-- create a finite state machine (FSM) that reads the field values and
-levels for each field, and appends the values sequentially
-to the output records. 
-- An FSM state corresponds to a field
-reader for each selected field. 
-- State transitions are labeled
-with repetition levels. 
-- Once a reader fetches a value, we
-look at the next repetition level to decide what next reader
-to use. 
-- The FSM is traversed from the start to end state once for each record.
-:::
-
-## Formats: Dremel
-![](img/dremel_record_assembly)
-
-## Formats: Dremel
-:::{.callout-tip icon=false}
-## 2 fields example
-![](img/dremel_automaton)
-:::
+# Google BigQuery
 
 ## Dremel aftermath
 :::{.callout-tip icon=false}
@@ -331,30 +354,10 @@ to use.
 - columnar storage
 :::
 
-## Dremel aftermath
-:::{.callout-tip icon=false}
-## Dremel SQL
-
-- First-class support of nested data (because of Protobuf usage)
-- therefore, hierarchical schemas
-- ability to interactively and \textbf{declaratively} analyze huge datasets
-- merged with other dialects at Google into GoogleSQL
-- support for joins and other analytic queries added later
+:::{.callout-note icon=false}
+## Execution
+Execution trees, distributed shuffle and serverless scheduling are about **distributed** query processing: see lecture 15. Here we focus on the **format**.
 :::
-
-## Dremel aftermath
-:::{.callout-tip icon=false}
-## Separated compute and storage
-
-- Started running on a few hundred shared-nothing server
-- moved to Borg (managed system, precursor to Kubernetes)
-- replicated storage (each table stored on 3 separate disks)
-- later on, move to disaggregated storage (akin to GFS)
-- disaggregated memory shuffling
-:::
-
-## Dremel aftermath
-![](img/dremel_memory_shuffle)
 
 ## Dremel aftermath
 :::{.callout-tip icon=false}
@@ -368,41 +371,6 @@ to use.
 :::{.callout-important icon=false}
 ## Drawback
 Needs complementary managed storage.
-:::
-
-## Dremel aftermath
-:::{.callout-tip icon=false}
-## Tree architecture
-Forms a massively parallel distributed tree for pushing down
-a query to the tree and then aggregating the results from the leaves.
-:::
-
-![](img/dremel_execution_tree1)
-
-## Dremel aftermath
-:::{.callout-tip icon=false}
-## Query execution
-![](img/dremel_execution_tree2)
-:::
-
-## Dremel aftermath
-:::{.callout-tip icon=false}
-## Query execution
-- read, filter, partially pre-aggregate, shuffle
-- final GROUP BY, sort, truncate
-- final ordering and truncation
-- query coordinator reads final 100 records
-
-:::
-
-## Dremel aftermath
-:::{.callout-tip icon=false}
-## Serverless computing
-
-- centralized scheduling, superseding dispatcher
-- shuffle persistence layer
-- flexible execution DAGs
-- dynamic query execution
 :::
 
 ## Dremel aftermath
@@ -422,7 +390,7 @@ In other words, an external implementation of Dremel.
 ## Formats: Parquet
 :::{.callout-tip icon=false}
 ## Parquet at Twitter
-Parquet stores nested data structures in a flat columnar format using a technique outlined in the Dremel paper from Google. 
+Parquet stores nested data structures in a flat columnar format using a technique outlined in the Dremel paper from Google.
 
 > Using Parquet at Twitter, we experienced a reduction in size by one third on our large datasets. Scan times were also reduced to a fraction of the original in the common case of needing only a subset of the columns.
 
@@ -437,11 +405,51 @@ Parquet stores nested data structures in a flat columnar format using a techniqu
 
 :::{.callout-tip icon=false}
 ## Columnar storage advantages
+The same as for columnar databases in lecture 8: better compression, reduced I/O, encodings suitable for vectorization. Parquet brings them to **files**.
+:::
 
-- **better compression** (data is more homogenous)
-- **reduced I/O** will be reduced 
-      <!-- %as we can efficiently scan only a subset of the columns while reading the data. Better compression also reduces the bandwidth required to read the input. -->
-- **better encodings** suitable for vectorization
+## Formats: Parquet
+:::{.callout-tip icon=false}
+## File layout
+![](img/parquet_arch){height=500}
+:::
+
+## Formats: Parquet {.font8}
+:::{.callout-tip icon=false}
+## File layout
+
+- **row group**: a horizontal slice of the table, typically 64 MB to 1 GB (DuckDB writes 122,880 rows by default)
+- **column chunk**: the values of one column within one row group, stored contiguously
+- **page**: the unit of encoding and compression inside a column chunk (about 1 MB)
+- **footer**: the schema, plus the location and **statistics** (min, max, null count) of every column chunk. It is written last, so a writer can stream the data first.
+:::
+
+:::{.callout-note icon=false}
+## Reading a Parquet file
+
+1. read the footer (the last bytes of the file)
+2. pick the **columns** the query needs (projection pushdown)
+3. skip the **row groups** whose min/max cannot match the filter (filter pushdown)
+4. read and decode only the remaining column chunks
+:::
+
+## Formats: Parquet {.font8}
+:::{.callout-tip icon=false}
+## Recall: columnar DBs
+
+| Lecture 8 (columnar databases) | Parquet |
+|---|---|
+| DuckDB row groups | row groups |
+| zone maps (min/max per block) | column chunk statistics in the footer, page indexes |
+| dictionary encoding | `RLE_DICTIONARY` |
+| RLE, bit-packing | RLE/bit-packing hybrid (for dictionary codes, levels, booleans) |
+| delta | `DELTA_BINARY_PACKED`, `DELTA_BYTE_ARRAY` |
+| projection and filter pushdown | read only the needed column chunks and row groups |
+:::
+
+:::{.callout-important icon=false}
+## Encoding, then compression
+Pages are first **encoded** (lightweight, type-aware), then optionally **compressed** with a general-purpose codec: Snappy (fast, the old default), zstd (smaller), gzip, LZ4.
 :::
 
 ## Formats: Parquet
@@ -524,7 +532,7 @@ message ExampleMap {
 ```
 :::
 
-## Formats: Parquet
+## Formats: Parquet {.scrollable}
 ![](img/parquet_nested_example){height=300}
 
 ![](img/parquet_nested_columns){height=300}
@@ -593,7 +601,223 @@ AddressBook {
 ## Formats: Parquet
 ![](img/parquet_addressbook_example)
 
+## Formats: Parquet
+:::{.callout-important icon=false}
+## Record assembly
+
+- create a finite state machine (FSM) that reads the field values and
+levels for each field, and appends the values sequentially
+to the output records. 
+- An FSM state corresponds to a field
+reader for each selected field. 
+- State transitions are labeled
+with repetition levels. 
+- Once a reader fetches a value, we
+look at the next repetition level to decide what next reader
+to use. 
+- The FSM is traversed from the start to end state once for each record.
+:::
+
+## Formats: Parquet
+![](img/dremel_record_assembly)
+
+## Formats: Parquet
+:::{.callout-tip icon=false}
+## 2 fields example
+![](img/dremel_automaton)
+:::
+
+## Formats: ORC {.font8}
+:::{.callout-tip icon=false}
+## Optimized Row Columnar
+Developed in 2013 for Apache Hive (Hortonworks and Facebook), at the same time as Parquet (Twitter and Cloudera).
+
+- **stripes** (about 64 MB) ≈ Parquet row groups
+- lightweight indexes every 10,000 rows: min/max, optional **Bloom filters**
+- nested types stored as separate child columns with presence and length streams, instead of Dremel levels
+- built-in support for Hive ACID tables
+:::
+
+:::{.callout-note icon=false}
+## Comparison
+
+| | Avro | Parquet | ORC |
+|---|---|---|---|
+| Layout | row | column | column |
+| Nested data | yes | Dremel levels | child columns |
+| Best for | writing records one by one, messages, schema evolution | analytics, most engines (Spark, DuckDB, Polars, BigQuery, Snowflake) | analytics in the Hive ecosystem |
+:::
+
+# Apache Arrow
+
+## Apache Arrow {.font8}
+:::{.callout-tip icon=false}
+## In-memory columnar format
+At the start of the lecture we separated the **in-memory** and the **on-disk** representations. Parquet is the standard on-disk columnar format. **Arrow** (2016) is its in-memory counterpart:
+
+- a column is a contiguous **buffer** of values, plus a validity bitmap for nulls (and an offsets buffer for strings and lists)
+- data is processed in **record batches** of columns, the vectors of lecture 8's vectorized execution
+- the same layout in every language: C++, Rust, Java, Python, R, ...
+:::
+
+:::{.callout-important icon=false}
+## Why it matters: zero copy
+Without a shared format, every exchange between two systems (database $\rightarrow$ Python, Spark $\rightarrow$ pandas) means serializing and deserializing every value. With Arrow, systems pass **pointers to the same buffers**.
+
+DuckDB, Polars, pandas 2 (`dtype_backend="pyarrow"`), Spark (`toPandas`), and Dask can all exchange Arrow tables.
+:::
+
+## Apache Arrow {.font8}
+:::{.callout-tip icon=false}
+## Arrow vs Parquet
+
+| | Parquet | Arrow |
+|---|---|---|
+| Lives | on disk, object storage | in memory, on the wire |
+| Optimized for | small size: encodings + compression | fast processing: random access, SIMD |
+| Decoding needed? | yes | no: compute directly on the buffers |
+:::
+
+:::{.callout-note icon=false}
+## The Arrow ecosystem
+
+- **Arrow IPC / Feather**: Arrow buffers written to a file or stream as they are
+- **Arrow Flight**: RPC protocol for sending record batches over the network
+- **ADBC**: a database API (like JDBC/ODBC) that returns Arrow instead of rows
+:::
+
+# Demo: Parquet in DuckDB
+
+## Demo: file sizes {.font8 .scrollable}
+The synthetic taxi trips from lecture 8, written in four formats:
+```{python}
+import os, re, tempfile
+import duckdb
+
+work = tempfile.mkdtemp()
+con = duckdb.connect()
+con.sql("""
+SELECT setseed(0.42);
+CREATE TABLE trips AS
+SELECT i                                                   AS trip_id,
+       TIMESTAMP '2025-01-01' + to_seconds(i * 10)         AS pickup_ts,
+       (i // 100000)::INTEGER                              AS vendor_id,
+       ['cash', 'card', 'app'][1 + (hash(i) % 3)::INTEGER] AS payment,
+       1000 + (random() * 50)::INTEGER                     AS zone_id,
+       round(random() * 100, 2)                            AS fare
+FROM range(1000000) t(i);
+""")
+
+formats = {
+    "trips.csv":            "(FORMAT csv)",
+    "trips.json":           "(FORMAT json)",
+    "trips_snappy.parquet": "(FORMAT parquet, COMPRESSION snappy)",
+    "trips_zstd.parquet":   "(FORMAT parquet, COMPRESSION zstd)",
+}
+for name, options in formats.items():
+    con.sql(f"COPY trips TO '{work}/{name}' {options}")
+    print(f"{name:22} {os.path.getsize(f'{work}/{name}') / 1e6:6.1f} MB")
+```
+
+- JSON repeats every field name in every record: the problem MessagePack and schemas solved.
+- Parquet is smaller because of **encodings** (dictionary, bit-packing) and then **compression** on top.
+
+## Demo: inside a Parquet file {.font8 .scrollable}
+The footer, as seen by `parquet_metadata`: one row per column chunk.
+```{python}
+p = f"{work}/trips_zstd.parquet"
+con.sql(f"""
+SELECT row_group_id AS rg, row_group_num_rows AS rows, path_in_schema AS col,
+       encodings, compression, stats_min, stats_max,
+       total_compressed_size AS bytes
+FROM parquet_metadata('{p}')
+WHERE path_in_schema IN ('trip_id', 'payment', 'fare') AND row_group_id < 2
+ORDER BY rg, col
+""").df()
+```
+
+```{python}
+con.sql(f"SELECT name, type, converted_type, repetition_type FROM parquet_schema('{p}')").df()
+```
+
+- `stats_min`/`stats_max` are the **zone maps** of lecture 8, stored in the file.
+- `payment` and `fare` use dictionary encoding: 3 distinct strings and 10,001 distinct prices.
+
+## Demo: filter pushdown {.font8 .scrollable}
+The same query on the file sorted by `trip_id`, and on a shuffled copy:
+```{python}
+con.sql(f"COPY (SELECT * FROM trips ORDER BY random()) TO '{work}/shuffled.parquet' (FORMAT parquet)")
+
+def scan_stats(path):
+    plan = con.sql(f"""EXPLAIN ANALYZE
+        SELECT count(*) FROM '{path}' WHERE trip_id BETWEEN 500000 AND 500100""").fetchall()[0][1]
+    return [re.sub(r"[│\s]+", " ", line).strip()
+            for line in plan.splitlines() if "Row Groups Scanned" in line or "Data Read" in line]
+
+for name in ["trips_zstd.parquet", "shuffled.parquet"]:
+    print(name, scan_stats(f"{work}/{name}"))
+```
+
+- Sorted: the min/max of only **one** row group overlaps the filter, so DuckDB reads one.
+- Shuffled: every row group spans all `trip_id`s, so it must read all of them.
+- Sort (or Z-order) the data **before** writing Parquet if you know the common filters.
+
+## Demo: nested data {.font8 .scrollable}
+The `AddressBook` example from above, written by DuckDB:
+```{python}
+con.sql(f"""
+COPY (
+  SELECT * FROM (VALUES
+    ('John Smith', ['555 111 2222'],
+     [{{'name': 'Edward Miller', 'phoneNumber': '555 987 6543'}},
+      {{'name': 'Arthur Clarke', 'phoneNumber': NULL}}]),
+    ('Random Guy', [], [])
+  ) t(owner, ownerPhoneNumbers, contacts)
+) TO '{work}/addressbook.parquet' (FORMAT parquet)""")
+
+con.sql(f"""SELECT name, type, repetition_type, num_children
+            FROM parquet_schema('{work}/addressbook.parquet')""").df()
+```
+
+```{python}
+con.sql(f"""SELECT path_in_schema, num_values
+            FROM parquet_metadata('{work}/addressbook.parquet')""").df()
+```
+
+- `LIST` and `STRUCT` become **groups** with a `REPEATED` middle level: the standard Parquet list layout.
+- Only the leaves (`name`, `phoneNumber`, ...) are stored as columns. The tree is rebuilt from the repetition and definition levels.
+
+## Demo: Parquet → Arrow {.font8 .scrollable}
+```{python}
+tbl = con.sql(f"FROM '{work}/addressbook.parquet'").to_arrow_table()
+print(type(tbl).__name__, tbl.num_rows, "rows")
+print(tbl.schema)
+```
+
+```{python}
+# DuckDB queries the Arrow table in place, without copying it
+con.sql("SELECT owner, len(contacts) AS n_contacts FROM tbl").df()
+```
+
 # Log-Structured Tables
+
+## Recap: warehouse, lake, lakehouse {.font8}
+
+| | Warehouse | Lake | Lakehouse |
+|---|---|---|---|
+| Storage | proprietary | open files on object storage | open files on object storage |
+| Schema | on write | on read | on write, can evolve |
+| ACID | yes | no | yes |
+| Cost | high | low | low |
+| ML on raw data | poor | good | good |
+
+## Recap: warehouse, lake, lakehouse {.font8}
+![](img/iceberg_data_lakehouse){height=420}
+
+:::{.callout-important icon=false}
+## File vs Table
+Parquet gives us efficient **files**. A **table** needs more: which files belong to it right now, atomic changes, and a history of versions. That is what **table formats** add.
+:::
 
 ## LSTs
 :::{.callout-tip icon=false}
@@ -632,16 +856,75 @@ Analytical workloads require frequent incremental updates to structured data.
 
 - stored within file structure of the table
 - commit log of additions/deletions/etc.
-- Copy-on-Write for read-heave scenarios
+- Copy-on-Write for read-heavy scenarios
 - Merge-on-Read for write-heavy scenarios
 :::
 
 ## LSTs
 ![](img/deltalake_update)
 
+## LSTs {.font8}
+:::{.callout-tip icon=false}
+## Recall: why "log-structured"?
+
+| Lecture 7 (storage engines) | Log-structured tables |
+|---|---|
+| append-only log | commit log of table versions (`_delta_log`, Iceberg snapshots) |
+| immutable SSTable segments | immutable Parquet data files |
+| memtable flush → new segment | every write → new data files |
+| tombstones | delete files, deletion vectors |
+| background compaction | compaction jobs (`OPTIMIZE`, `rewrite_data_files`) |
+| reads merge several segments | Merge-on-Read: readers apply delete files |
+| RUM conjecture: read, update, memory | Copy-on-Write vs Merge-on-Read |
+:::
+
+:::{.callout-note icon=false}
+## Difference
+An LSM tree is a key-value index on one machine. A table format works at the scale of **files on object storage**. Object storage cannot modify a file in place, so everything has to be append-only.
+:::
+
+## Delta Lake {.font8}
+:::{.callout-tip icon=false}
+## Table layout
+```
+my_table/
+  _delta_log/
+    00000000000000000000.json      <- commit 0: add file part-000.parquet
+    00000000000000000001.json      <- commit 1: add part-001, remove part-000
+    ...
+    00000000000000000010.checkpoint.parquet   <- full table state every 10 commits
+    _last_checkpoint
+  part-000.parquet
+  part-001.parquet
+```
+:::
+
+:::{.callout-note icon=false}
+## How it works
+
+- each commit is a JSON file of **actions**: `add` file (with statistics), `remove` file, `metaData` (schema), `commitInfo`
+- table version $n$ = replay the log up to $n$, starting from the latest **checkpoint** (in Parquet, so readers can use the same Parquet reader)
+- a commit creates file $n+1$ only if it **does not exist yet** (put-if-absent): two writers cannot both create version $n+1$
+- created at Databricks (2017, open-sourced 2019)
+:::
+
+## Delta Lake vs Hudi vs Iceberg {.font8 .scrollable}
+
+| | Delta Lake | Apache Hudi | Apache Iceberg |
+|---|---|---|---|
+| Origin | Databricks, 2017 | Uber, 2016 | Netflix, 2017 |
+| Metadata | JSON log + Parquet checkpoints | timeline of instants + metadata table | tree: metadata JSON → manifest lists → manifests (Avro) |
+| Focus | Spark, Databricks | streaming upserts, incremental pulls | engine-neutral, very large tables |
+| Row-level changes | CoW, deletion vectors | CoW and MoR (log files) | CoW, MoR (delete files, deletion vectors in v3) |
+| Partitioning | Hive-style, liquid clustering | Hive-style | hidden partitioning, partition evolution |
+
+:::{.callout-note icon=false}
+The formats are converging. **Delta UniForm** and **Apache XTable** write the metadata of the other formats for the same Parquet files. Iceberg v3 adopted deletion vectors, which come from Delta.
+:::
+
 # Example architecture: Apache Iceberg
 
-## Iceberg
+## Iceberg {.scrollable}
 :::{.callout-tip icon=false}
 ## Iceberg architecture
 
@@ -649,34 +932,18 @@ Analytical workloads require frequent incremental updates to structured data.
 - datafile formats: Parquet, ORC, Avro
 - compute: Apache Spark, Apache Flink, Apache Hive, Presto, Trino, Dremio
 :::
-<!--
-% \begin{frame}{Iceberg}
-%   Apache Iceberg is one of the leading open formats for
-% updatable Parquet-based tables, which are emerging as the
-% new data storage standard for analytics. Historically,
-% relational databases have stored data row-by-row, packed
-% into physical pages for efficient I/O. Columnar table
-% formats, however, have proven far more efficient for query-
-% intensive workloads. Data lakes began by supporting
-% queries over columnar formats such as Parquet, but of
-% course, transactional updates must also be supported
-% efficiently to address traditional warehouse scenarios.
-% Iceberg is emerging as a popular choice of table format
-% supporting scenarios that require query-intensive
-% workloads mixed with updates, and bulk ingests.
-% \end{frame}
--->
 
-## Iceberg
 ![](img/analytical_workload_components)
   
 ## Iceberg
 :::{.callout-tip icon=false}
 ## File format
+How the data of a single file is encoded:
 
-- Structured (CSV)
-- Semi-structured (JSON)
-- Unstructured (text files, media)
+- row-based: CSV, JSON, Avro
+- columnar: Parquet, ORC
+
+Analytical table formats store their data in **Parquet** (most common), ORC or Avro files.
 :::
 
 ## Iceberg
@@ -747,56 +1014,11 @@ Massively parallel processing (MPP) engines:
 
 ## Iceberg
 :::{.callout-tip icon=false}
-## Data warehouse
-![](img/iceberg_data_warehouse){height=500}
-:::
-
-## Iceberg
-:::{.callout-tip icon=false}
-## Warehouse features
-
-|Pros|Cons|
-|---|---|
-|Single source of truth | Vendor-specific|
-|Fast analytical workloads | Expensive|
-|Organizes data layout | Not good for ML|
-|Single source of truth | Vendor-specific|
-|Ensures data schemas | Mainly supports structured data|
-
-:::
-
-## Iceberg
-:::{.callout-tip icon=false}
 ## Data lake history
 
 - Data on Apache Hadoop + MapReduce
 - Apache Hive: convert SQL to MapReduce, tables as dirs/files
 - Object storage, SQL engines, using Hive as table format
-:::
-
-## Iceberg
-:::{.callout-tip icon=false}
-## Data lake
-![](img/iceberg_data_lake){height=500}
-:::
-
-## Iceberg
-:::{.callout-tip icon=false}
-## Data lake features
-
-|Pros|Cons|
-|---|---|
-|Cost | Performance|
-|Open formats | Lots of config|
-|Unstructured data support | No ACID support|
-|Supports ML workloads ||
-
-:::
-
-## Iceberg
-:::{.callout-tip icon=false}
-## Data lakehouse
-![](img/iceberg_data_lakehouse){height=500}
 :::
 
 ## Iceberg
@@ -862,7 +1084,7 @@ A standard of how metadata defining a data lakehouse table should be written acr
 ## Iceberg features
 
 - ACID transactions: **optimistic concurrency control**
-- Partion evolution, enabled by metadata files
+- Partition evolution, enabled by metadata files
 - Hidden partitioning: physical (column) + optional transform
 - Row-level ops: Copy-On-Write and Merge-On-Read
 - Time travel, version rollback
@@ -908,13 +1130,7 @@ of the table’s most recent metadata file.
 
 ## Iceberg
 :::{.callout-tip icon=false}
-## Parquet architecture
-![](img/parquet_arch){height=500}
-:::
-
-## Iceberg
-:::{.callout-tip icon=false}
-## Parquet architecture
+## Data layer: datafiles and delete files
 ![](img/iceberg_file_layout){height=500}
 :::
 
@@ -951,7 +1167,7 @@ A tree structure consisting of three components:
 - metadata files
 :::
 
-## Iceberg
+## Iceberg {.scrollable}
 :::{.callout-tip icon=false}
 ## Iceberg manifest files
 Manifest files keep track of files in the data layer (i.e.,
@@ -961,29 +1177,15 @@ maximum values for a datafile’s columns.
 
 Each manifest file keeps track of a subset of the datafiles.
 
-- stored in Avro format
+- stored in **Avro** format (see the encoding section): written once, read whole, schema stored in the file
 - lower/upper column bounds
 - record counts
 - partition membership
 :::
 
-## Iceberg
-:::{.callout-tip icon=false}
-## Avro architecture
-```
-record Person {
-  string userName;
-  union { null, long } favoriteNumber = null;
-  array<string> interests;
-}
-```
-:::
-![](img/avro_schemas)
-
-## Iceberg
-:::{.callout-tip icon=false}
-## Avro encoding
-![](img/avro_encoding)
+:::{.callout-note icon=false}
+## Two levels of data skipping
+A query first skips whole **files** using the bounds in the manifests, then skips **row groups** inside the remaining files using the Parquet footers.
 :::
 
 ## Iceberg
@@ -1008,11 +1210,11 @@ table at a certain point in time
 
 Contain:
 
-- table schema
-- partition information
-  - snapshots, and a pointer to the current one
-  - created every time a change is made to the Iceberg table
-  - registered atomically via the catalog
+- table schema (and its history)
+- partition specification
+- list of snapshots, and a pointer to the current one
+
+A new metadata file is created every time the table changes, and it is registered atomically via the catalog.
 :::
 
 ## Iceberg
@@ -1026,8 +1228,9 @@ Contain:
 - store statistics and indexes about the data in the table 
 - in addition to stats already in datafile and metadata
 - contain sets of blobs and associated metadata
-- currently support Theta sketches
-- potentially support any index structures (e.g. Bloom filters)
+- Theta sketches (distinct counts)
+- **deletion vectors** (Iceberg v3): a bitmap of deleted row positions per datafile
+- potentially any index structure (e.g. Bloom filters)
 :::
 
 :::
@@ -1051,15 +1254,33 @@ given set of rows.
 ## Iceberg catalog
 Stores the current location of the current metadata pointer.
 
-Must provide atomic guarantees.
+Must provide an **atomic swap** of that pointer.
 
+- file system ("Hadoop" catalog): a `version-hint` file; safe only where rename is atomic
+- Hive Metastore, AWS Glue
+- JDBC: any relational database
+- Project Nessie: git-like branches and tags across tables
+- **REST catalog**: an open HTTP API, now the standard. Implementations: Apache Polaris, Unity Catalog, Lakekeeper, AWS S3 Tables
+:::
 
-- Amazon S3
-- Hive Metastore
-- Project Nessie
-- AWS Glue
-- RDBMS
-- REST
+## Iceberg {.font8}
+:::{.callout-tip icon=false}
+## ACID via optimistic concurrency control
+Recall transactions from lecture 6. Iceberg has no lock manager: only the catalog's atomic pointer swap.
+
+1. read the current metadata file `v3.metadata.json`
+2. write new datafiles, manifests, manifest list and `v4.metadata.json`. Nobody sees them yet.
+3. ask the catalog: **"set the pointer to `v4` if it still points to `v3`"** (compare-and-swap)
+4. if another writer committed `v4` first, the swap fails: re-read, check for conflicts, re-apply the change on top, and retry
+:::
+
+:::{.callout-note icon=false}
+## Properties
+
+- **atomicity**: readers see either the old or the new snapshot, never a mix
+- **isolation**: snapshot isolation by default, serializable as an option
+- optimistic: cheap when writers rarely touch the same data, many retries when they often do
+- Delta Lake does the same with put-if-absent on the next log file
 :::
 
 ## Iceberg
@@ -1067,12 +1288,17 @@ Must provide atomic guarantees.
 
 ## Iceberg
 :::{.callout-tip icon=false}
-## Query path
+## Write path
 
-- Parsing
-- Consult the catalog
-- Write the datafiles/metadata files
-- Update catalog file 
+- Parse the query
+- Consult the catalog for the current metadata file
+- Write the datafiles, then the metadata files
+- Update the catalog pointer (atomically)
+:::
+
+:::{.callout-note icon=false}
+## Read path
+Catalog → metadata file → manifest list of the current (or requested) snapshot → manifests → datafiles.
 :::
 
 ## Iceberg
@@ -1153,6 +1379,35 @@ Partitioning: write records with distinct values of the target field into their 
 :::
 ![](img/iceberg_partitioning)
 
+## Partitioning: Hive-style vs hidden {.font8 .scrollable}
+:::{.callout-tip icon=false}
+## Hive-style: partitions in the path
+```
+trips/year=2025/month=1/data_0.parquet
+trips/year=2025/month=2/data_0.parquet
+```
+DuckDB, Polars, Spark and Dask read this directly. The engine prunes directories by the `key=value` names:
+```sql
+COPY (SELECT *, year(pickup_ts) AS year, month(pickup_ts) AS month FROM trips)
+  TO 'trips' (FORMAT parquet, PARTITION_BY (year, month));
+SELECT count(*) FROM read_parquet('trips/*/*/*.parquet', hive_partitioning = true)
+WHERE year = 2025 AND month = 1;
+```
+:::
+
+:::{.callout-important icon=false}
+## Problems
+
+- users must filter on `year`/`month`, not on `pickup_ts`, or nothing is pruned
+- changing the scheme means rewriting the table
+- many small partitions → many small files
+:::
+
+:::{.callout-note icon=false}
+## Iceberg hidden partitioning
+The partition spec is a **transform** of a column, `month(pickup_ts)`, stored in the metadata. A filter on `pickup_ts` is pruned automatically, and the spec can evolve without rewriting old files. Partitioning across machines comes back in lecture 15.
+:::
+
 ## Iceberg
 :::{.callout-tip icon=false}
 ## Optimizations: row-level updates
@@ -1176,3 +1431,84 @@ Partitioning: write records with distinct values of the target field into their 
 ## Merge-on-Read
 ![](img/iceberg_merge_on_read)
 :::
+
+## Table maintenance {.font8}
+:::{.callout-important icon=false}
+## The small-files problem
+Streaming and frequent small writes create thousands of tiny datafiles and manifests. Every file costs an object-store request, and a footer and a manifest entry to read. Queries get slower even though the data is small.
+:::
+
+:::{.callout-tip icon=false}
+## Regular jobs (Iceberg Spark procedures)
+
+| Job | Procedure | Why |
+|---|---|---|
+| compaction | `rewrite_data_files` | merge small files, apply delete files, re-sort |
+| expire snapshots | `expire_snapshots` | old snapshots keep old files alive: storage cost, GDPR deletes |
+| remove orphan files | `remove_orphan_files` | files written by failed jobs and never committed |
+| rewrite manifests | `rewrite_manifests` | regroup manifests so they match the query filters |
+:::
+
+:::{.callout-note icon=false}
+Expiring snapshots ends **time travel** to them: choose a retention period (e.g. 7 days).
+:::
+
+## Iceberg v3 (2025) {.font8}
+:::{.callout-tip icon=false}
+## New in the v3 spec
+
+- **deletion vectors**: one bitmap per datafile in a Puffin file instead of many positional delete files (from Delta Lake)
+- **row lineage**: each row gets an id and a last-updated sequence number, for incremental processing
+- new types: **`VARIANT`** (semi-structured JSON-like data, stored efficiently), geometry/geography, nanosecond timestamps
+- default column values: add a column without rewriting the data
+:::
+
+# DuckLake
+
+## DuckLake {.font8}
+:::{.callout-tip icon=false}
+## Idea (DuckDB, 2025)
+Iceberg and Delta store metadata as **files** on object storage (JSON, Avro), plus a catalog that only holds one pointer. Every commit writes several files, and every read follows the tree.
+
+DuckLake stores **all** metadata (snapshots, schemas, file lists, statistics) in a **SQL database**: DuckDB, SQLite, PostgreSQL or MySQL. The data stays in Parquet files on object storage.
+:::
+
+:::{.callout-note icon=false}
+## Consequences
+
+- a commit is one SQL transaction: ACID comes from the database (lecture 6), not from file tricks
+- multi-table transactions, and finding the files of a snapshot with one query
+- small inserts can be **inlined** into the catalog database, which avoids the small-files problem
+- trade-off: needs a running database for the catalog
+:::
+
+## Demo: DuckLake {.font8 .scrollable}
+```{python}
+con.sql("INSTALL ducklake; LOAD ducklake;")
+con.sql(f"ATTACH 'ducklake:{work}/meta.ducklake' AS lake (DATA_PATH '{work}/lake_data/')")
+
+con.sql("CREATE TABLE lake.trips AS SELECT trip_id, fare FROM trips WHERE trip_id < 1000")
+con.sql("INSERT INTO lake.trips SELECT trip_id, fare FROM trips WHERE trip_id BETWEEN 1000 AND 1009")
+con.sql("UPDATE lake.trips SET fare = fare * 1.1 WHERE trip_id < 100")
+con.sql("DELETE FROM lake.trips WHERE trip_id >= 1000")
+
+con.sql("SELECT snapshot_id, changes FROM ducklake_snapshots('lake')").df()
+```
+
+```{python}
+# time travel: the table as of snapshot 2 still has the 10 inserted rows
+con.sql("""
+SELECT (SELECT count(*) FROM lake.trips)                   AS now,
+       (SELECT count(*) FROM lake.trips AT (VERSION => 2)) AS at_version_2
+""").df()
+```
+
+```{python}
+# the data layer: immutable Parquet files, including a delete file
+for root, _, files in os.walk(f"{work}/lake_data"):
+    for f in sorted(files):
+        print(os.path.relpath(os.path.join(root, f), work))
+```
+
+- The `UPDATE` wrote a new datafile and a **delete file** (Merge-on-Read), and did not modify the original file.
+- The 10-row insert was **inlined** into the catalog database: no tiny Parquet file.
