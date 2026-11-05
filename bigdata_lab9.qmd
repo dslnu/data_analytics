@@ -18,16 +18,39 @@ filters:
   - diagram
 ---
 
-# Postgres for analytics
+# Postgres for analytics, and DuckDB for comparison
+
+This lab uses two very different SQL engines on the same data:
+
+| | **PostgreSQL** | **DuckDB** |
+|---|---|---|
+| architecture | client--server | in-process library, like SQLite |
+| storage | row-oriented | column-oriented |
+| designed for | transactions (OLTP), many concurrent users | analytics (OLAP), one process |
+| reading a CSV | load it into a table first | query the file directly |
+
+Everything you do in Postgres, also do in DuckDB, and keep notes on what differed: syntax, results, and speed.
 
 ## Installation
  1. Install Dockerized Postgres: <https://hub.docker.com/_/postgres/>
- 
+
  2. For python:
 `pip install "psycopg[binary,pool]"`
 
-
 Use the docs from <https://www.psycopg.org/psycopg3/docs/basic/usage.html>.
+
+ 3. DuckDB --- no server needed:
+```bash
+uv add duckdb
+```
+
+```python
+import duckdb
+con = duckdb.connect("lab9.duckdb")   # a single file; duckdb.connect() for in-memory
+con.sql("SELECT 42").show()
+```
+
+Docs: <https://duckdb.org/docs/stable/clients/python/overview>. DuckDB can also return results as pandas or Polars DataFrames (`.df()`, `.pl()`).
 
 ## Dataset
 We'll use a shrunken version of this dataset: <https://ual.sg/project/global-streetscapes/>.
@@ -91,16 +114,87 @@ with open('data/places365.csv', 'r') as f:
             copy.write(line)
 ```
 **Also**: please compare performance of the above 3 methods on a larger (~2GB) file from the original dataset.
+
+#### 1.4. DuckDB
+
+DuckDB reads CSV files directly, inferring column types:
+
+```python
+con.sql("SELECT * FROM 'data/places365.csv' LIMIT 5")                       # no table at all
+con.sql("CREATE TABLE places365 AS SELECT * FROM read_csv_auto('data/places365.csv')")
+```
+
+1. Load all six tables into DuckDB. Time it, and add DuckDB as a fourth row to your loading comparison (including the ~2 GB file).
+2. Compare the column types DuckDB inferred with the ones `csvsql` and `pandas.to_sql` produced. Pay attention to `orig_id`: in which files is it an integer, and in which a floating-point number? Look at the raw text of `perception.csv` to see why.
+3. Compare storage: the size of the `lab9.duckdb` file against `SELECT pg_size_pretty(pg_database_size('lab10'))` in Postgres, and against the CSVs. Then export one table to Parquet (`COPY places365 TO 'places365.parquet'`) and compare again. Which formats are compressed, and why does a column store compress better?
+
+### 2. Data quality
+
+Do these in either engine; then check that the other one agrees.
+
+1. Every file has both `uuid` and `orig_id`. Join `metadata` to `perception` **on `uuid`**, then **on `orig_id`**. You should get 10 000 rows the first way and **fewer** the second way. Find the rows that fail to match, print both `orig_id` values side by side, and explain what happened to the identifiers when the file was written. Which column should be the key, and what does this tell you about storing IDs as floating-point numbers?
+2. Find images with implausible timestamps (look at the earliest `datetime_local` values). What do the suspicious values have in common? Propose a rule that flags them, and count how many it flags.
+3. `gadm` has missing values at different levels. Count images with no `COUNTRY` and with no level-2 area (`GID_2`). For a query grouping perception scores by level-2 area, what happens to these rows under `JOIN`, `LEFT JOIN` and `GROUP BY` --- are they dropped, grouped together as `NULL`, or counted somewhere you did not intend? Finally, list the distinct `COUNTRY` values with their counts: is every one of them actually a country?
+4. The `datetime_local` column is a timestamp **with time zone**, and the table also has an `hour` column. In Postgres, compute `extract(hour FROM datetime_local)` and count rows where it differs from `hour`. Then run `SET TIME ZONE 'Asia/Tokyo'` and repeat. Do the same in DuckDB (`SET TimeZone = 'UTC'`). Explain what is going on, and write an expression that returns the *local* hour of the photo without relying on the precomputed column.
    
-### 2. Table setup
+### 3. Table setup
 1. Create primary keys on all tables.
 2. Make `metadata` the master table, link other tables to it via foreign keys.
+3. Do the same in DuckDB (it supports `PRIMARY KEY` and `FOREIGN KEY`). Try inserting a row into `perception` whose `uuid` is not in `metadata` in both engines --- do both reject it?
+4. In Postgres, run `EXPLAIN ANALYZE` for a query that filters `gadm` by `COUNTRY = 'Japan'` and joins `perception`. Then create an index on `gadm(COUNTRY)` and run it again. Did the plan change? Did the time change? At what table size would you expect the index to matter, and why might the planner ignore it here?
+5. DuckDB creates no index for such a query and mostly does not need one. Look up *zone maps* (min/max statistics per row group) in the DuckDB documentation and explain in two or three sentences why a column store can skip data without an index. Run `EXPLAIN ANALYZE` on the same query in DuckDB and compare the plans.
 
 
-### 3. Some queries
+### 4. Queries
+
+Write every query for **both** engines. Where the syntax differs, keep both versions.
+
 1. Calculate average perception scores for:
    - `urban_term` column from `ghsl` table
    - `place` column from `places365` table
    - `country` column from `gadm` table
-   
-2. Create a `MATERIALIZED VIEW` (https://www.postgresql.org/docs/15/sql-creatematerializedview.html) that will contain total object instance counts (`instance.csv`) for each gadm level2 area (`gadm.csv`).
+
+2. Create a `MATERIALIZED VIEW` (https://www.postgresql.org/docs/15/sql-creatematerializedview.html) that will contain total object instance counts (`instance.csv`) for each gadm level2 area (`gadm.csv`). DuckDB has no materialized views: what is the closest equivalent, and what do you lose? In Postgres, insert a new image and check whether the view sees it before and after `REFRESH MATERIALIZED VIEW`.
+
+3. **Averages you can trust.** Redo 4.1 for countries, but report for each group the number of images, the mean, and the standard error of the mean of `Safe`; keep only groups with at least 30 images. How many of the "top 10 safest countries" from 4.1 survive? How many images does the original number one have?
+
+4. **Medians and percentiles.** For each `urban_term`, compute the median and the 90th percentile of `Safe`. Postgres: `percentile_cont(...) WITHIN GROUP (ORDER BY ...)`; DuckDB: `median()`, `quantile_cont()`. Where do the mean and the median rank the categories differently?
+
+5. **Top-k per group.** For each country, list the three level-1 areas (`NAME_1`) with the highest average `Safe`, among areas with at least 20 images. Solve it with a window function (`row_number() OVER (PARTITION BY ...)`) in both engines. Then solve it again with Postgres's `DISTINCT ON` (for top-1) and DuckDB's `QUALIFY` clause or `arg_max()`. Which version is easiest to read?
+
+6. **Subtotals.** Count images per country and level-1 area with `GROUP BY ROLLUP (COUNTRY, NAME_1)`. The subtotal rows have `NULL` in `NAME_1` --- but so do real rows with a missing name. Use `GROUPING()` to tell them apart. Then try `CUBE` and `GROUPING SETS`, and explain the difference in one sentence each.
+
+7. **Wide to long.** `instances` has one column per object class (~65 of them). Reshape it into long format `(uuid, object, count)`:
+   - DuckDB: `UNPIVOT instances ON COLUMNS(* EXCLUDE (uuid, source, orig_id)) INTO NAME object VALUE n`
+   - Postgres: no `UNPIVOT`; use `CROSS JOIN LATERAL (VALUES ...)` or convert each row to `jsonb` and use `jsonb_each_text`.
+
+   Using the long table, find the object classes whose counts correlate most strongly (`corr()`, both engines have it) with each perception score. Ignore classes that are almost never detected. Does the strongest "safety" predictor make sense? Correlation is not causation: name one confounder.
+
+8. **Spatial neighbours.** For the images in the United States, find each image's nearest other image by great-circle (haversine) distance, using a plain SQL self-join --- no PostGIS. Report the median distance to the nearest neighbour and the correlation between an image's `Safe` score and its neighbour's.
+   - How many pairs does the self-join evaluate? Time the query in both engines.
+   - Is the correlation you find evidence of *spatial autocorrelation*? Compare with the correlation between random pairs.
+   - **Optional:** install PostGIS, create a `geography` column and a GiST index, and use the KNN operator `<->` with `ORDER BY ... LIMIT 1`. How does that compare with the brute-force versions?
+
+### 5. Postgres vs DuckDB: performance
+
+1. **Scale up.** Create a table 100× larger than `perception` by cross-joining it with a series (`generate_series(1, 100)` in Postgres, `range(100)` in DuckDB), generating fresh `uuid`s (`gen_random_uuid()` exists in both). Run queries 4.1, 4.3 and 4.5 on 1×, 10× and 100× data in both engines. Run each query at least 5 times and report the median; explain why the first run is often slower.
+2. **Few columns vs all columns.** On the scaled-up `instances` table, compare `SELECT avg("Car") FROM ...` with `SELECT * FROM ... WHERE "Car" > 10` in both engines. Relate what you see to row vs column storage.
+3. **The other direction.** Insert 10 000 rows into `perception` one at a time, each in its own transaction, from Python, in both engines. Then update 10 000 single rows by primary key. Which engine wins now, and why?
+4. **Engines together.** DuckDB can query a running Postgres directly:
+   ```python
+   con.sql("INSTALL postgres; LOAD postgres;")
+   con.sql("ATTACH 'dbname=lab10 user=... password=... host=localhost' AS pg (TYPE postgres)")
+   con.sql("SELECT count(*) FROM pg.public.perception")
+   ```
+   Time query 4.1 three ways: in Postgres, in DuckDB on its own tables, and in DuckDB on the attached Postgres tables. What does each of them actually read?
+5. **Files as tables.** Export the scaled-up tables to Parquet and run the same queries directly on the Parquet files in DuckDB (`FROM 'big.parquet'`). Compare file sizes (CSV vs Parquet vs DuckDB database vs Postgres) and query times.
+
+Collect everything in one table: rows = tasks, columns = Postgres time / DuckDB time / notes.
+
+### 6. Reflection
+
+Answer briefly:
+
+1. You are building (a) a web application where thousands of users update their profiles, and (b) a weekly report that aggregates 500 million logged events. Which engine for each, and why?
+2. Which data-quality problem from section 2 would have silently changed a result in section 4 if you had not caught it?
+3. What did DuckDB make easier, and what did it make impossible or harder (think: concurrent writers, users and permissions, a server that other programs connect to)?
