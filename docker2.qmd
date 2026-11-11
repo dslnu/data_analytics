@@ -575,84 +575,6 @@ It is possible to do e.g. `COPY . .`
 - See the documentation for the little details
 (exceptions can be made with `!`, multiple directory levels with `**`...)
 :::
-
-# Exercise — writing Dockerfiles
-
-## Exercise — writing Dockerfiles
-:::{.callout-tip icon=false}
-## Exercise — writing Dockerfiles
-
-- Let's write Dockerfiles for an existing application!
-- Check out the code repository
-- Read all the instructions
-- Write Dockerfiles
-- Build and test them individually
-:::
-
-## Exercise — writing Dockerfiles
-:::{.callout-tip icon=false}
-## Code repository
-
-- Clone the repository available at <https://github.com/jpetazzo/wordsmith>
-It should look like this:
-```
-├── LICENSE
-├── README
-├── db/
-│   └── words.sql
-├── web/
-│   ├── dispatcher.go
-│   └── static/
-└── words/
-    ├── pom.xml
-    └── src/
-```
-:::
-
-## Exercise — writing Dockerfiles
-:::{.callout-tip icon=false}
-## Instructions
-
-The repository contains instructions in English and French.
-<br/>
-For now, we only care about the first part (about writing Dockerfiles).
-<br/>
-Place each Dockerfile in its own directory, like this:
-```
-├── LICENSE
-├── README
-├── db/
-│   ├── Dockerfile
-│   └── words.sql
-├── web/
-│   ├── Dockerfile
-│   ├── dispatcher.go
-│   └── static/
-└── words/
-    ├── Dockerfile
-    ├── pom.xml
-    └── src/
-```
-:::
-
-## Exercise — writing Dockerfiles
-:::{.callout-tip icon=false}
-## Build and test
-
-Build and run each Dockerfile individually.
-
-For `db`, we should be able to see some messages confirming that the data set
-was loaded successfully (some `INSERT` lines in the container output).
-
-For `web` and `words`, we should be able to see some message looking like
-"server started successfully".
-
-That's all we care about for now!
-
-Bonus question: make sure that each container stops correctly when hitting Ctrl-C.
-
-:::
-
 # Reducing image size
 
 ## Reducing image size
@@ -1189,21 +1111,6 @@ Anybody can now `docker run jpetazzo/figlet` anywhere.
 
 :::
 
-## Publishing images to the Docker Hub
-:::{.callout-tip icon=false}
-## Building on the fly
-
-- Some services can build images on the fly from a repository
-
-- Example: [ctr.run](https://ctr.run/)
-
-There might be a long pause before the first layer is pulled,
-because the API behind `docker pull` doesn't allow to stream build logs, and there is no feedback during the build.
-
-It is possible to view the build logs by setting up an account on [ctr.run](https://ctr.run/).
-:::
-
-
 # Tips for efficient Dockerfiles
 
 ## Tips for efficient Dockerfiles
@@ -1691,21 +1598,6 @@ services:
 - It's OK (and even encouraged) to start simple and evolve as needed.
 :::
 
-## Exercise — multi-stage builds
-
-:::{.callout-note}
-## Exercise
-Let's update our Dockerfiles to leverage multi-stage builds!
-
-The code is at: <https://github.com/jpetazzo/wordsmith>.
-
-Use a different tag for these images, so that we can compare their sizes.
-
-What's the size difference between single-stage and multi-stage builds?
-:::
-
-
-
 # Naming and inspecting containers
 
 ## Naming and inspecting containers
@@ -2026,22 +1918,6 @@ $ ps faux | less
 
 ## Getting inside a container
 :::{.callout-important icon=false}
-## What's the difference between a container process and a host process?
-
-* Each process (containerized or not) belongs to *namespaces* and *cgroups*.
-
-* The namespaces and cgroups determine what a process can "see" and "do".
-
-* Analogy: each process (containerized or not) runs with a specific UID (user ID).
-
-* UID=0 is root, and has elevated privileges. Other UIDs are normal users.
-
-_We will give more details about namespaces and cgroups later._
-
-:::
-
-## Getting inside a container
-:::{.callout-important icon=false}
 ## Getting a shell in a running container
 
 * Sometimes, we need to get a shell anyway.
@@ -2055,8 +1931,6 @@ $ docker exec -ti ticktock sh
 ```
 
 * This creates a new process (running `sh`) _inside_ the container.
-
-* This can also be done "manually" with the tool `nsenter`.
 
 :::
 
@@ -2101,8 +1975,6 @@ docker run jpetazzo/crashtest
 ```
 
 The container starts, but then stops immediately, without any output.
-
-What would MacGyver&trade; do?
 
 First, let's check the status of that container.
 

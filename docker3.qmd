@@ -1,5 +1,5 @@
 ---
-title: "Docker Networking"
+title: "Docker Networking and Volumes"
 author: 
   - name: MSDE
     affiliation: Lviv University
@@ -36,22 +36,6 @@ format:
 ---
 
 # Container networking basics
-
-## Container networking basics
-:::{.callout-tip icon=false}
-## Objectives
-
-We will now run network services (accepting requests) in containers.
-
-At the end of this section, you will be able to:
-
-* Run a network service in a container.
-
-* Connect to that network service.
-
-* Find a container's IP address.
-
-:::
 
 ## Container networking basics {.font8 .scrollable}
 
@@ -166,7 +150,7 @@ $ docker run -d -P nginx
 Point your browser to the IP address of your Docker host, on the port
 shown by `docker ps` for container port 80.
 
-![Screenshot](img/welcome-to-nginx.png)
+![](img/welcome-to-nginx.png)
 
 :::
 
@@ -174,7 +158,7 @@ shown by `docker ps` for container port 80.
 :::{.callout-tip icon=false}
 ## Connecting to our web server (CLI)
 
-You can also use `curl` directly from the Docker host.
+You can also use [`curl`](https://github.com/curl/curl) directly from the Docker host.
 
 Make sure to use the right port number if it is different
 from the example below:
@@ -237,28 +221,6 @@ IMAGE               CREATED             CREATED BY
 
 ## Container networking basics
 :::{.callout-tip icon=false}
-## Using multiple IP addresses
-
-*Hey, my network-fu is strong, and I have questions...*
-
-- Can I publish one container on 127.0.0.2:80, and another on 127.0.0.3:80?
-
-- My machine has multiple (public) IP addresses, let's say A.A.A.A and B.B.B.B.
-  <br/>
-  Can I have one container on A.A.A.A:80 and another on B.B.B.B:80?
-
-- I have a whole IPV4 subnet, can I allocate it to my containers?
-
-- What about IPV6?
-
-You can do all these things when running Docker directly on Linux.
-
-(On other platforms, *generally not*, but there are some exceptions.)
-
-:::
-
-## Container networking basics
-:::{.callout-tip icon=false}
 ## Finding the web server port in a script
 
 Parsing the output of `docker ps` would be painful.
@@ -293,27 +255,6 @@ $ docker run -d -p 8080:80 -p 8888:80 nginx
 
 :::{.callout-note}
 The convention is `port-on-host:port-on-container`.
-:::
-
-
-## Container networking basics
-:::{.callout-tip icon=false}
-## Plumbing containers into your infrastructure
-
-There are many ways to integrate containers in your network.
-
-* Start the container, letting [Docker allocate]{style="color:blue;"} a public port for it.
-  <br/>Then retrieve that port number and feed it to your configuration.
-
-* Pick a [fixed port]{style="color:blue;"} number in advance, when you generate your configuration.
-  <br/>Then start your container by setting the port numbers manually.
-
-* Use an [orchestrator]{style="color:blue;"} like Kubernetes or Swarm.
-  <br/>The orchestrator will provide its own networking facilities.
-
-Orchestrators typically provide mechanisms to enable direct container-to-container
-communication across hosts, and publishing/load balancing for inbound traffic.
-
 :::
 
 ## Container networking basics
@@ -406,9 +347,6 @@ The built-in drivers include:
 The network is selected with `docker run --net ...`.
 
 Each network is managed by a [**driver**]{style="color:blue;"}.
-
-The different drivers are explained with more details on the following slides.
-
 :::
 
 ## Container network drivers
@@ -418,17 +356,11 @@ The different drivers are explained with more details on the following slides.
 * By default, the container gets a virtual `eth0` interface.
   <br/>(In addition to its own private `lo` loopback interface.)
 
-* That interface is provided by a `veth` pair.
-
 * It is connected to the Docker bridge.
   <br/>(Named `docker0` by default; configurable with `--bridge`.)
 
 * Addresses are allocated on a private, internal subnet.
   <br/>(Docker uses 172.17.0.0/16 by default; configurable with `--bip`.)
-
-* Outbound traffic goes through an iptables MASQUERADE rule.
-
-* Inbound traffic goes through an iptables DNAT rule.
 
 * The container can have its own routes, iptables rules, etc.
 
@@ -487,26 +419,6 @@ Use cases:
 
 
 # The Container Network Model
-
-## The Container Network Model
-:::{.callout-tip icon=false}
-## Objectives
-
-We will learn about the CNM (Container Network Model).
-
-At the end of this lesson, you will be able to:
-
-* Create a private network for a group of containers.
-
-* Use container naming to connect services together.
-
-* Dynamically connect and disconnect containers to networks.
-
-* Set the IP address of a container.
-
-We will also explain the principle of overlay networks and network plugins.
-
-:::
 
 ## The Container Network Model
 :::{.callout-tip icon=false}
@@ -594,64 +506,6 @@ New networks can be created (with `docker network create`).
 
 ## The Container Network Model
 :::{.callout-tip icon=false}
-## How to use networks
-
-- We typically create one network per "stack" or app that we deploy
-
-- More complex apps or stacks might require multiple networks
-
-  (e.g. `frontend`, `backend`, ...)
-
-- Networks allow us to deploy multiple copies of the same stack
-
-  (e.g. `prod`, `dev`, `pr-442`, ....)
-
-- If we use Docker Compose, this is managed automatically for us
-
-:::
-
-
-## The Container Network Model
-![Multiple containers on the default bridge network, on a Linux machine](img/docker-networking-default-bridge-linux.png)
-
-
-## The Container Network Model
-
-![Multiple containers in multiple bridge networks, on a Linux machine](img/docker-networking-networks-linux.png)
-
-
-## The Container Network Model
-
-![Multiple containers in multiple bridge networks, on a Mac/Windows machine](img/docker-networking-networks-macwin.png)
-
-
-
-## The Container Network Model
-:::{.callout-tip icon=false}
-## CNM vs CNI
-
-- CNM is the model used by Docker
-
-- Kubernetes uses a different model, architectured around CNI
-
-  (CNI is a kind of API between a container engine and *CNI plugins*)
-
-- Docker model:
-
-  - multiple isolated networks
-  - per-network service discovery
-  - network interconnection requires extra steps
-
-- Kubernetes model:
-
-  - single flat network
-  - per-namespace service discovery
-  - network isolation requires extra steps (Network Policies)
-
-:::
-
-## The Container Network Model
-:::{.callout-tip icon=false}
 ## Creating a network
 
 Let's create a network called `dev`.
@@ -717,32 +571,6 @@ root@0ecccdfa45ef:/#
 
 :::
 
-## The Container Network Model
-:::{.callout-tip icon=false}
-## Resolving container addresses
-
-Since Docker Engine 1.10, name resolution is implemented by a dynamic resolver.
-
-Archeological note: when CNM was introduced (in Docker Engine 1.9, November 2015)
-name resolution was implemented with `/etc/hosts`, and it was updated each time
-CONTAINERs were added/removed. This could cause interesting race conditions
-since `/etc/hosts` was a bind-mount (and couldn't be updated atomically).
-
-```bash
-[root@0ecccdfa45ef /]# cat /etc/hosts
-172.18.0.3  0ecccdfa45ef
-127.0.0.1       localhost
-::1     localhost ip6-localhost ip6-loopback
-fe00::0 ip6-localnet
-ff00::0 ip6-mcastprefix
-ff02::1 ip6-allnodes
-ff02::2 ip6-allrouters
-172.18.0.2      es
-172.18.0.2      es.dev
-```
-
-:::
-
 # Service discovery with containers
 
 ## Service discovery with containers
@@ -780,7 +608,7 @@ $ docker ps -l
 
 :::
 
-## Service discovery with containers
+## Service discovery with containers {.scrollable}
 :::{.callout-tip icon=false}
 ## Test the web server
 
@@ -813,7 +641,7 @@ $ docker run --net dev --net-alias redis -d redis
 
 :::
 
-## Service discovery with containers
+## Service discovery with containers {.scrollable}
 :::{.callout-tip icon=false}
 ## Test the web server again
 
@@ -915,94 +743,6 @@ Address 2: 172.23.0.2 prod-es-1.prod
 
 :::
 
-## Service discovery with containers {.font8}
-:::{.callout-tip icon=false} 
-## Connecting to aliased containers
-
-Each ElasticSearch instance has a name (generated when it is started). This name can be seen when we issue a simple HTTP request on the ElasticSearch API endpoint.
-
-Try the following command a few times:
-
-```bash
-$ docker run --rm --net dev centos curl -s es:9200
-{
-  "name" : "Tarot",
-...
-}
-```
-
-Then try it a few times by replacing `--net dev` with `--net prod`:
-
-```bash
-$ docker run --rm --net prod centos curl -s es:9200
-{
-  "name" : "The Symbiote",
-...
-}
-```
-
-:::
-
-## Service discovery with containers
-:::{.callout-tip icon=false}
-## Good to know ...
-
-* Docker will not create network names and aliases on the default `bridge` network.
-
-* Therefore, if you want to use those features, you have to create a custom network first.
-
-* Network aliases are *not* unique on a given network.
-
-* i.e., multiple containers can have the same alias on the same network.
-
-* In that scenario, the Docker DNS server will return multiple records.
-  <br/>
-  (i.e. you will get DNS round robin out of the box.)
-
-* Enabling *Swarm Mode* gives access to clustering and load balancing with IPVS.
-
-* Creation of networks and network aliases is generally automated with tools like Compose.
-
-:::
-
-<!--
-## Service discovery with containers
-:::{.callout-tip icon=false}
-## A few words about round robin DNS
-
-Don't rely exclusively on round robin DNS to achieve load balancing.
-
-Many factors can affect DNS resolution, and you might see:
-
-- all traffic going to a single instance;
-- traffic being split (unevenly) between some instances;
-- different behavior depending on your application language;
-- different behavior depending on your base distro;
-- different behavior depending on other factors (sic).
-
-It's OK to use DNS to discover available endpoints, but remember that you have to re-resolve every now and then to discover new endpoints.
-
-:::
--->
-
-## Service discovery with containers
-:::{.callout-tip icon=false}
-## Custom networks
-
-When creating a network, extra options can be provided.
-
-* `--internal` disables outbound traffic (the network won't have a default gateway).
-
-* `--gateway` indicates which address to use for the gateway (when outbound traffic is allowed).
-
-* `--subnet` (in CIDR notation) indicates the subnet to use.
-
-* `--ip-range` (in CIDR notation) indicates the subnet to allocate from.
-
-* `--aux-address` allows specifying a list of reserved addresses (which won't be allocated to containers).
-
-:::
-
 ## Service discovery with containers
 :::{.callout-tip icon=false}
 ## Setting containers' IP address
@@ -1023,82 +763,6 @@ b2887adeb5578a01fd9c55c435cad56bbbe802350711d2743691f95743680b09
 :::{.callout-important}
 Don't hard code container IP addresses in your code!
 :::
-
-<!--
-## Service discovery with containers
-:::{.callout-tip icon=false}
-## Network drivers
-
-* A network is managed by a *driver*.
-
-* The built-in drivers include:
-
-  * `bridge` (default)
-  * `none`
-  * `host`
-  * `macvlan`
-  * `overlay` (for Swarm clusters)
-
-* More drivers can be provided by plugins (OVS, VLAN...)
-
-* A network can have a custom IPAM (IP allocator).
-
-:::
-
-## Service discovery with containers
-:::{.callout-tip icon=false}
-## Overlay networks
-
-* The features we've seen so far only work when all containers are on a single host.
-
-* If containers span multiple hosts, we need an *overlay* network to connect them together.
-
-* Docker ships with a default network plugin, `overlay`, implementing an overlay network leveraging
-  VXLAN, *enabled with Swarm Mode*.
-
-* Other plugins (Weave, Calico...) can provide overlay networks as well.
-
-* Once you have an overlay network, *all the features that we've used in this chapter work identically
-  across multiple hosts.*
-
-:::
-
-## Service discovery with containers
-:::{.callout-tip icon=false}
-## Multi-host networking (overlay)
-
-Out of the scope for this intro-level workshop!
-
-Very short instructions:
-
-- enable Swarm Mode (`docker swarm init` then `docker swarm join` on other nodes)
-- `docker network create mynet --driver overlay`
-- `docker service create --network mynet myimage`
-
-If you want to learn more about Swarm mode, you can check
-[this video](https://www.youtube.com/watch?v=EuzoEaE6Cqs)
-or [these slides](https://container.training/swarm-selfpaced.yml.html).
-
-:::
-
-## Service discovery with containers
-:::{.callout-tip icon=false}
-## Multi-host networking (plugins)
-
-Out of the scope for this intro-level workshop!
-
-General idea:
-
-- install the plugin (they often ship within containers)
-
-- run the plugin (if it's in a container, it will often require extra parameters; don't just `docker run` it blindly!)
-
-- some plugins require configuration or activation (creating a special file that tells Docker "use the plugin whose control socket is at the following location")
-
-- you can then `docker network create --driver pluginname`
-
-:::
--->
 
 ## Service discovery with containers
 :::{.callout-tip icon=false}
@@ -1180,35 +844,6 @@ General idea:
 
 ## Service discovery with containers
 :::{.callout-tip icon=false}
-## Looking at the network setup in the container
-
-We can look at the list of network interfaces with `ifconfig`, `ip a`, or `ip l`:
-
-```bash
-/ # ip a
-1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN qlen 1000
-    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
-    inet 127.0.0.1/8 scope host lo
-       valid_lft forever preferred_lft forever
-18: eth0@if19: <BROADCAST,MULTICAST,UP,LOWER_UP,M-DOWN> mtu 1500 qdisc noqueue state UP
-    link/ether 02:42:ac:11:00:02 brd ff:ff:ff:ff:ff:ff
-    inet 172.17.0.2/16 brd 172.17.255.255 scope global eth0
-       valid_lft forever preferred_lft forever
-20: eth1@if21: <BROADCAST,MULTICAST,UP,LOWER_UP,M-DOWN> mtu 1500 qdisc noqueue state UP
-    link/ether 02:42:ac:14:00:04 brd ff:ff:ff:ff:ff:ff
-    inet 172.20.0.4/16 brd 172.20.255.255 scope global eth1
-       valid_lft forever preferred_lft forever
-/ #
-```
-
-Each network connection is materialized with a virtual network interface.
-
-As we can see, we can be connected to multiple networks at the same time.
-
-:::
-
-## Service discovery with containers
-:::{.callout-tip icon=false}
 ## Disconnecting from a network
 
 * Let's try the symmetrical command to disconnect the container:
@@ -1249,41 +884,6 @@ As we can see, we can be connected to multiple networks at the same time.
 
 :::
 
-<!--
-## Service discovery with containers
-:::{.callout-tip icon=false}
-## Finding out about our networks and names
-
-* We can do reverse DNS lookups on containers' IP addresses.
-
-* If the IP address belongs to a network (other than the default bridge), the result will be:
-
-  ```
-  name-or-first-alias-or-container-id.network-name
-  ```
-
-* Example:
-
-```bash
-$ docker run -ti --net prod --net-alias hello alpine
-/ # apk add --no-cache drill
-...
-OK: 5 MiB in 13 packages
-/ # ifconfig
-eth0      Link encap:Ethernet  HWaddr 02:42:AC:15:00:03
-          inet addr:`172.21.0.3`  Bcast:172.21.255.255  Mask:255.255.0.0
-          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
-...
-/ # drill -t ptr `3.0.21.172`.in-addr.arpa
-...
-;; ANSWER SECTION:
-3.0.21.172.in-addr.arpa.	600	IN	PTR	`hello.prod`.
-...
-```
-
-:::
--->
-
 ## Service discovery with containers
 :::{.callout-tip icon=false}
 ## Building with a custom network
@@ -1302,20 +902,6 @@ eth0      Link encap:Ethernet  HWaddr 02:42:AC:15:00:03
 :::
 
 # Working with volumes
-
-## Working with volumes
-:::{.callout-note icon=false}
-## Objectives
-
-At the end of this section, you will be able to:
-
-* Create containers holding volumes.
-
-* Share volumes across containers.
-
-* Share a host directory with one or many containers.
-
-:::
 
 ## Working with volumes
 :::{.callout-note icon=false}
@@ -1657,9 +1243,6 @@ QUIT
 
 * You can remove them with `docker volume rm` or `docker system prune`.
 
-Ultimately, _you_ are the one responsible for logging,
-monitoring, and backup of your volumes.
-
 :::
 
 ## Working with volumes
@@ -1793,17 +1376,4 @@ $ docker run \
   --mount type=tmpfs,destination=/path/in/container,tmpfs-size=1000000 alpine
 ```
 
-:::
-
-## Working with volumes
-:::{.callout-note icon=false}
-## Section summary
-
-We've learned how to:
-
-* Create and manage volumes.
-
-* Share volumes across containers.
-
-* Share a host directory with one or many containers.
 :::
