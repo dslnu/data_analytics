@@ -15,6 +15,7 @@ format:
     preview-links: auto
     slide-number: true
     theme: default
+    html-math-method: mathjax
     multiplex:
       url: 'https://mplex.vitv.ly'
       secret: 'aafcc2edb39d1be9e36643ee62a11240'
@@ -474,8 +475,9 @@ adata.var["ribo"] = adata.var_names.str.startswith(("RPS", "RPL"))
 adata.var["hb"] = adata.var_names.str.contains("^HB[^(P)]")
 
 sc.pp.calculate_qc_metrics(
-    adata, qc_vars=["mt", "ribo", "hb"], inplace=True, percent_top=None
+    adata, qc_vars=["mt", "ribo", "hb"], inplace=True, percent_top=[20], log1p=True
 )
+adata
 print(adata.obs.columns)
 ```
 :::
@@ -491,8 +493,6 @@ sc.pl.violin(adata, ["n_genes_by_counts", "total_counts", "pct_counts_mt"], mult
 sc.pl.scatter(adata, x="total_counts", y="pct_counts_mt")
 sc.pl.scatter(adata, x="total_counts", y="n_genes_by_counts")
 ```
-
-Healthy cells form a dense cloud; outliers (very low genes, very high mito) are suspect. Thresholds are dataset-specific — e.g. PBMC 3k: keep cells with 200–2500 genes and < 5–10% mito.
 :::
 
 ## Filtering cells and genes {.scrollable}
@@ -516,6 +516,17 @@ print(adata.shape)
 
 ## QC: Ambient RNA
 ![](../img/ambient_rna.jpeg)
+
+## QC: Ambient RNA
+:::{.callout-tip icon=false}
+## Overview
+Every droplet-based single-cell library is contaminated with ambient RNA — cell-free transcripts that leak out of stressed or lysed cells into the suspension and get co-encapsulated with real cells. This “soup” is captured and sequenced alongside each cell’s native transcriptome.
+
+Several approaches can be used:
+
+- CellBender (<https://cellbender.readthedocs.io/>)
+- SoupX (<https://github.com/NiRuff/soupx-python>)
+:::
 
 ## QC: Doublet Detection
 ![](../img/doublet_detection.jpeg)
@@ -573,7 +584,7 @@ p1 = sns.histplot(adata.obs["total_counts"], bins=100, kde=False)
 :::{.callout-tip icon=false}
 ## Shifted logarithm
 
-The first normalization technique we will use is the shifted logarithm which is based on the delta method . The delta method applies a nonlinear function 
+The first normalization technique we will use is the **shifted logarithm** which is based on the **delta method**. The delta method applies a nonlinear function 
 $$
 f(y) = \log \left(\frac{y}{s}+y_0\right)
 $$
@@ -598,11 +609,6 @@ scales_counts = sc.pp.normalize_total(adata, target_sum=None, inplace=False)
 adata.layers["log1p_norm"] = sc.pp.log1p(scales_counts["X"], copy=True)
 ```
 
-:::
-
-## Normalization {.scrollable}
-:::{.callout-tip icon=false}
-## Shifted logarithm
 Inspect:
 ```{python}
 fig, axes = plt.subplots(1, 2, figsize=(10, 5))
@@ -621,11 +627,26 @@ plt.show()
 
 This normalization technique was motivated by the observation that cell-to-cell variation in scRNA-seq data might be confounded by biological heterogeneity with technical effects.
 
+$$
+r_i = \frac{y_i - \hat{\mu_i}}{\sqrt{V(\hat{\mu_i})}},
+$$
+where $y_i$ is the observed value, $\hat{\mu_i}$ is the fitted mean, and $V$ is the variance function.
+
 The method utilizes Pearson residuals from ‘regularized negative binomial regression’ to calculate a model of technical noise in the data.
+
+$$
+z_{ij} = \frac{x_{ij}-\hat{\mu_i}}{\sqrt{\hat{\mu_i} + \hat{\mu_i}^2/\hat{\theta_i}}},
+$$
+where $V(\mu) = \mu + \mu^2/\theta$, and $\hat{\mu_{ij}} = \exp(\beta_{0i} + \beta_{1i}\log_{10}m_j)$.
 
 It explicitly adds the count depth as a covariate in a generalized linear model.
 
 This method removed the impact of sampling effects while preserving cell heterogeneity in the dataset. 
+:::
+
+## Normalization {.scrollable}
+:::{.callout-tip icon=false}
+## Pearson residuals
 ```{python}
 analytic_pearson = sc.experimental.pp.normalize_pearson_residuals(adata, inplace=False)
 adata.layers["analytic_pearson_residuals"] = csr_matrix(analytic_pearson["X"])
@@ -640,6 +661,8 @@ axes[1].set_title("Analytic Pearson residuals")
 plt.show()
 ```
 :::
+
+
 
 # Feature selection
 
